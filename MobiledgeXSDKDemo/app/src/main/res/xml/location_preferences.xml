@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:id="@+id/mex_preference_screen">
+
+    <SwitchPreference
+        android:key="@string/preference_mex_location_verification"
+        android:title="@string/preference_mex_location_verification_title"
+        android:summary="@string/preference_mex_location_verification_summary"
+        android:defaultValue="false" />
+</PreferenceScreen>
