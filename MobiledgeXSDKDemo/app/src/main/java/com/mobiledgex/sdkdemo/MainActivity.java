@@ -3,6 +3,9 @@ package com.mobiledgex.sdkdemo;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
@@ -32,7 +35,6 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -53,17 +55,24 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.SphericalUtil;
 import com.mobiledgex.matchingengine.FindCloudletResponse;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.UUID;
+
+import distributed_match_engine.AppClient;
+
+import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_CLOUDLET;
+import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
+import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
+import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -73,13 +82,10 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = "MainActivity";
     public static final int COLOR_NEUTRAL = 0xff676798;
     public static final int COLOR_VERIFIED = 0xff009933;
-//    public static final int COLOR_VERIFIED = 0xff00ff00;
     public static final int COLOR_FAILURE = 0xffff3300;
-//    public static final String HOSTNAME = "35.199.188.102";
-    public static final String HOSTNAME = "acrotopia.com";
+    public static final String HOSTNAME = "mexdemo.dme.mobiledgex.net";
 
     private GoogleMap mGoogleMap;
-    private ArrayMap<String, Cloudlet> mCloudlets = new ArrayMap<>();
     private MatchingEngineHelper mMatchingEngineHelper;
     private Marker mUserLocationMarker;
     private Location mLastKnownLocation;
@@ -91,10 +97,15 @@ public class MainActivity extends AppCompatActivity
     private boolean mDoLocationUpdates;
 
     private boolean gpsInitialized = false;
+    private FloatingActionButton fabFindCloudlets;
+    private boolean locationVerified = false;
+    private boolean locationVerificationAttempted = false;
+    private double mGpsLocationAccuracyKM;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate() HOSTNAME="+HOSTNAME);
 
         /**
          * MatchEngine APIs require special user approved permissions to READ_PHONE_STATE and
@@ -106,16 +117,16 @@ public class MainActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -142,16 +153,25 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getCloudlets();
                 mMatchingEngineHelper.doEnhancedLocationUpdateInBackground(mLocationForMatching);
             }
         });
 
+        fabFindCloudlets = findViewById(R.id.fab2);
+        fabFindCloudlets.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                matchingEngineRequest(REQ_FIND_CLOUDLET);
+            }
+        });
+        boolean allowFindBeforeVerify = prefs.getBoolean(getResources().getString(R.string.preference_allow_find_before_verify), true);
+        fabFindCloudlets.setEnabled(allowFindBeforeVerify);
+
         // Open dialog for MEX if this is the first time the app is created:
-        boolean firstTimeUse = prefs.getBoolean(getResources().getString(R.string.perference_first_time_use), true);
+        boolean firstTimeUse = prefs.getBoolean(getResources().getString(R.string.preference_first_time_use), true);
         if (firstTimeUse) {
             new EnhancedLocationDialog().show(this.getSupportFragmentManager(), "dialog");
-            String firstTimeUseKey = getResources().getString(R.string.perference_first_time_use);
+            String firstTimeUseKey = getResources().getString(R.string.preference_first_time_use);
             // Disable first time use.
             prefs.edit()
                     .putBoolean(firstTimeUseKey, false)
@@ -159,7 +179,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Set, or create create an App generated UUID for use in MatchingEngine, if there isn't one:
-        String uuidKey = getResources().getString(R.string.perference_mex_user_uuid);
+        String uuidKey = getResources().getString(R.string.preference_mex_user_uuid);
         String currentUUID = prefs.getString(uuidKey, "");
         if (currentUUID.isEmpty()) {
             prefs.edit()
@@ -168,9 +188,47 @@ public class MainActivity extends AppCompatActivity
         } else {
             mMatchingEngineHelper.getMatchingEngine().setUUID(UUID.fromString(currentUUID));
         }
+    }
 
-        Log.i(TAG, "HOSTNAME="+HOSTNAME);
+    /**
+     * Use the MatchingEngineHelper to perform a request with the Matching Engine.
+     *
+     * @param reqType  The request to perform.
+     */
+    private void matchingEngineRequest(MatchingEngineHelper.RequestType reqType) {
+        Log.i(TAG, "matchingEngineRequest("+reqType+") mLastKnownLocation="+mLastKnownLocation);
+        if(mLastKnownLocation == null) {
+            startLocationUpdates();
+            Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
+            return;
+        }
+//        getCloudletList();
+        mMatchingEngineHelper.doRequestInBackground(reqType, mLocationForMatching);
+    }
 
+    private void showAboutDialog() {
+        String appName = "";
+        String appVersion = "";
+        try {
+            // App
+            ApplicationInfo appInfo = getApplicationInfo();
+            if (getPackageManager() != null) {
+                CharSequence seq = appInfo.loadLabel(getPackageManager());
+                if (seq != null) {
+                    appName = seq.toString();
+                }
+                PackageInfo pi  = getPackageManager().getPackageInfo(getPackageName(), 0);
+                appVersion = pi.versionName;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("About")
+                .setMessage(appName+"\nVersion: "+appVersion)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     @Override
@@ -204,13 +262,31 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
             return true;
         }
-        if (id == R.id.action_reset) {
+        if (id == R.id.action_register_client) {
+            matchingEngineRequest(REQ_REGISTER_CLIENT);
+        }
+        if (id == R.id.action_get_cloudlet_list) {
+            getCloudlets();
+        }
+        if (id == R.id.action_reset_location) {
             // Reset spoofed GPS
             mMatchingEngineHelper.setSpoofedLocation(null);
             mUserLocationMarker.setPosition(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
+            mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
             updateLocSimLocation(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+            locationVerified = false;
+            locationVerificationAttempted = false;
             getCloudlets();
             return true;
+        }
+        if (id == R.id.action_verify_location) {
+            matchingEngineRequest(REQ_VERIFY_LOCATION);
+        }
+        if (id == R.id.action_find_cloudlet) {
+            matchingEngineRequest(REQ_FIND_CLOUDLET);
+        }
+        if (id == R.id.action_about) {
+            showAboutDialog();
         }
 
         return super.onOptionsItemSelected(item);
@@ -219,6 +295,7 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+        //TODO: Replace these with real items.
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
@@ -236,7 +313,7 @@ public class MainActivity extends AppCompatActivity
 
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -252,11 +329,6 @@ public class MainActivity extends AppCompatActivity
         mGoogleMap.setOnMapLongClickListener(this);
         mGoogleMap.setOnMarkerDragListener(this);
 
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(120000); // two minute interval
-        mLocationRequest.setFastestInterval(120000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-
         // As of Android 23, permissions can be asked for while the app is still running.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
             Log.i(TAG, "requestMultiplePermissions");
@@ -268,6 +340,13 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     * This makes a web service call to the location simulator to update the current IP address
+     * entry in the database with the given latitude/longitude.
+     *
+     * @param lat
+     * @param lng
+     */
     public void updateLocSimLocation(double lat, double lng) {
         JSONObject jsonBody = new JSONObject();
         try {
@@ -281,7 +360,8 @@ public class MainActivity extends AppCompatActivity
 
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url = "http://"+HOSTNAME+":8888/updateLocation";
+        String hostName = HOSTNAME.replace("dme", "locsim");
+        String url = "http://"+hostName+":8888/updateLocation";
         Log.i(TAG, "updateLocSimLocation url="+url);
         Log.i(TAG, "updateLocSimLocation body="+requestBody);
 
@@ -321,105 +401,24 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Gets list of cloudlets from DME, and populate map with markers.
+     * Gets list of cloudlets from DME, and populates map with markers.
      *
      */
     public void getCloudlets() {
-        Log.i(TAG, "getCloudlets() mLastKnownLocation="+mLastKnownLocation);
+        Log.i(TAG, "getCloudletList() mLastKnownLocation="+mLastKnownLocation);
         if(mLastKnownLocation == null) {
             startLocationUpdates();
             Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // TODO: Rework this to use an SDK call once it has been added.
-        // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url = "http://" + HOSTNAME + ":8080/GetCloudlets";
+        if(mMatchingEngineHelper.getSpoofedLocation() == null) {
+            mLocationForMatching = mLastKnownLocation;
+        } else {
+            mLocationForMatching = mMatchingEngineHelper.getSpoofedLocation();
+        }
 
-        // Request a JSON response from the provided URL.
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.i(TAG, "Response is: " + response);
-                        try {
-                            mGoogleMap.clear();
-                            ArrayMap<String, Cloudlet> tempCloudlets = new ArrayMap<String, Cloudlet>();
-                            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-
-                            JSONArray cloudlets = response.getJSONArray("Cloudlets");
-
-                            //First get the new list into an ArrayMap so we can index on the CarrierName
-                            int i;
-                            for (i = 0; i < cloudlets.length(); i++) {
-                                JSONObject cloudlet = cloudlets.getJSONObject(i);
-                                Log.i(TAG, i + " cloudlet=" + cloudlet);
-                                String carrierName = cloudlet.getString("CarrierName");
-                                String cloudletName = cloudlet.getString("CloudletName");
-                                JSONObject gpsCoords = cloudlet.getJSONObject("GpsLocation");
-                                LatLng latLng = new LatLng(gpsCoords.getDouble("lat"), gpsCoords.getDouble("long"));
-                                double distance = cloudlet.getDouble("Distance");
-                                Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
-                                marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL));
-                                marker.setTag(cloudletName);
-                                tempCloudlets.put(cloudletName, new Cloudlet(cloudletName, carrierName, latLng, distance, marker));
-                                builder.include(marker.getPosition());
-                            }
-
-                            //Now see if all cloudlets still exist. If removed, show as transparent.
-                            for (i = 0; i < mCloudlets.size(); i++) {
-                                Cloudlet cloudlet = mCloudlets.valueAt(i);
-                                if (!tempCloudlets.containsKey(cloudlet.getCloudletName())) {
-                                    Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
-                                    Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(cloudlet.getLatitude(), cloudlet.getLongitude()))
-                                            .title(cloudlet.getCloudletName() + " Cloudlet").snippet("Has been removed"));
-                                    marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL));
-                                    marker.setAlpha((float) 0.33);
-                                }
-                            }
-
-                            mCloudlets = tempCloudlets;
-
-                            if(mMatchingEngineHelper.getSpoofedLocation() == null) {
-                                mLocationForMatching = mLastKnownLocation;
-                            } else {
-                                mLocationForMatching = mMatchingEngineHelper.getSpoofedLocation();
-                            }
-                            LatLng latLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
-                            mUserLocationMarker = mGoogleMap.addMarker(new MarkerOptions().position(latLng)
-                                    .title("User Location - Not Verified").snippet("Drag to spoof GPS")
-                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)).draggable(true));
-                            mUserLocationMarker.setTag("user");
-                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL));
-                            builder.include(mUserLocationMarker.getPosition());
-
-                            if(mMatchingEngineHelper.getSpoofedLocation() != null) {
-                                Log.i(TAG, "Leave the camera alone.");
-                                return;
-                            }
-
-                            LatLngBounds bounds = builder.build();
-                            int padding = 240; // offset from edges of the map in pixels
-                            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-                            mGoogleMap.moveCamera(cu);
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "That didn't work! error="+error);
-                        Snackbar.make(findViewById(android.R.id.content), error.getMessage(), Snackbar.LENGTH_LONG).show();
-                    }
-                });
-
-        // Add the request to the RequestQueue.
-        queue.add(jsonObjectRequest);
-
+        mMatchingEngineHelper.doRequestInBackground(REQ_GET_CLOUDLETS, mLocationForMatching);
     }
 
     @NonNull
@@ -438,45 +437,256 @@ public class MainActivity extends AppCompatActivity
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
-    public void onVerifyLocation(boolean validated) {
-        String message;
-        if(mUserLocationMarker == null) {
-            Log.w(TAG, "No marker for user location");
-            return;
-        }
-        if(validated) {
-//            mUserLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED));
-            message = "User Location - Verified";
-        } else {
-//            mUserLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE));
-            message = "User Location - Failed Verify";
-        }
-        mUserLocationMarker.setTitle(message);
-        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+    /**
+     * When releasing a dragged marker or long-clicking on the map, the user will be prompted
+     * if they want to either spoof the GPS at the dropped location, or to update the GPS location
+     * for their IP address in the simulator.
+     *
+     * @param spoofLatLng  The location to use.
+     */
+    private void showSpoofGpsDialog(final LatLng spoofLatLng) {
+        mUserLocationMarker.setPosition(spoofLatLng);
+        final CharSequence[] charSequence = new CharSequence[] {"Spoof GPS at this location", "Update location in GPS database"};
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setSingleChoiceItems(charSequence, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                Location location = new Location("MEX");
+                location.setLatitude(spoofLatLng.latitude);
+                location.setLongitude(spoofLatLng.longitude);
+                LatLng oldLatLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
+                switch (which) {
+                    case 0:
+                        Log.i(TAG, "Spoof GPS at "+location);
+                        Toast.makeText(MainActivity.this, "GPS spoof enabled.", Toast.LENGTH_LONG).show();
+                        double distance = SphericalUtil.computeDistanceBetween(oldLatLng, spoofLatLng)/1000;
+                        mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
+                        mMatchingEngineHelper.setSpoofedLocation(location);
+                        locationVerificationAttempted = locationVerified = false;
+                        getCloudlets();
+                        break;
+                    case 1:
+                        Log.i(TAG, "Update GPS in simulator to "+location);
+                        updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
+                        mMatchingEngineHelper.setSpoofedLocation(location);
+                        locationVerificationAttempted = locationVerified = false;
+                        getCloudlets();
+                        break;
+                    default:
+                        Log.i(TAG, "Unknown dialog selection.");
+                }
+
+            }
+        });
+
+        alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                mUserLocationMarker.setPosition(new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude()));
+            }
+        });
+
+        alertDialogBuilder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                mUserLocationMarker.setPosition(new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude()));
+            }
+        });
+
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
     }
 
     @Override
-    public void onFindCloudlet(FindCloudletResponse closestCloudlet) {
-        Cloudlet cloudlet = null;
-        for (int i = 0; i < mCloudlets.size(); i++) {
-            cloudlet = mCloudlets.valueAt(i);
-            if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.loc.getLat() &&
-                    cloudlet.getMarker().getPosition().longitude == closestCloudlet.loc.getLong() ) {
-                Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
-//                cloudlet.getMarker().setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED));
-                cloudlet.setBestMatch(true);
-                break;
+    public void onRegister(final String sessionCookie) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, "Successfully registered client. sessionCookie=\n"+sessionCookie, Toast.LENGTH_SHORT).show();
             }
-        }
-        if(cloudlet != null) {
-            Polyline line = mGoogleMap.addPolyline(new PolylineOptions()
-                    .add(mUserLocationMarker.getPosition(), cloudlet.getMarker().getPosition())
-                    .width(8)
-                    .color(COLOR_VERIFIED));
-        }
+        });
+    }
+
+    /**
+     * Callback for Matching Engine's verifyLocation results.
+     *
+     * @param verified  Whether location passed verification.
+     * @param gpsLocationAccuracyKM  location accuracy, the location is verified to
+     * be within this number of kilometers. Negative value means no verification was done.
+     */
+    public void onVerifyLocation(final boolean verified, final double gpsLocationAccuracyKM) {
+        locationVerificationAttempted = true;
+        locationVerified = verified;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                String message;
+                String message2="";
+                if(mUserLocationMarker == null) {
+                    Log.w(TAG, "No marker for user location");
+                    return;
+                }
+                if(verified) {
+                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED));
+                    message = "User Location - Verified";
+                    mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
+                    message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
+                } else {
+                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE));
+                    message = "User Location - Failed Verify";
+                }
+                fabFindCloudlets.setEnabled(verified);
+                mUserLocationMarker.setTitle(message);
+                Toast.makeText(MainActivity.this, message+message2, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    /**
+     * Callback for Matching Engine's findCloudlet results. Looks through cloudlet list
+     * and marks this one as closest by setting the color.
+     *
+     * @param closestCloudlet  Object encapsulating the closest cloudlet characteristics.
+     */
+    @Override
+    public void onFindCloudlet(final FindCloudletResponse closestCloudlet) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Cloudlet cloudlet = null;
+                for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
+                    cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
+                    if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.loc.getLat() &&
+                            cloudlet.getMarker().getPosition().longitude == closestCloudlet.loc.getLong() ) {
+                        Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
+                        cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED));
+                        cloudlet.setBestMatch(true);
+                        break;
+                    }
+                }
+                if(cloudlet != null) {
+                    Polyline line = mGoogleMap.addPolyline(new PolylineOptions()
+                            .add(mUserLocationMarker.getPosition(), cloudlet.getMarker().getPosition())
+                            .width(8)
+                            .color(COLOR_VERIFIED));
+                }
+            }
+        });
+    }
+
+    /**
+     * Callback for Matching Engine's getCloudletList results. Creates ArrayMap of cloudlets
+     * keyed on the cloudlet name. A map marker is also created for each cloudlet.
+     *
+     * @param cloudletList  List of found cloudlet instances.
+     */
+    @Override
+    public void onGetCloudletList(final AppClient.Match_Engine_Cloudlet_List cloudletList) {
+        Log.i(TAG, "onGetCloudletList()");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mGoogleMap.clear();
+                ArrayMap<String, Cloudlet> tempCloudlets = new ArrayMap<>();
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
+                if(cloudletList.getCloudletsList().size() == 0) {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Error")
+                            .setMessage("No cloudlets available.\nContact MobiledgeX support.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
+
+                //First get the new list into an ArrayMap so we can index on the cloudletName
+                for(AppClient.CloudletLocation cloudletLocation:cloudletList.getCloudletsList()) {
+                    Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName());
+                    String carrierName = cloudletLocation.getCarrierName();
+                    String cloudletName = cloudletLocation.getCloudletName();
+                    List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
+                    String uri = appInstances.get(0).getUri();
+                    String appName = appInstances.get(0).getAppname();
+                    double distance = cloudletLocation.getDistance();
+                    LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLat(), cloudletLocation.getGpsLocation().getLong());
+                    Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
+                    marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL));
+                    marker.setTag(cloudletName);
+
+                    Cloudlet cloudlet;
+                    if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
+                        cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
+                    } else {
+                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, uri, marker);
+                    }
+                    cloudlet.update(cloudletName, appName, carrierName, latLng, distance, uri, marker);
+                    tempCloudlets.put(cloudletName, cloudlet);
+                    builder.include(marker.getPosition());
+
+                }
+
+                //Now see if all cloudlets still exist. If removed, show as transparent.
+                for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
+                    Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
+                    if (!tempCloudlets.containsKey(cloudlet.getCloudletName())) {
+                        Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
+                        Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(cloudlet.getLatitude(), cloudlet.getLongitude()))
+                                .title(cloudlet.getCloudletName() + " Cloudlet").snippet("Has been removed"));
+                        marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_FAILURE));
+                        marker.setAlpha((float) 0.33);
+                    }
+                }
+                CloudletListHolder.getSingleton().setCloudlets(tempCloudlets);
+
+                // Create the marker representing the user/mobile device.
+                String tag = "User";
+                String title = "User Location - Not Verified";
+                String snippet = (String) getResources().getText(R.string.drag_to_spoof);
+                BitmapDescriptor icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL);
+
+                if(mUserLocationMarker != null) {
+                    snippet = mUserLocationMarker.getSnippet();
+                    if (locationVerificationAttempted) {
+                        if (locationVerified) {
+                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED);
+                            title = "User Location - Verified";
+                        } else {
+                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE);
+                            title = "User Location - Failed Verify";
+                        }
+                    }
+                }
+
+                LatLng latLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
+                mUserLocationMarker = mGoogleMap.addMarker(new MarkerOptions().position(latLng)
+                        .title(title).snippet(snippet)
+                        .icon(icon).draggable(true));
+                mUserLocationMarker.setTag(tag);
+                builder.include(mUserLocationMarker.getPosition());
+
+                // Update the camera view if needed.
+                if(mMatchingEngineHelper.getSpoofedLocation() != null) {
+                    Log.i(TAG, "Leave the camera alone.");
+                    return;
+                }
+                LatLngBounds bounds = builder.build();
+                Log.i(TAG, "bounds.northeast="+bounds.northeast+" bounds.southwest="+bounds.southwest);
+
+                //If there are no cloudlets, don't use the bounds, as it will zoom in super close.
+                CameraUpdate cu;
+                if(!bounds.southwest.equals(bounds.northeast)) {
+                    Log.d(TAG, "Using cloudlet boundaries");
+                    int padding = 240; // offset from edges of the map in pixels
+                    cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+                } else {
+                    Log.d(TAG, "No cloudlets. Don't zoom in");
+                    cu = CameraUpdateFactory.newLatLng(mUserLocationMarker.getPosition());
+                }
+                mGoogleMap.moveCamera(cu);
+
+            }
+        });
+
     }
 
     @Override
@@ -494,24 +704,25 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onInfoWindowClick(Marker marker) {
 
-        if(marker.getTag() == "user") {
+        if(marker.getTag().toString().equalsIgnoreCase("user")) {
             Log.d(TAG, "skipping mUserLocationMarker");
             return;
         }
 
         String cloudletName = (String) marker.getTag();
-        Cloudlet cloudlet = mCloudlets.get(cloudletName);
+        Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
+        Log.i(TAG, "1."+cloudlet+" "+cloudlet.getCloudletName()+" "+cloudlet.getMbps());
 
         Intent intent = new Intent(getApplicationContext(), CloudletDetailsActivity.class);
-        intent.putExtra("cloudlet", cloudlet);
+        intent.putExtra("CloudletName", cloudlet.getCloudletName());
         startActivity(intent);
         Log.i(TAG, "Display Detailed Cloudlet Info");
     }
 
     @Override
     public void onMapLongClick(LatLng latLng) {
-        Log.i(TAG, "onMapLongClick("+latLng+"). Spoof GPS to here.");
-        showSpoofGpsDialog();
+        Log.i(TAG, "onMapLongClick("+latLng+")");
+        showSpoofGpsDialog(latLng);
     }
 
     @Override
@@ -526,72 +737,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMarkerDragEnd(Marker marker) {
         Log.i(TAG, "onMarkerDragEnd(" + marker + ")");
-        showSpoofGpsDialog();
+        showSpoofGpsDialog(marker.getPosition());
     }
-
-    /**
-     * When releasing a dragged marker the user will be prompted if they want to either spoof the
-     * GPS at the dropped location, or to update the
-     */
-    private void showSpoofGpsDialog() {
-        final CharSequence[] charSequence = new CharSequence[] {"Spoof GPS at this location", "Update location in GPS database"};
-
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setSingleChoiceItems(charSequence, -1, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                Location location = new Location("MEX");
-                location.setLatitude(mUserLocationMarker.getPosition().latitude);
-                location.setLongitude(mUserLocationMarker.getPosition().longitude);
-                switch (which) {
-                    case 0:
-                        Log.i(TAG, "Spoof");
-                        Toast.makeText(MainActivity.this, "GPS spoof enabled.", Toast.LENGTH_LONG).show();
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL));
-                        mMatchingEngineHelper.setSpoofedLocation(location);
-                        getCloudlets();
-                        break;
-                    case 1:
-                        Log.i(TAG, "Update");
-                        updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL));
-                        mMatchingEngineHelper.setSpoofedLocation(location);
-                        getCloudlets();
-                        break;
-                    default:
-                        Log.i(TAG, "Unknown dialog selection.");
-                }
-
-            }
-        });
-
-        alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                mUserLocationMarker.setPosition(new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude()));
-            }
-        });
-
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
-    }
-
-    LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            List<Location> locationList = locationResult.getLocations();
-            if (locationList.size() > 0) {
-                //The last location in the list is the newest
-                Location location = locationList.get(locationList.size() - 1);
-                Log.i(TAG, "onLocationResult() Location: " + location.getLatitude() + " " + location.getLongitude());
-                mLastKnownLocation = locationResult.getLastLocation();
-                if(!gpsInitialized) {
-                    getCloudlets();
-                    gpsInitialized = true;
-                }
-            }
-        }
-    };
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -644,6 +791,7 @@ public class MainActivity extends AppCompatActivity
      * See documentation for Google's FusedLocationProviderClient for additional usage information.
      */
     private void startLocationUpdates() {
+        Log.i(TAG, "startLocationUpdates()");
         // As of Android 23, permissions can be asked for while the app is still running.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
             return;
@@ -651,7 +799,17 @@ public class MainActivity extends AppCompatActivity
 
         try {
             mGoogleMap.setMyLocationEnabled(true);
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest,mLocationCallback, Looper.myLooper());
+
+            int interval = 5000; // Initially, 5 second interval to get the first update quickly
+            Log.i(TAG, "mFusedLocationClient.getLastLocation()="+mFusedLocationClient.getLastLocation()+" interval="+interval);
+
+            mLocationRequest = new LocationRequest();
+            mLocationRequest.setInterval(interval);
+            mLocationRequest.setFastestInterval(interval);
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+            Log.i(TAG, "mFusedLocationClient.requestLocationUpdates() called");
         } catch (SecurityException se) {
             se.printStackTrace();
             Log.i(TAG, "App should Request location permissions during onCreate().");
@@ -661,6 +819,30 @@ public class MainActivity extends AppCompatActivity
     private void stopLocationUpdates() {
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
     }
+
+    LocationCallback mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            List<Location> locationList = locationResult.getLocations();
+            if (locationList.size() > 0) {
+                //The last location in the list is the newest
+                Location location = locationList.get(locationList.size() - 1);
+                Log.i(TAG, "onLocationResult() Location: " + location.getLatitude() + " " + location.getLongitude());
+                mLastKnownLocation = locationResult.getLastLocation();
+                if(!gpsInitialized) {
+                    getCloudlets();
+                    gpsInitialized = true;
+                }
+
+                if(mLocationRequest.getInterval() < 120000) {
+                    // Now that we got our first update, make interval longer to save battery.
+                    Log.i(TAG, "Slowing down location request interval");
+                    mLocationRequest.setInterval(120000); // two minute interval
+                    mLocationRequest.setFastestInterval(120000);
+                }
+            }
+        }
+    };
 
 }
 

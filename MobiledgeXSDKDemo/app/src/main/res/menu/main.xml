@@ -2,13 +2,40 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_register_client"
+        android:orderInCategory="100"
+        android:title="@string/action_register_client"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_get_cloudlet_list"
+        android:orderInCategory="100"
+        android:title="@string/action_get_cloudlet_list"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_verify_location"
+        android:icon="@mipmap/ic_action_verify_location"
+        android:orderInCategory="100"
+        android:title="@string/action_verify_location"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_find_cloudlet"
+        android:icon="@drawable/ic_action_find_cloudlets"
+        android:orderInCategory="100"
+        android:title="@string/action_find_cloudlet"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_reset_location"
+        android:orderInCategory="100"
+        android:title="@string/action_reset_location"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_reset"
+        android:id="@+id/action_about"
         android:orderInCategory="100"
-        android:title="@string/action_reset"
+        android:title="@string/action_about"
         app:showAsAction="never" />
 </menu>

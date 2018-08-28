@@ -28,6 +28,22 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@mipmap/ic_action_near_me" />
+        app:srcCompat="@mipmap/ic_action_verify_location" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginBottom="85dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:src="@drawable/ic_action_find_cloudlets"
+        android:visibility="gone"
+        app:layout_anchor="@id/fab"
+        app:layout_anchorGravity="top" />
 
 </android.support.design.widget.CoordinatorLayout>
