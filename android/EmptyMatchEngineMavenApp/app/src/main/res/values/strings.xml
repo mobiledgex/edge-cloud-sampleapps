@@ -3,11 +3,22 @@
 
     <!-- Strings related to Settings -->
     <string name="action_settings">Settings</string>
-    <string name="perference_first_time_use">first_time_use</string>
-    <string name="perference_mex_user_uuid">mex_user_uuid</string>
-    <string name="enchanced_location_permission">This application uses enhanced features of carrier networks to validate your device location. Please enable in app settings.</string>
+    <string name="preference_first_time_use">first_time_use</string>
+    <string name="preference_mex_user_uuid">mex_user_uuid</string>
+    <string name="enhanced_location_permission">This application uses enhanced features of carrier networks to validate your device location. Please enable in app settings.</string>
     <string name="preference_mex_location_verification">location_verification</string>
     <string name="preference_mex_location_verification_title">Location Verification</string>
     <string name="preference_mex_location_verification_summary">Enhanced Network Location Services</string>
+
+    <string name="needed_permissions_text">We need these permissions to make everything work:</string>
+    <string name="location_permission_summary">Access Device Location Permission Summary</string>
+    <string name="location_carrier_permission_summary">Verify Location with Carrier Location Permission Summary</string>
+    <string name="why">Why?</string>
+
+    <string name="location_device_permission_title">Device Location Verification</string>
+    <string name="location_device_permission_explanation">Location with Device Supplied Location Permission Explanation</string>
+    <string name="location_carrier_permission_title">Carrier Location Verification</string>
+    <string name="location_carrier_permission_explanation">Location with Carrier Supplied Location Permission Explanation</string>
+
     <string name="title_activity_settings">Settings</string>
 </resources>

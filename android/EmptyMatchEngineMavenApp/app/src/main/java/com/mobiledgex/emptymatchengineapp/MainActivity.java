@@ -6,7 +6,6 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -65,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
          * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION. This creates a dialog, if needed.
          */
         mRpUtil = new RequestPermissions();
-        mRpUtil.requestMultiplePermissions(this);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mLocationRequest = new LocationRequest();
 
@@ -73,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         // Restore mex location preference, defaulting to false:
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        PreferenceManager.setDefaultValues(this, R.xml.location_preferences, false);
+
         boolean mexLocationAllowed = prefs.getBoolean(getResources()
                 .getString(R.string.preference_mex_location_verification),
                 false);
@@ -117,18 +117,17 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         setSupportActionBar(myToolbar);
 
         // Open dialog for MEX if this is the first time the app is created:
-        boolean firstTimeUse = prefs.getBoolean(getResources().getString(R.string.perference_first_time_use), true);
+
+        String firstTimeUsePrefKey = getResources().getString(R.string.preference_first_time_use);
+        boolean firstTimeUse = prefs.getBoolean(firstTimeUsePrefKey, true);
+
         if (firstTimeUse) {
-            new EnhancedLocationDialog().show(this.getSupportFragmentManager(), "dialog");
-            String firstTimeUseKey = getResources().getString(R.string.perference_first_time_use);
-            // Disable first time use.
-            prefs.edit()
-                    .putBoolean(firstTimeUseKey, false)
-                    .apply();
+            Intent intent = new Intent(this, FirstTimeUseActivity.class);
+            startActivity(intent);
         }
 
         // Set, or create create an App generated UUID for use in MatchingEngine, if there isn't one:
-        String uuidKey = getResources().getString(R.string.perference_mex_user_uuid);
+        String uuidKey = getResources().getString(R.string.preference_mex_user_uuid);
         String currentUUID = prefs.getString(uuidKey, "");
         if (currentUUID.isEmpty()) {
             prefs.edit()
@@ -154,7 +153,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
 
             // Open "Settings" UI
@@ -222,15 +220,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Or replace with an app specific dialog set.
-        mRpUtil.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
-    }
-
-
-    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         final String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
 
@@ -239,8 +228,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             MatchingEngine.setMexLocationAllowed(mexLocationAllowed);
         }
     }
-
-
 
     public void doEnhancedLocationVerification() throws SecurityException {
         final Activity ctx = this;
