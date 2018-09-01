@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    tools:context=".FirstTimeUseActivity">
+
+    <ImageView
+        android:id="@+id/permission_icon"
+        android:layout_width="300px"
+        android:layout_height="300px"
+        android:gravity="center"
+        android:src="@android:color/holo_blue_dark"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/permissions_needed_request"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread_inside" />
+
+    <TextView
+        android:id="@+id/permissions_needed_request"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/needed_permissions_text"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/imageView"
+        app:layout_constraintTop_toBottomOf="@+id/permission_icon" />
+
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_menu_mylocation"
+        app:layout_constraintBottom_toTopOf="@+id/permission_device_location"
+        app:layout_constraintEnd_toStartOf="@+id/permission_device_location"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/permissions_needed_request" />
+
+    <TextView
+        android:id="@+id/permission_device_location"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+
+        android:text="@string/location_permission_summary"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/permission_location_device_why"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/imageView"
+        app:layout_constraintTop_toBottomOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@id/imageView" />
+
+    <TextView
+        android:id="@+id/permission_location_device_why"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:text="@string/why"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/imageView2"
+        app:layout_constraintLeft_toLeftOf="@+id/permission_device_location"
+        app:layout_constraintTop_toBottomOf="@+id/permission_device_location" />
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_menu_mylocation"
+        app:layout_constraintBottom_toTopOf="@+id/permission_carrier_location"
+        app:layout_constraintEnd_toStartOf="@+id/permission_carrier_location"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/permission_location_device_why" />
+
+    <TextView
+        android:id="@+id/permission_carrier_location"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+
+        android:text="@string/location_carrier_permission_summary"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/permission_location_carrier_why"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/imageView2"
+        app:layout_constraintTop_toBottomOf="@+id/imageView2"
+        app:layout_constraintTop_toTopOf="@id/imageView2"/>
+
+    <TextView
+        android:id="@+id/permission_location_carrier_why"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:text="@string/why"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/okbutton"
+        app:layout_constraintLeft_toLeftOf="@+id/permission_carrier_location"
+        app:layout_constraintTop_toBottomOf="@+id/permission_carrier_location" />
+
+    <Button
+        android:id="@+id/okbutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OK"
+        app:layout_constraintBottom_toTopOf="@+id/permission_icon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/permission_location_carrier_why" />
+
+
+</android.support.constraint.ConstraintLayout>
