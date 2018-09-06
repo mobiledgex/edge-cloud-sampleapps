@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -73,6 +74,8 @@ import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_C
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
+import static distributed_match_engine.AppClient.Match_Engine_Loc_Verify.GPS_Location_Status.LOC_VERIFIED;
+import static distributed_match_engine.AppClient.Match_Engine_Loc_Verify.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -83,6 +86,7 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_NEUTRAL = 0xff676798;
     public static final int COLOR_VERIFIED = 0xff009933;
     public static final int COLOR_FAILURE = 0xffff3300;
+    public static final int COLOR_CAUTION = 0xffffbf00;
     public static final String HOSTNAME = "mexdemo.dme.mobiledgex.net";
 
     private GoogleMap mGoogleMap;
@@ -218,13 +222,14 @@ public class MainActivity extends AppCompatActivity
                     appName = seq.toString();
                 }
                 PackageInfo pi  = getPackageManager().getPackageInfo(getPackageName(), 0);
-                appVersion = pi.versionName;
+                appVersion = pi.versionName+"."+pi.versionCode;
             }
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
 
         new AlertDialog.Builder(MainActivity.this)
+                .setIcon(R.mipmap.ic_launcher_foreground)
                 .setTitle("About")
                 .setMessage(appName+"\nVersion: "+appVersion)
                 .setPositiveButton("OK", null)
@@ -255,13 +260,6 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            // Open "Settings" UI
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-            return true;
-        }
         if (id == R.id.action_register_client) {
             matchingEngineRequest(REQ_REGISTER_CLIENT);
         }
@@ -270,6 +268,11 @@ public class MainActivity extends AppCompatActivity
         }
         if (id == R.id.action_reset_location) {
             // Reset spoofed GPS
+            if(mLastKnownLocation == null) {
+                startLocationUpdates();
+                Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
+                return true;
+            }
             mMatchingEngineHelper.setSpoofedLocation(null);
             mUserLocationMarker.setPosition(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
             mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
@@ -285,9 +288,6 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_find_cloudlet) {
             matchingEngineRequest(REQ_FIND_CLOUDLET);
         }
-        if (id == R.id.action_about) {
-            showAboutDialog();
-        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -299,17 +299,26 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if (id == R.id.nav_settings) {
+            // Open "Settings" UI
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.nav_about) {
+            // Handle the About action
+            showAboutDialog();
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+//        } else if (id == R.id.nav_camera) {
+//            // Handle the camera action
+//        } else if (id == R.id.nav_gallery) {
+//
+//        } else if (id == R.id.nav_slideshow) {
+//
+//        } else if (id == R.id.nav_manage) {
+//
+//        } else if (id == R.id.nav_share) {
+//
+//        } else if (id == R.id.nav_send) {
 
         }
 
@@ -422,16 +431,36 @@ public class MainActivity extends AppCompatActivity
     }
 
     @NonNull
-    private BitmapDescriptor makeMarker(int resourceId, int color) {
+    private BitmapDescriptor makeMarker(int resourceId, int color, String badgeText) {
         Drawable iconDrawable = getResources().getDrawable(resourceId);
         iconDrawable.setColorFilter(color, PorterDuff.Mode.MULTIPLY );
-        return getMarkerIconFromDrawable(iconDrawable);
+        return getMarkerIconFromDrawable(iconDrawable, color, badgeText);
     }
 
-    private BitmapDescriptor getMarkerIconFromDrawable(Drawable drawable) {
+    /**
+     * Create map marker icon, based on given drawable, color, and add badge text if non-empty.
+     *
+     * @param drawable
+     * @param color
+     * @param badgeText
+     * @return
+     */
+    private BitmapDescriptor getMarkerIconFromDrawable(Drawable drawable, int color, String badgeText) {
         Canvas canvas = new Canvas();
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         canvas.setBitmap(bitmap);
+        if(badgeText != null && badgeText.length() != 0) {
+            float scale = getResources().getDisplayMetrics().density;
+            Log.d(TAG, "scale=" + scale + " x,y=" + drawable.getIntrinsicWidth() + "," + drawable.getIntrinsicHeight());
+            Paint paint = new Paint();
+            paint.setStrokeWidth(5);
+            paint.setTextAlign(Paint.Align.CENTER);
+            float textSize = 22 * scale;
+            float badgeWidth = paint.measureText(badgeText);
+            paint.setTextSize(textSize);
+            paint.setColor(color);
+            canvas.drawText(badgeText, drawable.getIntrinsicWidth() / 2, drawable.getIntrinsicHeight() / 2 + textSize / 2, paint);
+        }
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         drawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
@@ -469,6 +498,7 @@ public class MainActivity extends AppCompatActivity
                         break;
                     case 1:
                         Log.i(TAG, "Update GPS in simulator to "+location);
+                        mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
                         updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
                         mMatchingEngineHelper.setSpoofedLocation(location);
                         locationVerificationAttempted = locationVerified = false;
@@ -511,13 +541,12 @@ public class MainActivity extends AppCompatActivity
     /**
      * Callback for Matching Engine's verifyLocation results.
      *
-     * @param verified  Whether location passed verification.
+     * @param status  GPS_Location_Status to determine success, fail, or caution
      * @param gpsLocationAccuracyKM  location accuracy, the location is verified to
-     * be within this number of kilometers. Negative value means no verification was done.
      */
-    public void onVerifyLocation(final boolean verified, final double gpsLocationAccuracyKM) {
+    public void onVerifyLocation(final AppClient.Match_Engine_Loc_Verify.GPS_Location_Status status,
+                                 final double gpsLocationAccuracyKM) {
         locationVerificationAttempted = true;
-        locationVerified = verified;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -527,20 +556,41 @@ public class MainActivity extends AppCompatActivity
                     Log.w(TAG, "No marker for user location");
                     return;
                 }
-                if(verified) {
-                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED));
+                mUserLocationMarker.hideInfoWindow();
+                if(status == LOC_VERIFIED) {
+                    fabFindCloudlets.setEnabled(true);
+                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
                     message = "User Location - Verified";
                     mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
                     message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
+                } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
+                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
+                    message = ""+status;
+                    mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
                 } else {
-                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE));
-                    message = "User Location - Failed Verify";
+                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
+                    message = ""+status;
                 }
-                fabFindCloudlets.setEnabled(verified);
                 mUserLocationMarker.setTitle(message);
                 Toast.makeText(MainActivity.this, message+message2, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    /**
+     * Determine what if any badge text should be shown for the given cloudlet.
+     *
+     * @param cloudlet
+     * @return
+     */
+    private String getBadgeText(Cloudlet cloudlet) {
+        String badgeText = "";
+        if(cloudlet.getCarrierName().equalsIgnoreCase("gcp")) {
+            badgeText = "G";
+        } else if(cloudlet.getCarrierName().equalsIgnoreCase("azure")) {
+            badgeText = "A";
+        }
+        return badgeText;
     }
 
     /**
@@ -560,7 +610,7 @@ public class MainActivity extends AppCompatActivity
                     if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.loc.getLat() &&
                             cloudlet.getMarker().getPosition().longitude == closestCloudlet.loc.getLong() ) {
                         Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
-                        cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED));
+                        cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, getBadgeText(cloudlet)));
                         cloudlet.setBestMatch(true);
                         break;
                     }
@@ -599,9 +649,13 @@ public class MainActivity extends AppCompatActivity
                             .show();
                 }
 
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                int speedTestBytes = Integer.parseInt(prefs.getString(getResources().getString(R.string.download_size), "1048576"));
+                int speedTestPackets = Integer.parseInt(prefs.getString(getResources().getString(R.string.latency_packets), "5"));
+
                 //First get the new list into an ArrayMap so we can index on the cloudletName
                 for(AppClient.CloudletLocation cloudletLocation:cloudletList.getCloudletsList()) {
-                    Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName());
+                    Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName()+" getCarrierName()="+cloudletLocation.getCarrierName());
                     String carrierName = cloudletLocation.getCarrierName();
                     String cloudletName = cloudletLocation.getCloudletName();
                     List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
@@ -610,16 +664,16 @@ public class MainActivity extends AppCompatActivity
                     double distance = cloudletLocation.getDistance();
                     LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLat(), cloudletLocation.getGpsLocation().getLong());
                     Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
-                    marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL));
                     marker.setTag(cloudletName);
 
                     Cloudlet cloudlet;
                     if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
                         cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
                     } else {
-                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, uri, marker);
+                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, uri, marker, speedTestBytes, speedTestPackets);
                     }
-                    cloudlet.update(cloudletName, appName, carrierName, latLng, distance, uri, marker);
+                    marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL, getBadgeText(cloudlet)));
+                    cloudlet.update(cloudletName, appName, carrierName, latLng, distance, uri, marker, speedTestBytes, speedTestPackets);
                     tempCloudlets.put(cloudletName, cloudlet);
                     builder.include(marker.getPosition());
 
@@ -632,7 +686,7 @@ public class MainActivity extends AppCompatActivity
                         Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
                         Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(cloudlet.getLatitude(), cloudlet.getLongitude()))
                                 .title(cloudlet.getCloudletName() + " Cloudlet").snippet("Has been removed"));
-                        marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_FAILURE));
+                        marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_FAILURE, getBadgeText(cloudlet)));
                         marker.setAlpha((float) 0.33);
                     }
                 }
@@ -642,16 +696,16 @@ public class MainActivity extends AppCompatActivity
                 String tag = "User";
                 String title = "User Location - Not Verified";
                 String snippet = (String) getResources().getText(R.string.drag_to_spoof);
-                BitmapDescriptor icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL);
+                BitmapDescriptor icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL, "");
 
                 if(mUserLocationMarker != null) {
                     snippet = mUserLocationMarker.getSnippet();
                     if (locationVerificationAttempted) {
                         if (locationVerified) {
-                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED);
+                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, "");
                             title = "User Location - Verified";
                         } else {
-                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE);
+                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, "");
                             title = "User Location - Failed Verify";
                         }
                     }
@@ -752,9 +806,22 @@ public class MainActivity extends AppCompatActivity
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         final String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
 
+        String prefKeyDownloadSize = getResources().getString(R.string.download_size);
+        String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
+
         if (key.equals(prefKeyAllowMEX)) {
             boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
             MatchingEngine.setMexLocationAllowed(mexLocationAllowed);
+        }
+
+        if(key.equals(prefKeyDownloadSize) || key.equals(prefKeyNumPackets)) {
+            int numBytes = Integer.parseInt(sharedPreferences.getString(getResources().getString(R.string.download_size), "1048576"));
+            int numPackets = Integer.parseInt(sharedPreferences.getString(getResources().getString(R.string.latency_packets), "5"));
+            for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
+                Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
+                cloudlet.setNumBytes(numBytes);
+                cloudlet.setNumPackets(numPackets);
+            }
         }
     }
 
@@ -804,6 +871,7 @@ public class MainActivity extends AppCompatActivity
             Log.i(TAG, "mFusedLocationClient.getLastLocation()="+mFusedLocationClient.getLastLocation()+" interval="+interval);
 
             mLocationRequest = new LocationRequest();
+            mLocationRequest.setSmallestDisplacement(5);
             mLocationRequest.setInterval(interval);
             mLocationRequest.setFastestInterval(interval);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);

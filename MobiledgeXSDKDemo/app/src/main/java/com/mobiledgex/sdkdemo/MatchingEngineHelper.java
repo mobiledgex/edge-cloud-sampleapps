@@ -23,7 +23,6 @@ import distributed_match_engine.AppClient;
 import io.grpc.StatusRuntimeException;
 
 import static com.mobiledgex.sdkdemo.MainActivity.HOSTNAME;
-import static distributed_match_engine.AppClient.Match_Engine_Loc_Verify.GPS_Location_Status.LOC_VERIFIED;
 
 public class MatchingEngineHelper {
     private static final String TAG = "MatchingEngineHelper";
@@ -52,6 +51,10 @@ public class MatchingEngineHelper {
         mView = view;
 
         mMatchingEngine = new MatchingEngine(mContext);
+
+        //For testing on a phone without a SIM card
+        mMatchingEngine.setNetworkSwitchingEnabled(false);
+//        mMatchingEngine.setSSLEnabled(false);
     }
 
     /**
@@ -117,7 +120,7 @@ public class MatchingEngineHelper {
                                 ", Location Accuracy: " + verifiedLocation.getGPSLocationAccuracyKM() + " ]\n";
 
                         if(mMatchingEngineResultsListener != null) {
-                            mMatchingEngineResultsListener.onVerifyLocation(verifiedLocation.getGpsLocationStatus().equals(LOC_VERIFIED),
+                            mMatchingEngineResultsListener.onVerifyLocation(verifiedLocation.getGpsLocationStatus(),
                                     verifiedLocation.getGPSLocationAccuracyKM());
                         }
 
@@ -234,7 +237,7 @@ public class MatchingEngineHelper {
                                     ", Location Accuracy: " + verifiedLocation.getGPSLocationAccuracyKM() + " ]\n";
 
                             if(mMatchingEngineResultsListener != null) {
-                                mMatchingEngineResultsListener.onVerifyLocation(someText.contains("LOC_VERIFIED"),
+                                mMatchingEngineResultsListener.onVerifyLocation(verifiedLocation.getGpsLocationStatus(),
                                         verifiedLocation.getGPSLocationAccuracyKM());
                             }
                             break;
