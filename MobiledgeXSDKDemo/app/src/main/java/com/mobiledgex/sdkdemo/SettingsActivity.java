@@ -15,6 +15,7 @@ import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
 
 import java.util.List;
+import com.mobiledgex.sdkdemo.BuildConfig;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -128,7 +129,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || LocationSettingsFragment.class.getName().equals(fragmentName);
+                || LocationSettingsFragment.class.getName().equals(fragmentName)
+                || SpeedTestSettingsFragment.class.getName().equals(fragmentName);
     }
 
     // Mex Enhanced Location Preference.
@@ -137,6 +139,46 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.location_preferences);
+            setHasOptionsMenu(true);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            int id = item.getItemId();
+            if (id == android.R.id.home) {
+                startActivity(new Intent(getActivity(), SettingsActivity.class));
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Speed Test Preferences.
+    public static class SpeedTestSettingsFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_speed_test);
+            setHasOptionsMenu(true);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            int id = item.getItemId();
+            if (id == android.R.id.home) {
+                startActivity(new Intent(getActivity(), SettingsActivity.class));
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Speed Test Preferences.
+    public static class AboutFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_speed_test);
             setHasOptionsMenu(true);
         }
 

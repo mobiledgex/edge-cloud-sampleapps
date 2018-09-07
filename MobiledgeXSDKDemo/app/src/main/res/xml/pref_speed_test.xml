@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
+         dismiss it. -->
+    <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
+    <ListPreference
+        android:defaultValue="1048576"
+        android:entries="@array/pref_download_size_titles"
+        android:entryValues="@array/pref_download_size_values"
+        android:key="@string/download_size"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_download_size" />
+
+    <ListPreference
+        android:defaultValue="4"
+        android:entries="@array/pref_latency_packets_titles"
+        android:entryValues="@array/pref_latency_packets_values"
+        android:key="@string/latency_packets"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_latency_packets" />
+
+
+</PreferenceScreen>

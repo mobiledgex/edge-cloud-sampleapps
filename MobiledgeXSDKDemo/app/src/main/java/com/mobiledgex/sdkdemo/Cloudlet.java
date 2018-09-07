@@ -44,27 +44,28 @@ public class Cloudlet implements Serializable {
     private int speedTestProgress = 0;
     private long startTime;
     private long timeDifference;
-    private int numPings = 5; //TODO: Make preference
+    private int mNumPackets = 4;
+    private int mNumBytes = 1048576;
     private boolean runningOnEmulator = false;
     private boolean pingFailed = false;
 
     private SpeedTestResultsListener mSpeedTestResultsListener;
 
-    private String downloadUri;// = "http://ipv4.ikoula.testdebit.info/1M.iso"; //TODO: Needs to come from real cloudlet
-    private String hostName;// = "ipv4.ikoula.testdebit.info"; //TODO: Needs to come from real cloudlet
+    private String downloadUri;
+    private String hostName;
     private boolean latencyTestTaskRunning = false;
     private boolean speedTestTaskRunning = false;
     private String uri;
 
-    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker) {
+    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPings) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
-        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker);
+        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPings);
 
         //All AsyncTask instances are run on the same thread, so this queues up the tasks.
         startLatencyTest();
     }
 
-    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker) {
+    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPings) {
         Log.d(TAG, "Cloudlet update. cloudletName="+cloudletName);
         mCloudletName = cloudletName;
         mAppName = appName;
@@ -73,6 +74,8 @@ public class Cloudlet implements Serializable {
         mLongitude = gpsLocation.longitude;
         mDistance = distance;
         mMarker = marker;
+        mNumBytes = numBytes;
+        mNumPackets = numPings;
         setUri(uri);
     }
 
@@ -83,7 +86,7 @@ public class Cloudlet implements Serializable {
      */
     public void setUri(String uri) {
         this.hostName = "mobiledgexsdkdemo."+uri;
-        this.downloadUri = "http://"+hostName+":7777/getdata?numbytes=1048576";
+        this.downloadUri = "http://"+hostName+":7777/getdata?numbytes="+ mNumBytes;
         this.uri = uri;
     }
 
@@ -114,7 +117,8 @@ public class Cloudlet implements Serializable {
 
         //ping can't run on an emulator, so detect that case.
         Log.i(TAG, "PRODUCT="+ Build.PRODUCT);
-        if (Build.PRODUCT.equalsIgnoreCase("sdk_gphone_x86")) {
+        if (Build.PRODUCT.equalsIgnoreCase("sdk_gphone_x86")
+                || Build.PRODUCT.equalsIgnoreCase("sdk_google_phone_x86")) {
             runningOnEmulator = true;
             Log.i(TAG, "YES, I am an emulator");
         } else {
@@ -138,7 +142,7 @@ public class Cloudlet implements Serializable {
 
         @Override
         protected String doInBackground(Void... voids) {
-            String pingCommand = "/system/bin/ping -c "+numPings+" " + hostName;
+            String pingCommand = "/system/bin/ping -c "+ mNumPackets +" " + hostName;
             String inputLine = "";
 
             String regex = "time=(\\d+.\\d+) ms";
@@ -154,7 +158,7 @@ public class Cloudlet implements Serializable {
                 // gets the input stream to get the output of the executed command
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-                double linesTotal = numPings;
+                double linesTotal = mNumPackets;
                 double linesRead = 0;
                 inputLine = bufferedReader.readLine();
                 while ((inputLine != null)) {
@@ -387,5 +391,13 @@ public class Cloudlet implements Serializable {
     public void setAppName(String mAppName) {
         this.mAppName = mAppName;
     }
+
+    public int getNumPackets() { return mNumPackets; }
+
+    public void setNumPackets(int mNumPings) { this.mNumPackets = mNumPings; }
+
+    public int getNumBytes() { return mNumBytes; }
+
+    public void setNumBytes(int mNumBytes) { this.mNumBytes = mNumBytes; }
 
 }

@@ -26,9 +26,40 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">MobiledgeX</string>
-    <string name="nav_header_subtitle">android.sdk@mobiledgex.com</string>
+    <string name="nav_header_subtitle">android@mobiledgex.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_get_cloudlet_list">Get Cloudlet List</string>
     <string name="action_about">About</string>
+    <string name="preference_speed_test_settings">Speed Test Settings</string>
+
+    <!-- Settings for Speed Test -->
+    <string name="pref_header_speed_test">Data &amp; sync</string>
+    <string name="pref_title_download_size">Download Size</string>
+    <string-array name="pref_download_size_titles">
+        <item>1 MB</item>
+        <item>5 MB</item>
+        <item>10 MB</item>
+        <item>20 MB</item>
+    </string-array>
+    <string-array name="pref_download_size_values">
+        <item>1048576</item>
+        <item>5242880</item>
+        <item>10485760</item>
+        <item>20971520</item>
+    </string-array>
+
+    <string name="pref_title_latency_packets">Latency Test Packets</string>
+    <string name="latency_packets">latency_packets</string>
+    <string name="download_size">download_size</string>
+    <string-array name="pref_latency_packets_titles">
+        <item>4</item>
+        <item>10</item>
+        <item>20</item>
+    </string-array>
+    <string-array name="pref_latency_packets_values">
+        <item>4</item>
+        <item>10</item>
+        <item>20</item>
+    </string-array>
 
 </resources>
