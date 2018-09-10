@@ -21,5 +21,13 @@
         android:positiveButtonText="@null"
         android:title="@string/pref_title_latency_packets" />
 
+    <ListPreference
+        android:defaultValue="socket"
+        android:entries="@array/pref_latency_test_method_titles"
+        android:entryValues="@array/pref_latency_test_method_values"
+        android:key="@string/latency_method"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_latency_method" />
 
 </PreferenceScreen>

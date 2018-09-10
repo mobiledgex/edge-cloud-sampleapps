@@ -173,7 +173,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
     }
 
-    // Speed Test Preferences.
+    // TODO: Implement this
+    // About Preferences.
     public static class AboutFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {

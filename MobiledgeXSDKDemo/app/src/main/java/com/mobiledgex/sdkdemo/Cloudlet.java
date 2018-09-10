@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,19 +56,21 @@ public class Cloudlet implements Serializable {
 
     private String downloadUri;
     private String hostName;
+    private int openPort = 7777;
+    private final int socketTimeout = 3000;
     private boolean latencyTestTaskRunning = false;
     private boolean speedTestTaskRunning = false;
     private String uri;
 
-    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPings) {
+    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPackets) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
-        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPings);
+        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPackets);
 
         //All AsyncTask instances are run on the same thread, so this queues up the tasks.
         startLatencyTest();
     }
 
-    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPings) {
+    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPackets) {
         Log.d(TAG, "Cloudlet update. cloudletName="+cloudletName);
         mCloudletName = cloudletName;
         mAppName = appName;
@@ -75,7 +80,7 @@ public class Cloudlet implements Serializable {
         mDistance = distance;
         mMarker = marker;
         mNumBytes = numBytes;
-        mNumPackets = numPings;
+        mNumPackets = numPackets;
         setUri(uri);
     }
 
@@ -115,15 +120,13 @@ public class Cloudlet implements Serializable {
         latencyStddev=0;
         latencyTotal=0;
 
-        //ping can't run on an emulator, so detect that case.
-        Log.i(TAG, "PRODUCT="+ Build.PRODUCT);
-        if (Build.PRODUCT.equalsIgnoreCase("sdk_gphone_x86")
-                || Build.PRODUCT.equalsIgnoreCase("sdk_google_phone_x86")) {
-            runningOnEmulator = true;
-            Log.i(TAG, "YES, I am an emulator");
+        String latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        if(latencyTestMethod.equals("socket")) { //TODO: Use enum instead of string
+            new LatencyTestTaskSocket().execute();
+        } else if(latencyTestMethod.equals("ping")) {
+            new LatencyTestTaskPing().execute();
         } else {
-            Log.i(TAG, "NO, I am NOT an emulator");
-            new LatencyTestTask().execute();
+            Log.e(TAG, "Unknown latencyTestMethod: "+latencyTestMethod);
         }
     }
 
@@ -132,16 +135,117 @@ public class Cloudlet implements Serializable {
             Log.d(TAG, "SpeedTest already running");
             return;
         }
-        Log.i(TAG, "downloadUri=" + downloadUri + " speedTestTaskRunning="+speedTestTaskRunning);
+        Log.d(TAG, "downloadUri=" + downloadUri + " speedTestTaskRunning="+speedTestTaskRunning);
         if(!speedTestTaskRunning) {
             new SpeedTestTask().execute();
         }
     }
 
-    public class LatencyTestTask extends AsyncTask<Void, Integer, String> {
+    private static boolean isReachable(String addr, int openPort, int timeOutMillis) {
+        // Any Open port on other machine
+        // openPort =  22 - ssh, 80 or 443 - webserver, 25 - mailserver etc.
+        try {
+            try (Socket soc = new Socket()) {
+                soc.connect(new InetSocketAddress(addr, openPort), timeOutMillis);
+            }
+            return true;
+        } catch (UnknownHostException ex) {
+            ex.printStackTrace();
+            return false;
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    public class LatencyTestTaskSocket extends AsyncTask<Void, Integer, String> {
 
         @Override
         protected String doInBackground(Void... voids) {
+            latencyTestTaskRunning = true;
+            pingFailed = false;
+            double sumSquare = 0;
+            int countFail = 0;
+            int countSuccess = 0;
+            boolean reachable;
+            //First time may be slower because of DNS lookup. Run once before it counts.
+            isReachable(hostName, openPort, socketTimeout);
+            for(int i = 0; i < mNumPackets; i++) {
+                startTime = System.currentTimeMillis();
+                reachable = isReachable(hostName, openPort, socketTimeout);
+                if(reachable) {
+                    long endTime = System.currentTimeMillis();
+                    timeDifference = endTime - startTime;
+                    Log.d(TAG, hostName+" reachable="+reachable+" Latency=" + timeDifference + " ms.");
+                    latencyTotal += timeDifference;
+                    latencyAvg = latencyTotal/(i+1);
+                    if(timeDifference < latencyMin) { latencyMin = timeDifference; }
+                    if(timeDifference > latencyMax) { latencyMax = timeDifference; }
+                    sumSquare += Math.pow((timeDifference - latencyAvg),2);
+                    latencyStddev = Math.sqrt( sumSquare/(i+1) );
+                    countSuccess++;
+                } else {
+                    countFail++;
+                }
+                publishProgress((int)((i+1.0f)/mNumPackets*100));
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            if(countFail == mNumPackets) {
+                Log.w(TAG, "ping failed");
+                pingFailed = true;
+            }
+
+            // Summary logs to match ping output
+            // 10 packets transmitted, 10 packets received, 0.0% packet loss
+            // round-trip min/avg/max/stddev = 202.167/219.318/335.734/38.879 ms
+            String percent = String.format("%.1f", (countFail/(float)mNumPackets*100));
+            String stddev = String.format("%.3f", (latencyStddev));
+            Log.i(TAG, hostName+" "+mNumPackets+" packets transmitted, "+countSuccess+" packets received, "+percent+"% packet loss");
+            Log.i(TAG, hostName+" round-trip min/avg/max/stddev = "+latencyMin+"/"+latencyAvg+"/"+latencyMax+"/"+stddev+" ms");
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            latencyTestProgress = pingFailed ? 0 : 100;
+            latencyTestTaskRunning = false;
+            if(mSpeedTestResultsListener != null) {
+                mSpeedTestResultsListener.onLatencyProgress();
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            latencyTestProgress = progress[0];
+            if(mSpeedTestResultsListener != null) {
+                mSpeedTestResultsListener.onLatencyProgress();
+            }
+        }
+
+    }
+
+    public class LatencyTestTaskPing extends AsyncTask<Void, Integer, String> {
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            //ping can't run on an emulator, so detect that case.
+            Log.i(TAG, "PRODUCT="+ Build.PRODUCT);
+            if (Build.PRODUCT.equalsIgnoreCase("sdk_gphone_x86")
+                    || Build.PRODUCT.equalsIgnoreCase("sdk_google_phone_x86")) {
+                runningOnEmulator = true;
+                Log.i(TAG, "YES, I am an emulator. Skipping ping test.");
+                return null;
+            } else {
+                Log.i(TAG, "NO, I am NOT an emulator. Running ping test.");
+            }
+
             String pingCommand = "/system/bin/ping -c "+ mNumPackets +" " + hostName;
             String inputLine = "";
 
@@ -260,19 +364,6 @@ public class Cloudlet implements Serializable {
                 @Override
                 public void onProgress(final float percent, final SpeedTestReport report) {
                     // called to notify download/upload progress
-
-                    if(runningOnEmulator) {
-                        if (timeDifference == -1) {
-                            long endTime = System.currentTimeMillis();
-                            timeDifference = endTime - startTime;
-                            Log.i(TAG, "Latency=" + timeDifference + " ms.");
-                            latencyAvg = timeDifference;
-                            if(mSpeedTestResultsListener != null) {
-                                mSpeedTestResultsListener.onLatencyProgress();
-                            }
-                        }
-                    }
-
                     Log.v(TAG, "[PROGRESS] "+percent + "% - rate in bit/s   : " + report.getTransferRateBit());
                     BigDecimal divisor = new BigDecimal(BYTES_TO_MBYTES);
                     mbps = report.getTransferRateBit().divide(divisor);
@@ -283,8 +374,6 @@ public class Cloudlet implements Serializable {
                 }
             });
 
-            startTime = System.currentTimeMillis();
-            timeDifference = -1;
             speedTestSocket.startDownload(downloadUri);
 
             return null;
