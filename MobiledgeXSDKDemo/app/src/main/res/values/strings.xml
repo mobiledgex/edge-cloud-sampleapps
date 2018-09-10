@@ -35,6 +35,7 @@
     <!-- Settings for Speed Test -->
     <string name="pref_header_speed_test">Data &amp; sync</string>
     <string name="pref_title_download_size">Download Size</string>
+    <string name="download_size">download_size</string>
     <string-array name="pref_download_size_titles">
         <item>1 MB</item>
         <item>5 MB</item>
@@ -50,7 +51,6 @@
 
     <string name="pref_title_latency_packets">Latency Test Packets</string>
     <string name="latency_packets">latency_packets</string>
-    <string name="download_size">download_size</string>
     <string-array name="pref_latency_packets_titles">
         <item>4</item>
         <item>10</item>
@@ -60,6 +60,17 @@
         <item>4</item>
         <item>10</item>
         <item>20</item>
+    </string-array>
+
+    <string name="pref_title_latency_method">Latency Test Method</string>
+    <string name="latency_method">latency_method</string>
+    <string-array name="pref_latency_test_method_titles">
+        <item>Socket</item>
+        <item>System Ping (ICMP)</item>
+    </string-array>
+    <string-array name="pref_latency_test_method_values">
+        <item>socket</item>
+        <item>ping</item>
     </string-array>
 
 </resources>

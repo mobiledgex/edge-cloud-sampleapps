@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -50,6 +49,7 @@ public class Cloudlet implements Serializable {
     private long timeDifference;
     private int mNumPackets = 4;
     private int mNumBytes = 1048576;
+    private boolean runningOnEmulator = false;
     private boolean pingFailed = false;
 
     private SpeedTestResultsListener mSpeedTestResultsListener;
@@ -120,7 +120,14 @@ public class Cloudlet implements Serializable {
         latencyStddev=0;
         latencyTotal=0;
 
-        new LatencyTestTask().execute();
+        String latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        if(latencyTestMethod.equals("socket")) { //TODO: Use enum instead of string
+            new LatencyTestTaskSocket().execute();
+        } else if(latencyTestMethod.equals("ping")) {
+            new LatencyTestTaskPing().execute();
+        } else {
+            Log.e(TAG, "Unknown latencyTestMethod: "+latencyTestMethod);
+        }
     }
 
     public void startBandwidthTest() {
@@ -151,7 +158,7 @@ public class Cloudlet implements Serializable {
         }
     }
 
-    public class LatencyTestTask extends AsyncTask<Void, Integer, String> {
+    public class LatencyTestTaskSocket extends AsyncTask<Void, Integer, String> {
 
         @Override
         protected String doInBackground(Void... voids) {
@@ -200,6 +207,109 @@ public class Cloudlet implements Serializable {
             String stddev = String.format("%.3f", (latencyStddev));
             Log.i(TAG, hostName+" "+mNumPackets+" packets transmitted, "+countSuccess+" packets received, "+percent+"% packet loss");
             Log.i(TAG, hostName+" round-trip min/avg/max/stddev = "+latencyMin+"/"+latencyAvg+"/"+latencyMax+"/"+stddev+" ms");
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            latencyTestProgress = pingFailed ? 0 : 100;
+            latencyTestTaskRunning = false;
+            if(mSpeedTestResultsListener != null) {
+                mSpeedTestResultsListener.onLatencyProgress();
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            latencyTestProgress = progress[0];
+            if(mSpeedTestResultsListener != null) {
+                mSpeedTestResultsListener.onLatencyProgress();
+            }
+        }
+
+    }
+
+    public class LatencyTestTaskPing extends AsyncTask<Void, Integer, String> {
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            //ping can't run on an emulator, so detect that case.
+            Log.i(TAG, "PRODUCT="+ Build.PRODUCT);
+            if (Build.PRODUCT.equalsIgnoreCase("sdk_gphone_x86")
+                    || Build.PRODUCT.equalsIgnoreCase("sdk_google_phone_x86")) {
+                runningOnEmulator = true;
+                Log.i(TAG, "YES, I am an emulator. Skipping ping test.");
+                return null;
+            } else {
+                Log.i(TAG, "NO, I am NOT an emulator. Running ping test.");
+            }
+
+            String pingCommand = "/system/bin/ping -c "+ mNumPackets +" " + hostName;
+            String inputLine = "";
+
+            String regex = "time=(\\d+.\\d+) ms";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher;
+
+            latencyTestTaskRunning = true;
+
+            Log.d(TAG, mCloudletName+ " executing "+pingCommand);
+            try {
+                // execute the command on the environment interface
+                Process process = Runtime.getRuntime().exec(pingCommand);
+                // gets the input stream to get the output of the executed command
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                double linesTotal = mNumPackets;
+                double linesRead = 0;
+                inputLine = bufferedReader.readLine();
+                while ((inputLine != null)) {
+                    Log.i(TAG, "inputLine="+inputLine);
+                    if (inputLine.length() > 0 && inputLine.contains("time=")) {
+                        linesRead++;
+                        matcher = pattern.matcher(inputLine);
+                        if(matcher.find()) {
+                            double val = Double.parseDouble(matcher.group(1));
+                            latencyTotal += val;
+                            latencyAvg = latencyTotal/linesRead;
+                            if(val < latencyMin) { latencyMin = val; }
+                            if(val > latencyMax) { latencyMax = val; }
+                        }
+                        Log.d(TAG, "linesRead="+linesRead+" linesTotal="+linesTotal+" "+(linesRead/linesTotal*100)+" "+(int)(linesRead/linesTotal*100));
+                        publishProgress((int)(linesRead/linesTotal*100));
+                    }
+                    if (inputLine.length() > 0 && inputLine.contains("avg")) {  // when we get to the last line of executed ping command
+                        break;
+                    }
+                    if (inputLine.length() > 0 && inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
+                        break;
+                    }
+                    inputLine = bufferedReader.readLine();
+                }
+            }
+            catch (IOException e){
+                Log.e(TAG, "getLatency: EXCEPTION");
+                e.printStackTrace();
+            }
+
+            if(inputLine == null || inputLine.contains("100% packet loss")) {
+                Log.w(TAG, "ping failed");
+                pingFailed = true;
+            } else {
+                // Extract the average round trip time from the inputLine string
+                regex = "(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+) ms";
+                pattern = Pattern.compile(regex);
+                matcher = pattern.matcher(inputLine);
+                if (matcher.find()) {
+                    Log.i(TAG, "output=" + matcher.group(0));
+                    latencyMin = Double.parseDouble(matcher.group(1));
+                    latencyAvg = Double.parseDouble(matcher.group(2));
+                    latencyMax = Double.parseDouble(matcher.group(3));
+                    latencyStddev = Double.parseDouble(matcher.group(4));
+                }
+            }
 
             return null;
         }

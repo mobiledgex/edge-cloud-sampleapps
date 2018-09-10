@@ -9,6 +9,7 @@ public class CloudletListHolder {
     private static final CloudletListHolder ourInstance = new CloudletListHolder();
 
     private ArrayMap<String, Cloudlet> mCloudletList = new ArrayMap<>();
+    private String latencyTestMethod = "socket";
 
     public static CloudletListHolder getSingleton() {
         return ourInstance;
@@ -23,5 +24,13 @@ public class CloudletListHolder {
 
     public void setCloudlets(ArrayMap<String, Cloudlet> mCloudlets) {
         this.mCloudletList = mCloudlets;
+    }
+
+    public String getLatencyTestMethod() {
+        return latencyTestMethod;
+    }
+
+    public void setLatencyTestMethod(String latencyTestMethod) {
+        this.latencyTestMethod = latencyTestMethod;
     }
 }

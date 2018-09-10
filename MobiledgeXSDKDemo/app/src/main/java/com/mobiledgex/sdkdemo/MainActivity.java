@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_VERIFIED = 0xff009933;
     public static final int COLOR_FAILURE = 0xffff3300;
     public static final int COLOR_CAUTION = 0xffffbf00;
-    public static final String HOSTNAME = "mexdemo.dme.mobiledgex.net";
+    public static final String HOSTNAME = "mexdemo.dme.mobiledgex.net"; //TODO: Make configurable preference
 
     private GoogleMap mGoogleMap;
     private MatchingEngineHelper mMatchingEngineHelper;
@@ -192,6 +192,10 @@ public class MainActivity extends AppCompatActivity
         } else {
             mMatchingEngineHelper.getMatchingEngine().setUUID(UUID.fromString(currentUUID));
         }
+
+        String latencyTestMethod = prefs.getString(getResources().getString(R.string.latency_method), "socket");
+        CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
+
     }
 
     /**
@@ -808,10 +812,16 @@ public class MainActivity extends AppCompatActivity
 
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
+        String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
 
         if (key.equals(prefKeyAllowMEX)) {
             boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
             MatchingEngine.setMexLocationAllowed(mexLocationAllowed);
+        }
+
+        if (key.equals(prefKeyLatencyMethod)) {
+            String latencyTestMethod = sharedPreferences.getString(getResources().getString(R.string.latency_method), "socket");
+            CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
         }
 
         if(key.equals(prefKeyDownloadSize) || key.equals(prefKeyNumPackets)) {
