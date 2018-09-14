@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_VERIFIED = 0xff009933;
     public static final int COLOR_FAILURE = 0xffff3300;
     public static final int COLOR_CAUTION = 0xff00b33c; //Amber: ffbf00;
-    public static final String HOSTNAME = "mexint.dme.mobiledgex.net"; //TODO: Make configurable preference
+    private String mHostname;
 
     private GoogleMap mGoogleMap;
     private MatchingEngineHelper mMatchingEngineHelper;
@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG, "onCreate() HOSTNAME="+HOSTNAME);
+        Log.i(TAG, "onCreate()");
 
         /**
          * MatchEngine APIs require special user approved permissions to READ_PHONE_STATE and
@@ -139,13 +139,16 @@ public class MainActivity extends AppCompatActivity
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        mMatchingEngineHelper = new MatchingEngineHelper(this, mapFragment.getView());
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mHostname = prefs.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
+        Log.i(TAG, "mHostname="+mHostname);
+
+        mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mapFragment.getView());
         mMatchingEngineHelper.setMatchingEngineResultsListener(this);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Restore mex location preference, defaulting to false:
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean mexLocationAllowed = prefs.getBoolean(getResources()
                         .getString(R.string.preference_mex_location_verification),
                 false);
@@ -378,7 +381,7 @@ public class MainActivity extends AppCompatActivity
 
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String hostName = HOSTNAME.replace("dme", "locsim");
+        String hostName = mHostname.replace("dme", "locsim");
         String url = "http://"+hostName+":8888/updateLocation";
         Log.i(TAG, "updateLocSimLocation url="+url);
         Log.i(TAG, "updateLocSimLocation body="+requestBody);
@@ -817,11 +820,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        final String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
-
+        Log.i(TAG, "onSharedPreferenceChanged("+key+")");
+        String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
+        String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
 
         if (key.equals(prefKeyAllowMEX)) {
             boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
@@ -831,6 +835,15 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyLatencyMethod)) {
             String latencyTestMethod = sharedPreferences.getString(getResources().getString(R.string.latency_method), "socket");
             CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
+        }
+
+        if (key.equals(prefKeyDmeHostname)) {
+            Log.i(TAG, "Updated mHostname="+mHostname);
+            mHostname = sharedPreferences.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
+            mMatchingEngineHelper.setHostname(mHostname);
+            //Clear list so we don't show old cloudlets as transparent
+            CloudletListHolder.getSingleton().getCloudletList().clear();
+            getCloudlets();
         }
 
         if(key.equals(prefKeyDownloadSize) || key.equals(prefKeyNumPackets)) {

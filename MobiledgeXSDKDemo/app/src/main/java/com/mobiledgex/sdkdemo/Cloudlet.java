@@ -100,7 +100,8 @@ public class Cloudlet implements Serializable {
     }
 
     public String toString() {
-        return "mCarrierName="+mCarrierName+" mCloudletName="+mCloudletName+" mLatitude="+mLatitude+" mLongitude="+mLongitude+" mDistance="+mDistance;
+        return "mCarrierName="+mCarrierName+" mCloudletName="+mCloudletName+" mLatitude="+mLatitude
+                +" mLongitude="+mLongitude+" mDistance="+mDistance+" uri="+uri;
     }
 
     public void setSpeedTestResultsListener(SpeedTestResultsListener speedTestResultsListener) {

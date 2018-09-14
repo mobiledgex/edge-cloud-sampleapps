@@ -31,8 +31,9 @@
     <string name="action_get_cloudlet_list">Get Cloudlet List</string>
     <string name="action_about">About</string>
     <string name="preference_speed_test_settings">Speed Test Settings</string>
+    <string name="preference_general_settings">General Settings</string>
 
-    <string name="camera_error">This device doesn't support Camera2 API.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
 
     <!-- Settings for Speed Test -->
     <string name="pref_header_speed_test">Data &amp; sync</string>
@@ -73,6 +74,17 @@
     <string-array name="pref_latency_test_method_values">
         <item>socket</item>
         <item>ping</item>
+    </string-array>
+
+    <string name="pref_title_dme_hostname">DME Selection</string>
+    <string name="dme_hostname">dme_hostname</string>
+    <string-array name="pref_dme_hostname_titles">
+        <item>Demo</item>
+        <item>TDG Integration</item>
+    </string-array>
+    <string-array name="pref_dme_hostname_values">
+        <item>mexdemo.dme.mobiledgex.net</item>
+        <item>mexint.dme.mobiledgex.net</item>
     </string-array>
 
 </resources>

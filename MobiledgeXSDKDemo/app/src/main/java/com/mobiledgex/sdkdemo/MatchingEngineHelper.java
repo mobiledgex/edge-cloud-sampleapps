@@ -22,8 +22,6 @@ import java.util.concurrent.ExecutionException;
 import distributed_match_engine.AppClient;
 import io.grpc.StatusRuntimeException;
 
-import static com.mobiledgex.sdkdemo.MainActivity.HOSTNAME;
-
 public class MatchingEngineHelper {
     private static final String TAG = "MatchingEngineHelper";
     private final Context mContext;
@@ -35,6 +33,7 @@ public class MatchingEngineHelper {
     private FindCloudletResponse mClosestCloudlet;
     private MatchingEngine mMatchingEngine;
     private String someText = null;
+    private String mHostname;
 
     /**
      * Possible actions to perform with the matching engine.
@@ -46,14 +45,14 @@ public class MatchingEngineHelper {
         REQ_GET_CLOUDLETS
     }
 
-    public MatchingEngineHelper(Context context, View view) {
+    public MatchingEngineHelper(Context context, String hostname, View view) {
         mContext = context;
         mView = view;
-
+        mHostname = hostname;
         mMatchingEngine = new MatchingEngine(mContext);
 
         //For testing on a phone without a SIM card
-        mMatchingEngine.setNetworkSwitchingEnabled(false);
+//        mMatchingEngine.setNetworkSwitchingEnabled(false);
 //        mMatchingEngine.setSSLEnabled(false);
     }
 
@@ -98,7 +97,7 @@ public class MatchingEngineHelper {
 
                     // Create a request:
                     //MatchingEngineRequest req = mMatchingEngine.createRequest(ctx, location); // Regular use case.
-                    String host = HOSTNAME; // Override host.
+                    String host = mHostname; // Override host.
                     int port = mMatchingEngine.getPort(); // Keep same port.
                     String carrierName = "TDG";
                     String devName = "MobiledgeX SDK Demo"; //TODO: In the current demo config, this matches the appName.
@@ -203,7 +202,7 @@ public class MatchingEngineHelper {
 
                 // Create a request:
                 try {
-                    String host = HOSTNAME; // Override host.
+                    String host = mHostname; // Override host.
                     int port = mMatchingEngine.getPort(); // Keep same port.
                     String carrierName = "TDG";
                     String devName = "MobiledgeX SDK Demo";
@@ -324,5 +323,13 @@ public class MatchingEngineHelper {
     public void setSpoofedLocation(Location mSpoofLocation) {
         Log.i(TAG, "setSpoofedLocation("+mSpoofLocation+")");
         this.mSpoofLocation = mSpoofLocation;
+    }
+
+    public String getHostname() {
+        return mHostname;
+    }
+
+    public void setHostname(String mHostname) {
+        this.mHostname = mHostname;
     }
 }
