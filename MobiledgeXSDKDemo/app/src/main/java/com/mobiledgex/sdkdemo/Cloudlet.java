@@ -67,7 +67,7 @@ public class Cloudlet implements Serializable {
         update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPackets);
 
         //All AsyncTask instances are run on the same thread, so this queues up the tasks.
-        startLatencyTest();
+        //startLatencyTest(); TODO: Add this back
     }
 
     public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPackets) {
@@ -100,7 +100,8 @@ public class Cloudlet implements Serializable {
     }
 
     public String toString() {
-        return "mCarrierName="+mCarrierName+" mCloudletName="+mCloudletName+" mLatitude="+mLatitude+" mLongitude="+mLongitude+" mDistance="+mDistance;
+        return "mCarrierName="+mCarrierName+" mCloudletName="+mCloudletName+" mLatitude="+mLatitude
+                +" mLongitude="+mLongitude+" mDistance="+mDistance+" uri="+uri;
     }
 
     public void setSpeedTestResultsListener(SpeedTestResultsListener speedTestResultsListener) {

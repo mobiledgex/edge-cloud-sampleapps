@@ -8,5 +8,9 @@
         android:fragment="com.mobiledgex.sdkdemo.SettingsActivity$SpeedTestSettingsFragment"
         android:icon="@android:drawable/ic_menu_manage"
         android:title="@string/preference_speed_test_settings"/>
+    <header
+        android:fragment="com.mobiledgex.sdkdemo.SettingsActivity$GeneralSettingsFragment"
+        android:icon="@drawable/ic_menu_settings"
+        android:title="@string/preference_general_settings"/>
 
 </preference-headers>
