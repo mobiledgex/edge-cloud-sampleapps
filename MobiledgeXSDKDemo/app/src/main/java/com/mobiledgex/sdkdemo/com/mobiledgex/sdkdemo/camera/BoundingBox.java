@@ -29,7 +29,7 @@ public class BoundingBox extends View
     {
         paint = new Paint();
         paint.setColor(Color.BLUE);
-        paint.setStrokeWidth(7);
+        paint.setStrokeWidth(10);
         paint.setStyle(Paint.Style.STROKE);
         rect = new Rect(0, 0, 0, 0);
     }
@@ -44,15 +44,5 @@ public class BoundingBox extends View
     {
         super.onDraw(canvas);
         canvas.drawRect(rect, paint);
-    }
-
-    private void rotate()
-    {
-        int tmp = rect.top;
-        rect.top = rect.bottom;
-        rect.bottom = tmp;
-        tmp = rect.right;
-        rect.right = rect.left;
-        rect.left = tmp;
     }
 }

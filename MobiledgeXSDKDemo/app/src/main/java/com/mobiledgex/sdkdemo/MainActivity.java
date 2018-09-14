@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_VERIFIED = 0xff009933;
     public static final int COLOR_FAILURE = 0xffff3300;
     public static final int COLOR_CAUTION = 0xff00b33c; //Amber: ffbf00;
-    public static final String HOSTNAME = "mexdemo.dme.mobiledgex.net"; //TODO: Make configurable preference
+    public static final String HOSTNAME = "mexint.dme.mobiledgex.net"; //TODO: Make configurable preference
 
     private GoogleMap mGoogleMap;
     private MatchingEngineHelper mMatchingEngineHelper;

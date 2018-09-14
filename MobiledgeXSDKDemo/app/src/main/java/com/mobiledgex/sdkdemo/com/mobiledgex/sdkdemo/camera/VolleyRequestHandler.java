@@ -42,13 +42,13 @@ public class VolleyRequestHandler {
     private Rect cloudRect = new Rect(0,0,0,0);
     private Rect edgeRect = new Rect(0, 0, 0,0);
 
-    private static String cloudAPIEndpoint = "http://104.42.217.135:8000"; //west us
-    private static String edgeAPIEndpoint = "http://37.50.143.103:8000"; //Bonn
+//    private static String cloudAPIEndpoint = "http://104.42.217.135:8000"; //west us
+//    private static String edgeAPIEndpoint = "http://37.50.143.103:8000"; //Bonn
 //    private static String edgeAPIEndpoint = "http://80.187.128.15:8000"; //Berlin
 
     //Bruce's private test environment
-//    private static String cloudAPIEndpoint = "http://acrotopia.com:8000";
-//    private static String edgeAPIEndpoint = "http://192.168.1.86:8000";
+    private static String cloudAPIEndpoint = "http://acrotopia.com:8000";
+    private static String edgeAPIEndpoint = "http://192.168.1.86:8000";
 
     RequestQueue queue;
 

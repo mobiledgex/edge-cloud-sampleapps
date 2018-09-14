@@ -65,6 +65,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -292,8 +293,6 @@ public class Camera2BasicFragment extends Fragment
         canvas.drawLine(x1, y1, x1, y2, paint);
     }
 
-    private float widthRatio;
-    private float heightRatio;
     private float serverToDisplayRatio;
     private int finalWidth;
     private int finalHeight;
@@ -312,7 +311,7 @@ public class Camera2BasicFragment extends Fragment
 
             Image image = reader.acquireLatestImage();
             if(image == null) {
-                Log.d(TAG, "null image. bail out.");
+//                Log.d(TAG, "null image. bail out.");
                 return;
             }
 
@@ -333,7 +332,7 @@ public class Camera2BasicFragment extends Fragment
                 width = image.getWidth() / factor;
                 height = image.getHeight() / factor;
             } catch (IllegalStateException e) {
-                Log.d(TAG, "image already closed. bail out.");
+//                Log.d(TAG, "image already closed. bail out.");
                 return;
             }
             Log.d(TAG, "image size="+image.getWidth()+","+image.getHeight()+"/factor("+factor+")="+width+","+height+" displayRotation="+displayRotation);
@@ -344,8 +343,6 @@ public class Camera2BasicFragment extends Fragment
                 notFinalWidthRatio = 1;
                 notFinalHeightRatio = 1;
             }
-            widthRatio = notFinalWidthRatio;
-            heightRatio = notFinalHeightRatio;
             switch (displayRotation) {
                 case Surface.ROTATION_0:
                     deg = 270;
@@ -404,8 +401,7 @@ public class Camera2BasicFragment extends Fragment
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                Activity activity = getActivity();
-                if(activity == null) {
+                if(getActivity() == null) {
                     //Happens during screen rotation
                     Log.e(TAG, "updateRectangles abort - null activity");
                     return;
@@ -654,9 +650,6 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        /*view.findViewById(R.id.picture).setOnClickListener(this);
-        view.findViewById(R.id.info).setOnClickListener(this);*/
-        // mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
         mTextureView = view.findViewById(R.id.textureView);
         mTextureView.setOnClickListener(this);
         mCloudLatency = view.findViewById(R.id.cloud_latency);
@@ -673,10 +666,12 @@ public class Camera2BasicFragment extends Fragment
         mEdgeBB = view.findViewById(R.id.edgeBB);
         mEdgeBB.setColor(Color.GREEN);
 
+        mCloudBB.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.alpha));
+        mEdgeBB.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.alpha));
+
         //TODO: Add these back at some point
         mEdgeStd.setVisibility(View.INVISIBLE);
         mCloudStd.setVisibility(View.INVISIBLE);
-
     }
 
     @Override
