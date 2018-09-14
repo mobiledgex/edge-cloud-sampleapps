@@ -9,7 +9,7 @@ android {
         applicationId "com.mobiledgex.sdkdemo"
         minSdkVersion 23
         targetSdkVersion 27
-        versionCode 6
+        versionCode 8
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -45,4 +45,5 @@ dependencies {
 
     implementation 'fr.bmartel:jspeedtest:1.32.1'
     implementation 'com.android.volley:volley:1.1.1'
+    implementation 'com.loopj.android:android-async-http:1.4.9'
 }

@@ -60,6 +60,7 @@ import com.google.maps.android.SphericalUtil;
 import com.mobiledgex.matchingengine.FindCloudletResponse;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
+import com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.CameraActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_NEUTRAL = 0xff676798;
     public static final int COLOR_VERIFIED = 0xff009933;
     public static final int COLOR_FAILURE = 0xffff3300;
-    public static final int COLOR_CAUTION = 0xffffbf00;
+    public static final int COLOR_CAUTION = 0xff00b33c; //Amber: ffbf00;
     public static final String HOSTNAME = "mexdemo.dme.mobiledgex.net"; //TODO: Make configurable preference
 
     private GoogleMap mGoogleMap;
@@ -312,8 +313,12 @@ public class MainActivity extends AppCompatActivity
             // Handle the About action
             showAboutDialog();
 
-//        } else if (id == R.id.nav_camera) {
-//            // Handle the camera action
+        } else if (id == R.id.nav_camera) {
+            // Start the face recognition Activity
+            Intent intent = new Intent(this, CameraActivity.class);
+            startActivity(intent);
+            return true;
+
 //        } else if (id == R.id.nav_gallery) {
 //
 //        } else if (id == R.id.nav_slideshow) {
@@ -740,7 +745,11 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "No cloudlets. Don't zoom in");
                     cu = CameraUpdateFactory.newLatLng(mUserLocationMarker.getPosition());
                 }
-                mGoogleMap.moveCamera(cu);
+                try {
+                    mGoogleMap.moveCamera(cu);
+                } catch (Exception e) {
+                    Log.e(TAG, "Map wasn't ready.", e);
+                }
 
             }
         });
