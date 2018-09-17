@@ -2,6 +2,8 @@ package com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera;
 
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
 
@@ -16,46 +18,68 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 
 import static com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.CLOUDLET_MEX;
 import static com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.CLOUDLET_PUBLIC;
 
 public class VolleyRequestHandler {
     private static final String TAG = "VolleyRequestHandler";
+    /**
+     * For every N face detection requests, do a network latency test.
+     */
+    public static final int PING_INTERVAL = 4;
 
+    private RequestQueue queue;
     private final Camera2BasicFragment mCamera2BasicFragment;
+
     public double edgeStdDev = 0;
     public double cloudStdDev = 0;
     private int N = 100;
     private int cn = 0;
     private int en = 0;
+    private long cloudCount = 0;
+    private long edgeCount = 0;
     private long[] cloudStdArr = new long[100];
     private long[] edgeStdArr = new long[100];
 
     public boolean cloudBusy = false;
     public boolean edgeBusy = false;
-
     private long cloudLatency = 0;
     private long edgeLatency = 0;
 
     private Rect cloudRect = new Rect(0,0,0,0);
     private Rect edgeRect = new Rect(0, 0, 0,0);
 
-    private static String cloudAPIEndpoint = "http://104.42.217.135:8000"; //west us
-    private static String edgeAPIEndpoint = "http://37.50.143.103:8000"; //Bonn
-//    private static String edgeAPIEndpoint = "http://80.187.128.15:8000"; //Berlin
+    private static int port = 8000;
+    private static String cloudHost = "104.42.217.135"; //West US
+    private static String edgeHost = "37.50.143.103"; //Bonn
+//    private static String edgeHost = "80.187.128.15"; //Berlin
 
     //Bruce's private test environment
-//    private static String cloudAPIEndpoint = "http://acrotopia.com:8000";
-//    private static String edgeAPIEndpoint = "http://192.168.1.86:8000";
+//    private static String cloudHost = "acrotopia.com";
+//    private static String edgeHost = "192.168.1.86";
 
-    RequestQueue queue;
+    private static String cloudAPIEndpoint = "http://"+cloudHost+":"+port;
+    private static String edgeAPIEndpoint = "http://"+edgeHost+":"+port;
+
+    //Variables for latency test
+    private Handler mHandler;
+    private final int socketTimeout = 3000;
 
     public VolleyRequestHandler(Camera2BasicFragment camera2BasicFragment) {
         mCamera2BasicFragment = camera2BasicFragment;
         // Instantiate the RequestQueue.
         queue = Volley.newRequestQueue(camera2BasicFragment.getActivity());
+
+        HandlerThread handlerThread = new HandlerThread("BackgroundPinger");
+        handlerThread.start();
+        mHandler = new Handler(handlerThread.getLooper());
+
     }
 
     public void sendImage(Bitmap image)
@@ -79,6 +103,26 @@ public class VolleyRequestHandler {
     private void sendToCloud(Bitmap bitmap) {
         // Get a lock for the busy
         cloudBusy = true;
+        cloudCount++;
+        if(cloudCount == 1 || cloudCount % PING_INTERVAL == 0) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    final long startTime = System.nanoTime();
+                    boolean reachable = isReachable(cloudHost, port, socketTimeout);
+                    if(reachable) {
+                        long endTime = System.nanoTime();
+                        long latency = endTime - startTime;
+                        mCamera2BasicFragment.updatePing(CLOUDLET_PUBLIC, latency);
+                        Log.d(TAG, cloudHost +" reachable="+reachable+" Latency=" + (latency/1000000.0) + " ms.");
+                    } else {
+                        Log.d(TAG, cloudHost +" reachable="+reachable);
+                    }
+                    cloudBusy = false;
+                }
+            });
+            return;
+        }
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
@@ -125,7 +169,6 @@ public class VolleyRequestHandler {
                 cn += 1;
                 cn %= N;
                 cloudStdDev = stdDev(cloudStdArr, N);
-                cloudBusy = false;
             }
         }) {
             @Override
@@ -159,6 +202,26 @@ public class VolleyRequestHandler {
     private void sendToEdge(Bitmap bitmap) {
         // Get a lock for the busy
         edgeBusy = true;
+        edgeCount++;
+        if(edgeCount == 1 || edgeCount % PING_INTERVAL == 0) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    final long startTime = System.nanoTime();
+                    boolean reachable = isReachable(edgeHost, port, socketTimeout);
+                    if(reachable) {
+                        long endTime = System.nanoTime();
+                        long latency = endTime - startTime;
+                        mCamera2BasicFragment.updatePing(CLOUDLET_MEX, latency);
+                        Log.d(TAG, edgeHost +" reachable="+reachable+" Latency=" + (latency/1000000.0) + " ms.");
+                    } else {
+                        Log.d(TAG, edgeHost +" reachable="+reachable);
+                    }
+                    edgeBusy = false;
+                }
+            });
+            return;
+        }
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
@@ -228,6 +291,24 @@ public class VolleyRequestHandler {
         queue.add(stringRequest);
 
     }
+
+    private static boolean isReachable(String addr, int openPort, int timeOutMillis) {
+        // Any Open port on other machine
+        // mOpenPort =  22 - ssh, 80 or 443 - webserver, 25 - mailserver etc.
+        try {
+            try (Socket soc = new Socket()) {
+                soc.connect(new InetSocketAddress(addr, openPort), timeOutMillis);
+            }
+            return true;
+        } catch (UnknownHostException ex) {
+            ex.printStackTrace();
+            return false;
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
 
     private double average(long[] arr, int len)
     {

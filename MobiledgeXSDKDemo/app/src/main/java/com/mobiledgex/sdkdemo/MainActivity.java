@@ -146,6 +146,13 @@ public class MainActivity extends AppCompatActivity
         mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mapFragment.getView());
         mMatchingEngineHelper.setMatchingEngineResultsListener(this);
 
+        boolean networkSwitchingAllowed = prefs.getBoolean(getResources()
+                        .getString(R.string.preference_mex_location_verification),false);
+//        mMatchingEngineHelper.getMatchingEngine().setSSLEnabled(false);
+        //For testing on a phone without a SIM card
+        mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(false);
+
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Restore mex location preference, defaulting to false:
@@ -577,11 +584,13 @@ public class MainActivity extends AppCompatActivity
                     message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
                 } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
                     mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
-                    message = ""+status;
+                    //message = ""+status;
+                    message = "User Location - Verified";
                     mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
                 } else {
                     mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
-                    message = ""+status;
+                    //message = ""+status;
+                    message = "User Location - Failed Verify";
                 }
                 mUserLocationMarker.setTitle(message);
                 Toast.makeText(MainActivity.this, message+message2, Toast.LENGTH_LONG).show();
@@ -822,6 +831,7 @@ public class MainActivity extends AppCompatActivity
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Log.i(TAG, "onSharedPreferenceChanged("+key+")");
         String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
+        String prefKeyAllowNetSwitch = getResources().getString(R.string.preference_net_switching_allowed);
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
@@ -830,6 +840,11 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyAllowMEX)) {
             boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
             MatchingEngine.setMexLocationAllowed(mexLocationAllowed);
+        }
+
+        if (key.equals(prefKeyAllowNetSwitch)) {
+            boolean netSwitchingAllowed = sharedPreferences.getBoolean(prefKeyAllowNetSwitch, false);
+            mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(netSwitchingAllowed);
         }
 
         if (key.equals(prefKeyLatencyMethod)) {
