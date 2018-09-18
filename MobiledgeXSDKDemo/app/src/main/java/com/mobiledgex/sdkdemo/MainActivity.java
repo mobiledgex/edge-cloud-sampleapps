@@ -118,7 +118,6 @@ public class MainActivity extends AppCompatActivity
          * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION. This creates a dialog, if needed.
          */
         mRpUtil = new RequestPermissions();
-        mRpUtil.requestMultiplePermissions(this);
 
         setContentView(R.layout.activity_main);
 
@@ -148,10 +147,8 @@ public class MainActivity extends AppCompatActivity
 
         boolean networkSwitchingAllowed = prefs.getBoolean(getResources()
                         .getString(R.string.preference_mex_location_verification),false);
+        mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(networkSwitchingAllowed);
 //        mMatchingEngineHelper.getMatchingEngine().setSSLEnabled(false);
-        //For testing on a phone without a SIM card
-        mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(false);
-
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -164,11 +161,14 @@ public class MainActivity extends AppCompatActivity
         // Watch allowed preference:
         prefs.registerOnSharedPreferenceChangeListener(this);
 
+        // Client side FusedLocation updates.
+        mDoLocationUpdates = true;
+
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mMatchingEngineHelper.doEnhancedLocationUpdateInBackground(mLocationForMatching);
+                onFloatingActionBarClicked();
             }
         });
 
@@ -183,14 +183,11 @@ public class MainActivity extends AppCompatActivity
         fabFindCloudlets.setEnabled(allowFindBeforeVerify);
 
         // Open dialog for MEX if this is the first time the app is created:
-        boolean firstTimeUse = prefs.getBoolean(getResources().getString(R.string.preference_first_time_use), true);
+        String firstTimeUsePrefKey = getResources().getString(R.string.preference_first_time_use);
+        boolean firstTimeUse = prefs.getBoolean(firstTimeUsePrefKey, true);
         if (firstTimeUse) {
-            new EnhancedLocationDialog().show(this.getSupportFragmentManager(), "dialog");
-            String firstTimeUseKey = getResources().getString(R.string.preference_first_time_use);
-            // Disable first time use.
-            prefs.edit()
-                    .putBoolean(firstTimeUseKey, false)
-                    .apply();
+            Intent intent = new Intent(this, FirstTimeUseActivity.class);
+            startActivity(intent);
         }
 
         // Set, or create create an App generated UUID for use in MatchingEngine, if there isn't one:
@@ -210,12 +207,29 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Perform the floatingActionBar action. Currently this is to perform the multi-step
+     * matching engine process.
+     */
+    private void onFloatingActionBarClicked() {
+        if (mRpUtil.getNeededPermissions(this).size() > 0) {
+            mRpUtil.requestMultiplePermissions(this);
+            return;
+        }
+        mMatchingEngineHelper.doEnhancedLocationUpdateInBackground(mLocationForMatching);
+    }
+
+    /**
      * Use the MatchingEngineHelper to perform a request with the Matching Engine.
      *
      * @param reqType  The request to perform.
      */
     private void matchingEngineRequest(MatchingEngineHelper.RequestType reqType) {
         Log.i(TAG, "matchingEngineRequest("+reqType+") mLastKnownLocation="+mLastKnownLocation);
+        // As of Android 23, permissions can be asked for while the app is still running.
+        if (mRpUtil.getNeededPermissions(this).size() > 0) {
+            mRpUtil.requestMultiplePermissions(this);
+            return;
+        }
         if(mLastKnownLocation == null) {
             startLocationUpdates();
             Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
@@ -359,8 +373,6 @@ public class MainActivity extends AppCompatActivity
 
         // As of Android 23, permissions can be asked for while the app is still running.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
-            Log.i(TAG, "requestMultiplePermissions");
-            mRpUtil.requestMultiplePermissions(this);
             return;
         } else {
             startLocationUpdates();
@@ -820,14 +832,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Or replace with an app specific dialog set.
-        mRpUtil.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
-    }
-
-    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Log.i(TAG, "onSharedPreferenceChanged("+key+")");
         String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
@@ -861,6 +865,7 @@ public class MainActivity extends AppCompatActivity
             getCloudlets();
         }
 
+        //TODO: Add variables in CloudletListHolder.getSingleton() instead of setting these for every cloudlet.
         if(key.equals(prefKeyDownloadSize) || key.equals(prefKeyNumPackets)) {
             int numBytes = Integer.parseInt(sharedPreferences.getString(getResources().getString(R.string.download_size), "1048576"));
             int numPackets = Integer.parseInt(sharedPreferences.getString(getResources().getString(R.string.latency_packets), "5"));
@@ -875,6 +880,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
+        Log.i("BDA", "onResume() mDoLocationUpdates="+mDoLocationUpdates);
 
         if (mDoLocationUpdates) {
             startLocationUpdates();
@@ -908,8 +914,10 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "startLocationUpdates()");
         // As of Android 23, permissions can be asked for while the app is still running.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
+            Log.i(TAG, "Location permission has NOT been granted");
             return;
         }
+        Log.i(TAG, "Location permission has been granted");
 
         try {
             mGoogleMap.setMyLocationEnabled(true);

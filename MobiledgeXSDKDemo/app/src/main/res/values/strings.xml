@@ -20,6 +20,16 @@
     <string name="preference_net_switching_allowed_summary">Wifi to Cell network switching</string>
     <string name="title_activity_settings">Settings</string>
 
+    <!-- Strings related to first-use screen -->
+    <string name="why">Why?</string>
+    <string name="needed_permissions_text">We need these permissions to make everything work:</string>
+    <string name="location_permission_summary">We need to have access to your device location</string>
+    <string name="location_carrier_permission_summary">We want to verify your location with your mobile operator</string>
+    <string name="location_device_permission_title">Device Location Verification</string>
+    <string name="location_device_permission_explanation">Location with Device Supplied Location Permission Explanation</string>
+    <string name="location_carrier_permission_title">Carrier Location Verification</string>
+    <string name="location_carrier_permission_explanation">To ensure that all players experience fair game play, we need to validate if your device\'s location corresponds with your location in the mobile network.</string>
+
     <string name="drag_to_spoof">Drag to spoof GPS</string>
 
     <string name="title_activity_maps">Map</string>

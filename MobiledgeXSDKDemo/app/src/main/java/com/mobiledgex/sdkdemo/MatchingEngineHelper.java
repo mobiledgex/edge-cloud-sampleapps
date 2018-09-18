@@ -64,6 +64,7 @@ public class MatchingEngineHelper {
      * @param location  The location to pass to the matching engine.
      */
     public void doEnhancedLocationUpdateInBackground (final Location location) {
+
         new EnhancedLocationUpdate().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, location);
     }
 

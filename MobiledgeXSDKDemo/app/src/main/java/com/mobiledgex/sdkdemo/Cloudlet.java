@@ -205,9 +205,10 @@ public class Cloudlet implements Serializable {
             // 10 packets transmitted, 10 packets received, 0.0% packet loss
             // round-trip min/avg/max/stddev = 202.167/219.318/335.734/38.879 ms
             String percent = String.format("%.1f", (countFail/(float)mNumPackets*100));
+            String avg = String.format("%.3f", (latencyAvg));
             String stddev = String.format("%.3f", (latencyStddev));
             Log.i(TAG, hostName+" "+mNumPackets+" packets transmitted, "+countSuccess+" packets received, "+percent+"% packet loss");
-            Log.i(TAG, hostName+" round-trip min/avg/max/stddev = "+latencyMin+"/"+latencyAvg+"/"+latencyMax+"/"+stddev+" ms");
+            Log.i(TAG, hostName+" round-trip min/avg/max/stddev = "+latencyMin+"/"+avg+"/"+latencyMax+"/"+stddev+" ms");
 
             return null;
         }
