@@ -24,7 +24,7 @@
         android:title="@string/pref_title_latency_packets" />
 
     <ListPreference
-        android:defaultValue="socket"
+        android:defaultValue="ping"
         android:entries="@array/pref_latency_test_method_titles"
         android:entryValues="@array/pref_latency_test_method_values"
         android:key="@string/latency_method"

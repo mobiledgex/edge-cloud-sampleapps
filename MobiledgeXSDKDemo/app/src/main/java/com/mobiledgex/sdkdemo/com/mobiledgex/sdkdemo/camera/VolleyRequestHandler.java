@@ -13,16 +13,21 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.mobiledgex.sdkdemo.CloudletListHolder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.CLOUDLET_MEX;
 import static com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.CLOUDLET_PUBLIC;
@@ -51,6 +56,11 @@ public class VolleyRequestHandler {
     public boolean edgeBusy = false;
     private long cloudLatency = 0;
     private long edgeLatency = 0;
+    private final int rollingAvgSize = 20;
+    private RollingAverage cloudLatencyRollingAvg = new RollingAverage(rollingAvgSize);
+    private RollingAverage edgeLatencyRollingAvg = new RollingAverage(rollingAvgSize);
+    private RollingAverage cloudLatencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
+    private RollingAverage edgeLatencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
 
     private Rect cloudRect = new Rect(0,0,0,0);
     private Rect edgeRect = new Rect(0, 0, 0,0);
@@ -68,11 +78,16 @@ public class VolleyRequestHandler {
     private static String edgeAPIEndpoint = "http://"+edgeHost+":"+port;
 
     //Variables for latency test
+    private CloudletListHolder.LatencyTestMethod latencyTestMethod;
     private Handler mHandler;
     private final int socketTimeout = 3000;
+    private boolean useRollingAverage = false; //TODO: Make preference
 
     public VolleyRequestHandler(Camera2BasicFragment camera2BasicFragment) {
         mCamera2BasicFragment = camera2BasicFragment;
+
+        latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+
         // Instantiate the RequestQueue.
         queue = Volley.newRequestQueue(camera2BasicFragment.getActivity());
 
@@ -93,6 +108,62 @@ public class VolleyRequestHandler {
         }
     }
 
+    private void doSinglePing(String host, Camera2BasicFragment.CloudLetType cloudletType) {
+        long latency = 999;
+        if(latencyTestMethod.equals(CloudletListHolder.LatencyTestMethod.ping)) {
+            try {
+                String pingCommand = "/system/bin/ping -c 1 " + host;
+                String inputLine = "";
+
+                String regex = "time=(\\d+.\\d+) ms";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher;
+
+                // execute the command on the environment interface
+                Process process = Runtime.getRuntime().exec(pingCommand);
+                // gets the input stream to get the output of the executed command
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                inputLine = bufferedReader.readLine();
+                while ((inputLine != null)) {
+                    Log.d(TAG, "inputLine=" + inputLine);
+                    if (inputLine.contains("rtt min")) {
+                        // Extract the average round trip time from the inputLine string
+                        regex = "(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+) ms";
+                        pattern = Pattern.compile(regex);
+                        matcher = pattern.matcher(inputLine);
+                        if (matcher.find()) {
+                            Log.d(TAG, "output=" + matcher.group(0));
+                            latency = (long) (Double.parseDouble(matcher.group(1)) * 1000000.0);
+                        }
+                        break;
+
+                    } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
+                        break;
+                    }
+                    inputLine = bufferedReader.readLine();
+                }
+            }
+            catch (IOException e){
+                Log.e(TAG, "doSinglePing: EXCEPTION");
+                e.printStackTrace();
+            }
+
+        } else {
+            long startTime = System.nanoTime();
+            boolean reachable = isReachable(host, port, socketTimeout);
+            if (reachable) {
+                long endTime = System.nanoTime();
+                latency = endTime - startTime;
+                Log.d(TAG, host + " reachable=" + reachable + " Latency=" + (latency / 1000000.0) + " ms.");
+            } else {
+                Log.d(TAG, host + " reachable=" + reachable);
+            }
+        }
+
+        mCamera2BasicFragment.updatePing(cloudletType, latency);
+    }
+
     /**
      * Encode the bitmap and use Volley async to request face detection
      * coordinates. Decode the returned JSON string and update the rectangle
@@ -108,16 +179,7 @@ public class VolleyRequestHandler {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    final long startTime = System.nanoTime();
-                    boolean reachable = isReachable(cloudHost, port, socketTimeout);
-                    if(reachable) {
-                        long endTime = System.nanoTime();
-                        long latency = endTime - startTime;
-                        mCamera2BasicFragment.updatePing(CLOUDLET_PUBLIC, latency);
-                        Log.d(TAG, cloudHost +" reachable="+reachable+" Latency=" + (latency/1000000.0) + " ms.");
-                    } else {
-                        Log.d(TAG, cloudHost +" reachable="+reachable);
-                    }
+                    doSinglePing(cloudHost, CLOUDLET_PUBLIC);
                     cloudBusy = false;
                 }
             });
@@ -143,6 +205,7 @@ public class VolleyRequestHandler {
                         long endTime = System.nanoTime();
                         cloudBusy = false;
                         cloudLatency = endTime - startTime;
+                        cloudLatencyRollingAvg.add(cloudLatency);
                         cloudStdArr[cn] = cloudLatency;
                         cn += 1;
                         cn %= N;
@@ -207,16 +270,7 @@ public class VolleyRequestHandler {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    final long startTime = System.nanoTime();
-                    boolean reachable = isReachable(edgeHost, port, socketTimeout);
-                    if(reachable) {
-                        long endTime = System.nanoTime();
-                        long latency = endTime - startTime;
-                        mCamera2BasicFragment.updatePing(CLOUDLET_MEX, latency);
-                        Log.d(TAG, edgeHost +" reachable="+reachable+" Latency=" + (latency/1000000.0) + " ms.");
-                    } else {
-                        Log.d(TAG, edgeHost +" reachable="+reachable);
-                    }
+                    doSinglePing(edgeHost, CLOUDLET_MEX);
                     edgeBusy = false;
                 }
             });
@@ -242,6 +296,7 @@ public class VolleyRequestHandler {
                         long endTime = System.nanoTime();
                         edgeBusy = false;
                         edgeLatency = endTime - startTime;
+                        edgeLatencyRollingAvg.add(edgeLatency);
                         edgeStdArr[en] = edgeLatency;
                         cn += 1;
                         cn %= N;
@@ -333,12 +388,55 @@ public class VolleyRequestHandler {
 
     public long getCloudLatency()
     {
-        return cloudLatency;
+        if(useRollingAverage) {
+            return cloudLatencyRollingAvg.getAverage();
+        } else {
+            return cloudLatency;
+        }
     }
 
     public long getEdgeLatency()
     {
-        return edgeLatency;
+        if(useRollingAverage) {
+            return edgeLatencyRollingAvg.getAverage();
+        } else {
+            return edgeLatency;
+        }
+    }
+
+    public class RollingAverage {
+
+        private final long[] window;
+        private float sum = 0f;
+        private int fill;
+        private int position;
+
+
+        public RollingAverage(int size) {
+            this.window=new long[size];
+        }
+
+        public void add(long number) {
+
+            if(fill==window.length){
+                sum-=window[position];
+            }else{
+                fill++;
+            }
+
+            sum+=number;
+            window[position++]=number;
+
+            if(position == window.length){
+                position=0;
+            }
+
+        }
+
+        public long getAverage() {
+            return (long) (sum / fill);
+        }
+
     }
 
 }

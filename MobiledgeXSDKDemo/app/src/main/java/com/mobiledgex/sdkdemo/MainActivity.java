@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity
     private boolean locationVerified = false;
     private boolean locationVerificationAttempted = false;
     private double mGpsLocationAccuracyKM;
+    private String defaultLatencyMethod = "ping";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,7 +202,8 @@ public class MainActivity extends AppCompatActivity
             mMatchingEngineHelper.getMatchingEngine().setUUID(UUID.fromString(currentUUID));
         }
 
-        String latencyTestMethod = prefs.getString(getResources().getString(R.string.latency_method), "socket");
+        String latencyTestMethod = prefs.getString(getResources().getString(R.string.latency_method), defaultLatencyMethod);
+        Log.i(TAG, "latencyTestMethod from prefs: "+latencyTestMethod);
         CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
 
     }
@@ -852,7 +854,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (key.equals(prefKeyLatencyMethod)) {
-            String latencyTestMethod = sharedPreferences.getString(getResources().getString(R.string.latency_method), "socket");
+            String latencyTestMethod = sharedPreferences.getString(getResources().getString(R.string.latency_method), defaultLatencyMethod);
             CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
         }
 
@@ -880,7 +882,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
-        Log.i("BDA", "onResume() mDoLocationUpdates="+mDoLocationUpdates);
+        Log.i(TAG, "onResume() mDoLocationUpdates="+mDoLocationUpdates);
 
         if (mDoLocationUpdates) {
             startLocationUpdates();
@@ -918,6 +920,11 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         Log.i(TAG, "Location permission has been granted");
+
+        if(mGoogleMap == null) {
+            Log.w(TAG, "Map not ready");
+            return;
+        }
 
         try {
             mGoogleMap.setMyLocationEnabled(true);

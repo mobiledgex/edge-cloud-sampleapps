@@ -6,6 +6,8 @@
     <string name="action_verify_location">Verify Location</string>
     <string name="action_find_cloudlet">Find Closest Cloudlet</string>
 
+    <string name="request_camera_permission">This app needs camera permission.</string>
+
     <!-- Strings related to Settings -->
     <string name="action_settings">Settings</string>
     <string name="preference_first_time_use">first_time_use</string>
@@ -79,12 +81,12 @@
     <string name="pref_title_latency_method">Latency Test Method</string>
     <string name="latency_method">latency_method</string>
     <string-array name="pref_latency_test_method_titles">
-        <item>Socket</item>
         <item>System Ping (ICMP)</item>
+        <item>Socket</item>
     </string-array>
     <string-array name="pref_latency_test_method_values">
-        <item>socket</item>
         <item>ping</item>
+        <item>socket</item>
     </string-array>
 
     <string name="pref_title_dme_hostname">DME Selection</string>

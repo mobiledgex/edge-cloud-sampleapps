@@ -121,10 +121,14 @@ public class Cloudlet implements Serializable {
         latencyStddev=0;
         latencyTotal=0;
 
-        String latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
-        if(latencyTestMethod.equals("socket")) { //TODO: Use enum instead of string
+        CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        if(mCarrierName.equalsIgnoreCase("azure")) {
+            Log.i(TAG, "Socket test forced for Azure");
+            latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+        }
+        if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
             new LatencyTestTaskSocket().execute();
-        } else if(latencyTestMethod.equals("ping")) {
+        } else if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
             new LatencyTestTaskPing().execute();
         } else {
             Log.e(TAG, "Unknown latencyTestMethod: "+latencyTestMethod);
