@@ -65,10 +65,12 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mobiledgex.sdkdemo.MainActivity;
 import com.mobiledgex.sdkdemo.R;
 
 import java.io.File;
@@ -89,13 +91,18 @@ public class Camera2BasicFragment extends Fragment
 
     private TextView mCloudLatency;
     private TextView mEdgeLatency;
+    private TextView mCloudLatency2;
+    private TextView mEdgeLatency2;
     private TextView mCloudStd;
     private TextView mEdgeStd;
 
     private BoundingBox mCloudBB;
     private BoundingBox mEdgeBB;
+    private Animation mCloudAlphaAnim;
+    private Animation mEdgeAlphaAnim;
 
     private VolleyRequestHandler mVolleyRequestHandler;
+
     enum CloudLetType {
         CLOUDLET_MEX,
         CLOUDLET_PUBLIC
@@ -450,9 +457,11 @@ public class Camera2BasicFragment extends Fragment
                     if(cloudletType == CloudLetType.CLOUDLET_PUBLIC) {
                         mCloudBB.rect=rect;
                         mCloudBB.invalidate();
+                        mCloudBB.startAnimation(mCloudAlphaAnim);
                     } else if(cloudletType == CloudLetType.CLOUDLET_MEX) {
                         mEdgeBB.rect=rect;
                         mEdgeBB.invalidate();
+                        mEdgeBB.startAnimation(mEdgeAlphaAnim);
                     }
                     updateUi();
                 } else {
@@ -466,10 +475,28 @@ public class Camera2BasicFragment extends Fragment
      * Update the text components of the UI.
      */
     public void updateUi() {
-        mCloudLatency.setText("Cloud Latency: " + String.valueOf(mVolleyRequestHandler.getCloudLatency()/1000000) + " ms");
+        mCloudLatency.setText("Cloud: " + String.valueOf(mVolleyRequestHandler.getCloudLatency()/1000000) + " ms");
         mCloudStd.setText("Cloud STDDEV: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.cloudStdDev/1000000));
-        mEdgeLatency.setText("Edge Latency: " + String.valueOf(mVolleyRequestHandler.getEdgeLatency() / 1000000) + " ms");
+        mEdgeLatency.setText("Edge: " + String.valueOf(mVolleyRequestHandler.getEdgeLatency() / 1000000) + " ms");
         mEdgeStd.setText("Edge STDDEV: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.edgeStdDev / 1000000));
+    }
+
+    public void updatePing(final CloudLetType cloudletType, final long latency) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                switch(cloudletType) {
+                    case CLOUDLET_MEX:
+                        mEdgeLatency2.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
+                        break;
+                    case CLOUDLET_PUBLIC:
+                        mCloudLatency2.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
     }
 
     /**
@@ -653,9 +680,13 @@ public class Camera2BasicFragment extends Fragment
         mTextureView = view.findViewById(R.id.textureView);
         mTextureView.setOnClickListener(this);
         mCloudLatency = view.findViewById(R.id.cloud_latency);
+        mCloudLatency2 = view.findViewById(R.id.cloud_latency2);
         mCloudLatency.setTextColor(Color.RED);
+        mCloudLatency2.setTextColor(Color.RED);
         mEdgeLatency = view.findViewById(R.id.edge_latency);
+        mEdgeLatency2 = view.findViewById(R.id.edge_latency2);
         mEdgeLatency.setTextColor(Color.GREEN);
+        mEdgeLatency2.setTextColor(Color.GREEN);
         mCloudStd = view.findViewById(R.id.cloud_std_dev);
         mCloudStd.setTextColor(Color.RED);
         mEdgeStd = view.findViewById(R.id.edge_std_dev);
@@ -666,8 +697,12 @@ public class Camera2BasicFragment extends Fragment
         mEdgeBB = view.findViewById(R.id.edgeBB);
         mEdgeBB.setColor(Color.GREEN);
 
-        mCloudBB.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.alpha));
-        mEdgeBB.startAnimation(AnimationUtils.loadAnimation(getActivity(), R.anim.alpha));
+        mCloudAlphaAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.alpha);
+        mCloudAlphaAnim.setFillAfter(true);
+        mCloudBB.startAnimation(mCloudAlphaAnim);
+        mEdgeAlphaAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.alpha);
+        mEdgeAlphaAnim.setFillAfter(true);
+        mEdgeBB.startAnimation(mEdgeAlphaAnim);
 
         //TODO: Add these back at some point
         mEdgeStd.setVisibility(View.INVISIBLE);
@@ -733,7 +768,7 @@ public class Camera2BasicFragment extends Fragment
                                            @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                ErrorDialog.newInstance(getString(R.string.request_permission))
+                ErrorDialog.newInstance(getString(R.string.request_camera_permission))
                         .show(getChildFragmentManager(), FRAGMENT_DIALOG);
             }
         } else {
@@ -1293,7 +1328,7 @@ public class Camera2BasicFragment extends Fragment
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Fragment parent = getParentFragment();
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.request_permission)
+                    .setMessage(R.string.request_camera_permission)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {

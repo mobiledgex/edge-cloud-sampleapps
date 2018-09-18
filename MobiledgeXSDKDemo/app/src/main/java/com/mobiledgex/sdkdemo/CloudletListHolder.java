@@ -9,7 +9,7 @@ public class CloudletListHolder {
     private static final CloudletListHolder ourInstance = new CloudletListHolder();
 
     private ArrayMap<String, Cloudlet> mCloudletList = new ArrayMap<>();
-    private String latencyTestMethod = "socket";
+    private LatencyTestMethod latencyTestMethod = LatencyTestMethod.ping;
 
     public static CloudletListHolder getSingleton() {
         return ourInstance;
@@ -26,11 +26,17 @@ public class CloudletListHolder {
         this.mCloudletList = mCloudlets;
     }
 
-    public String getLatencyTestMethod() {
+    public enum LatencyTestMethod {
+        ping,
+        socket
+    }
+
+    public LatencyTestMethod getLatencyTestMethod() {
         return latencyTestMethod;
     }
 
     public void setLatencyTestMethod(String latencyTestMethod) {
-        this.latencyTestMethod = latencyTestMethod;
+        this.latencyTestMethod = LatencyTestMethod.valueOf(latencyTestMethod);
+        System.out.println("String latencyTestMethod="+latencyTestMethod+" enum latencyTestMethod="+this.latencyTestMethod);
     }
 }

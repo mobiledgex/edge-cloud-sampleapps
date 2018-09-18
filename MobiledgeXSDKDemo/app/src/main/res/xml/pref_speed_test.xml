@@ -10,6 +10,7 @@
         android:key="@string/download_size"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
+        android:summary="@string/pref_summary_download_size"
         android:title="@string/pref_title_download_size" />
 
     <ListPreference
@@ -19,15 +20,17 @@
         android:key="@string/latency_packets"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
+        android:summary="@string/pref_summary_latency_packets"
         android:title="@string/pref_title_latency_packets" />
 
     <ListPreference
-        android:defaultValue="socket"
+        android:defaultValue="ping"
         android:entries="@array/pref_latency_test_method_titles"
         android:entryValues="@array/pref_latency_test_method_values"
         android:key="@string/latency_method"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
+        android:summary="@string/pref_summary_latency_method"
         android:title="@string/pref_title_latency_method" />
 
 </PreferenceScreen>

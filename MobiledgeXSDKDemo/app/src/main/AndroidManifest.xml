@@ -51,13 +51,15 @@
             android:label="@string/title_activity_settings" />
         <activity android:name=".CloudletDetailsActivity" />
 
+        <activity
+            android:name=".FirstTimeUseActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
+        </activity>
+
         <activity android:name=".com.mobiledgex.sdkdemo.camera.CameraActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
     </application>

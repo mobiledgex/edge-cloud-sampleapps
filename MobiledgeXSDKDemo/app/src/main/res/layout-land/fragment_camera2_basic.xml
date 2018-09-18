@@ -44,42 +44,85 @@
         android:layout_height="match_parent">
 
         <TextView
+            android:id="@+id/latency_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Full Process Latency"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="28sp" />
+
+        <TextView
             android:id="@+id/cloud_latency"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cloud Latency"
+            android:layout_alignParentTop="true"
+            android:paddingTop="40dp"
+            android:text="Cloud:"
             android:textColor="@android:color/white"
-            android:textSize="28sp" />
+            android:textSize="24sp" />
 
         <TextView
             android:id="@+id/cloud_std_dev"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cloud STDDEV"
-            android:textColor="@android:color/white"
             android:layout_alignParentTop="true"
             android:paddingTop="80dp"
-            android:textSize="28sp" />
+            android:text="Cloud STDDEV"
+            android:textColor="@android:color/white"
+            android:textSize="24sp" />
 
         <TextView
             android:id="@+id/edge_latency"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
             android:layout_alignParentTop="true"
             android:paddingTop="40dp"
-            android:text="Edge Latency"
+            android:text="Edge:"
             android:textColor="@android:color/white"
-            android:textSize="28sp" />
+            android:textSize="24sp" />
 
         <TextView
             android:id="@+id/edge_std_dev"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:paddingTop="80dp"
             android:text="Edge STDDEV"
             android:textColor="@android:color/white"
-            android:layout_alignParentTop="true"
-            android:paddingTop="120dp"
-            android:textSize="28sp" />
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/cloud_latency2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:text="Cloud:"
+            android:textColor="@android:color/white"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/edge_latency2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:text="Edge:"
+            android:textColor="@android:color/white"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/latency_title2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="30dp"
+            android:textColor="@android:color/darker_gray"
+            android:text="Network Latency"
+            android:textSize="20sp"/>
+
     </RelativeLayout>
 
 

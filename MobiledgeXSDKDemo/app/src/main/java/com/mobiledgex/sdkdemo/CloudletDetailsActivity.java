@@ -101,6 +101,13 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+                if(cloudlet.getCarrierName().equalsIgnoreCase("azure")) {
+                    if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
+                        latencyMessageTv.setText("Socket test forced");
+                    }
+                }
+
                 if(cloudlet.getLatencyMin() != 9999) {
                     latencyMinTv.setText(formatValue(cloudlet.getLatencyMin()) + " ms");
                 } else {

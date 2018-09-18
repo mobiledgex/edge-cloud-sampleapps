@@ -46,7 +46,7 @@ public class Cloudlet implements Serializable {
     private int latencyTestProgress = 0;
     private int speedTestProgress = 0;
     private long startTime;
-    private long timeDifference;
+    private double timeDifference;
     private int mNumPackets = 4;
     private int mNumBytes = 1048576;
     private boolean runningOnEmulator = false;
@@ -67,7 +67,7 @@ public class Cloudlet implements Serializable {
         update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPackets);
 
         //All AsyncTask instances are run on the same thread, so this queues up the tasks.
-        //startLatencyTest(); TODO: Add this back
+        startLatencyTest();
     }
 
     public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPackets) {
@@ -121,10 +121,14 @@ public class Cloudlet implements Serializable {
         latencyStddev=0;
         latencyTotal=0;
 
-        String latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
-        if(latencyTestMethod.equals("socket")) { //TODO: Use enum instead of string
+        CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        if(mCarrierName.equalsIgnoreCase("azure")) {
+            Log.i(TAG, "Socket test forced for Azure");
+            latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+        }
+        if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
             new LatencyTestTaskSocket().execute();
-        } else if(latencyTestMethod.equals("ping")) {
+        } else if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
             new LatencyTestTaskPing().execute();
         } else {
             Log.e(TAG, "Unknown latencyTestMethod: "+latencyTestMethod);
@@ -172,11 +176,11 @@ public class Cloudlet implements Serializable {
             //First time may be slower because of DNS lookup. Run once before it counts.
             isReachable(hostName, openPort, socketTimeout);
             for(int i = 0; i < mNumPackets; i++) {
-                startTime = System.currentTimeMillis();
+                startTime = System.nanoTime();
                 reachable = isReachable(hostName, openPort, socketTimeout);
                 if(reachable) {
-                    long endTime = System.currentTimeMillis();
-                    timeDifference = endTime - startTime;
+                    long endTime = System.nanoTime();
+                    timeDifference = (endTime - startTime)/1000000.0;
                     Log.d(TAG, hostName+" reachable="+reachable+" Latency=" + timeDifference + " ms.");
                     latencyTotal += timeDifference;
                     latencyAvg = latencyTotal/(i+1);
@@ -205,9 +209,10 @@ public class Cloudlet implements Serializable {
             // 10 packets transmitted, 10 packets received, 0.0% packet loss
             // round-trip min/avg/max/stddev = 202.167/219.318/335.734/38.879 ms
             String percent = String.format("%.1f", (countFail/(float)mNumPackets*100));
+            String avg = String.format("%.3f", (latencyAvg));
             String stddev = String.format("%.3f", (latencyStddev));
             Log.i(TAG, hostName+" "+mNumPackets+" packets transmitted, "+countSuccess+" packets received, "+percent+"% packet loss");
-            Log.i(TAG, hostName+" round-trip min/avg/max/stddev = "+latencyMin+"/"+latencyAvg+"/"+latencyMax+"/"+stddev+" ms");
+            Log.i(TAG, hostName+" round-trip min/avg/max/stddev = "+latencyMin+"/"+avg+"/"+latencyMax+"/"+stddev+" ms");
 
             return null;
         }
