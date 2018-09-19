@@ -121,9 +121,24 @@ public class Cloudlet implements Serializable {
         latencyStddev=0;
         latencyTotal=0;
 
+        //ping can't run on an emulator, so detect that case.
+        Log.i(TAG, "PRODUCT="+ Build.PRODUCT);
+        if (Build.PRODUCT.equalsIgnoreCase("sdk_gphone_x86")
+                || Build.PRODUCT.equalsIgnoreCase("sdk_google_phone_x86")) {
+            runningOnEmulator = true;
+            Log.i(TAG, "YES, I am an emulator.");
+        } else {
+            runningOnEmulator = false;
+            Log.i(TAG, "NO, I am NOT an emulator.");
+        }
+
         CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
         if(mCarrierName.equalsIgnoreCase("azure")) {
             Log.i(TAG, "Socket test forced for Azure");
+            latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+        }
+        if(runningOnEmulator) {
+            Log.i(TAG, "Socket test forced for emulator");
             latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
         }
         if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
@@ -241,17 +256,7 @@ public class Cloudlet implements Serializable {
 
         @Override
         protected String doInBackground(Void... voids) {
-            //ping can't run on an emulator, so detect that case.
-            Log.i(TAG, "PRODUCT="+ Build.PRODUCT);
-            if (Build.PRODUCT.equalsIgnoreCase("sdk_gphone_x86")
-                    || Build.PRODUCT.equalsIgnoreCase("sdk_google_phone_x86")) {
-                runningOnEmulator = true;
-                Log.i(TAG, "YES, I am an emulator. Skipping ping test.");
-                return null;
-            } else {
-                Log.i(TAG, "NO, I am NOT an emulator. Running ping test.");
-            }
-
+            pingFailed = false;
             String pingCommand = "/system/bin/ping -c "+ mNumPackets +" " + hostName;
             String inputLine = "";
 
