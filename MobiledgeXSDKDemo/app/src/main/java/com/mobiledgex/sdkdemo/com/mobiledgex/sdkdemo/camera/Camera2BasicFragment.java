@@ -432,6 +432,7 @@ public class Camera2BasicFragment extends Fragment
 
                 Log.i(TAG, "received rect="+rect.toShortString()+" widthOff="+widthOff+" heightOff="+heightOff+" serverToDisplayRatio="+serverToDisplayRatio);
                 Rect textureRect = new Rect(1, 1 , mTextureView.getWidth(), mTextureView.getHeight());
+                textureRect.offset(widthOff, heightOff);
                 Log.d(TAG, "textureRect="+textureRect);
 
                 // The image that was processed is what the camera sees, but the image we want to

@@ -147,7 +147,8 @@ public class MainActivity extends AppCompatActivity
         mMatchingEngineHelper.setMatchingEngineResultsListener(this);
 
         boolean networkSwitchingAllowed = prefs.getBoolean(getResources()
-                        .getString(R.string.preference_mex_location_verification),false);
+                        .getString(R.string.preference_net_switching_allowed),false);
+        Log.i(TAG, "networkSwitchingAllowed="+networkSwitchingAllowed);
         mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(networkSwitchingAllowed);
 //        mMatchingEngineHelper.getMatchingEngine().setSSLEnabled(false);
 
@@ -302,6 +303,11 @@ public class MainActivity extends AppCompatActivity
             if(mLastKnownLocation == null) {
                 startLocationUpdates();
                 Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
+                return true;
+            }
+            if(mUserLocationMarker == null) {
+                Log.w(TAG, "No marker for user location");
+                Toast.makeText(MainActivity.this, "No user location marker. Please retry in a moment.", Toast.LENGTH_LONG).show();
                 return true;
             }
             mMatchingEngineHelper.setSpoofedLocation(null);
