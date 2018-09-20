@@ -15,7 +15,6 @@ import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
 
 import java.util.List;
-import com.mobiledgex.sdkdemo.BuildConfig;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -104,6 +103,21 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // Show the Up button in the action bar.
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+    }
+
+    /**
+     * This is needed for the Back Arrow button to work on Android version 6.
+     * @param item
+     * @return
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     /**
