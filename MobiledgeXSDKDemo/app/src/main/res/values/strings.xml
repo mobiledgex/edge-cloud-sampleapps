@@ -20,6 +20,24 @@
     <string name="preference_net_switching_allowed">net_switching_allowed</string>
     <string name="preference_net_switching_allowed_title">Network Switching Enabled</string>
     <string name="preference_net_switching_allowed_summary">Wifi to Cell network switching</string>
+
+    <!-- String for Face Detection preferences -->
+    <string name="preference_fd_front_camera">fd_front_camera</string>
+    <string name="preference_fd_multi_face">fd_multi_face</string>
+    <string name="preference_fd_multi_face_title">Multi-face</string>
+    <string name="preference_fd_multi_face_summary">Track multiple faces</string>
+    <string name="preference_fd_show_full_latency">fd_show_full_latency</string>
+    <string name="preference_fd_show_full_latency_title">Show full process latency</string>
+    <string name="preference_fd_show_full_latency_summary">Measures image upload, face detection, results being returned.</string>
+    <string name="preference_fd_show_net_latency">fd_show_net_latency</string>
+    <string name="preference_fd_show_net_latency_title">Show network latency</string>
+    <string name="preference_fd_show_net_latency_summary">Measures only network latency.</string>
+    <string name="preference_fd_show_stddev">fd_show_stddev</string>
+    <string name="preference_fd_show_stddev_title">Show Stddev</string>
+    <string name="preference_fd_show_stddev_summary">Standard deviation</string>
+    <string name="preference_fd_use_rolling_avg">fd_use_rolling_avg</string>
+    <string name="preference_fd_use_rolling_avg_title">Use Rolling Average</string>
+    <string name="preference_fd_use_rolling_avg_summary">Individual measurements or rolling average</string>
     <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to first-use screen -->
@@ -45,6 +63,7 @@
     <string name="action_about">About</string>
     <string name="preference_speed_test_settings">Speed Test Settings</string>
     <string name="preference_general_settings">General Settings</string>
+    <string name="preference_fd_settings">Face Detection Settings</string>
 
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
 

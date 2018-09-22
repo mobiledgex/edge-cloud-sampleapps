@@ -14,10 +14,5 @@
         android:positiveButtonText="@null"
         android:summary="@string/pref_summary_dme_hostname"
         android:title="@string/pref_title_dme_hostname" />
-    <SwitchPreference
-        android:key="@string/preference_net_switching_allowed"
-        android:title="@string/preference_net_switching_allowed_title"
-        android:summary="@string/preference_net_switching_allowed_summary"
-        android:defaultValue="false" />
 
 </PreferenceScreen>

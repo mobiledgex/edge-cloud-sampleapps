@@ -332,7 +332,6 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        //TODO: Replace these with real items.
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 

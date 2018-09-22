@@ -15,6 +15,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.mobiledgex.sdkdemo.CloudletListHolder;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -44,26 +45,19 @@ public class VolleyRequestHandler {
 
     public double edgeStdDev = 0;
     public double cloudStdDev = 0;
-    private int N = 100;
-    private int cn = 0;
-    private int en = 0;
     private long cloudCount = 0;
     private long edgeCount = 0;
-    private long[] cloudStdArr = new long[100];
-    private long[] edgeStdArr = new long[100];
 
+    private boolean doNetLatency = true;
     public boolean cloudBusy = false;
     public boolean edgeBusy = false;
     private long cloudLatency = 0;
     private long edgeLatency = 0;
-    private final int rollingAvgSize = 20;
+    private final int rollingAvgSize = 100;
     private RollingAverage cloudLatencyRollingAvg = new RollingAverage(rollingAvgSize);
     private RollingAverage edgeLatencyRollingAvg = new RollingAverage(rollingAvgSize);
     private RollingAverage cloudLatencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
     private RollingAverage edgeLatencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
-
-    private Rect cloudRect = new Rect(0,0,0,0);
-    private Rect edgeRect = new Rect(0, 0, 0,0);
 
     private static int port = 8000;
     private static String cloudHost = "104.42.217.135"; //West US
@@ -81,7 +75,7 @@ public class VolleyRequestHandler {
     private CloudletListHolder.LatencyTestMethod latencyTestMethod;
     private Handler mHandler;
     private final int socketTimeout = 3000;
-    private boolean useRollingAverage = false; //TODO: Make preference
+    private boolean useRollingAverage = false;
 
     public VolleyRequestHandler(Camera2BasicFragment camera2BasicFragment) {
         mCamera2BasicFragment = camera2BasicFragment;
@@ -108,8 +102,15 @@ public class VolleyRequestHandler {
         }
     }
 
-    private void doSinglePing(String host, Camera2BasicFragment.CloudLetType cloudletType) {
-        long latency = 999;
+    /**
+     * Depending on Latency Testing method preference, perform either a single "ping"
+     * or a single socket open test.
+     *
+     * @param host
+     * @param cloudletType
+     */
+    private void doSinglePing(String host, RollingAverage rollingAverage, Camera2BasicFragment.CloudLetType cloudletType) {
+        long latency = 0;
         if(latencyTestMethod.equals(CloudletListHolder.LatencyTestMethod.ping)) {
             try {
                 String pingCommand = "/system/bin/ping -c 1 " + host;
@@ -135,6 +136,7 @@ public class VolleyRequestHandler {
                         if (matcher.find()) {
                             Log.d(TAG, "output=" + matcher.group(0));
                             latency = (long) (Double.parseDouble(matcher.group(1)) * 1000000.0);
+                            rollingAverage.add(latency);
                         }
                         break;
 
@@ -155,13 +157,14 @@ public class VolleyRequestHandler {
             if (reachable) {
                 long endTime = System.nanoTime();
                 latency = endTime - startTime;
+                rollingAverage.add(latency);
                 Log.d(TAG, host + " reachable=" + reachable + " Latency=" + (latency / 1000000.0) + " ms.");
             } else {
                 Log.d(TAG, host + " reachable=" + reachable);
             }
         }
 
-        mCamera2BasicFragment.updatePing(cloudletType, latency);
+        mCamera2BasicFragment.updatePing(cloudletType, latency, rollingAverage.getStdDev());
     }
 
     /**
@@ -174,16 +177,18 @@ public class VolleyRequestHandler {
     private void sendToCloud(Bitmap bitmap) {
         // Get a lock for the busy
         cloudBusy = true;
-        cloudCount++;
-        if(cloudCount == 1 || cloudCount % PING_INTERVAL == 0) {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    doSinglePing(cloudHost, CLOUDLET_PUBLIC);
-                    cloudBusy = false;
-                }
-            });
-            return;
+        if(doNetLatency) {
+            cloudCount++;
+            if (cloudCount == 1 || cloudCount % PING_INTERVAL == 0) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        doSinglePing(cloudHost, cloudLatencyNetOnlyRollingAvg, CLOUDLET_PUBLIC);
+                        cloudBusy = false;
+                    }
+                });
+                return;
+            }
         }
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -192,7 +197,7 @@ public class VolleyRequestHandler {
         String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
 
         final String requestBody = encoded;
-        String url = cloudAPIEndpoint+ "/detect2/";
+        String url = cloudAPIEndpoint+ "/detect3/";
 
         final long startTime = System.nanoTime();
 
@@ -206,17 +211,11 @@ public class VolleyRequestHandler {
                         cloudBusy = false;
                         cloudLatency = endTime - startTime;
                         cloudLatencyRollingAvg.add(cloudLatency);
-                        cloudStdArr[cn] = cloudLatency;
-                        cn += 1;
-                        cn %= N;
-                        cloudStdDev = stdDev(cloudStdArr, N);
+                        cloudStdDev = cloudLatencyRollingAvg.getStdDev();
+                        Log.i("BDA", "cloudLatency="+(cloudLatency/1000000.0)+" cloudStdDev="+(cloudStdDev/1000000.0));
                         try {
-                            JSONObject jsonRect = new JSONObject(response);
-                            cloudRect.left = jsonRect.getInt("left");
-                            cloudRect.top = jsonRect.getInt("top");
-                            cloudRect.right = jsonRect.getInt("right");
-                            cloudRect.bottom = jsonRect.getInt("bottom");
-                            mCamera2BasicFragment.updateRectangles(CLOUDLET_PUBLIC, cloudRect);
+                            JSONArray jsonArray = new JSONArray(response);
+                            mCamera2BasicFragment.updateRectangles(CLOUDLET_PUBLIC, jsonArray);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -226,12 +225,6 @@ public class VolleyRequestHandler {
             public void onErrorResponse(VolleyError error) {
                 cloudBusy = false;
                 Log.e(TAG, "That didn't work! error="+error);
-                long endTime = System.nanoTime();
-                cloudLatency = endTime - startTime;
-                cloudStdArr[cn] = cloudLatency;
-                cn += 1;
-                cn %= N;
-                cloudStdDev = stdDev(cloudStdArr, N);
             }
         }) {
             @Override
@@ -265,16 +258,18 @@ public class VolleyRequestHandler {
     private void sendToEdge(Bitmap bitmap) {
         // Get a lock for the busy
         edgeBusy = true;
-        edgeCount++;
-        if(edgeCount == 1 || edgeCount % PING_INTERVAL == 0) {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    doSinglePing(edgeHost, CLOUDLET_MEX);
-                    edgeBusy = false;
-                }
-            });
-            return;
+        if(doNetLatency) {
+            edgeCount++;
+            if (edgeCount == 1 || edgeCount % PING_INTERVAL == 0) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        doSinglePing(edgeHost, edgeLatencyNetOnlyRollingAvg, CLOUDLET_MEX);
+                        edgeBusy = false;
+                    }
+                });
+                return;
+            }
         }
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -283,7 +278,7 @@ public class VolleyRequestHandler {
         String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
 
         final String requestBody = encoded;
-        String url = edgeAPIEndpoint+ "/detect2/";
+        String url = edgeAPIEndpoint+ "/detect3/";
 
         final long startTime = System.nanoTime();
 
@@ -297,17 +292,11 @@ public class VolleyRequestHandler {
                         edgeBusy = false;
                         edgeLatency = endTime - startTime;
                         edgeLatencyRollingAvg.add(edgeLatency);
-                        edgeStdArr[en] = edgeLatency;
-                        cn += 1;
-                        cn %= N;
-                        edgeStdDev = stdDev(edgeStdArr, N);
+                        edgeStdDev = edgeLatencyRollingAvg.getStdDev();
+                        Log.i("BDA", "edgeLatency="+(edgeLatency/1000000.0)+" edgeStdDev="+(edgeStdDev/1000000.0));
                         try {
-                            JSONObject jsonRect = new JSONObject(response);
-                            edgeRect.left = jsonRect.getInt("left");
-                            edgeRect.top = jsonRect.getInt("top");
-                            edgeRect.right = jsonRect.getInt("right");
-                            edgeRect.bottom = jsonRect.getInt("bottom");
-                            mCamera2BasicFragment.updateRectangles(CLOUDLET_MEX, edgeRect);
+                            JSONArray jsonArray = new JSONArray(response);
+                            mCamera2BasicFragment.updateRectangles(CLOUDLET_MEX, jsonArray);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -317,13 +306,6 @@ public class VolleyRequestHandler {
             public void onErrorResponse(VolleyError error) {
                 edgeBusy = false;
                 Log.e(TAG, "That didn't work! error="+error);
-                long endTime = System.nanoTime();
-                edgeLatency = endTime - startTime;
-                edgeStdArr[en] = edgeLatency;
-                cn += 1;
-                cn %= N;
-                edgeStdDev = stdDev(edgeStdArr, N);
-                edgeBusy = false;
             }
         }) {
             @Override
@@ -364,28 +346,6 @@ public class VolleyRequestHandler {
         }
     }
 
-
-    private double average(long[] arr, int len)
-    {
-        double sum = 0;
-        for (int i = 0; i < len; i++) {
-            sum += arr[i];
-        }
-        return sum /= len;
-    }
-
-    private double stdDev(long[] arr, int len)
-    {
-        double avg = average(arr, len);
-        double sum = 0;
-
-        for (int i = 0; i < len; i++) {
-            sum += Math.pow(arr[i] - avg, 2);
-        }
-
-        return Math.sqrt(sum/len);
-    }
-
     public long getCloudLatency()
     {
         if(useRollingAverage) {
@@ -402,6 +362,21 @@ public class VolleyRequestHandler {
         } else {
             return edgeLatency;
         }
+    }
+
+    public void setDoNetLatency(boolean doNetLatency) {
+        this.doNetLatency = doNetLatency;
+    }
+    public void setUseRollingAverage(boolean useRollingAverage) {
+        this.useRollingAverage = useRollingAverage;
+    }
+
+    public double getCloudStdDev() {
+        return cloudStdDev;
+    }
+
+    public double getEdgeStdDev() {
+        return edgeStdDev;
     }
 
     public class RollingAverage {
@@ -437,6 +412,19 @@ public class VolleyRequestHandler {
             return (long) (sum / fill);
         }
 
-    }
+        /**
+         * Get the standard deviation of the entire set.
+         * @return Population Standard Deviation, σ
+         */
+        public long getStdDev() {
+            double avg = getAverage();
+            double sum = 0;
 
+            for (int i = 0; i < fill; i++) {
+                sum += Math.pow(window[i] - avg, 2);
+            }
+
+            return (long) Math.sqrt(sum/fill);
+        }
+    }
 }
