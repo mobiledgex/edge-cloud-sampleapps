@@ -22,6 +22,8 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -51,7 +53,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -67,11 +72,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mobiledgex.sdkdemo.MainActivity;
 import com.mobiledgex.sdkdemo.R;
+import com.mobiledgex.sdkdemo.SettingsActivity;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -87,21 +98,36 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class Camera2BasicFragment extends Fragment
-        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback,
+        SharedPreferences.OnSharedPreferenceChangeListener {
 
+    private static final int MAX_FACES = 5;
+    private TextView mLatencyFullTitle;
+    private TextView mLatencyNetTitle;
     private TextView mCloudLatency;
     private TextView mEdgeLatency;
     private TextView mCloudLatency2;
     private TextView mEdgeLatency2;
     private TextView mCloudStd;
     private TextView mEdgeStd;
+    private TextView mCloudStd2;
+    private TextView mEdgeStd2;
+    private FloatingActionButton fabSwapCamera;
+    private FloatingActionButton fabSettings;
 
     private BoundingBox mCloudBB;
     private BoundingBox mEdgeBB;
-    private Animation mCloudAlphaAnim;
-    private Animation mEdgeAlphaAnim;
+    private List<BoundingBox> mCloudBBList = new ArrayList<>();
+    private List<BoundingBox> mEdgeBBList = new ArrayList<>();
 
     private VolleyRequestHandler mVolleyRequestHandler;
+    private int mCameraLensFacingDirection = CameraCharacteristics.LENS_FACING_FRONT;
+
+    private boolean prefMultiFace;
+    private boolean prefShowFullLatency;
+    private boolean prefShowNetLatency;
+    private boolean prefShowStdDev;
+    private boolean prefUseRollingAvg;
 
     enum CloudLetType {
         CLOUDLET_MEX,
@@ -144,11 +170,21 @@ public class Camera2BasicFragment extends Fragment
      */
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
-    private int factor = 12; //TODO: Possibly calculate this based on camera resolution.
+    //TODO: Perform profiling with these factor values swapped.
+    private int factor = 1; //TODO: Possibly calculate this based on camera resolution.
+    private int mImageReaderFactor = 12;
+
+    private int displayWidth;
+    private int displayHeight;
+    private float serverToDisplayRatio;
+    private int finalWidth;
+    private int finalHeight;
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        prefs.registerOnSharedPreferenceChangeListener(this);
         //We can't create the VolleyRequestHandler until we have a context available.
         mVolleyRequestHandler = new VolleyRequestHandler(this);
     }
@@ -185,39 +221,6 @@ public class Camera2BasicFragment extends Fragment
      * ID of the current {@link CameraDevice}.
      */
     private String mCameraId;
-    private int displayWidth;
-    private int displayHeight;
-
-    private void rotateRectangle(Rect rect, int deg)
-    {
-        int tmp = 0;
-        switch (deg) {
-            case 0:
-                break;
-            case 90:
-                tmp = rect.top;
-                rect.top = rect.right;
-                rect.right = rect.bottom;
-                rect.bottom = rect.left;
-                rect.left = tmp;
-                break;
-            case 180:
-                tmp = rect.top;
-                rect.top = rect.bottom;
-                rect.bottom = tmp;
-                tmp = rect.right;
-                rect.right = rect.left;
-                rect.left = tmp;
-                break;
-            case 270:
-                tmp = rect.top;
-                rect.top = rect.left;
-                rect.left = rect.bottom;
-                rect.bottom = rect.right;
-                rect.right = tmp;
-                break;
-        }
-    }
 
     /**
      * An {@link AutoFitTextureView} for camera preview.
@@ -292,17 +295,6 @@ public class Camera2BasicFragment extends Fragment
      */
     private File mFile;
 
-    private void drawBoundingBox(Canvas canvas, int x1, int y1, int x2, int y2, Paint paint)
-    {
-        canvas.drawLine(x1, y1, x2, y1, paint);
-        canvas.drawLine(x2, y1, x2, y2, paint);
-        canvas.drawLine(x2, y2, x1, y2, paint);
-        canvas.drawLine(x1, y1, x1, y2, paint);
-    }
-
-    private float serverToDisplayRatio;
-    private int finalWidth;
-    private int finalHeight;
     /**
      * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
      * still image is ready to be saved.
@@ -312,7 +304,7 @@ public class Camera2BasicFragment extends Fragment
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-            Log.d("camera2diagnostics", "onImageAvailable");
+            Log.d(TAG, "onImageAvailable");
             // How to manipulate preview frames:
             // https://stackoverflow.com/questions/25462277/camera-preview-image-data-processing-with-android-l-and-camera2-api
 
@@ -330,8 +322,6 @@ public class Camera2BasicFragment extends Fragment
             Matrix matrix = new Matrix();
 
             Activity activity = getActivity();
-            int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            int deg = 0;
 
             int width = 0;
             int height = 0;
@@ -342,33 +332,40 @@ public class Camera2BasicFragment extends Fragment
 //                Log.d(TAG, "image already closed. bail out.");
                 return;
             }
-            Log.d(TAG, "image size="+image.getWidth()+","+image.getHeight()+"/factor("+factor+")="+width+","+height+" displayRotation="+displayRotation);
-            float notFinalWidthRatio = (float) mTextureView.getWidth() / (float) image.getWidth();
-            float notFinalHeightRatio = (float) mTextureView.getHeight() / (float) image.getHeight();
+            Log.d(TAG, "image size="+image.getWidth()+","+image.getHeight()+"/factor("+factor+")="+width+","+height);
 
-            if (notFinalWidthRatio == 0 || notFinalHeightRatio == 0) {
-                notFinalWidthRatio = 1;
-                notFinalHeightRatio = 1;
+            int deg = 0;
+            int rotation2 = 0;
+            try {
+                CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
+                CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics("" + mCameraDevice.getId());
+                rotation2 = cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+                int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+                deg = getOrientation(rotation);
+                Log.i("BDA5", "getOrientation("+rotation+")="+deg+" SENSOR_ORIENTATION="+rotation2);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
             }
-            switch (displayRotation) {
-                case Surface.ROTATION_0:
-                    deg = 270;
-                    height = image.getWidth() / factor;
-                    width = image.getHeight() / factor;
-                    break;
-                case Surface.ROTATION_180:
-                    deg = 90;
-                    height = image.getWidth() / factor;
-                    width = image.getHeight() / factor;
-                    break;
-                case Surface.ROTATION_90:
-                    deg = 0;
-                    break;
-                case Surface.ROTATION_270:
-                    deg = 180;
-                    break;
-                default:
-                    Log.e(TAG, "Display rotation is invalid: " + displayRotation);
+
+            if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT) {
+                int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+                switch (displayRotation) {
+                    case Surface.ROTATION_0:
+                        deg = 270;
+                        break;
+                    case Surface.ROTATION_180:
+                        deg = 90;
+                        break;
+                    case Surface.ROTATION_90:
+                        deg = 0;
+                        break;
+                    case Surface.ROTATION_270:
+                        deg = 180;
+                        break;
+                    default:
+                        Log.e(TAG, "Display rotation is invalid: " + displayRotation);
+                }
             }
 
             if(deg != 0) {
@@ -385,8 +382,6 @@ public class Camera2BasicFragment extends Fragment
 
             mVolleyRequestHandler.sendImage(rotatedBitmap);
 
-            final int finalDeg = deg;
-
             finalWidth = mTextureView.getWidth();
             finalHeight = mTextureView.getHeight();
 
@@ -401,19 +396,19 @@ public class Camera2BasicFragment extends Fragment
      * Update the face rectangle coordinates and the UI.
      *
      * @param cloudletType
-     * @param rect
+     * @param rectJsonArray
      */
-    public void updateRectangles(final CloudLetType cloudletType, final Rect rect) {
-        Log.i(TAG, "updateRectangles("+cloudletType+","+rect.toShortString()+")");
+    public void updateRectangles(final CloudLetType cloudletType, final JSONArray rectJsonArray) {
+        Log.i(TAG, "updateRectangles("+cloudletType+","+rectJsonArray.toString()+")");
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                if(getActivity() == null) {
+                if (getActivity() == null) {
                     //Happens during screen rotation
                     Log.e(TAG, "updateRectangles abort - null activity");
                     return;
                 }
-                if(rect.top == 0 && rect.left == 0 && rect.right == 0 && rect.bottom == 0) {
+                if (rectJsonArray.length() == 0) {
                     Log.i(TAG, "Empty rectangle received. Discarding.");
                     updateUi();
                     return;
@@ -425,49 +420,87 @@ public class Camera2BasicFragment extends Fragment
                 getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
                 displayWidth = displaymetrics.widthPixels;
                 displayHeight = displaymetrics.heightPixels;
-                int widthOff = (displayWidth - mTextureView.getWidth())/2;
-                int heightOff = (displayHeight - mTextureView.getHeight())/2;
+                int widthOff = (displayWidth - mTextureView.getWidth()) / 2;
+                int heightOff = (displayHeight - mTextureView.getHeight()) / 2;
 
-                Log.d(TAG, "display w,h="+displayWidth+","+displayHeight+" mTextureView w,h="+mTextureView.getWidth()+","+mTextureView.getHeight());
+                Log.d(TAG, "display w,h=" + displayWidth + "," + displayHeight + " mTextureView w,h=" + mTextureView.getWidth() + "," + mTextureView.getHeight());
 
-                Log.i(TAG, "received rect="+rect.toShortString()+" widthOff="+widthOff+" heightOff="+heightOff+" serverToDisplayRatio="+serverToDisplayRatio);
-                Rect textureRect = new Rect(1, 1 , mTextureView.getWidth(), mTextureView.getHeight());
+                Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " serverToDisplayRatio=" + serverToDisplayRatio);
+                Rect textureRect = new Rect(1, 1, mTextureView.getWidth(), mTextureView.getHeight());
                 textureRect.offset(widthOff, heightOff);
-                Log.d(TAG, "textureRect="+textureRect);
+                Log.d(TAG, "textureRect=" + textureRect);
 
-                // The image that was processed is what the camera sees, but the image we want to
-                // overlay the rectangle onto is mirrored. So not only do we have to scale it,
-                // but we have to flip it horizontally.
-                rect.left *= serverToDisplayRatio;
-                rect.right *= serverToDisplayRatio;
-                rect.top *= serverToDisplayRatio;
-                rect.bottom *= serverToDisplayRatio;
-
-                // Flip horizontal
-                rect.left = finalWidth - rect.left;
-                rect.right = finalWidth - rect.right;
-                int tmp = rect.left;
-                rect.left = rect.right;
-                rect.right = tmp;
-
-                rect.offset(widthOff, heightOff);
-
-                Log.i(TAG, "scaled rect="+rect.toShortString()+" finalWidth="+finalWidth+" finalHeight="+finalHeight);
-
-                if(textureRect.contains(rect)) {
-                    if(cloudletType == CloudLetType.CLOUDLET_PUBLIC) {
-                        mCloudBB.rect=rect;
-                        mCloudBB.invalidate();
-                        mCloudBB.startAnimation(mCloudAlphaAnim);
-                    } else if(cloudletType == CloudLetType.CLOUDLET_MEX) {
-                        mEdgeBB.rect=rect;
-                        mEdgeBB.invalidate();
-                        mEdgeBB.startAnimation(mEdgeAlphaAnim);
+                int i;
+                int totalFaces;
+                JSONArray jsonRect;
+                Log.w(TAG, "rectJsonArray.length()="+rectJsonArray.length()+" "+rectJsonArray.toString());
+                if(prefMultiFace) {
+                    totalFaces = rectJsonArray.length();
+                    if(totalFaces == MAX_FACES) {
+                        totalFaces = MAX_FACES;
+                        Log.w(TAG, "MAX_FACES ("+MAX_FACES+") exceeded. Ignoring additional");
                     }
-                    updateUi();
                 } else {
-                    Log.w(TAG, "invalid CLOUD rectangle received: "+rect.toShortString());
+                    totalFaces = 1;
                 }
+                for(i = 0; i < totalFaces; i++) {
+                    try {
+                        jsonRect = rectJsonArray.getJSONArray(i);
+                        Rect rect = new Rect();
+                        rect.left = jsonRect.getInt(0);
+                        rect.top = jsonRect.getInt(1);
+                        rect.right = jsonRect.getInt(2);
+                        rect.bottom = jsonRect.getInt(3);
+                        Log.i(TAG, "received rect=" + rect.toShortString());
+                        if (rect.top == 0 && rect.left == 0 && rect.right == 0 && rect.bottom == 0) {
+                            Log.d(TAG, "Discarding empty rectangle");
+                            continue;
+                        }
+
+                        rect.left *= serverToDisplayRatio;
+                        rect.right *= serverToDisplayRatio;
+                        rect.top *= serverToDisplayRatio;
+                        rect.bottom *= serverToDisplayRatio;
+
+                        if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT) {
+                            // The image that was processed is what the camera sees, but the image we want to
+                            // overlay the rectangle onto is mirrored. So not only do we have to scale it,
+                            // but we have to flip it horizontally.
+                            rect.left = finalWidth - rect.left;
+                            rect.right = finalWidth - rect.right;
+                            int tmp = rect.left;
+                            rect.left = rect.right;
+                            rect.right = tmp;
+                        }
+
+                        rect.offset(widthOff, heightOff);
+
+                        Log.i(TAG, "jsonRect="+jsonRect+" scaled rect=" + rect.toShortString() + " finalWidth=" + finalWidth + " finalHeight=" + finalHeight);
+
+                        if (textureRect.contains(rect)) {
+                            Log.d(TAG, "Adding "+rect);
+                            BoundingBox bb;
+                            if (cloudletType == CloudLetType.CLOUDLET_PUBLIC) {
+                                bb = mCloudBBList.get(i);
+                            } else if (cloudletType == CloudLetType.CLOUDLET_MEX) {
+                                bb = mEdgeBBList.get(i);
+                            } else {
+                                Log.e(TAG, "Unknown cloudletType: "+cloudletType);
+                                continue;
+                            }
+                            bb.rect = rect;
+                            bb.invalidate();
+                            bb.restartAnimation();
+                        } else {
+                            Log.w(TAG, "invalid CLOUD rectangle received: " + jsonRect.toString()+" converted to: " + rect.toShortString());
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                updateUi();
+
             }
         });
     }
@@ -477,21 +510,27 @@ public class Camera2BasicFragment extends Fragment
      */
     public void updateUi() {
         mCloudLatency.setText("Cloud: " + String.valueOf(mVolleyRequestHandler.getCloudLatency()/1000000) + " ms");
-        mCloudStd.setText("Cloud STDDEV: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.cloudStdDev/1000000));
+        mCloudStd.setText("Stddev: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.getCloudStdDev()/1000000) + " ms");
         mEdgeLatency.setText("Edge: " + String.valueOf(mVolleyRequestHandler.getEdgeLatency() / 1000000) + " ms");
-        mEdgeStd.setText("Edge STDDEV: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.edgeStdDev / 1000000));
+        mEdgeStd.setText("Stddev: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.getEdgeStdDev() / 1000000) + " ms");
     }
 
-    public void updatePing(final CloudLetType cloudletType, final long latency) {
+    public void updatePing(final CloudLetType cloudletType, final long latency, final long stdDev) {
+        if(getActivity() == null) {
+            Log.w(TAG, "Activity has gone away. Abort UI update");
+            return;
+        }
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 switch(cloudletType) {
                     case CLOUDLET_MEX:
                         mEdgeLatency2.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
+                        mEdgeStd2.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
                     case CLOUDLET_PUBLIC:
                         mCloudLatency2.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
+                        mCloudStd2.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
                     default:
                         break;
@@ -678,8 +717,11 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
+        FrameLayout frameLayout = view.findViewById(R.id.container);
         mTextureView = view.findViewById(R.id.textureView);
         mTextureView.setOnClickListener(this);
+        mLatencyFullTitle = view.findViewById(R.id.latency_title);
+        mLatencyNetTitle = view.findViewById(R.id.latency_title2);
         mCloudLatency = view.findViewById(R.id.cloud_latency);
         mCloudLatency2 = view.findViewById(R.id.cloud_latency2);
         mCloudLatency.setTextColor(Color.RED);
@@ -692,22 +734,114 @@ public class Camera2BasicFragment extends Fragment
         mCloudStd.setTextColor(Color.RED);
         mEdgeStd = view.findViewById(R.id.edge_std_dev);
         mEdgeStd.setTextColor(Color.GREEN);
+        mCloudStd2 = view.findViewById(R.id.cloud_std_dev2);
+        mCloudStd.setTextColor(Color.RED);
+        mEdgeStd2 = view.findViewById(R.id.edge_std_dev2);
+        mEdgeStd2.setTextColor(Color.GREEN);
 
+        //Find 1 CLoudBB and create 4 more, using the same LayoutParams.
         mCloudBB = view.findViewById(R.id.cloudBB);
         mCloudBB.setColor(Color.RED);
+        for(int i = 1; i <= MAX_FACES; i++) {
+            BoundingBox bb = new BoundingBox(getContext());
+            bb.setColor(Color.RED);
+            bb.setLayoutParams(mCloudBB.getLayoutParams());
+            mCloudBBList.add(bb);
+            frameLayout.addView(bb);
+        }
+
+        //Find 1 EdgeBB and create 4 more, using the same LayoutParams.
         mEdgeBB = view.findViewById(R.id.edgeBB);
         mEdgeBB.setColor(Color.GREEN);
+        for(int i = 1; i <= MAX_FACES; i++) {
+            BoundingBox bb = new BoundingBox(getContext());
+            bb.setColor(Color.GREEN);
+            bb.setLayoutParams(mEdgeBB.getLayoutParams());
+            mEdgeBBList.add(bb);
+            frameLayout.addView(bb);
+        }
 
-        mCloudAlphaAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.alpha);
-        mCloudAlphaAnim.setFillAfter(true);
-        mCloudBB.startAnimation(mCloudAlphaAnim);
-        mEdgeAlphaAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.alpha);
-        mEdgeAlphaAnim.setFillAfter(true);
-        mEdgeBB.startAnimation(mEdgeAlphaAnim);
+        fabSwapCamera = view.findViewById(R.id.fabSwapCamera);
+        fabSwapCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switchCamera();
+            }
+        });
 
-        //TODO: Add these back at some point
-        mEdgeStd.setVisibility(View.INVISIBLE);
-        mCloudStd.setVisibility(View.INVISIBLE);
+        fabSettings = view.findViewById(R.id.fabSettings);
+        fabSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getContext(), SettingsActivity.class);
+                intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.FaceDetectionSettingsFragment.class.getName() );
+                intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
+                startActivity(intent);
+            }
+        });
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        onSharedPreferenceChanged(prefs, "ALL");
+    }
+
+    private void toggleViews() {
+        if(prefShowStdDev) {
+            mEdgeStd.setVisibility(View.VISIBLE);
+            mCloudStd.setVisibility(View.VISIBLE);
+            mEdgeStd2.setVisibility(View.VISIBLE);
+            mCloudStd2.setVisibility(View.VISIBLE);
+        } else {
+            mEdgeStd.setVisibility(View.GONE);
+            mCloudStd.setVisibility(View.GONE);
+            mEdgeStd2.setVisibility(View.GONE);
+            mCloudStd2.setVisibility(View.GONE);
+        }
+        if(prefShowFullLatency) {
+            mLatencyFullTitle.setVisibility(View.VISIBLE);
+            mCloudLatency.setVisibility(View.VISIBLE);
+            mEdgeLatency.setVisibility(View.VISIBLE);
+        } else {
+            mLatencyFullTitle.setVisibility(View.INVISIBLE);
+            mCloudLatency.setVisibility(View.INVISIBLE);
+            mEdgeLatency.setVisibility(View.INVISIBLE);
+        }
+        if(prefShowNetLatency) {
+            mLatencyNetTitle.setVisibility(View.VISIBLE);
+            mCloudLatency2.setVisibility(View.VISIBLE);
+            mEdgeLatency2.setVisibility(View.VISIBLE);
+        } else {
+            mLatencyNetTitle.setVisibility(View.INVISIBLE);
+            mCloudLatency2.setVisibility(View.INVISIBLE);
+            mEdgeLatency2.setVisibility(View.INVISIBLE);
+        }
+
+        mVolleyRequestHandler.setUseRollingAverage(prefUseRollingAvg);
+        mVolleyRequestHandler.setDoNetLatency(prefShowNetLatency);
+
+    }
+
+    private void switchCamera() {
+        if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_BACK) {
+            mCameraLensFacingDirection = CameraCharacteristics.LENS_FACING_FRONT;
+            closeCamera();
+            reopenCamera();
+
+        } else if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT) {
+            mCameraLensFacingDirection = CameraCharacteristics.LENS_FACING_BACK;
+            closeCamera();
+            reopenCamera();
+        }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+        prefs.edit().putInt(prefKeyFrontCamera, mCameraLensFacingDirection).apply();
+    }
+
+    private void reopenCamera() {
+        if (mTextureView.isAvailable()) {
+            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+        } else {
+            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+        }
     }
 
     @Override
@@ -794,7 +928,7 @@ public class Camera2BasicFragment extends Fragment
 
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing != CameraCharacteristics.LENS_FACING_FRONT) {
+                if (facing != null && facing != mCameraLensFacingDirection) {
                     continue;
                 }
 
@@ -808,7 +942,7 @@ public class Camera2BasicFragment extends Fragment
                 Size largest = Collections.max(
                         Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
-                mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
+                mImageReader = ImageReader.newInstance(largest.getWidth()/mImageReaderFactor, largest.getHeight()/mImageReaderFactor,
                         ImageFormat.JPEG, /*maxImages*/2);
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mBackgroundHandler);
@@ -870,15 +1004,9 @@ public class Camera2BasicFragment extends Fragment
                 if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     mTextureView.setAspectRatio(
                             mPreviewSize.getWidth(), mPreviewSize.getHeight());
-                    //mCloudBB.setLayoutParams(new RelativeLayout.LayoutParams(mPreviewSize.getWidth(), mPreviewSize.getHeight()));
-                    //mEdgeBB.setLayoutParams(new RelativeLayout.LayoutParams(mPreviewSize.getWidth(), mPreviewSize.getHeight()));
                 } else {
                     mTextureView.setAspectRatio(
                             mPreviewSize.getHeight(), mPreviewSize.getWidth());
-                    //mCloudBB.setLayoutParams(new RelativeLayout.LayoutParams(mPreviewSize.getHeight(), mPreviewSize.getWidth()));
-                    //mEdgeBB.setLayoutParams(new RelativeLayout.LayoutParams(mPreviewSize.getHeight(), mPreviewSize.getWidth()));
-
-
                 }
 
                 // Check if the flash is supported.
@@ -1350,4 +1478,41 @@ public class Camera2BasicFragment extends Fragment
                     .create();
         }
     }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Log.i(TAG, "Camera2BasicFragment onSharedPreferenceChanged("+key+")");
+        if(getContext() == null) {
+            //Can happen during rapid screen rotations.
+            return;
+        }
+        String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+        String prefKeyMultiFace = getResources().getString(R.string.preference_fd_multi_face);
+        String prefKeyShowFullLatency = getResources().getString(R.string.preference_fd_show_full_latency);
+        String prefKeyShowNetLatency = getResources().getString(R.string.preference_fd_show_net_latency);
+        String prefKeyShowStdDev = getResources().getString(R.string.preference_fd_show_stddev);
+        String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
+
+        if (key.equals(prefKeyFrontCamera) || key.equals("ALL")) {
+            mCameraLensFacingDirection = sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);
+        }
+        if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
+            prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
+        }
+        if (key.equals(prefKeyShowFullLatency) || key.equals("ALL")) {
+            prefShowFullLatency = sharedPreferences.getBoolean(prefKeyShowFullLatency, true);
+        }
+        if (key.equals(prefKeyShowNetLatency) || key.equals("ALL")) {
+            prefShowNetLatency = sharedPreferences.getBoolean(prefKeyShowNetLatency, true);
+        }
+        if (key.equals(prefKeyShowStdDev) || key.equals("ALL")) {
+            prefShowStdDev = sharedPreferences.getBoolean(prefKeyShowStdDev, false);
+        }
+        if (key.equals(prefKeyUseRollingAvg) || key.equals("ALL")) {
+            prefUseRollingAvg = sharedPreferences.getBoolean(prefKeyUseRollingAvg, false);
+        }
+
+        toggleViews();
+    }
+
 }
