@@ -10,4 +10,10 @@
         android:title="@string/preference_mex_location_verification_title"
         android:summary="@string/preference_mex_location_verification_summary"
         android:defaultValue="false" />
+    <SwitchPreference
+        android:key="@string/preference_net_switching_allowed"
+        android:title="@string/preference_net_switching_allowed_title"
+        android:summary="@string/preference_net_switching_allowed_summary"
+        android:defaultValue="false" />
+
 </PreferenceScreen>
