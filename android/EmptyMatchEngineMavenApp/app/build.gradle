@@ -32,7 +32,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     // Matching Engine SDK
-    implementation 'com.mobiledgex:matchingengine:0.0.3'
+    implementation 'com.mobiledgex:matchingengine:0.0.5'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
