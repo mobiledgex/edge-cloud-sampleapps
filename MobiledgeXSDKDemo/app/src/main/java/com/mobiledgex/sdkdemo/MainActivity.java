@@ -60,7 +60,8 @@ import com.google.maps.android.SphericalUtil;
 import com.mobiledgex.matchingengine.FindCloudletResponse;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
-import com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.CameraActivity;
+import com.mobiledgex.sdkdemo.camera.Camera2BasicFragment;
+import com.mobiledgex.sdkdemo.camera.CameraActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -204,8 +205,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         String latencyTestMethod = prefs.getString(getResources().getString(R.string.latency_method), defaultLatencyMethod);
+        boolean latencyTestAutoStart = prefs.getBoolean(getResources().getString(R.string.pref_latency_autostart), true);
         Log.i(TAG, "latencyTestMethod from prefs: "+latencyTestMethod);
+        Log.i(TAG, "latencyAutoStart from prefs: "+latencyTestAutoStart);
         CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
+        CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
 
     }
 
@@ -295,7 +299,7 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_register_client) {
             matchingEngineRequest(REQ_REGISTER_CLIENT);
         }
-        if (id == R.id.action_get_cloudlet_list) {
+        if (id == R.id.action_get_app_inst_list) {
             getCloudlets();
         }
         if (id == R.id.action_reset_location) {
@@ -349,17 +353,18 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, CameraActivity.class);
             startActivity(intent);
             return true;
-
-//        } else if (id == R.id.nav_gallery) {
-//
-//        } else if (id == R.id.nav_slideshow) {
-//
-//        } else if (id == R.id.nav_manage) {
-//
-//        } else if (id == R.id.nav_share) {
-//
-//        } else if (id == R.id.nav_send) {
-
+        } else if (id == R.id.nav_benchmark_edge) {
+            // Start the face recognition Activity in Edge benchmark mode
+            Intent intent = new Intent(this, CameraActivity.class);
+            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_EDGE, true);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.nav_benchmark_local) {
+            // Start the face recognition Activity in local benchmark mode
+            Intent intent = new Intent(this, CameraActivity.class);
+            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_LOCAL, true);
+            startActivity(intent);
+            return true;
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -672,7 +677,7 @@ public class MainActivity extends AppCompatActivity
      * @param cloudletList  List of found cloudlet instances.
      */
     @Override
-    public void onGetCloudletList(final AppClient.Match_Engine_Cloudlet_List cloudletList) {
+    public void onGetCloudletList(final AppClient.Match_Engine_AppInst_List cloudletList) {
         Log.i(TAG, "onGetCloudletList()");
         runOnUiThread(new Runnable() {
             @Override
@@ -846,6 +851,7 @@ public class MainActivity extends AppCompatActivity
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
+        String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
         String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
 
         if (key.equals(prefKeyAllowMEX)) {
@@ -861,6 +867,11 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyLatencyMethod)) {
             String latencyTestMethod = sharedPreferences.getString(getResources().getString(R.string.latency_method), defaultLatencyMethod);
             CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
+        }
+
+        if (key.equals(prefKeyLatencyAutoStart)) {
+            boolean latencyTestAutoStart = sharedPreferences.getBoolean(getResources().getString(R.string.pref_latency_autostart), true);
+            CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
         }
 
         if (key.equals(prefKeyDmeHostname)) {

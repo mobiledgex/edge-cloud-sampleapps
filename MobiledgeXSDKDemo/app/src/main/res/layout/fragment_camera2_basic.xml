@@ -20,22 +20,28 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000"
-    tools:context=".com.mobiledgex.sdkdemo.camera.CameraActivity">
+    tools:context="camera.CameraActivity">
 
-    <com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.AutoFitTextureView
+    <com.mobiledgex.sdkdemo.camera.AutoFitTextureView
         android:id="@+id/textureView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center" />
 
-    <com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.BoundingBox
+    <com.mobiledgex.sdkdemo.camera.BoundingBox
         android:id="@+id/cloudBB"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
-    <com.mobiledgex.sdkdemo.com.mobiledgex.sdkdemo.camera.BoundingBox
+    <com.mobiledgex.sdkdemo.camera.BoundingBox
         android:id="@+id/edgeBB"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
+    <com.mobiledgex.sdkdemo.camera.BoundingBox
+        android:id="@+id/localBB"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center" />

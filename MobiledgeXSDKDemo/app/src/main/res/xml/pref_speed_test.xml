@@ -33,4 +33,11 @@
         android:summary="@string/pref_summary_latency_method"
         android:title="@string/pref_title_latency_method" />
 
+    <SwitchPreference
+        android:key="@string/pref_latency_autostart"
+        android:title="@string/pref_latency_autostart_title"
+        android:summary="@string/pref_latency_autostart_summary"
+        android:defaultValue="true" />
+
+
 </PreferenceScreen>

@@ -23,6 +23,9 @@
 
     <!-- String for Face Detection preferences -->
     <string name="preference_fd_front_camera">fd_front_camera</string>
+    <string name="preference_fd_local_proc">fd_local_proc</string>
+    <string name="preference_fd_local_proc_title">Local processing</string>
+    <string name="preference_fd_local_proc_summary">Include tracking via local processing</string>
     <string name="preference_fd_multi_face">fd_multi_face</string>
     <string name="preference_fd_multi_face_title">Multi-face</string>
     <string name="preference_fd_multi_face_summary">Track multiple faces</string>
@@ -37,7 +40,7 @@
     <string name="preference_fd_show_stddev_summary">Standard deviation</string>
     <string name="preference_fd_use_rolling_avg">fd_use_rolling_avg</string>
     <string name="preference_fd_use_rolling_avg_title">Use Rolling Average</string>
-    <string name="preference_fd_use_rolling_avg_summary">Individual measurements or rolling average</string>
+    <string name="preference_fd_use_rolling_avg_summary">Show individual measurements or rolling average</string>
     <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to first-use screen -->
@@ -59,7 +62,7 @@
     <string name="nav_header_title">MobiledgeX</string>
     <string name="nav_header_subtitle">android@mobiledgex.com</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_get_cloudlet_list">Get Cloudlet List</string>
+    <string name="action_get_app_inst_list">Get App Instances</string>
     <string name="action_about">About</string>
     <string name="preference_speed_test_settings">Speed Test Settings</string>
     <string name="preference_general_settings">General Settings</string>
@@ -107,6 +110,10 @@
         <item>ping</item>
         <item>socket</item>
     </string-array>
+
+    <string name="pref_latency_autostart">latency_autostart</string>
+    <string name="pref_latency_autostart_title">Latency Test Auto-Start</string>
+    <string name="pref_latency_autostart_summary">Automatically start latency test when cloudlet is discovered.</string>
 
     <string name="pref_title_dme_hostname">DME Selection</string>
     <string name="pref_summary_dme_hostname">Select Demo or TDG Integration environment</string>
