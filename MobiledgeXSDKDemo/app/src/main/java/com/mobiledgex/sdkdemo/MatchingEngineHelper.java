@@ -256,7 +256,7 @@ public class MatchingEngineHelper {
 
                     case REQ_GET_CLOUDLETS:
                         // Location Verification (Blocking, or use verifyLocationFuture):
-                        AppClient.Match_Engine_Cloudlet_List cloudletList = mMatchingEngine.getCloudletList(req, 10000);
+                        AppClient.Match_Engine_AppInst_List cloudletList = mMatchingEngine.getAppInstList(req, 10000);
                         if(mMatchingEngineResultsListener != null) {
                             mMatchingEngineResultsListener.onGetCloudletList(cloudletList);
                         }

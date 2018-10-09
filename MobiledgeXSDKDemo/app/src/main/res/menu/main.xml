@@ -7,9 +7,9 @@
         android:title="@string/action_register_client"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_get_cloudlet_list"
+        android:id="@+id/action_get_app_inst_list"
         android:orderInCategory="100"
-        android:title="@string/action_get_cloudlet_list"
+        android:title="@string/action_get_app_inst_list"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_verify_location"

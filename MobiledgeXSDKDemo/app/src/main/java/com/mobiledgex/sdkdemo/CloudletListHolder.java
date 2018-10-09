@@ -10,9 +10,15 @@ public class CloudletListHolder {
 
     private ArrayMap<String, Cloudlet> mCloudletList = new ArrayMap<>();
     private LatencyTestMethod latencyTestMethod = LatencyTestMethod.ping;
+    private boolean latencyTestAutoStart;
 
     public static CloudletListHolder getSingleton() {
         return ourInstance;
+    }
+
+    public enum LatencyTestMethod {
+        ping,
+        socket
     }
 
     private CloudletListHolder() {
@@ -26,9 +32,12 @@ public class CloudletListHolder {
         this.mCloudletList = mCloudlets;
     }
 
-    public enum LatencyTestMethod {
-        ping,
-        socket
+    public boolean getLatencyTestAutoStart() {
+        return latencyTestAutoStart;
+    }
+
+    public void setLatencyTestAutoStart(boolean latencyTestAutoStart) {
+        this.latencyTestAutoStart = latencyTestAutoStart;
     }
 
     public LatencyTestMethod getLatencyTestMethod() {

@@ -66,8 +66,12 @@ public class Cloudlet implements Serializable {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
         update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPackets);
 
-        //All AsyncTask instances are run on the same thread, so this queues up the tasks.
-        startLatencyTest();
+        if(CloudletListHolder.getSingleton().getLatencyTestAutoStart()) {
+            //All AsyncTask instances are run on the same thread, so this queues up the tasks.
+            startLatencyTest();
+        } else {
+            Log.i(TAG, "LatencyTestAutoStart is disabled");
+        }
     }
 
     public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPackets) {
@@ -148,12 +152,13 @@ public class Cloudlet implements Serializable {
             Log.i(TAG, "Socket test forced for emulator");
             latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
         }
-        if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
+
+        if (latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
             new LatencyTestTaskSocket().execute();
-        } else if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
+        } else if (latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
             new LatencyTestTaskPing().execute();
         } else {
-            Log.e(TAG, "Unknown latencyTestMethod: "+latencyTestMethod);
+            Log.e(TAG, "Unknown latencyTestMethod: " + latencyTestMethod);
         }
     }
 
