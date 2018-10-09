@@ -9,7 +9,7 @@ android {
         applicationId "com.mobiledgex.sdkdemo"
         minSdkVersion 23
         targetSdkVersion 27
-        versionCode 14
+        versionCode 16
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -22,7 +22,7 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
@@ -34,16 +34,14 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
-    implementation "com.mobiledgex:matchingengine:0.0.4"
+    implementation 'com.mobiledgex:matchingengine:0.0.5'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
-
     // For Google Location Services.
     implementation 'com.google.android.gms:play-services-location:15.0.1'
-
     implementation 'fr.bmartel:jspeedtest:1.32.1'
     implementation 'com.android.volley:volley:1.1.1'
-
+    // Required for local unit tests (JUnit 4 framework)
+    implementation project(':opencv')
 }
