@@ -6,16 +6,19 @@ import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.mobiledgex.sdkdemo.Account;
 import com.mobiledgex.sdkdemo.CloudletListHolder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -25,6 +28,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,48 +42,49 @@ public class VolleyRequestHandler {
      * For every N face detection requests, do a network latency test.
      */
     public static final int PING_INTERVAL = 4;
+    public static final int TRAINING_COUNT_TARGET = 10;
 
     private RequestQueue queue;
-    private final Camera2BasicFragment mCamera2BasicFragment;
-
-    public double edgeStdDev = 0;
-    public double cloudStdDev = 0;
-    private long cloudCount = 0;
-    private long edgeCount = 0;
+    private final Camera2BasicFragment mCamera2BasicFragment; //Our owner
 
     private boolean doNetLatency = true;
-    public boolean cloudBusy = false;
-    public boolean edgeBusy = false;
-    private long cloudLatency = 0;
-    private long edgeLatency = 0;
     private final int rollingAvgSize = 100;
-    private RollingAverage cloudLatencyRollingAvg = new RollingAverage(rollingAvgSize);
-    private RollingAverage edgeLatencyRollingAvg = new RollingAverage(rollingAvgSize);
-    private RollingAverage cloudLatencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
-    private RollingAverage edgeLatencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
 
     private static int port = 8000;
-    private static String cloudHost = "104.42.217.135"; //West US
+    private static String cloudHost = "23.99.193.4"; // facerec-central
     private static String edgeHost = "37.50.143.103"; //Bonn
+//    private static String cloudHost = "104.42.217.135"; //West US
 //    private static String edgeHost = "80.187.128.15"; //Berlin
 
     //Bruce's private test environment
 //    private static String cloudHost = "acrotopia.com";
 //    private static String edgeHost = "192.168.1.86";
+//    private static String edgeHost = "10.157.107.83";
 
-    private static String cloudAPIEndpoint = "http://"+cloudHost+":"+port;
-    private static String edgeAPIEndpoint = "http://"+edgeHost+":"+port;
+    public ImageSender cloudImageSender = new ImageSender(cloudHost, CLOUDLET_PUBLIC);
+    public ImageSender edgeImageSender = new ImageSender(edgeHost, CLOUDLET_MEX);
 
     //Variables for latency test
     private CloudletListHolder.LatencyTestMethod latencyTestMethod;
     private Handler mHandler;
     private final int socketTimeout = 3000;
     private boolean useRollingAverage = false;
+    private String mSubject = "";
+
+    enum CameraMode {
+        FACE_DETECTION,
+        FACE_RECOGNITION,
+        FACE_TRAINING,
+        FACE_UPDATING_SERVER
+    }
 
     public VolleyRequestHandler(Camera2BasicFragment camera2BasicFragment) {
         mCamera2BasicFragment = camera2BasicFragment;
 
         latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        if(Account.getSingleton().isSignedIn()) {
+            mSubject = Account.getSingleton().getGoogleSignInAccount().getDisplayName();
+        }
 
         // Instantiate the RequestQueue.
         queue = Volley.newRequestQueue(camera2BasicFragment.getActivity());
@@ -88,15 +94,14 @@ public class VolleyRequestHandler {
         mHandler = new Handler(handlerThread.getLooper());
     }
 
-    public void sendImage(Bitmap image)
-    {
-        if (!cloudBusy) {
-            sendToCloud(image);
-        }
+    public void setCameraMode(CameraMode mode) {
+        cloudImageSender.setCameraMode(mode);
+        edgeImageSender.setCameraMode(mode);
+    }
 
-        if (!edgeBusy) {
-            sendToEdge(image);
-        }
+    public void sendImage(Bitmap image) {
+        cloudImageSender.sendImage(image);
+        edgeImageSender.sendImage(image);
     }
 
     /**
@@ -113,7 +118,7 @@ public class VolleyRequestHandler {
                 String pingCommand = "/system/bin/ping -c 1 " + host;
                 String inputLine = "";
 
-                String regex = "time=(\\d+.\\d+) ms";
+                String regex = "(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+) ms";
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher;
 
@@ -127,8 +132,6 @@ public class VolleyRequestHandler {
                     Log.d(TAG, "inputLine=" + inputLine);
                     if (inputLine.contains("rtt min")) {
                         // Extract the average round trip time from the inputLine string
-                        regex = "(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+) ms";
-                        pattern = Pattern.compile(regex);
                         matcher = pattern.matcher(inputLine);
                         if (matcher.find()) {
                             Log.d(TAG, "output=" + matcher.group(0));
@@ -164,166 +167,191 @@ public class VolleyRequestHandler {
         mCamera2BasicFragment.updatePing(cloudletType, latency, rollingAverage.getStdDev());
     }
 
-    /**
-     * Encode the bitmap and use Volley async to request face detection
-     * coordinates. Decode the returned JSON string and update the rectangles
-     * on the preview. Also time the transaction to calculate latency.
-     *
-     * @param bitmap  The image to encode and send.
-     */
-    private void sendToCloud(Bitmap bitmap) {
-        // Get a lock for the busy
-        cloudBusy = true;
-        if(doNetLatency) {
-            cloudCount++;
-            if (cloudCount == 1 || cloudCount % PING_INTERVAL == 0) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        doSinglePing(cloudHost, cloudLatencyNetOnlyRollingAvg, CLOUDLET_PUBLIC);
-                        cloudBusy = false;
-                    }
-                });
-                return;
+    public class ImageSender {
+        public String host;
+        private RollingAverage latencyRollingAvg = new RollingAverage(rollingAvgSize);
+        private RollingAverage latencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
+        public int trainingCount;
+        public boolean busy;
+        public double stdDev = 0;
+        private long latency = 0;
+        private long count = 0;
+        public CameraMode mCameraMode;
+        private String djangoUrl = "/detector/detect/";
+        Camera2BasicFragment.CloudLetType cloudLetType;
+
+        public ImageSender(String host, Camera2BasicFragment.CloudLetType cloudLetType) {
+            this.host = host;
+            this.cloudLetType = cloudLetType;
+        }
+
+        public void setCameraMode(CameraMode mode) {
+            mCameraMode = mode;
+            if(mode == CameraMode.FACE_DETECTION || mode == CameraMode.FACE_UPDATING_SERVER) {
+                djangoUrl = "/detector/detect/";
+            } else if (mode == CameraMode.FACE_RECOGNITION){
+                djangoUrl = "/recognizer/predict/";
+            } else if (mode == CameraMode.FACE_TRAINING){
+                djangoUrl = "/recognizer/add/";
+                trainingCount = 0;
+            } else {
+                Log.e(TAG, "Invalid CameraMode: "+mode);
             }
         }
 
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
-        byte[] bytes = byteStream.toByteArray();
-        String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
-
-        final String requestBody = encoded;
-        String url = cloudAPIEndpoint+ "/detect3/";
-
-        final long startTime = System.nanoTime();
-
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "sendToCloud response="+response);
-                        long endTime = System.nanoTime();
-                        cloudBusy = false;
-                        cloudLatency = endTime - startTime;
-                        cloudLatencyRollingAvg.add(cloudLatency);
-                        cloudStdDev = cloudLatencyRollingAvg.getStdDev();
-                        Log.i("BDA", "cloudLatency="+(cloudLatency/1000000.0)+" cloudStdDev="+(cloudStdDev/1000000.0));
-                        try {
-                            JSONArray jsonArray = new JSONArray(response);
-                            mCamera2BasicFragment.updateRectangles(CLOUDLET_PUBLIC, jsonArray);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                cloudBusy = false;
-                Log.e(TAG, "That didn't work! error="+error);
-            }
-        }) {
-            @Override
-            public String getBodyContentType() {
-                return "application/json; charset=utf-8";
-            }
-
-            @Override
-            public byte[] getBody() {
-                try {
-                    return requestBody == null ? null : requestBody.getBytes("utf-8");
-                } catch (UnsupportedEncodingException uee) {
-                    Log.wtf(TAG, "Unsupported Encoding while trying to get the body bytes");
-                    return null;
-                }
-            }
-        };
-
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
-
-    }
-
-    /**
-     * Encode the bitmap and use Volley async to request face detection
-     * coordinates. Decode the returned JSON string and update the rectangles
-     * on the preview. Also time the transaction to calculate latency.
-     *
-     * @param bitmap  The image to encode and send.
-     */
-    private void sendToEdge(Bitmap bitmap) {
-        // Get a lock for the busy
-        edgeBusy = true;
-        if(doNetLatency) {
-            edgeCount++;
-            if (edgeCount == 1 || edgeCount % PING_INTERVAL == 0) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        doSinglePing(edgeHost, edgeLatencyNetOnlyRollingAvg, CLOUDLET_MEX);
-                        edgeBusy = false;
-                    }
-                });
+        /**
+         * Encode the bitmap and use Volley async to request face detection
+         * coordinates. Decode the returned JSON string and update the rectangles
+         * on the preview. Also time the transaction to calculate latency.
+         *
+         * @param bitmap  The image to encode and send.
+         */
+        private void sendImage(Bitmap bitmap) {
+            if(busy) {
                 return;
             }
-        }
-
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
-        byte[] bytes = byteStream.toByteArray();
-        String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
-
-        final String requestBody = encoded;
-        String url = edgeAPIEndpoint+ "/detect3/";
-
-        final long startTime = System.nanoTime();
-
-        // Request a byte response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "sendToEdge response="+response);
-                        long endTime = System.nanoTime();
-                        edgeBusy = false;
-                        edgeLatency = endTime - startTime;
-                        edgeLatencyRollingAvg.add(edgeLatency);
-                        edgeStdDev = edgeLatencyRollingAvg.getStdDev();
-                        Log.i("BDA", "edgeLatency="+(edgeLatency/1000000.0)+" edgeStdDev="+(edgeStdDev/1000000.0));
-                        try {
-                            JSONArray jsonArray = new JSONArray(response);
-                            mCamera2BasicFragment.updateRectangles(CLOUDLET_MEX, jsonArray);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+            // Get a lock for the busy
+            busy = true;
+            if(doNetLatency) {
+                count++;
+                if (count == 1 || count % PING_INTERVAL == 0) {
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            doSinglePing(host, latencyNetOnlyRollingAvg, cloudLetType);
+                            busy = false;
                         }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                edgeBusy = false;
-                Log.e(TAG, "That didn't work! error="+error);
-            }
-        }) {
-            @Override
-            public String getBodyContentType() {
-                return "application/json; charset=utf-8";
-            }
-
-            @Override
-            public byte[] getBody() {
-                try {
-                    return requestBody == null ? null : requestBody.getBytes("utf-8");
-                } catch (UnsupportedEncodingException uee) {
-                    Log.wtf(TAG, "Unsupported Encoding while trying to get the body bytes");
-                    return null;
+                    });
+                    return;
                 }
             }
-        };
 
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+            byte[] bytes = byteStream.toByteArray();
+            String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
 
+            final String requestBody = encoded;
+            String url = "http://"+host+":"+port + djangoUrl;
+
+            final long startTime = System.nanoTime();
+
+            // Request a byte response from the provided URL.
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            Log.d(TAG, cloudLetType+" sendImage response="+response);
+                            long endTime = System.nanoTime();
+                            busy = false;
+                            latency = endTime - startTime;
+                            latencyRollingAvg.add(latency);
+                            stdDev = latencyRollingAvg.getStdDev();
+                            Log.i("BDA", cloudLetType+" latency="+(latency/1000000.0)+" stdDev="+(stdDev/1000000.0));
+                            try {
+                                JSONObject jsonObject = new JSONObject(response);
+                                JSONArray rects;
+                                String subject = null;
+                                if(jsonObject.getBoolean("success")) {
+                                    if(jsonObject.has("subject")) {
+                                        //This means it was from recognition mode
+                                        subject = jsonObject.getString("subject");
+                                        JSONArray rect = jsonObject.getJSONArray("rect");
+                                        rects = new JSONArray();
+                                        rects.put(rect);
+                                    } else {
+                                        //Default is from detection mode
+                                        rects = jsonObject.getJSONArray("rects");
+                                    }
+                                    mCamera2BasicFragment.updateRectangles(cloudLetType, rects, subject);
+
+                                    if(mCameraMode == CameraMode.FACE_TRAINING) {
+                                        trainingCount++;
+                                        Log.i("BDA7", cloudLetType+" trainingCount="+trainingCount);
+                                        CameraMode mode = CameraMode.FACE_TRAINING;
+                                        if(trainingCount >= TRAINING_COUNT_TARGET) {
+                                            updateTraining();
+                                        }
+                                        mCamera2BasicFragment.updateTrainingProgress();
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    busy = false;
+                    Log.e(TAG, "That didn't work! error="+error);
+                }
+            }) {
+
+                @Override
+                protected Map<String,String> getParams(){
+                    Map<String, String> params = new HashMap<String, String>();
+                    params.put("subject", mSubject);
+                    params.put("image", requestBody);
+                    return params;
+                }
+            };
+
+            // Add the request to the RequestQueue.
+            queue.add(stringRequest);
+        }
+
+        private void updateTraining() {
+            Log.i("BDA7", cloudLetType+" updateTraining mCameraMode="+mCameraMode);
+            if(mCameraMode == CameraMode.FACE_UPDATING_SERVER) {
+                return;
+            }
+            setCameraMode(CameraMode.FACE_UPDATING_SERVER);
+
+            String url = "http://"+host+":"+port + "/recognizer/train/";
+            Log.i("BDA7", cloudLetType+" url="+url);
+
+            final long startTime = System.nanoTime();
+
+            // Request a byte response from the provided URL.
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            Log.d("BDA7", cloudLetType+" updateTraining response="+response);
+                            long endTime = System.nanoTime();
+                            long elapsed = endTime - startTime;
+                            Log.i("BDA7", cloudLetType+" updateTraining elapsed="+(elapsed/1000000.0));
+                            if(response.startsWith("OK")) {
+                                Log.i("BDA7", cloudLetType+" updateTraining successful");
+                                setCameraMode(CameraMode.FACE_RECOGNITION);
+                            } else {
+                                Log.i("BDA7", cloudLetType+" updateTraining failed!");
+                            }
+                            mCamera2BasicFragment.updateTrainingProgress();
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    busy = false;
+                    Log.e(TAG, "That didn't work! error="+error);
+                }
+            }) {
+                @Override
+                protected Map<String,String> getParams(){
+                    Map<String, String> params = new HashMap<String, String>();
+                    params.put("subject", mSubject);
+                    return params;
+                }
+            };
+
+            // Add the request to the RequestQueue.
+            //TODO: Revisit this when the daemonized server is ready.
+            stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                    0,
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            queue.add(stringRequest);
+        }
     }
 
     private static boolean isReachable(String addr, int openPort, int timeOutMillis) {
@@ -346,18 +374,18 @@ public class VolleyRequestHandler {
     public long getCloudLatency()
     {
         if(useRollingAverage) {
-            return cloudLatencyRollingAvg.getAverage();
+            return cloudImageSender.latencyRollingAvg.getAverage();
         } else {
-            return cloudLatency;
+            return cloudImageSender.latency;
         }
     }
 
     public long getEdgeLatency()
     {
         if(useRollingAverage) {
-            return edgeLatencyRollingAvg.getAverage();
+            return edgeImageSender.latencyRollingAvg.getAverage();
         } else {
-            return edgeLatency;
+            return edgeImageSender.latency;
         }
     }
 
@@ -369,11 +397,11 @@ public class VolleyRequestHandler {
     }
 
     public double getCloudStdDev() {
-        return cloudStdDev;
+        return cloudImageSender.stdDev;
     }
 
     public double getEdgeStdDev() {
-        return edgeStdDev;
+        return edgeImageSender.stdDev;
     }
 
     public static class RollingAverage {

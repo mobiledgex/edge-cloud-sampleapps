@@ -50,7 +50,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.AsyncTask;
-import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -59,24 +58,31 @@ import android.os.Looper;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mobiledgex.sdkdemo.Account;
 import com.mobiledgex.sdkdemo.R;
 import com.mobiledgex.sdkdemo.SettingsActivity;
 
@@ -86,11 +92,9 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Scalar;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
@@ -128,8 +132,8 @@ public class Camera2BasicFragment extends Fragment
     private TextView mEdgeStd;
     private TextView mCloudStd2;
     private TextView mEdgeStd2;
-    private FloatingActionButton fabSwapCamera;
-    private FloatingActionButton fabSettings;
+    private TextView mProgressText;
+    private ProgressBar mProgressBarTraining;
 
     private BoundingBox mCloudBB;
     private BoundingBox mEdgeBB;
@@ -158,6 +162,7 @@ public class Camera2BasicFragment extends Fragment
     private long mBenchmarkTickMillis = 200;
     private int mBenchmarkFrameCount;
     private boolean mBenchmarkMaxCpuFlag = false;
+    private VolleyRequestHandler.CameraMode mCameraMode;
 
     enum CloudLetType {
         CLOUDLET_MEX,
@@ -209,12 +214,12 @@ public class Camera2BasicFragment extends Fragment
     private float serverToDisplayRatio;
 
     private CascadeClassifier cascadeClassifier;
-    private Mat grayscaleImage;
     private int absoluteFaceSize;
     VolleyRequestHandler.RollingAverage localLatencyRollingAvg = new VolleyRequestHandler.RollingAverage(100);
 
     public static final String EXTRA_BENCH_EDGE = "extra_bench_edge";
     public static final String EXTRA_BENCH_LOCAL = "extra_bench_local";
+    public static final String EXTRA_FACE_RECOGNITION = "extra_face_recognition";
 
     @Override
     public void onAttach(Context context) {
@@ -239,7 +244,7 @@ public class Camera2BasicFragment extends Fragment
      * @param context
      */
     public void runBenchmark(Context context) {
-        fabSwapCamera.setVisibility(View.INVISIBLE);
+        //TODO Disable camera swap menu item
         closeCamera();
         stopBackgroundThread();
 
@@ -267,7 +272,7 @@ public class Camera2BasicFragment extends Fragment
             public void onFinish() {
                 mBenchmarkMaxCpuFlag = false;
                 Log.i(TAG, "mBenchmarkFrameCount = " + mBenchmarkFrameCount);
-                mVolleyRequestHandler.cloudBusy = false;
+                mVolleyRequestHandler.cloudImageSender.busy = false;
 
                 //Write some results to a timestamped text file.
                 String benchmarkType;
@@ -622,7 +627,7 @@ public class Camera2BasicFragment extends Fragment
             long localAvg = localLatencyRollingAvg.getAverage();
             Log.i("BDA", "localLatency="+(localLatency/1000000.0)+" localAvg="+(localAvg/1000000.0)+" localStdDev="+(localStdDev/1000000.0));
 
-            updateRectangles(CloudLetType.LOCAL_PROCESSING, jsonArray);
+            updateRectangles(CloudLetType.LOCAL_PROCESSING, jsonArray, null);
 
             // Save image to local storage.
 //            if (facesArray.length > 0) {
@@ -639,8 +644,8 @@ public class Camera2BasicFragment extends Fragment
      * @param cloudletType
      * @param rectJsonArray
      */
-    public void updateRectangles(final CloudLetType cloudletType, final JSONArray rectJsonArray) {
-        Log.i(TAG, "updateRectangles("+cloudletType+","+rectJsonArray.toString()+")");
+    public void updateRectangles(final CloudLetType cloudletType, final JSONArray rectJsonArray, final String subject) {
+        Log.i(TAG, "updateRectangles("+cloudletType+","+rectJsonArray.toString()+","+subject+")");
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -733,6 +738,7 @@ public class Camera2BasicFragment extends Fragment
                             bb.rect = rect;
                             bb.invalidate();
                             bb.restartAnimation();
+                            bb.setSubject(subject);
                         } else {
                             Log.w(TAG, "invalid "+cloudletType+" rectangle received: " + jsonRect.toString()+" converted to: " + rect.toShortString());
                         }
@@ -755,6 +761,33 @@ public class Camera2BasicFragment extends Fragment
         mCloudStd.setText("Stddev: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.getCloudStdDev()/1000000) + " ms");
         mEdgeLatency.setText("Edge: " + String.valueOf(mVolleyRequestHandler.getEdgeLatency() / 1000000) + " ms");
         mEdgeStd.setText("Stddev: " + new DecimalFormat("#.##").format(mVolleyRequestHandler.getEdgeStdDev() / 1000000) + " ms");
+    }
+
+    public void updateTrainingProgress() {
+        Log.i("BDA7", "updateTrainingProgress() edge="+mVolleyRequestHandler.edgeImageSender.mCameraMode+" cloud="+mVolleyRequestHandler.cloudImageSender.mCameraMode);
+        mProgressBarTraining.setVisibility(View.VISIBLE);
+        mProgressText.setVisibility(View.VISIBLE);
+        //Find smaller value.
+        int progress = mVolleyRequestHandler.cloudImageSender.trainingCount;
+        if( mVolleyRequestHandler.edgeImageSender.trainingCount <= progress) {
+            progress = mVolleyRequestHandler.edgeImageSender.trainingCount;
+        }
+
+        VolleyRequestHandler.CameraMode edgeMode = mVolleyRequestHandler.edgeImageSender.mCameraMode;
+        VolleyRequestHandler.CameraMode cloudMode = mVolleyRequestHandler.cloudImageSender.mCameraMode;
+        if(edgeMode == VolleyRequestHandler.CameraMode.FACE_TRAINING
+                || cloudMode == VolleyRequestHandler.CameraMode.FACE_TRAINING) {
+            mProgressBarTraining.setProgress(progress);
+            mProgressText.setText("Collecting images... "+progress+"/"+VolleyRequestHandler.TRAINING_COUNT_TARGET);
+        } else if(edgeMode == VolleyRequestHandler.CameraMode.FACE_UPDATING_SERVER
+                && cloudMode == VolleyRequestHandler.CameraMode.FACE_UPDATING_SERVER) {
+            mProgressBarTraining.setIndeterminate(true);
+            mProgressText.setText("Updating server...");
+        } else if(edgeMode == VolleyRequestHandler.CameraMode.FACE_RECOGNITION
+                && cloudMode == VolleyRequestHandler.CameraMode.FACE_RECOGNITION) {
+            mProgressBarTraining.setVisibility(View.GONE);
+            mProgressText.setVisibility(View.GONE);
+        }
     }
 
     public void updatePing(final CloudLetType cloudletType, final long latency, final long stdDev) {
@@ -992,13 +1025,73 @@ public class Camera2BasicFragment extends Fragment
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.i("BDA9", "onCreateOptionsMenu");
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.camera_menu, menu);
+
+        if(mCameraMode == VolleyRequestHandler.CameraMode.FACE_DETECTION) {
+            MenuItem item = menu.findItem(R.id.action_camera_training);
+            item.setVisible(false);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if (id == R.id.action_camera_swap) {
+            switchCamera();
+            return true;
+        }
+
+        if (id == R.id.action_camera_settings) {
+            Intent intent = new Intent(getContext(), SettingsActivity.class);
+            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.FaceDetectionSettingsFragment.class.getName() );
+            intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
+            startActivity(intent);
+            return true;
+        }
+
+        if (id == R.id.action_camera_training) {
+            if(!Account.getSingleton().isSignedIn()) {
+                new android.support.v7.app.AlertDialog.Builder(getContext())
+                        .setTitle(R.string.sign_in_required_title)
+                        .setMessage(R.string.sign_in_required_message)
+                        .setPositiveButton("OK", null)
+                        .show();
+                return true;
+            }
+            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_TRAINING);
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        Log.i("BDA9", "onCreate");
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i("BDA9", "onCreateView");
         return inflater.inflate(R.layout.fragment_camera2_basic, container, false);
     }
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
+        Log.i("BDA9", "onViewCreated");
+        Toolbar cameraToolbar = view.findViewById(R.id.cameraToolbar);
+        ((AppCompatActivity)getActivity()).setSupportActionBar(cameraToolbar);
+
         FrameLayout frameLayout = view.findViewById(R.id.container);
         mTextureView = view.findViewById(R.id.textureView);
         mTextureView.setOnClickListener(this);
@@ -1024,10 +1117,12 @@ public class Camera2BasicFragment extends Fragment
         //Find 1 CLoudBB and create MAX_FACES-1 more, using the same LayoutParams.
         mCloudBB = view.findViewById(R.id.cloudBB);
         mCloudBB.setColor(Color.RED);
+        mCloudBB.setCloudletType(CloudLetType.CLOUDLET_PUBLIC);
         mCloudBBList.add(mCloudBB);
         for(int i = 1; i <= MAX_FACES; i++) {
             BoundingBox bb = new BoundingBox(getContext());
             bb.setColor(Color.RED);
+            bb.setCloudletType(CloudLetType.CLOUDLET_PUBLIC);
             bb.setLayoutParams(mCloudBB.getLayoutParams());
             mCloudBBList.add(bb);
             frameLayout.addView(bb);
@@ -1036,10 +1131,12 @@ public class Camera2BasicFragment extends Fragment
         //Find 1 EdgeBB and create MAX_FACES-1 more, using the same LayoutParams.
         mEdgeBB = view.findViewById(R.id.edgeBB);
         mEdgeBB.setColor(Color.GREEN);
+        mEdgeBB.setCloudletType(CloudLetType.CLOUDLET_MEX);
         mEdgeBBList.add(mEdgeBB);
         for(int i = 1; i <= MAX_FACES; i++) {
             BoundingBox bb = new BoundingBox(getContext());
             bb.setColor(Color.GREEN);
+            bb.setCloudletType(CloudLetType.CLOUDLET_MEX);
             bb.setLayoutParams(mEdgeBB.getLayoutParams());
             mEdgeBBList.add(bb);
             frameLayout.addView(bb);
@@ -1049,44 +1146,44 @@ public class Camera2BasicFragment extends Fragment
         //Find 1 LocalBB and create MAX_FACES-1 more, using the same LayoutParams.
         mLocalBB = view.findViewById(R.id.localBB);
         mLocalBB.setColor(Color.BLUE);
+//        mLocalBB.shapeType = BoundingBox.ShapeType.OVAL;
         mLocalBBList.add(mLocalBB);
         for(int i = 1; i <= MAX_FACES; i++) {
             BoundingBox bb = new BoundingBox(getContext());
             bb.setColor(Color.BLUE);
+//            bb.shapeType = BoundingBox.ShapeType.OVAL;
             bb.setLayoutParams(mLocalBB.getLayoutParams());
             mLocalBBList.add(bb);
             frameLayout.addView(bb);
         }
 
-        fabSwapCamera = view.findViewById(R.id.fabSwapCamera);
-        fabSwapCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                switchCamera();
-            }
-        });
-
-        fabSettings = view.findViewById(R.id.fabSettings);
-        fabSettings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getContext(), SettingsActivity.class);
-                intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.FaceDetectionSettingsFragment.class.getName() );
-                intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
-                startActivity(intent);
-            }
-        });
+        mProgressBarTraining = view.findViewById(R.id.progressBarTraining);
+        mProgressBarTraining.setProgress(0);
+        mProgressBarTraining.setMax(VolleyRequestHandler.TRAINING_COUNT_TARGET);
+        mProgressBarTraining.setVisibility(View.GONE);
+        mProgressText = view.findViewById(R.id.progressTextView);
+        mProgressText.setVisibility(View.GONE);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         onSharedPreferenceChanged(prefs, "ALL");
 
         Intent intent = getActivity().getIntent();
+        boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
+        if(faceRecognition) {
+            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_RECOGNITION);
+            prefLocalProcessing = false;
+            cameraToolbar.setTitle(R.string.title_activity_face_recognition);
+        } else {
+            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_DETECTION);
+            mCameraMode = VolleyRequestHandler.CameraMode.FACE_DETECTION;
+            cameraToolbar.setTitle(R.string.title_activity_face_detection);
+        }
         boolean benchEdge = intent.getBooleanExtra(EXTRA_BENCH_EDGE, false);
         boolean benchLocal = intent.getBooleanExtra(EXTRA_BENCH_LOCAL, false);
         if(benchEdge) {
             prefLocalProcessing = false;
             prefRemoteProcessing = true;
-            mVolleyRequestHandler.cloudBusy = true;
+            mVolleyRequestHandler.cloudImageSender.busy = true;
         } else if(benchLocal) {
             prefLocalProcessing = true;
             prefRemoteProcessing = false;
@@ -1674,7 +1771,7 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onClick(View view) {
-        Log.w(TAG, "cloudBusy="+mVolleyRequestHandler.cloudBusy+" edgeBusy="+mVolleyRequestHandler.edgeBusy);
+        Log.w(TAG, "cloudBusy="+mVolleyRequestHandler.cloudImageSender.busy+" edgeBusy="+mVolleyRequestHandler.edgeImageSender.busy);
         switch (view.getId()) {
             /*case R.id.picture: {
                 takePicture();

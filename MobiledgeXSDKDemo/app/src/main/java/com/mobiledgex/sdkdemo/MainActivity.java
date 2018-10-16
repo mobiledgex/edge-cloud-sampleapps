@@ -38,6 +38,11 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -56,6 +61,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.maps.android.SphericalUtil;
 import com.mobiledgex.matchingengine.FindCloudletResponse;
 import com.mobiledgex.matchingengine.MatchingEngine;
@@ -89,6 +96,7 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_VERIFIED = 0xff009933;
     public static final int COLOR_FAILURE = 0xffff3300;
     public static final int COLOR_CAUTION = 0xff00b33c; //Amber: ffbf00;
+    private static final int RC_SIGN_IN = 1;
     private String mHostname;
 
     private GoogleMap mGoogleMap;
@@ -109,6 +117,10 @@ public class MainActivity extends AppCompatActivity
     private double mGpsLocationAccuracyKM;
     private String defaultLatencyMethod = "ping";
 
+    private GoogleSignInClient mGoogleSignInClient;
+    private MenuItem signInMenuItem;
+    private MenuItem signOutMenuItem;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,6 +135,35 @@ public class MainActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
 
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        // Check for existing Google Sign In account, if the user is already signed in
+        // the GoogleSignInAccount will be non-null.
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        Account.getSingleton().setGoogleSignInAccount(account);
+
+        signInMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signin);
+        signOutMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signout);
+
+        if(account != null) {
+            //This means we're already signed in.
+            signInMenuItem.setVisible(false);
+            signOutMenuItem.setVisible(true);
+        } else {
+            signInMenuItem.setVisible(true);
+            signOutMenuItem.setVisible(false);
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -131,9 +172,6 @@ public class MainActivity extends AppCompatActivity
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -197,8 +235,10 @@ public class MainActivity extends AppCompatActivity
         String uuidKey = getResources().getString(R.string.preference_mex_user_uuid);
         String currentUUID = prefs.getString(uuidKey, "");
         if (currentUUID.isEmpty()) {
+            UUID uuid = mMatchingEngineHelper.getMatchingEngine().createUUID();
+            mMatchingEngineHelper.getMatchingEngine().setUUID(uuid);
             prefs.edit()
-                    .putString(uuidKey, mMatchingEngineHelper.getMatchingEngine().createUUID().toString())
+                    .putString(uuidKey, uuid.toString())
                     .apply();
         } else {
             mMatchingEngineHelper.getMatchingEngine().setUUID(UUID.fromString(currentUUID));
@@ -347,24 +387,44 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_about) {
             // Handle the About action
             showAboutDialog();
-
+            return true;
         } else if (id == R.id.nav_camera) {
+            // Start the face detection Activity
+            Intent intent = new Intent(this, CameraActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.nav_face_recognition) {
             // Start the face recognition Activity
             Intent intent = new Intent(this, CameraActivity.class);
+            intent.putExtra(Camera2BasicFragment.EXTRA_FACE_RECOGNITION, true);
             startActivity(intent);
             return true;
-        } else if (id == R.id.nav_benchmark_edge) {
-            // Start the face recognition Activity in Edge benchmark mode
-            Intent intent = new Intent(this, CameraActivity.class);
-            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_EDGE, true);
-            startActivity(intent);
-            return true;
-        } else if (id == R.id.nav_benchmark_local) {
-            // Start the face recognition Activity in local benchmark mode
-            Intent intent = new Intent(this, CameraActivity.class);
-            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_LOCAL, true);
-            startActivity(intent);
-            return true;
+//        } else if (id == R.id.nav_benchmark_edge) {
+//            // Start the face detection Activity in Edge benchmark mode
+//            Intent intent = new Intent(this, CameraActivity.class);
+//            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_EDGE, true);
+//            startActivity(intent);
+//            return true;
+//        } else if (id == R.id.nav_benchmark_local) {
+//            // Start the face detection Activity in local benchmark mode
+//            Intent intent = new Intent(this, CameraActivity.class);
+//            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_LOCAL, true);
+//            startActivity(intent);
+//            return true;
+        } else if (id == R.id.nav_google_signin) {
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        } else if (id == R.id.nav_google_signout) {
+            mGoogleSignInClient.signOut()
+                    .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Toast.makeText(MainActivity.this, "Sign out successful.", Toast.LENGTH_LONG).show();
+                            signInMenuItem.setVisible(true);
+                            signOutMenuItem.setVisible(false);
+                            Account.getSingleton().setGoogleSignInAccount(null);
+                        }
+                    });
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -841,6 +901,38 @@ public class MainActivity extends AppCompatActivity
     public void onMarkerDragEnd(Marker marker) {
         Log.i(TAG, "onMarkerDragEnd(" + marker + ")");
         showSpoofGpsDialog(marker.getPosition());
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            // The Task returned from this call is always completed, no need to attach a listener.
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleSignInResult(task);
+        }
+    }
+
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            // Signed in successfully, show authenticated UI.
+            signInMenuItem.setVisible(false);
+            signOutMenuItem.setVisible(true);
+            Account.getSingleton().setGoogleSignInAccount(account);
+            Toast.makeText(MainActivity.this, "Sign in successful. Welcome, "+account.getDisplayName(), Toast.LENGTH_LONG).show();
+        } catch (ApiException e) {
+            // The ApiException status code indicates the detailed failure reason.
+            // Please refer to the GoogleSignInStatusCodes class reference for more information.
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Error")
+                    .setMessage("signInResult:failed code=" + e.getStatusCode())
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
     }
 
     @Override
