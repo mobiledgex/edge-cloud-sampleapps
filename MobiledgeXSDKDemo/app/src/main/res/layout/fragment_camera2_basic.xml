@@ -46,32 +46,30 @@
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/cameraToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:title="@string/face_detection_title" />
+    </android.support.design.widget.AppBarLayout>
+
     <RelativeLayout
         android:id="@+id/relativeLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fabSwapCamera"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentTop="true"
-            android:clickable="true"
-            app:backgroundTint="@android:color/transparent"
-            app:fabSize="mini"
-            app:srcCompat="@android:drawable/ic_menu_camera" />
-
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fabSettings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_toLeftOf="@+id/fabSwapCamera"
-            android:clickable="true"
-            app:backgroundTint="@android:color/transparent"
-            app:fabSize="mini"
-            app:srcCompat="@android:drawable/ic_menu_preferences" />
 
         <TextView
             android:id="@+id/latency_title"
@@ -103,8 +101,8 @@
             android:id="@+id/edge_latency"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
             android:layout_below="@+id/latency_title"
+            android:layout_alignParentEnd="true"
             android:text="Edge:"
             android:textColor="@android:color/white"
             android:textSize="24sp" />
@@ -113,25 +111,28 @@
             android:id="@+id/edge_std_dev"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
             android:layout_below="@+id/edge_latency"
+            android:layout_alignParentEnd="true"
             android:text="Stddev: 0 ms"
             android:textColor="@android:color/white"
             android:textSize="20sp" />
 
         <LinearLayout
+            android:id="@+id/cloudStatsLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
             android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
             android:orientation="vertical">
+
             <TextView
                 android:id="@+id/latency_title2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/darker_gray"
                 android:text="Network Latency"
-                android:textSize="22sp"/>
+                android:textColor="@android:color/darker_gray"
+                android:textSize="22sp" />
+
             <TextView
                 android:id="@+id/cloud_latency2"
                 android:layout_width="wrap_content"
@@ -139,6 +140,7 @@
                 android:text="Cloud:"
                 android:textColor="@android:color/white"
                 android:textSize="20sp" />
+
             <TextView
                 android:id="@+id/cloud_std_dev2"
                 android:layout_width="wrap_content"
@@ -151,9 +153,10 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
             android:orientation="vertical">
+
             <TextView
                 android:id="@+id/edge_latency2"
                 android:layout_width="wrap_content"
@@ -171,8 +174,27 @@
                 android:textSize="20sp" />
         </LinearLayout>
 
+        <ProgressBar
+            android:id="@+id/progressBarTraining"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/cloudStatsLayout"
+            android:layout_alignParentStart="true"
+            android:max="20" />
+
+        <TextView
+            android:id="@+id/progressTextView"
+            android:textColor="@android:color/white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/cloudStatsLayout"
+            android:layout_centerHorizontal="true"
+            android:text="TextView" />
 
     </RelativeLayout>
+
+    </LinearLayout>
 
 
 </FrameLayout>
