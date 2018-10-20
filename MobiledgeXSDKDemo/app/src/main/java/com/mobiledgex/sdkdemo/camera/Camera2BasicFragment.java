@@ -62,7 +62,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
@@ -118,10 +117,12 @@ import java.util.concurrent.TimeUnit;
 
 public class Camera2BasicFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback,
-        SharedPreferences.OnSharedPreferenceChangeListener {
+        SharedPreferences.OnSharedPreferenceChangeListener,
+        TrainGuestDialog.TrainGuestDialogListener {
 
     private static final String TAG = "Camera2BasicFragment";
     private static final int MAX_FACES = 8;
+    private Menu mOptionsMenu;
     private TextView mLatencyFullTitle;
     private TextView mLatencyNetTitle;
     private TextView mCloudLatency;
@@ -228,6 +229,23 @@ public class Camera2BasicFragment extends Fragment
         prefs.registerOnSharedPreferenceChangeListener(this);
         //We can't create the VolleyRequestHandler until we have a context available.
         mVolleyRequestHandler = new VolleyRequestHandler(this);
+    }
+
+    @Override
+    public void onSetGuestName(String guestName) {
+        mVolleyRequestHandler.setSubjectName(guestName);
+        mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_TRAINING);
+    }
+
+    @Override
+    public void onCancelTrainGuestDialog() {
+        guestTrainingMenuUncheck();
+    }
+
+    public void guestTrainingMenuUncheck() {
+        if(mOptionsMenu != null) {
+            mOptionsMenu.findItem(R.id.action_camera_training_guest).setChecked(false);
+        }
     }
 
     /**
@@ -787,6 +805,7 @@ public class Camera2BasicFragment extends Fragment
                 && cloudMode == VolleyRequestHandler.CameraMode.FACE_RECOGNITION) {
             mProgressBarTraining.setVisibility(View.GONE);
             mProgressText.setVisibility(View.GONE);
+            guestTrainingMenuUncheck();
         }
     }
 
@@ -1027,11 +1046,14 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         Log.i("BDA9", "onCreateOptionsMenu");
+        mOptionsMenu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.camera_menu, menu);
 
         if(mCameraMode == VolleyRequestHandler.CameraMode.FACE_DETECTION) {
             MenuItem item = menu.findItem(R.id.action_camera_training);
+            item.setVisible(false);
+            item = menu.findItem(R.id.action_camera_training_guest);
             item.setVisible(false);
         }
     }
@@ -1069,8 +1091,27 @@ public class Camera2BasicFragment extends Fragment
             return true;
         }
 
+        if (id == R.id.action_camera_training_guest) {
+            if(item.isChecked()) {
+                // If item already checked then uncheck it
+                item.setChecked(false);
+                if(Account.getSingleton().isSignedIn()) {
+                    mVolleyRequestHandler.setSubjectName(Account.getSingleton().getGoogleSignInAccount().getDisplayName());
+                } else {
+                    mVolleyRequestHandler.setSubjectName("");
+                }
+            } else {
+                item.setChecked(true);
+                TrainGuestDialog trainGuestDialog = new TrainGuestDialog();
+                trainGuestDialog.setTargetFragment(this, 1);
+                trainGuestDialog.show(getActivity().getSupportFragmentManager(), "training_guest_dialog");
+            }
+            return true;
+        }
+
         return false;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -1556,6 +1597,10 @@ public class Camera2BasicFragment extends Fragment
      * Creates a new {@link CameraCaptureSession} for camera preview.
      */
     private void createCameraPreviewSession() {
+        if(mImageReader == null) {
+            Log.e(TAG, "mImageReader is null. Aborting createCameraPreviewSession");
+            return;
+        }
         try {
             SurfaceTexture texture = mTextureView.getSurfaceTexture();
 

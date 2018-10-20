@@ -399,18 +399,18 @@ public class MainActivity extends AppCompatActivity
             intent.putExtra(Camera2BasicFragment.EXTRA_FACE_RECOGNITION, true);
             startActivity(intent);
             return true;
-//        } else if (id == R.id.nav_benchmark_edge) {
-//            // Start the face detection Activity in Edge benchmark mode
-//            Intent intent = new Intent(this, CameraActivity.class);
-//            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_EDGE, true);
-//            startActivity(intent);
-//            return true;
-//        } else if (id == R.id.nav_benchmark_local) {
-//            // Start the face detection Activity in local benchmark mode
-//            Intent intent = new Intent(this, CameraActivity.class);
-//            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_LOCAL, true);
-//            startActivity(intent);
-//            return true;
+        } else if (id == R.id.nav_benchmark_edge) {
+            // Start the face detection Activity in Edge benchmark mode
+            Intent intent = new Intent(this, CameraActivity.class);
+            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_EDGE, true);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.nav_benchmark_local) {
+            // Start the face detection Activity in local benchmark mode
+            Intent intent = new Intent(this, CameraActivity.class);
+            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_LOCAL, true);
+            startActivity(intent);
+            return true;
         } else if (id == R.id.nav_google_signin) {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
             startActivityForResult(signInIntent, RC_SIGN_IN);
