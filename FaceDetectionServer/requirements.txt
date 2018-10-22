@@ -1,0 +1,6 @@
+django
+djangorestframework
+gunicorn
+numpy
+opencv-python
+imageio
