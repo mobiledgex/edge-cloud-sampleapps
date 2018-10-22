@@ -24,7 +24,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -102,6 +101,11 @@ public class VolleyRequestHandler {
     public void sendImage(Bitmap image) {
         cloudImageSender.sendImage(image);
         edgeImageSender.sendImage(image);
+    }
+
+    public void setSubjectName(String subjectName) {
+        Log.d("BDA5", "setSubjectName="+subjectName);
+        mSubject = subjectName;
     }
 
     /**
@@ -292,6 +296,11 @@ public class VolleyRequestHandler {
                     Map<String, String> params = new HashMap<String, String>();
                     params.put("subject", mSubject);
                     params.put("image", requestBody);
+                    if(Account.getSingleton().isSignedIn()) {
+                        if(mSubject != Account.getSingleton().getGoogleSignInAccount().getDisplayName()) {
+                            params.put("owner", Account.getSingleton().getGoogleSignInAccount().getDisplayName());
+                        }
+                    }
                     return params;
                 }
             };
