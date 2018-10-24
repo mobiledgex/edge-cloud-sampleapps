@@ -11,7 +11,7 @@ import time
 class RequestClient(object):
     """ """
     BASE_URL = 'http://%s:8000'
-    API_ENDPOINT = '/detect2/'
+    API_ENDPOINT = '/detect3/'
 
     def __init__(self):
         """ """
@@ -19,8 +19,7 @@ class RequestClient(object):
 
     def send_image(self, host, image):
         """ """
-        return requests.post(
-            self.BASE_URL %host + self.API_ENDPOINT, data=image)
+        return requests.post(self.BASE_URL %host + self.API_ENDPOINT, data=image)
 
 if __name__ == "__main__":
     import sys

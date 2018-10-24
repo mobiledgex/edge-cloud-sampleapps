@@ -15,11 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from tracker.views import frame_detect, frame_detect_json, test_connection
+from tracker.views import frame_detect, frame_detect_json, frame_detect_multi_json, test_connection
+from tracker.views import detector_detect, recognizer_add, recognizer_train, recognizer_predict
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('detect/', frame_detect),
     path('detect2/', frame_detect_json),
+    path('detect3/', frame_detect_multi_json),
+    path('detector/detect/', detector_detect),
+    path('recognizer/add/', recognizer_add),
+    path('recognizer/train/', recognizer_train),
+    path('recognizer/predict/', recognizer_predict),
     path('test/', test_connection),
 ]
