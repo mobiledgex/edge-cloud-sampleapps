@@ -64,7 +64,6 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.maps.android.SphericalUtil;
-import com.mobiledgex.matchingengine.FindCloudletResponse;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.sdkdemo.camera.Camera2BasicFragment;
@@ -83,8 +82,8 @@ import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_C
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
-import static distributed_match_engine.AppClient.Match_Engine_Loc_Verify.GPS_Location_Status.LOC_VERIFIED;
-import static distributed_match_engine.AppClient.Match_Engine_Loc_Verify.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
+import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_VERIFIED;
+import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -647,7 +646,7 @@ public class MainActivity extends AppCompatActivity
      * @param status  GPS_Location_Status to determine success, fail, or caution
      * @param gpsLocationAccuracyKM  location accuracy, the location is verified to
      */
-    public void onVerifyLocation(final AppClient.Match_Engine_Loc_Verify.GPS_Location_Status status,
+    public void onVerifyLocation(final AppClient.VerifyLocationReply.GPS_Location_Status status,
                                  final double gpsLocationAccuracyKM) {
         locationVerificationAttempted = true;
         runOnUiThread(new Runnable() {
@@ -705,15 +704,15 @@ public class MainActivity extends AppCompatActivity
      * @param closestCloudlet  Object encapsulating the closest cloudlet characteristics.
      */
     @Override
-    public void onFindCloudlet(final FindCloudletResponse closestCloudlet) {
+    public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Cloudlet cloudlet = null;
                 for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
                     cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
-                    if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.loc.getLat() &&
-                            cloudlet.getMarker().getPosition().longitude == closestCloudlet.loc.getLong() ) {
+                    if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.getCloudletLocation().getLat() &&
+                            cloudlet.getMarker().getPosition().longitude == closestCloudlet.getCloudletLocation().getLong() ) {
                         Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
                         cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, getBadgeText(cloudlet)));
                         cloudlet.setBestMatch(true);
@@ -737,7 +736,7 @@ public class MainActivity extends AppCompatActivity
      * @param cloudletList  List of found cloudlet instances.
      */
     @Override
-    public void onGetCloudletList(final AppClient.Match_Engine_AppInst_List cloudletList) {
+    public void onGetCloudletList(final AppClient.AppInstListReply cloudletList) {
         Log.i(TAG, "onGetCloudletList()");
         runOnUiThread(new Runnable() {
             @Override
@@ -764,7 +763,7 @@ public class MainActivity extends AppCompatActivity
                     String carrierName = cloudletLocation.getCarrierName();
                     String cloudletName = cloudletLocation.getCloudletName();
                     List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
-                    String uri = appInstances.get(0).getUri();
+                    String uri = appInstances.get(0).getFQDN();
                     String appName = appInstances.get(0).getAppname();
                     double distance = cloudletLocation.getDistance();
                     LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLat(), cloudletLocation.getGpsLocation().getLong());
@@ -967,9 +966,9 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (key.equals(prefKeyDmeHostname)) {
-            Log.i(TAG, "Updated mHostname="+mHostname);
             mHostname = sharedPreferences.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
             mMatchingEngineHelper.setHostname(mHostname);
+            Log.i(TAG, "Updated mHostname="+mHostname);
             //Clear list so we don't show old cloudlets as transparent
             CloudletListHolder.getSingleton().getCloudletList().clear();
             getCloudlets();
