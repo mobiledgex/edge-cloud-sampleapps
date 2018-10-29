@@ -132,10 +132,12 @@
     <string name="face_detection_title">Face Detection</string>
     <string-array name="pref_dme_hostname_titles">
         <item>Demo</item>
+        <item>DME API Reorg</item>
         <item>TDG Integration</item>
     </string-array>
     <string-array name="pref_dme_hostname_values">
         <item>mexdemo.dme.mobiledgex.net</item>
+        <item>tdg2.dme.mobiledgex.net</item>
         <item>mexint.dme.mobiledgex.net</item>
     </string-array>
 
