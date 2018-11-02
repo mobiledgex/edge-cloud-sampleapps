@@ -4,3 +4,4 @@ gunicorn
 numpy
 opencv-python
 imageio
+opencv-contrib-python
