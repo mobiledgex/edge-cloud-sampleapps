@@ -1,0 +1,5 @@
+version: '3'
+services:
+  facedetection:
+    image: "registry.mobiledgex.net:5000/mobiledgex/facedetection"
+    network_mode: "host"
