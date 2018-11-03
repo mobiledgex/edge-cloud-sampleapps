@@ -7,6 +7,6 @@ EXPOSE 8000/tcp
 ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EXPOSE 8000/tcp
  
-CMD ["gunicorn","moedx.wsgi:application","--bind","0.0.0.0:8000","--certfile=server.crt","--keyfile=server.key","--workers=10"]
+CMD ["gunicorn","moedx.wsgi:application","--bind","0.0.0.0:8000","--workers=10"]
  
 
