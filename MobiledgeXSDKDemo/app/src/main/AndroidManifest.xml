@@ -39,31 +39,35 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name="com.mobiledgex.sdkdemo.MainActivity"
+            android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings" />
         <activity android:name=".CloudletDetailsActivity" />
-
         <activity
             android:name=".FirstTimeUseActivity"
             android:configChanges="orientation"
-            android:screenOrientation="portrait">
-        </activity>
-
-        <activity android:name=".camera.CameraActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".camera.CameraActivity"
+            android:label="@string/title_activity_face_detection"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".qoe.QoeMapActivity"
             android:theme="@style/AppTheme.NoActionBar"
-            android:label="@string/title_activity_face_detection">
+            android:label="@string/title_activity_qoe_map">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.mobiledgex.sdkdemo.MainActivity" />
         </activity>
-
     </application>
 
 </manifest>

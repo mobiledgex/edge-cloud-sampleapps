@@ -1,5 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
+project.ext.matchingengineVersion = "0.0.6-SNAP"
+
 buildscript {
 
     repositories {
@@ -8,7 +10,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
-
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.6"
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -32,7 +34,10 @@ allprojects {
                 username nexusUser
                 password nexusPassword
             }
-            url "https://registry.mobiledgex.net/nexus/content/repositories/staging"
+            def version = project.matchingengineVersion
+            def releasesRepoUrl = "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
+            def snapshotsRepoUrl = "https://registry.mobiledgex.net/nexus/content/repositories/snapshots/"
+            url = version.endsWith('SNAP') ? snapshotsRepoUrl : releasesRepoUrl
         }
     }
 }

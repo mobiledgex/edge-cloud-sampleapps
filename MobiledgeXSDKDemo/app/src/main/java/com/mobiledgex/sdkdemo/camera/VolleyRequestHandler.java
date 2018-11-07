@@ -1,8 +1,10 @@
 package com.mobiledgex.sdkdemo.camera;
 
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
 
@@ -15,6 +17,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.mobiledgex.sdkdemo.Account;
 import com.mobiledgex.sdkdemo.CloudletListHolder;
+import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -50,8 +53,8 @@ public class VolleyRequestHandler {
     private final int rollingAvgSize = 100;
 
     private static int port = 8000;
-    private static String cloudHost = "23.99.193.4"; // facerec-central
-    private static String edgeHost = "37.50.143.103"; //Bonn
+//    private static String cloudHost = "23.99.193.4"; // facerec-central
+//    private static String edgeHost = "37.50.143.103"; //Bonn
 //    private static String cloudHost = "104.42.217.135"; //West US
 //    private static String edgeHost = "80.187.128.15"; //Berlin
 
@@ -60,12 +63,14 @@ public class VolleyRequestHandler {
 //    private static String edgeHost = "192.168.1.86";
 //    private static String edgeHost = "10.157.107.83";
 
-    public ImageSender cloudImageSender = new ImageSender(cloudHost, CLOUDLET_PUBLIC);
-    public ImageSender edgeImageSender = new ImageSender(edgeHost, CLOUDLET_MEX);
+    private String cloudHost;
+    private String edgeHost;
+
+    public ImageSender cloudImageSender;
+    public ImageSender edgeImageSender;
 
     //Variables for latency test
     private CloudletListHolder.LatencyTestMethod latencyTestMethod;
-    private Handler mHandler;
     private final int socketTimeout = 3000;
     private boolean useRollingAverage = false;
     private String mSubject = "";
@@ -85,12 +90,21 @@ public class VolleyRequestHandler {
             mSubject = Account.getSingleton().getGoogleSignInAccount().getDisplayName();
         }
 
+        // Get hosts from preferences.
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(camera2BasicFragment.getContext());
+        String defValueCloud = "23.99.193.4";
+        String defValueEdge = "37.50.143.103";
+        cloudHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_cloud), defValueCloud);
+        edgeHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_edge), defValueEdge);
+
+        Log.i(TAG, "cloudHost="+cloudHost);
+        Log.i(TAG, "edgeHost="+edgeHost);
+
+        cloudImageSender = new ImageSender(cloudHost, CLOUDLET_PUBLIC);
+        edgeImageSender = new ImageSender(edgeHost, CLOUDLET_MEX);
+
         // Instantiate the RequestQueue.
         queue = Volley.newRequestQueue(camera2BasicFragment.getActivity());
-
-        HandlerThread handlerThread = new HandlerThread("BackgroundPinger");
-        handlerThread.start();
-        mHandler = new Handler(handlerThread.getLooper());
     }
 
     public void setCameraMode(CameraMode mode) {
@@ -127,24 +141,27 @@ public class VolleyRequestHandler {
                 Matcher matcher;
 
                 // execute the command on the environment interface
+                Log.d(TAG, "ping command: "+pingCommand);
                 Process process = Runtime.getRuntime().exec(pingCommand);
                 // gets the input stream to get the output of the executed command
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
                 inputLine = bufferedReader.readLine();
                 while ((inputLine != null)) {
-                    Log.d(TAG, "inputLine=" + inputLine);
+                    Log.d(TAG, "ping inputLine=" + inputLine);
                     if (inputLine.contains("rtt min")) {
                         // Extract the average round trip time from the inputLine string
                         matcher = pattern.matcher(inputLine);
                         if (matcher.find()) {
-                            Log.d(TAG, "output=" + matcher.group(0));
+                            Log.d(TAG, "ping output=" + matcher.group(0));
                             latency = (long) (Double.parseDouble(matcher.group(1)) * 1000000.0);
                             rollingAverage.add(latency);
                         }
                         break;
 
                     } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
+                        latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+                        mCamera2BasicFragment.showToast("Ping failed. Switching to socket latency test mode.");
                         break;
                     }
                     inputLine = bufferedReader.readLine();
@@ -182,11 +199,16 @@ public class VolleyRequestHandler {
         private long count = 0;
         public CameraMode mCameraMode;
         private String djangoUrl = "/detector/detect/";
-        Camera2BasicFragment.CloudLetType cloudLetType;
+        private Camera2BasicFragment.CloudLetType cloudLetType;
+        private Handler mHandler;
+
 
         public ImageSender(String host, Camera2BasicFragment.CloudLetType cloudLetType) {
             this.host = host;
             this.cloudLetType = cloudLetType;
+            HandlerThread handlerThread = new HandlerThread("BackgroundPinger"+cloudLetType);
+            handlerThread.start();
+            mHandler = new Handler(handlerThread.getLooper());
         }
 
         public void setCameraMode(CameraMode mode) {
@@ -363,7 +385,7 @@ public class VolleyRequestHandler {
         }
     }
 
-    private static boolean isReachable(String addr, int openPort, int timeOutMillis) {
+    public static boolean isReachable(String addr, int openPort, int timeOutMillis) {
         // Any Open port on other machine
         // mOpenPort =  22 - ssh, 80 or 443 - webserver, 25 - mailserver etc.
         try {

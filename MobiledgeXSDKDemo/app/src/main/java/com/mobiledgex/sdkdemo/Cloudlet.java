@@ -94,15 +94,10 @@ public class Cloudlet implements Serializable {
      * @param uri
      */
     public void setUri(String uri) {
-        if(mCarrierName.equalsIgnoreCase("TDG")) {
-            this.openPort = 443;
-            this.hostName = uri;
-            this.downloadUri = "https://"+hostName+"/mobiledgexsdkdemohttp/getdata?numbytes="+ mNumBytes;
-        } else {
-            this.openPort = 7777;
-            this.hostName = "mobiledgexsdkdemo." + uri;
-            this.downloadUri = "http://"+hostName+":"+openPort+"/getdata?numbytes="+ mNumBytes;
-        }
+        Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+uri+")");
+        this.openPort = 7777;
+        this.hostName = uri;
+        this.downloadUri = "http://"+hostName+":"+openPort+"/getdata?numbytes="+ mNumBytes;
         this.uri = uri;
     }
 

@@ -12,6 +12,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -68,6 +69,8 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.sdkdemo.camera.Camera2BasicFragment;
 import com.mobiledgex.sdkdemo.camera.CameraActivity;
+import com.mobiledgex.sdkdemo.camera.VolleyRequestHandler;
+import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -150,6 +153,8 @@ public class MainActivity extends AppCompatActivity
         // the GoogleSignInAccount will be non-null.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         Account.getSingleton().setGoogleSignInAccount(account);
+
+        navigationView.getMenu().findItem(R.id.nav_qoe_map).setVisible(false); //TODO: Temporary. Remove.
 
         signInMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signin);
         signOutMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signout);
@@ -398,18 +403,23 @@ public class MainActivity extends AppCompatActivity
             intent.putExtra(Camera2BasicFragment.EXTRA_FACE_RECOGNITION, true);
             startActivity(intent);
             return true;
-        } else if (id == R.id.nav_benchmark_edge) {
+        } else if (id == R.id.nav_qoe_map) {
             // Start the face detection Activity in Edge benchmark mode
-            Intent intent = new Intent(this, CameraActivity.class);
-            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_EDGE, true);
+            Intent intent = new Intent(this, QoeMapActivity.class);
             startActivity(intent);
             return true;
-        } else if (id == R.id.nav_benchmark_local) {
-            // Start the face detection Activity in local benchmark mode
-            Intent intent = new Intent(this, CameraActivity.class);
-            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_LOCAL, true);
-            startActivity(intent);
-            return true;
+//        } else if (id == R.id.nav_benchmark_edge) {
+//            // Start the face detection Activity in Edge benchmark mode
+//            Intent intent = new Intent(this, CameraActivity.class);
+//            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_EDGE, true);
+//            startActivity(intent);
+//            return true;
+//        } else if (id == R.id.nav_benchmark_local) {
+//            // Start the face detection Activity in local benchmark mode
+//            Intent intent = new Intent(this, CameraActivity.class);
+//            intent.putExtra(Camera2BasicFragment.EXTRA_BENCH_LOCAL, true);
+//            startActivity(intent);
+//            return true;
         } else if (id == R.id.nav_google_signin) {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
             startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -576,8 +586,26 @@ public class MainActivity extends AppCompatActivity
      * @param spoofLatLng  The location to use.
      */
     private void showSpoofGpsDialog(final LatLng spoofLatLng) {
+        //Secret code to unlock PQOE
+        if(spoofLatLng.latitude < -80) {
+            Log.i(TAG, "Unlocked PQOE");
+            NavigationView navigationView = findViewById(R.id.nav_view);
+            navigationView.getMenu().findItem(R.id.nav_qoe_map).setVisible(true); //TODO: Temporary. Remove.
+        }
+
+        if(mUserLocationMarker == null) {
+            Log.e(TAG, "No mUserLocationMarker.");
+            return;
+        }
         mUserLocationMarker.setPosition(spoofLatLng);
-        final CharSequence[] charSequence = new CharSequence[] {"Spoof GPS at this location", "Update location in GPS database"};
+        String spoofText = "Spoof GPS at this location";
+        String updateSimText = "Update location in GPS database";
+        final CharSequence[] charSequence;
+        if(mHostname.equals("mexdemo.dme.mobiledgex.net")) {
+            charSequence = new CharSequence[] {spoofText, updateSimText};
+        } else {
+            charSequence = new CharSequence[] {spoofText};
+        }
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setSingleChoiceItems(charSequence, -1, new DialogInterface.OnClickListener() {
@@ -689,7 +717,9 @@ public class MainActivity extends AppCompatActivity
      */
     private String getBadgeText(Cloudlet cloudlet) {
         String badgeText = "";
-        if(cloudlet.getCarrierName().equalsIgnoreCase("gcp")) {
+        if(cloudlet.getUri().indexOf("microsoft") >= 0) {
+            badgeText = "M";
+        } else if(cloudlet.getCarrierName().equalsIgnoreCase("gcp")) {
             badgeText = "G";
         } else if(cloudlet.getCarrierName().equalsIgnoreCase("azure")) {
             badgeText = "A";
@@ -763,8 +793,10 @@ public class MainActivity extends AppCompatActivity
                     String carrierName = cloudletLocation.getCarrierName();
                     String cloudletName = cloudletLocation.getCloudletName();
                     List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
+                    //TODO: What if there is more than 1 appInstance in the list?
                     String uri = appInstances.get(0).getFQDN();
                     String appName = appInstances.get(0).getAppname();
+//                    List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
                     double distance = cloudletLocation.getDistance();
                     LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLat(), cloudletLocation.getGpsLocation().getLong());
                     Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
@@ -834,14 +866,16 @@ public class MainActivity extends AppCompatActivity
                 CameraUpdate cu;
                 if(!bounds.southwest.equals(bounds.northeast)) {
                     Log.d(TAG, "Using cloudlet boundaries");
-                    int padding = 240; // offset from edges of the map in pixels
-                    cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+                    int width = getResources().getDisplayMetrics().widthPixels;
+                    int height = getResources().getDisplayMetrics().heightPixels;
+                    int padding = (int) (width * 0.12); // offset from edges of the map 12% of screen
+                    cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
                 } else {
                     Log.d(TAG, "No cloudlets. Don't zoom in");
                     cu = CameraUpdateFactory.newLatLng(mUserLocationMarker.getPosition());
                 }
                 try {
-                    mGoogleMap.moveCamera(cu);
+                    mGoogleMap.animateCamera(cu);
                 } catch (Exception e) {
                     Log.e(TAG, "Map wasn't ready.", e);
                 }
@@ -944,6 +978,8 @@ public class MainActivity extends AppCompatActivity
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
         String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
+        String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+        String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
 
         if (key.equals(prefKeyAllowMEX)) {
             boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
@@ -984,6 +1020,47 @@ public class MainActivity extends AppCompatActivity
                 cloudlet.setNumPackets(numPackets);
             }
         }
+
+        if(key.equals(prefKeyHostCloud)) {
+            String defValueCloud = "23.99.193.4";
+            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, defValueCloud, key);
+        }
+        if(key.equals(prefKeyHostEdge)) {
+            String defValueEdge = "37.50.143.103";
+            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, defValueEdge, key);
+        }
+
+    }
+
+    private class FaceServerConnectivityTask extends AsyncTask<String, Void, Boolean> {
+        private String newHost;
+
+        @Override
+        protected Boolean doInBackground(String... params) {
+            String defaultHost = params[0];
+            String keyName = params[1];
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+            newHost = prefs.getString(keyName, defaultHost);
+            boolean reachable = VolleyRequestHandler.isReachable(newHost, 8000, 3000);
+            if(!reachable) {
+                Log.i(TAG, newHost+" not reachable. Resetting "+keyName+" to default.");
+                prefs.edit().putString(keyName, defaultHost).apply();
+                return false;
+            }
+            return true;
+        }
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if(result) {
+                Log.i(TAG, "FaceServerConnectivityTask verified new host: "+newHost);
+            } else {
+                Toast.makeText(MainActivity.this, "Could not reach face server at '"+newHost+"'. Resetting to default.", Toast.LENGTH_LONG).show();
+            }
+        }
+        @Override
+        protected void onPreExecute() {}
+        @Override
+        protected void onProgressUpdate(Void... values) {}
     }
 
     @Override
