@@ -19,12 +19,12 @@ import android.widget.TextView;
 import android.content.Intent;
 
 // Matching Engine API:
-import com.mobiledgex.matchingengine.FindCloudletResponse;
 import com.mobiledgex.matchingengine.MatchingEngine;
-import com.mobiledgex.matchingengine.MatchingEngineRequest;
+import com.mobiledgex.matchingengine.NetworkRequestTimeoutException;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import distributed_match_engine.AppClient;
+import distributed_match_engine.Appcommon;
 import io.grpc.StatusRuntimeException;
 
 
@@ -38,7 +38,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 
@@ -125,18 +126,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             Intent intent = new Intent(this, FirstTimeUseActivity.class);
             startActivity(intent);
         }
-
-        // Set, or create create an App generated UUID for use in MatchingEngine, if there isn't one:
-        String uuidKey = getResources().getString(R.string.preference_mex_user_uuid);
-        String currentUUID = prefs.getString(uuidKey, "");
-        if (currentUUID.isEmpty()) {
-            prefs.edit()
-                    .putString(uuidKey, mMatchingEngine.createUUID().toString())
-                    .apply();
-        } else {
-            mMatchingEngine.setUUID(UUID.fromString(currentUUID));
-        }
-
     }
 
     @Override
@@ -267,41 +256,66 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     boolean mexAllowed = prefs.getBoolean(getResources().getString(R.string.preference_mex_location_verification), false);
 
                     //MatchingEngineRequest req = mMatchingEngine.createRequest(ctx, location); // Regular use case.
-                    String host = "tdg.dme.mobiledgex.net"; // Override host.
+                    String host = "tdg2.dme.mobiledgex.net"; // Override host.
                     int port = mMatchingEngine.getPort(); // Keep same port.
-                    String carrierName = "TDG";
-                    String devName = "EmptyMatchEngineMavenApp";
+                    String carrierName = "T-Mobile";
+                    String devName = "EmptyMatchEngineApp";
+                    String appName = "EmptyMatchEngineApp"; // Override. The app must be registered to the DME in actual use.
 
-                    MatchingEngineRequest req = mMatchingEngine.createRequest(ctx, host, port, carrierName, devName, location);
+                    AppClient.RegisterClientRequest registerClientRequest =
+                            mMatchingEngine.createRegisterClientRequest(ctx,
+                                    devName, appName, "");
 
-                    AppClient.Match_Engine_Status registerStatus = mMatchingEngine.registerClient(req, 10000);
-                    if (registerStatus.getStatus() != AppClient.Match_Engine_Status.ME_Status.ME_SUCCESS) {
+                    AppClient.RegisterClientReply registerStatus =
+                            mMatchingEngine.registerClient(registerClientRequest,
+                                    host, port, 10000);
+
+                    if (registerStatus.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
                         someText = "Registration Failed. Error: " + registerStatus.getStatus();
                         TextView tv = findViewById(R.id.mex_verified_location_content);
                         tv.setText(someText);
                         return;
                     }
 
-                    req = mMatchingEngine.createRequest(ctx, host, port, carrierName, devName, location);
-                    if (req != null) {
+                    AppClient.VerifyLocationRequest verifyRequest =
+                            mMatchingEngine.createVerifyLocationRequest(ctx, carrierName, location);
+                    if (verifyRequest != null) {
                         // Location Verification (Blocking, or use verifyLocationFuture):
-                        AppClient.Match_Engine_Loc_Verify verifiedLocation = mMatchingEngine.verifyLocation(req, 10000);
+                        AppClient.VerifyLocationReply verifiedLocation =
+                                mMatchingEngine.verifyLocation(verifyRequest, host, port, 10000);
+
                         someText = "[Location Verified: Tower: " + verifiedLocation.getTowerStatus() +
                                 ", GPS LocationStatus: " + verifiedLocation.getGpsLocationStatus() +
                                 ", Location Accuracy: " + verifiedLocation.getGPSLocationAccuracyKM() + " ]\n";
 
                         // Find the closest cloudlet for your application to use. (Blocking call, or use findCloudletFuture):
-                        FindCloudletResponse closestCloudlet = mMatchingEngine.findCloudlet(req, 10000);
-                        // FIXME: It's not possible to get a complete http(s) URI on just a service IP + port!
-                        String serverip = null;
-                        if (closestCloudlet.service_ip != null && closestCloudlet.service_ip.length > 0) {
-                            serverip = closestCloudlet.service_ip[0] + ", ";
-                            for (int i = 1; i < closestCloudlet.service_ip.length - 1; i++) {
-                                serverip += closestCloudlet.service_ip[i] + ", ";
+                        AppClient.FindCloudletRequest findCloudletRequest =
+                                mMatchingEngine.createFindCloudletRequest(ctx, carrierName, location);
+                        AppClient.FindCloudletReply closestCloudlet = mMatchingEngine.findCloudlet(findCloudletRequest,
+                                host, port, 10000);
+
+                        List<Appcommon.AppPort> ports = closestCloudlet.getPortsList();
+                        String portListStr = "";
+                        boolean first = true;
+                        String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Public Path: '%s'}";
+                        for (Appcommon.AppPort aPort : ports) {
+                            if (first) {
+                                portListStr += String.format(Locale.getDefault(), appPortFormat,
+                                        aPort.getProto().getNumber(),
+                                        aPort.getInternalPort(),
+                                        aPort.getPublicPort(),
+                                        aPort.getPublicPath());
+                                ;
+                            } else {
+                                portListStr += ", " + String.format(Locale.getDefault(), appPortFormat,
+                                        aPort.getProto().getNumber(),
+                                        aPort.getInternalPort(),
+                                        aPort.getPublicPort(),
+                                        aPort.getPublicPath());
                             }
-                            serverip += closestCloudlet.service_ip[closestCloudlet.service_ip.length - 1];
                         }
-                        someText += "[Cloudlet Server: URI: [" + closestCloudlet.uri + "], Serverip: [" + serverip + "], Port: " + closestCloudlet.port + "]\n";
+
+                        someText += "[Cloudlet App Ports: [" + portListStr + "]\n";
                     } else {
                         someText = "Cannot create request object.\n";
                         if (!mexAllowed) {
@@ -332,6 +346,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     });
                 } catch (ExecutionException ee) {
                     ee.printStackTrace();
+                    if (ee.getCause() instanceof NetworkRequestTimeoutException) {
+                        String causeMessage = ee.getCause().getMessage();
+                        someText = "Network connection failed: " + causeMessage;
+                        Log.e(TAG, someText);
+                        // Handle network error with failover logic. MEX requests over cellular is needed to talk to the DME.
+                        ctx.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                TextView tv = findViewById(R.id.mex_verified_location_content);
+                                tv.setText(someText);
+                            }
+                        });
+                    }
                 } catch (IOException ioe) {
                     ioe.printStackTrace();
                 } catch (InterruptedException ie) {
