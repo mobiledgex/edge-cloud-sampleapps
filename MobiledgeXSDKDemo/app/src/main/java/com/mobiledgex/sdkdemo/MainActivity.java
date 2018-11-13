@@ -154,8 +154,6 @@ public class MainActivity extends AppCompatActivity
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         Account.getSingleton().setGoogleSignInAccount(account);
 
-        navigationView.getMenu().findItem(R.id.nav_qoe_map).setVisible(false); //TODO: Temporary. Remove.
-
         signInMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signin);
         signOutMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signout);
 
@@ -586,13 +584,6 @@ public class MainActivity extends AppCompatActivity
      * @param spoofLatLng  The location to use.
      */
     private void showSpoofGpsDialog(final LatLng spoofLatLng) {
-        //Secret code to unlock PQOE
-        if(spoofLatLng.latitude < -80) {
-            Log.i(TAG, "Unlocked PQOE");
-            NavigationView navigationView = findViewById(R.id.nav_view);
-            navigationView.getMenu().findItem(R.id.nav_qoe_map).setVisible(true); //TODO: Temporary. Remove.
-        }
-
         if(mUserLocationMarker == null) {
             Log.e(TAG, "No mUserLocationMarker.");
             return;

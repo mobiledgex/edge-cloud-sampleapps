@@ -6,6 +6,10 @@ import android.graphics.Color;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.mobiledgex.matchingengine.MatchingEngine;
@@ -52,6 +56,7 @@ public class PredictiveQosClient {
     private GoogleMap mGoogleMap;
 
     private int routeWidth = 20;
+    private int requestNum;
 
     public PredictiveQosClient(Context context, String host, int port) throws IOException, MexTrustStoreException, MexKeyStoreException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, InvalidKeySpecException {
         Log.i(TAG, "onMarkerDragEnd()");
@@ -63,7 +68,7 @@ public class PredictiveQosClient {
         channel = OkHttpChannelBuilder
                 .forAddress(SERVER_URI, SERVER_PORT)
                 .sslSocketFactory(mMatchingEngine.getMutualAuthSSLSocketFactoryInstance("certificates",
-                        "server.crt", "client.crt", "client.pem"))
+                        "qos-predictive.all-ip.t-online.de", "server.crt", "client.crt", "client.pem"))
                 .build();
     }
 
@@ -215,7 +220,11 @@ public class PredictiveQosClient {
         Log.i(TAG, "Request is complete");
     }
 
-    public void requestQos(final QoSKPIRequest request, GoogleMap map) {
+    public void setRequestNum(int num){
+        requestNum = num;
+    }
+
+    public void requestQos(final QoSKPIRequest request, GoogleMap map, final int localRequestNum, final boolean modeRoute) {
         mGoogleMap = map;
         final List<ColoredPoint> points = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
@@ -227,24 +236,32 @@ public class PredictiveQosClient {
         StreamObserver<QoSKPIResponse> responseObserver = new StreamObserver<QoSKPIResponse>() {
             @Override
             public void onNext(QoSKPIResponse msg) {
+                Log.i(TAG, "Stale? localRequestNum="+localRequestNum+" requestNum="+requestNum);
+                if(localRequestNum != requestNum) {
+                    Log.w(TAG, "Ignoring stale data received.");
+                    return;
+                }
                 points.clear();
                 for (PositionKpiResult res : msg.getResultsList()) {
                     PositionKpiRequest positionKpiRequest = request.getRequests((int) res.getPositionid());
                     LatLng coords = new LatLng(positionKpiRequest.getLatitude(), positionKpiRequest.getLongitude());
                     points.add(new ColoredPoint(coords, res.getDluserthroughputAvg(), res.getUluserthroughputAvg()));
-                    Log.i(TAG, "positionResult: "+res.getPositionid()+" "+res.getDluserthroughputAvg()+" "+res.getLatencyAvg()+" "+coords);
+//                    Log.i(TAG, "positionResult: "+res.getPositionid()+" "+res.getDluserthroughputAvg()+" "+res.getLatencyAvg()+" "+coords);
                 }
                 ((Activity)mContext).runOnUiThread(new Runnable(){
                     public void run(){
-                        drawColoredPolyline(points);
-//                        routeWidth*=2;
+                        if(modeRoute) {
+                            drawColoredPolyline(points);
+                        } else {
+                            drawColoredPolyGrid(points);
+                        }
                     }
                 });
             }
 
             @Override
             public void onError(Throwable t) {
-                Log.i(TAG, "Received error: " + t);
+                Log.i(TAG, "Received error: " + Log.getStackTraceString(t)+"\n"+t.getCause());
             }
 
             @Override
@@ -280,6 +297,7 @@ public class PredictiveQosClient {
     class ColoredPoint {
         public LatLng coords;
         public int color;
+        public String colorString;
 
         String colors[] = {"#000000", "#ff0000", "#ff8900", "#ffff00", "#bbff99", "#339933", "#006600"};
         String classes[] = {"bad", "slow", "ok", "good", "fast", "very fast"};
@@ -287,21 +305,53 @@ public class PredictiveQosClient {
         public ColoredPoint(LatLng coords, float dlSpeed, float upSpeed) {
             this.coords = coords;
             if(dlSpeed > 60) {
+                colorString = colors[6];
                 color = Color.parseColor(colors[6]);
             } else if(dlSpeed <= 60 && dlSpeed > 40 ) {
+                colorString = colors[5];
                 color = Color.parseColor(colors[5]);
             } else if(dlSpeed <= 40 && dlSpeed > 25 ) {
+                colorString = colors[4];
                 color = Color.parseColor(colors[4]);
             } else if(dlSpeed <= 25 && dlSpeed > 10 ) {
+                colorString = colors[3];
                 color = Color.parseColor(colors[3]);
             } else if(dlSpeed <= 10 && dlSpeed > 2 ) {
+                colorString = colors[2];
                 color = Color.parseColor(colors[2]);
             } else if(dlSpeed <= 2 && dlSpeed > 0) {
+                colorString = colors[1];
                 color = Color.parseColor(colors[1]);
             } else {
+                colorString = colors[0];
                 color = Color.parseColor(colors[0]);
             }
         }
+    }
+
+
+    private void drawColoredPolyGrid(List<ColoredPoint> points) {
+        Log.i(TAG, "drawColoredPolyGrid() size=" + points.size());
+
+        if (points.size() < 2)
+            return;
+
+        int ix = 0;
+        ColoredPoint currentPoint;
+        while (ix < points.size()) {
+            currentPoint = points.get(ix);
+//            Log.i(TAG, ix+" currentPoint="+currentPoint.coords+" "+currentPoint.color);
+            Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(currentPoint.coords).icon(getMarkerIcon(currentPoint.colorString)));
+
+
+//            mGoogleMap.addCircle(new CircleOptions()
+//                    .center(currentPoint.coords)
+//                    .fillColor(currentPoint.color)
+//                    .strokeColor(currentPoint.color)
+//                    .radius(200));
+            ix++;
+        }
+
     }
 
     private void drawColoredPolyline(List<ColoredPoint> points) {
@@ -319,13 +369,13 @@ public class PredictiveQosClient {
 
         while (ix < points.size()) {
             currentPoint = points.get(ix);
-            Log.i(TAG, "currentPoint="+currentPoint.coords+" "+currentPoint.color);
+//            Log.i(TAG, "currentPoint="+currentPoint.coords+" "+currentPoint.color);
 
             if (currentPoint.color == currentColor) {
                 currentSegment.add(currentPoint.coords);
             } else {
                 currentSegment.add(currentPoint.coords);
-                Log.i(TAG, "1.currentSegment "+currentSegment.size()+" points. "+currentColor);
+//                Log.i(TAG, "1.currentSegment "+currentSegment.size()+" points. "+currentColor);
                 mGoogleMap.addPolyline(new PolylineOptions()
                         .addAll(currentSegment)
                         .color(currentColor)
@@ -338,12 +388,18 @@ public class PredictiveQosClient {
             ix++;
         }
 
-        Log.i(TAG, "2.currentSegment "+currentSegment.size()+" points. "+currentColor);
+//        Log.i(TAG, "2.currentSegment "+currentSegment.size()+" points. "+currentColor);
         mGoogleMap.addPolyline(new PolylineOptions()
                 .addAll(currentSegment)
                 .color(currentColor)
                 .width(20));
 
+    }
+
+    public BitmapDescriptor getMarkerIcon(String color) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(Color.parseColor(color), hsv);
+        return BitmapDescriptorFactory.defaultMarker(hsv[0]);
     }
 
 }

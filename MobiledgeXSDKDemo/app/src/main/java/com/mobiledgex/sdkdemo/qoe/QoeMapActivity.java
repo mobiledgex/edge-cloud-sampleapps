@@ -1,12 +1,14 @@
 package com.mobiledgex.sdkdemo.qoe;
 
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -15,6 +17,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -34,7 +37,6 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertPathBuilder;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,21 +49,28 @@ import static com.mobiledgex.sdkdemo.qoe.PredictiveQosClient.SERVER_PORT;
 import static com.mobiledgex.sdkdemo.qoe.PredictiveQosClient.SERVER_URI;
 
 public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallback,
-        GoogleMap.OnMapLongClickListener,GoogleMap.OnMarkerDragListener {
+        GoogleMap.OnMapLongClickListener, GoogleMap.OnMarkerDragListener, GoogleMap.OnCameraIdleListener {
 
     private static final String TAG = "QoeMapActivity";
     private GoogleMap mMap;
+    public boolean modeRoute = true;
     private PredictiveQosClient mPredictiveQosClient = null;
     private Marker startMarker;
     private Marker endMarker;
     private String apiKey;
+    private LatLng startLatLng;
+    private LatLng endLatLng;
+    private int requestNum = 0;
+    private MenuItem modeGroupPrevItem;
+    private MenuItem mapTypeGroupPrevItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_qoe_map);
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar_qoe);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         apiKey = getResources().getString(R.string.google_directions_api_key);
 
@@ -77,12 +86,68 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mapFragment.getMapAsync(this);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.i(TAG, "onCreateOptionsMenu "+menu);
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.predictive_qoe_menu, menu);
+
+        // We should be able to use <group android:checkableBehavior="single">
+        // to automatically allow only a single item to be checked at a time,
+        // but that is broken for submenus, so we need to track the previously
+        // checked items for our group, and manually uncheck it each time.
+        modeGroupPrevItem = menu.findItem(R.id.action_pqoe_mode_route);
+        modeGroupPrevItem.setChecked(true);
+        mapTypeGroupPrevItem = menu.findItem(R.id.action_pqoe_map_type_normal);
+        mapTypeGroupPrevItem.setChecked(true);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void onModeGroupItemClick(MenuItem item) {
+        modeGroupPrevItem.setChecked(false);
+        modeGroupPrevItem = item;
+        if (item.getItemId() == R.id.action_pqoe_mode_route) {
+            modeRoute = true;
+            item.setChecked(true);
+            routeBetweenPoints(startLatLng, endLatLng);
+        } else if (item.getItemId() == R.id.action_pqoe_mode_grid) {
+            modeRoute = false;
+            item.setChecked(true);
+            collectGridData();
+        } else {
+            // Do nothing
+        }
+    }
+
+    public void onTypeGroupItemClick(MenuItem item) {
+        mapTypeGroupPrevItem.setChecked(false);
+        mapTypeGroupPrevItem = item;
+        if (item.getItemId() == R.id.action_pqoe_map_type_normal) {
+            item.setChecked(true);
+            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        } else if(item.getItemId() == R.id.action_pqoe_map_type_hybrid) {
+            item.setChecked(true);
+            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        } else if(item.getItemId() == R.id.action_pqoe_map_type_terrain) {
+            item.setChecked(true);
+            mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        }
+    }
+
 
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
+     * This is where we can add markers or lines, add listeners or move the camera.
      * If Google Play services is not installed on the device, the user will be prompted to install
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
@@ -92,19 +157,61 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap = googleMap;
         mMap.setOnMapLongClickListener(this);
         mMap.setOnMarkerDragListener(this);
+        mMap.setOnCameraIdleListener(this);
 
-        LatLng startLatLng = new LatLng(48.1,11.39);
-        LatLng endLatLng = new LatLng(48.2,11.57);
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.style_json));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
+
+        startLatLng = new LatLng(48.1,11.39);
+        endLatLng = new LatLng(48.2,11.57);
 //        LatLng startLatLng = new LatLng(48.100948333740234,11.39490032196045);
 //        LatLng endLatLng = new LatLng(48.101009368896484,11.394619941711426);
 
         routeBetweenPoints(startLatLng, endLatLng);
 
         mMap.getUiSettings().setZoomControlsEnabled(true);
+    }
 
+    private void collectGridData() {
+        LatLngBounds bounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+        Log.i(TAG, "bounds=" + bounds);
+        double maxLng = bounds.northeast.longitude;
+        double maxLat = bounds.northeast.latitude;
+        double minLng = bounds.southwest.longitude;
+        double minLat = bounds.southwest.latitude;
+        mMap.clear();
+        final long timeStamp = System.currentTimeMillis()/1000+10;
+
+        mPredictiveQosClient.setRequestNum(requestNum);
+        QoSKPIRequest.Builder requestBuilder = QoSKPIRequest.newBuilder();
+        int positionId = 0;
+        double gridSize = (maxLng - minLng) / 20;
+        for(double lat = minLat; lat <= maxLat; lat+=gridSize) {
+            for(double lng = minLng; lng <= maxLng; lng+=gridSize) {
+                PositionKpiRequest point = PositionKpiRequest.newBuilder().setPositionid(positionId).setLatitude((float) lat).setLongitude((float) lng).setTimestamp(timeStamp+positionId).build();
+                requestBuilder.addRequests(point);
+                positionId++;
+            }
+        }
+        QoSKPIRequest request = requestBuilder.build();
+        getQoeData(request, mMap, requestNum);
+        requestNum++;
     }
 
     private void routeBetweenPoints(LatLng startLatLng, LatLng endLatLng) {
+        this.startLatLng = startLatLng;
+        this.endLatLng = endLatLng;
         mMap.clear();
         startMarker = mMap.addMarker(new MarkerOptions().position(startLatLng).title("Start of route"));
         startMarker.setDraggable(true);
@@ -113,14 +220,12 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
         final long timeStamp = System.currentTimeMillis()/1000+10;
 
-        //Define list to get all latlng for the route
-//        List<LatLng> path = new ArrayList();
-
         //Execute Directions API request
         GeoApiContext context = new GeoApiContext.Builder()
                 .apiKey(apiKey)
                 .build();
 
+        mPredictiveQosClient.setRequestNum(requestNum);
         try {
             DirectionsResult calculatedRoutes = DirectionsApi.newRequest(context)
                     .alternatives(true)
@@ -131,14 +236,12 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             Log.d(TAG, "calculatedRoutes="+calculatedRoutes.routes.length);
 
-
-
-            int positionId = 0;
             //Loop through legs and steps to get encoded polylines of each step
             if (calculatedRoutes.routes != null && calculatedRoutes.routes.length > 0) {
                 Log.i(TAG, "calculatedRoutes.routes.length="+calculatedRoutes.routes.length);
                 for(DirectionsRoute route: calculatedRoutes.routes) {
                     QoSKPIRequest.Builder requestBuilder = QoSKPIRequest.newBuilder();
+                    int positionId = 0;
                     requestBuilder.setRequestid(TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis()));
                     List<LatLng> path = new ArrayList();
 
@@ -157,7 +260,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                                                 List<com.google.maps.model.LatLng> coords1 = points1.decodePath();
                                                 for (com.google.maps.model.LatLng coord1 : coords1) {
                                                     LatLng latLng = new LatLng(coord1.lat, coord1.lng);
-//                                                    path.add(latLng);
+                                                    path.add(latLng);
                                                     boundsBuilder.include(latLng);
                                                     PositionKpiRequest point = PositionKpiRequest.newBuilder().setPositionid(positionId).setLatitude((float) coord1.lat).setLongitude((float) coord1.lng).setTimestamp(timeStamp+positionId).build();
                                                     requestBuilder.addRequests(point);
@@ -172,7 +275,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                                             List<com.google.maps.model.LatLng> coords = points.decodePath();
                                             for (com.google.maps.model.LatLng coord : coords) {
                                                 LatLng latLng = new LatLng(coord.lat, coord.lng);
-//                                                path.add(latLng);
+                                                path.add(latLng);
                                                 boundsBuilder.include(latLng);
                                                 PositionKpiRequest point = PositionKpiRequest.newBuilder().setPositionid(positionId).setLatitude((float) coord.lat).setLongitude((float) coord.lng).setTimestamp(timeStamp+positionId).build();
                                                 requestBuilder.addRequests(point);
@@ -186,33 +289,34 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     }
                     Log.i(TAG, "path.size()="+path.size());
                     QoSKPIRequest request = requestBuilder.build();
-                    getQoeData(request, mMap);
+                    getQoeData(request, mMap, requestNum);
 
-//                    //Draw the polyline
-//                    if (path.size() > 0) {
-//                        PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(8);
-//                        mMap.addPolyline(opts);
-//                    }
+                    //Draw the polyline
+                    if (path.size() > 0) {
+                        PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(5);
+                        mMap.addPolyline(opts);
+                    }
                 }
             }
 
         } catch(Exception ex) {
             Log.e(TAG, ex.getLocalizedMessage());
         }
+        requestNum++;
 
         LatLngBounds bounds = boundsBuilder.build();
         int width = getResources().getDisplayMetrics().widthPixels;
         int height = getResources().getDisplayMetrics().heightPixels;
-        int padding = (int) (height * 0.12); // offset from edges of the map 12% of screen
+        int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
         mMap.animateCamera(cu);
 
 
     }
 
-    private void getQoeData(QoSKPIRequest request, GoogleMap map) {
+    private void getQoeData(QoSKPIRequest request, GoogleMap map, int requestNum) {
         Log.i(TAG, "getQoeData() request size: "+request.getRequestsList().size());
-        new QoeDataTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, request, map);
+        new QoeDataTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, request, map, requestNum, modeRoute);
     }
 
     private class QoeDataTask extends AsyncTask<Object, Void, String> {
@@ -221,8 +325,10 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         protected String doInBackground(Object... params) {
             QoSKPIRequest request = (QoSKPIRequest) params[0];
             GoogleMap map = (GoogleMap) params[1];
+            int reqNum = (int) params[2];
+            boolean modeRoute = (boolean) params[3];
             mPredictiveQosClient.checkHealth();
-            mPredictiveQosClient.requestQos(request, map);
+            mPredictiveQosClient.requestQos(request, map, reqNum, modeRoute);
             return "Executed";
         }
 
@@ -236,6 +342,15 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         @Override
         protected void onProgressUpdate(Void... values) {}
+    }
+
+    @Override
+    public void onCameraIdle() {
+        Log.i(TAG, "onCameraIdle()");
+        if(!modeRoute) {
+            collectGridData();
+        }
+
     }
 
     @Override
