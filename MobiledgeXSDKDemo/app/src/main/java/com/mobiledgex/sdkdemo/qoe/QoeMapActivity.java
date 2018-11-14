@@ -92,13 +92,15 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.predictive_qoe_menu, menu);
 
+        menu.findItem(R.id.action_pqoe_map_mode).setVisible(false); //TODO: Remove
+
         // We should be able to use <group android:checkableBehavior="single">
         // to automatically allow only a single item to be checked at a time,
         // but that is broken for submenus, so we need to track the previously
         // checked items for our group, and manually uncheck it each time.
         modeGroupPrevItem = menu.findItem(R.id.action_pqoe_mode_route);
         modeGroupPrevItem.setChecked(true);
-        mapTypeGroupPrevItem = menu.findItem(R.id.action_pqoe_map_type_normal);
+        mapTypeGroupPrevItem = menu.findItem(R.id.action_pqoe_map_type_silver);
         mapTypeGroupPrevItem.setChecked(true);
         return true;
     }
@@ -134,6 +136,14 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         if (item.getItemId() == R.id.action_pqoe_map_type_normal) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            setCustomMapStyle(mMap, R.raw.map_style_default);
+        } else if(item.getItemId() == R.id.action_pqoe_map_type_silver) {
+            item.setChecked(true);
+            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            setCustomMapStyle(mMap, R.raw.map_style_silver);
+        } else if(item.getItemId() == R.id.action_pqoe_map_type_satellite) {
+            item.setChecked(true);
+            mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
         } else if(item.getItemId() == R.id.action_pqoe_map_type_hybrid) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
@@ -143,6 +153,21 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
+    private void setCustomMapStyle(GoogleMap googleMap, int mapStyleResource) {
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, mapStyleResource));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
+    }
 
     /**
      * Manipulates the map once available.
@@ -159,19 +184,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap.setOnMarkerDragListener(this);
         mMap.setOnCameraIdleListener(this);
 
-        try {
-            // Customise the styling of the base map using a JSON object defined
-            // in a raw resource file.
-            boolean success = googleMap.setMapStyle(
-                    MapStyleOptions.loadRawResourceStyle(
-                            this, R.raw.style_json));
-
-            if (!success) {
-                Log.e(TAG, "Style parsing failed.");
-            }
-        } catch (Resources.NotFoundException e) {
-            Log.e(TAG, "Can't find style. Error: ", e);
-        }
+        setCustomMapStyle(mMap, R.raw.map_style_silver);
 
         startLatLng = new LatLng(48.1,11.39);
         endLatLng = new LatLng(48.2,11.57);
@@ -205,7 +218,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             }
         }
         QoSKPIRequest request = requestBuilder.build();
-        getQoeData(request, mMap, requestNum);
+        getQoeData(request, mMap, 0, requestNum);
         requestNum++;
     }
 
@@ -239,6 +252,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             //Loop through legs and steps to get encoded polylines of each step
             if (calculatedRoutes.routes != null && calculatedRoutes.routes.length > 0) {
                 Log.i(TAG, "calculatedRoutes.routes.length="+calculatedRoutes.routes.length);
+                int routeNum = 0;
                 for(DirectionsRoute route: calculatedRoutes.routes) {
                     QoSKPIRequest.Builder requestBuilder = QoSKPIRequest.newBuilder();
                     int positionId = 0;
@@ -289,13 +303,14 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     }
                     Log.i(TAG, "path.size()="+path.size());
                     QoSKPIRequest request = requestBuilder.build();
-                    getQoeData(request, mMap, requestNum);
+                    getQoeData(request, mMap, routeNum, requestNum);
 
                     //Draw the polyline
                     if (path.size() > 0) {
                         PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(5);
                         mMap.addPolyline(opts);
                     }
+                    routeNum++;
                 }
             }
 
@@ -314,9 +329,9 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     }
 
-    private void getQoeData(QoSKPIRequest request, GoogleMap map, int requestNum) {
+    private void getQoeData(QoSKPIRequest request, GoogleMap map, int routeNum, int requestNum) {
         Log.i(TAG, "getQoeData() request size: "+request.getRequestsList().size());
-        new QoeDataTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, request, map, requestNum, modeRoute);
+        new QoeDataTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, request, map, routeNum, requestNum, modeRoute);
     }
 
     private class QoeDataTask extends AsyncTask<Object, Void, String> {
@@ -325,10 +340,11 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         protected String doInBackground(Object... params) {
             QoSKPIRequest request = (QoSKPIRequest) params[0];
             GoogleMap map = (GoogleMap) params[1];
-            int reqNum = (int) params[2];
-            boolean modeRoute = (boolean) params[3];
+            int routeNum = (int) params[2];
+            int reqNum = (int) params[3];
+            boolean modeRoute = (boolean) params[4];
             mPredictiveQosClient.checkHealth();
-            mPredictiveQosClient.requestQos(request, map, reqNum, modeRoute);
+            mPredictiveQosClient.requestQos(request, map, routeNum, reqNum, modeRoute);
             return "Executed";
         }
 

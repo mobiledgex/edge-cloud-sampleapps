@@ -224,7 +224,8 @@ public class PredictiveQosClient {
         requestNum = num;
     }
 
-    public void requestQos(final QoSKPIRequest request, GoogleMap map, final int localRequestNum, final boolean modeRoute) {
+    public void requestQos(final QoSKPIRequest request, GoogleMap map, final int routeNum, final int localRequestNum, final boolean modeRoute) {
+        Log.i(TAG, "requestQos() routeNum="+routeNum+" localRequestNum="+localRequestNum+" modeRoute="+modeRoute);
         mGoogleMap = map;
         final List<ColoredPoint> points = new ArrayList<>();
         final CountDownLatch finishLatch = new CountDownLatch(1);
@@ -251,7 +252,7 @@ public class PredictiveQosClient {
                 ((Activity)mContext).runOnUiThread(new Runnable(){
                     public void run(){
                         if(modeRoute) {
-                            drawColoredPolyline(points);
+                            drawColoredPolyline(points, routeNum);
                         } else {
                             drawColoredPolyGrid(points);
                         }
@@ -354,11 +355,16 @@ public class PredictiveQosClient {
 
     }
 
-    private void drawColoredPolyline(List<ColoredPoint> points) {
+    private void drawColoredPolyline(List<ColoredPoint> points, int routeNum) {
         Log.i(TAG, "drawColoredPolyline() size="+points.size());
 
         if (points.size() < 2)
             return;
+
+        int routeWidth = 20;
+        if(routeNum == 0) {
+            routeWidth = 30;
+        }
 
         int ix = 0;
         ColoredPoint currentPoint  = points.get(ix);
@@ -392,7 +398,7 @@ public class PredictiveQosClient {
         mGoogleMap.addPolyline(new PolylineOptions()
                 .addAll(currentSegment)
                 .color(currentColor)
-                .width(20));
+                .width(routeWidth));
 
     }
 

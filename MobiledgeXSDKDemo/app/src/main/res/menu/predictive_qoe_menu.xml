@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/pqoe_map_mode">
+    <item android:title="@string/pqoe_map_mode"
+        android:id="@+id/action_pqoe_map_mode">
         <menu>
             <group>
                 <item
@@ -24,6 +25,16 @@
                     android:checkable="true"
                     android:onClick="onTypeGroupItemClick"
                     android:title="@string/pqoe_map_type_normal" />
+                <item
+                    android:id="@+id/action_pqoe_map_type_silver"
+                    android:checkable="true"
+                    android:onClick="onTypeGroupItemClick"
+                    android:title="@string/pqoe_map_type_silver" />
+                <item
+                    android:id="@+id/action_pqoe_map_type_satellite"
+                    android:checkable="true"
+                    android:onClick="onTypeGroupItemClick"
+                    android:title="@string/pqoe_map_type_satellite" />
                 <item
                     android:id="@+id/action_pqoe_map_type_terrain"
                     android:checkable="true"
