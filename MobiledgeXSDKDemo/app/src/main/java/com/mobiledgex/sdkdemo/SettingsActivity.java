@@ -3,7 +3,9 @@ package com.mobiledgex.sdkdemo;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -12,7 +14,11 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
+import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
+
+import com.mobiledgex.sdkdemo.camera.VolleyRequestHandler;
 
 import java.util.List;
 
@@ -210,12 +216,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     }
 
     // Face Detection Preferences.
-    public static class FaceDetectionSettingsFragment extends PreferenceFragment {
+    public static class FaceDetectionSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_face_detection);
             setHasOptionsMenu(true);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            prefs.registerOnSharedPreferenceChangeListener(this);
         }
 
         @Override
@@ -226,6 +234,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 return true;
             }
             return super.onOptionsItemSelected(item);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            System.out.println("key="+key);
+
+            getPreferenceScreen().removeAll();
+            addPreferencesFromResource(R.xml.pref_face_detection);
+
         }
     }
 
