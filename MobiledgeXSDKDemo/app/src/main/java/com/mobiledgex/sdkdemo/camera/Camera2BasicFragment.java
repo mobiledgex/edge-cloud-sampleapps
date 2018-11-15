@@ -978,7 +978,7 @@ public class Camera2BasicFragment extends Fragment
      *
      * @param text The message to show
      */
-    private void showToast(final String text) {
+    protected void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
             activity.runOnUiThread(new Runnable() {
@@ -1986,6 +1986,13 @@ public class Camera2BasicFragment extends Fragment
         String prefKeyShowNetLatency = getResources().getString(R.string.preference_fd_show_net_latency);
         String prefKeyShowStdDev = getResources().getString(R.string.preference_fd_show_stddev);
         String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
+        String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+        String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+
+        if(key.equals(prefKeyHostCloud) || key.equals(prefKeyHostEdge)) {
+            Log.d(TAG, "Nothing to do for "+key);
+            return;
+        }
 
         if (key.equals(prefKeyFrontCamera) || key.equals("ALL")) {
             mCameraLensFacingDirection = sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);

@@ -35,5 +35,19 @@
         android:title="@string/preference_fd_use_rolling_avg_title"
         android:summary="@string/preference_fd_use_rolling_avg_summary"
         android:defaultValue="false" />
+    <EditTextPreference
+        android:defaultValue="23.99.193.4"
+        android:key="@string/preference_fd_host_cloud"
+        android:selectAllOnFocus="true"
+        android:singleLine="false"
+        android:summary="@string/preference_fd_host_cloud_summary"
+        android:title="@string/preference_fd_host_cloud_title" />
+    <EditTextPreference
+        android:defaultValue="37.50.143.103"
+        android:key="@string/preference_fd_host_edge"
+        android:selectAllOnFocus="true"
+        android:singleLine="false"
+        android:summary="@string/preference_fd_host_edge_summary"
+        android:title="@string/preference_fd_host_edge_title" />
 
 </PreferenceScreen>

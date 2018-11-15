@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
 
-def grpcVersion='1.13.1'
+def grpcVersion = '1.13.1'
 
 android {
     archivesBaseName = "MobiledgeXSDKDemo"
@@ -9,7 +10,7 @@ android {
         applicationId "com.mobiledgex.sdkdemo"
         minSdkVersion 23
         targetSdkVersion 27
-        versionCode 18
+        versionCode 23
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -17,6 +18,36 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/io.netty.versions.properties'
+    }
+
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.5.1-1'
+    }
+    plugins {
+        javalite {
+            artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0"
+        }
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                javalite {}
+                grpc {
+                    // Options added to --grpc_out
+                    option 'lite'
+                }
+            }
         }
     }
 }
@@ -32,10 +63,12 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth:15.0.1'
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     implementation 'com.google.maps.android:android-maps-utils:0.5+'
+    implementation 'com.google.maps:google-maps-services:0.9.0'
+    implementation 'org.slf4j:slf4j-nop:1.7.25'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation 'com.mobiledgex:matchingengine:0.0.6-SNAP'
+    implementation "com.mobiledgex:matchingengine:${project.matchingengineVersion}"
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
@@ -44,4 +77,9 @@ dependencies {
     implementation 'com.android.volley:volley:1.1.1'
     // Required for local unit tests (JUnit 4 framework)
     implementation project(':opencv')
+
+    //GRPC
+    implementation 'javax.annotation:javax.annotation-api:1.2'
+
 }
+

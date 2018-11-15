@@ -47,6 +47,12 @@
     <string name="preference_fd_use_rolling_avg">fd_use_rolling_avg</string>
     <string name="preference_fd_use_rolling_avg_title">Use Rolling Average</string>
     <string name="preference_fd_use_rolling_avg_summary">Show individual measurements or rolling average</string>
+    <string name="preference_fd_host_cloud">fd_host_cloud</string>
+    <string name="preference_fd_host_cloud_title">Cloud Server</string>
+    <string name="preference_fd_host_cloud_summary">Enter a custom IP or hostname. Enter nothing to reset to default.</string>
+    <string name="preference_fd_host_edge">fd_host_edge</string>
+    <string name="preference_fd_host_edge_title">Edge Server</string>
+    <string name="preference_fd_host_edge_summary">Enter a custom IP or hostname. Enter nothing to reset to default.</string>
     <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to first-use screen -->
@@ -131,14 +137,22 @@
     <string name="pref_summary_download_size">Number of Megabytes to download for speed test</string>
     <string name="face_detection_title">Face Detection</string>
     <string-array name="pref_dme_hostname_titles">
-        <item>Demo</item>
-        <item>DME API Reorg</item>
-        <item>TDG Integration</item>
+        <item>Demo (mexdemo)</item>
+        <item>DME API Reorg (tdg2)</item>
     </string-array>
     <string-array name="pref_dme_hostname_values">
         <item>mexdemo.dme.mobiledgex.net</item>
         <item>tdg2.dme.mobiledgex.net</item>
-        <item>mexint.dme.mobiledgex.net</item>
     </string-array>
+    <string name="title_activity_qoe_map">Predictive QoE</string>
+    <string name="map_type">Map Type</string>
+    <string name="pqoe_map_mode">Mode</string>
+    <string name="pqoe_route_mode">Route Mode</string>
+    <string name="pqoe_grid_mode">Grid Mode</string>
+    <string name="pqoe_map_type_normal">Normal</string>
+    <string name="pqoe_map_type_satellite">Satellite</string>
+    <string name="pqoe_map_type_terrain">Terrain</string>
+    <string name="pqoe_map_type_hybrid">Hybrid</string>
+    <string name="pqoe_map_type_silver">Silver</string>
 
 </resources>
