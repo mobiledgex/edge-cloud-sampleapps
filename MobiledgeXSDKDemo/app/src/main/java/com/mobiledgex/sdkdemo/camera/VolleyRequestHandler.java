@@ -52,16 +52,17 @@ public class VolleyRequestHandler {
     private boolean doNetLatency = true;
     private final int rollingAvgSize = 100;
 
-    private static int port = 8000;
-//    private static String cloudHost = "23.99.193.4"; // facerec-central
-//    private static String edgeHost = "37.50.143.103"; //Bonn
-//    private static String cloudHost = "104.42.217.135"; //West US
-//    private static String edgeHost = "80.187.128.15"; //Berlin
+//    public static final String DEF_FACE_HOST_CLOUD = "23.99.193.4"; // facerec-central
+//    public static final String DEF_FACE_HOST_EDGE = "37.50.143.103"; //Bonn
+//    public static String DEF_FACE_HOST_CLOUD = "104.42.217.135"; //West US
+//    public static String DEF_FACE_HOST_EDGE = "80.187.128.15"; //Berlin
 
     //Bruce's private test environment
-//    private static String cloudHost = "acrotopia.com";
-//    private static String edgeHost = "192.168.1.86";
-//    private static String edgeHost = "10.157.107.83";
+    public static String DEF_FACE_HOST_CLOUD = "acrotopia.com";
+    public static String DEF_FACE_HOST_EDGE = "192.168.1.86";
+//    public static String DEF_FACE_HOST_EDGE = "10.157.107.83";
+
+    private static int port = 8000;
 
     private String cloudHost;
     private String edgeHost;
@@ -92,10 +93,8 @@ public class VolleyRequestHandler {
 
         // Get hosts from preferences.
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(camera2BasicFragment.getContext());
-        String defValueCloud = "23.99.193.4";
-        String defValueEdge = "37.50.143.103";
-        cloudHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_cloud), defValueCloud);
-        edgeHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_edge), defValueEdge);
+        cloudHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_cloud), DEF_FACE_HOST_EDGE);
+        edgeHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_edge), DEF_FACE_HOST_EDGE);
 
         Log.i(TAG, "cloudHost="+cloudHost);
         Log.i(TAG, "edgeHost="+edgeHost);

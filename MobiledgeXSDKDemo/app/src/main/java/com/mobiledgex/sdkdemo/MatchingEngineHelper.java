@@ -196,6 +196,7 @@ public class MatchingEngineHelper {
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     host, port, 10000);
+            Log.i(TAG, "cloudletList.getStatus()="+cloudletList.getStatus());
 //            if (cloudletList.getStatus() != AppClient.AppInstListReply.AI_Status.AI_SUCCESS) {
 //                someText = "Cannot create AppInstListRequest object. Status="+cloudletList.getStatus()+"\n";
 //                Log.e(TAG, someText);

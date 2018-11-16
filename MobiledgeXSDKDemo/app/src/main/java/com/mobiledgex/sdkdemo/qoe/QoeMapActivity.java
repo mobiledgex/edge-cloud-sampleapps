@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,8 +78,8 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         try {
             mPredictiveQosClient = new PredictiveQosClient(this, SERVER_URI, SERVER_PORT);
-        } catch (IOException | NoSuchAlgorithmException | KeyManagementException | MexTrustStoreException
-                | InvalidKeySpecException | KeyStoreException | MexKeyStoreException e) {
+        } catch (IOException | NoSuchAlgorithmException | KeyManagementException
+                | CertificateException | KeyStoreException | UnrecoverableKeyException e) {
             e.printStackTrace();
         }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -276,7 +278,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                                                     LatLng latLng = new LatLng(coord1.lat, coord1.lng);
                                                     path.add(latLng);
                                                     boundsBuilder.include(latLng);
-                                                    PositionKpiRequest point = PositionKpiRequest.newBuilder().setPositionid(positionId).setLatitude((float) coord1.lat).setLongitude((float) coord1.lng).setTimestamp(timeStamp+positionId).build();
+                                                    PositionKpiRequest point = PositionKpiRequest.newBuilder().setPositionid(positionId).setLatitude((float) coord1.lat).setLongitude((float) coord1.lng).setTimestamp(timeStamp).build();
                                                     requestBuilder.addRequests(point);
                                                     positionId++;
                                                 }
@@ -291,7 +293,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                                                 LatLng latLng = new LatLng(coord.lat, coord.lng);
                                                 path.add(latLng);
                                                 boundsBuilder.include(latLng);
-                                                PositionKpiRequest point = PositionKpiRequest.newBuilder().setPositionid(positionId).setLatitude((float) coord.lat).setLongitude((float) coord.lng).setTimestamp(timeStamp+positionId).build();
+                                                PositionKpiRequest point = PositionKpiRequest.newBuilder().setPositionid(positionId).setLatitude((float) coord.lat).setLongitude((float) coord.lng).setTimestamp(timeStamp).build();
                                                 requestBuilder.addRequests(point);
                                                 positionId++;
                                             }

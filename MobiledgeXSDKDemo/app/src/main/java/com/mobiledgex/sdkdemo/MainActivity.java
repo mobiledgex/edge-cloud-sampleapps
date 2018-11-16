@@ -77,14 +77,18 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import distributed_match_engine.AppClient;
+import distributed_match_engine.Appcommon;
 
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_CLOUDLET;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
+import static com.mobiledgex.sdkdemo.camera.VolleyRequestHandler.DEF_FACE_HOST_CLOUD;
+import static com.mobiledgex.sdkdemo.camera.VolleyRequestHandler.DEF_FACE_HOST_EDGE;
 import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_VERIFIED;
 import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
 
@@ -231,19 +235,6 @@ public class MainActivity extends AppCompatActivity
         if (firstTimeUse) {
             Intent intent = new Intent(this, FirstTimeUseActivity.class);
             startActivity(intent);
-        }
-
-        // Set, or create create an App generated UUID for use in MatchingEngine, if there isn't one:
-        String uuidKey = getResources().getString(R.string.preference_mex_user_uuid);
-        String currentUUID = prefs.getString(uuidKey, "");
-        if (currentUUID.isEmpty()) {
-            UUID uuid = mMatchingEngineHelper.getMatchingEngine().createUUID();
-            mMatchingEngineHelper.getMatchingEngine().setUUID(uuid);
-            prefs.edit()
-                    .putString(uuidKey, uuid.toString())
-                    .apply();
-        } else {
-            mMatchingEngineHelper.getMatchingEngine().setUUID(UUID.fromString(currentUUID));
         }
 
         String latencyTestMethod = prefs.getString(getResources().getString(R.string.latency_method), defaultLatencyMethod);
@@ -785,9 +776,20 @@ public class MainActivity extends AppCompatActivity
                     String cloudletName = cloudletLocation.getCloudletName();
                     List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
                     //TODO: What if there is more than 1 appInstance in the list?
+                    //There shouldn't be since we use all of appName, appVer, and devName in the
+                    //request. There should only be a single match.
                     String uri = appInstances.get(0).getFQDN();
-                    String appName = appInstances.get(0).getAppname();
-//                    List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
+                    String appName = appInstances.get(0).getAppName();
+                    List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
+                    //TODO: Use these ports instead of the hard-coded values in Cloudlet.java.
+                    String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Public Path: '%s'}";
+                    for (Appcommon.AppPort aPort : ports) {
+                        Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
+                                    aPort.getProto().getNumber(),
+                                    aPort.getInternalPort(),
+                                    aPort.getPublicPort(),
+                                    aPort.getPublicPath()));
+                    }
                     double distance = cloudletLocation.getDistance();
                     LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLat(), cloudletLocation.getGpsLocation().getLong());
                     Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
@@ -1013,11 +1015,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         if(key.equals(prefKeyHostCloud)) {
-            String defValueCloud = "23.99.193.4";
+            String defValueCloud = DEF_FACE_HOST_CLOUD;
             new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, defValueCloud, key);
         }
         if(key.equals(prefKeyHostEdge)) {
-            String defValueEdge = "37.50.143.103";
+            String defValueEdge = DEF_FACE_HOST_EDGE;
             new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, defValueEdge, key);
         }
 
