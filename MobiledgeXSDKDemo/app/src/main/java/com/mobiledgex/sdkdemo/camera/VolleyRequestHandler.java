@@ -52,14 +52,14 @@ public class VolleyRequestHandler {
     private boolean doNetLatency = true;
     private final int rollingAvgSize = 100;
 
-//    public static final String DEF_FACE_HOST_CLOUD = "23.99.193.4"; // facerec-central
-//    public static final String DEF_FACE_HOST_EDGE = "37.50.143.103"; //Bonn
+    public static final String DEF_FACE_HOST_CLOUD = "23.99.193.4"; // facerec-central
+    public static final String DEF_FACE_HOST_EDGE = "37.50.143.103"; //Bonn
 //    public static String DEF_FACE_HOST_CLOUD = "104.42.217.135"; //West US
 //    public static String DEF_FACE_HOST_EDGE = "80.187.128.15"; //Berlin
 
     //Bruce's private test environment
-    public static String DEF_FACE_HOST_CLOUD = "acrotopia.com";
-    public static String DEF_FACE_HOST_EDGE = "192.168.1.86";
+//    public static String DEF_FACE_HOST_CLOUD = "acrotopia.com";
+//    public static String DEF_FACE_HOST_EDGE = "192.168.1.86";
 //    public static String DEF_FACE_HOST_EDGE = "10.157.107.83";
 
     private static int port = 8000;
