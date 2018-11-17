@@ -1,6 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-project.ext.matchingengineVersion = "0.0.6-SNAP"
+project.ext.matchingengineVersion = "0.0.7"
 //
 buildscript {
 
@@ -20,7 +20,7 @@ buildscript {
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 def nexusUser = properties.getProperty("nexus.user")
-def nexusPassword = properties.getProperty("nexus.password")+"_BAD" //TODO: Fix
+def nexusPassword = properties.getProperty("nexus.password")
 println "Nexus Credentials: ${nexusUser} ${nexusPassword}"
 
 allprojects {
