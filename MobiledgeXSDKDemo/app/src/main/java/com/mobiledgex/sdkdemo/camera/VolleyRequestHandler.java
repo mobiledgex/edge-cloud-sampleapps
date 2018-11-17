@@ -53,7 +53,7 @@ public class VolleyRequestHandler {
     private final int rollingAvgSize = 100;
 
     public static final String DEF_FACE_HOST_CLOUD = "23.99.193.4"; // facerec-central
-    public static final String DEF_FACE_HOST_EDGE = "37.50.143.103"; //Bonn
+    public static final String DEF_FACE_HOST_EDGE = "mobiledgexsdkdemomobiledgexsdkdemo10.bonndemocloudlet.tdg.mobiledgex.net";
 //    public static String DEF_FACE_HOST_CLOUD = "104.42.217.135"; //West US
 //    public static String DEF_FACE_HOST_EDGE = "80.187.128.15"; //Berlin
 
@@ -93,7 +93,7 @@ public class VolleyRequestHandler {
 
         // Get hosts from preferences.
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(camera2BasicFragment.getContext());
-        cloudHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_cloud), DEF_FACE_HOST_EDGE);
+        cloudHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_cloud), DEF_FACE_HOST_CLOUD);
         edgeHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_edge), DEF_FACE_HOST_EDGE);
 
         Log.i(TAG, "cloudHost="+cloudHost);

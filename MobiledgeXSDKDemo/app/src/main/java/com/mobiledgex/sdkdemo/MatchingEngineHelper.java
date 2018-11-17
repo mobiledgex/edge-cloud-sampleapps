@@ -119,7 +119,7 @@ public class MatchingEngineHelper {
                 }
                 Log.i(TAG, "host:" + host);
 
-                if (!registerClient(ctx, host, port, devName, appVersion, reportCookie)) {
+                if (!registerClient(ctx, host, port, devName, appVersion, carrierName, reportCookie)) {
                     return null;
                 }
 
@@ -166,10 +166,11 @@ public class MatchingEngineHelper {
         }
     }
 
-    private boolean registerClient(Activity ctx, String host, int port, String devName, String appVersion, boolean reportCookie) throws InterruptedException, ExecutionException {
+    private boolean registerClient(Activity ctx, String host, int port, String devName, String appVersion,
+                                   String carrierName, boolean reportCookie) throws InterruptedException, ExecutionException {
         AppClient.RegisterClientRequest registerClientRequest =
                 mMatchingEngine.createRegisterClientRequest(ctx,
-                        devName, "", appVersion);
+                        devName, "", appVersion, carrierName, null);
         Log.i(TAG, "registerClientRequest.getAppVers()=["+registerClientRequest.getAppVers()+"] registerClientRequest.getAppName()="+registerClientRequest.getAppName());
         AppClient.RegisterClientReply registerStatus =
                 mMatchingEngine.registerClient(registerClientRequest,
