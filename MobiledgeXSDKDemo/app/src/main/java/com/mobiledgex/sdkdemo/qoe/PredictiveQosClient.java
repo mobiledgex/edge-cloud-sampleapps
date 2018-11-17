@@ -13,14 +13,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.mobiledgex.matchingengine.MatchingEngine;
-import com.mobiledgex.matchingengine.MexKeyStoreException;
-import com.mobiledgex.matchingengine.MexTrustStoreException;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -41,10 +40,8 @@ import io.grpc.stub.StreamObserver;
 public class PredictiveQosClient {
     private static final String TAG = "PredictiveQosClient";
 
-    // set the certificates/key files path
-    private static final String CLIENT_CERT_PATH = "/certificates/client.crt";
-    private static final String CLIENT_KEY_PATH = "/certificates/client.pem";
-    private static final String SERVER_CERT_PATH = "/certificates/server.crt";
+    private static final String CERT_SERVER_BKS = "certs_pqoe/server.bks";
+    private static final String CERT_CLIENT_P12 = "certs_pqoe/client.p12";
 
     // set the public address/port for dt.qos.predictive.api project
     public static final String SERVER_URI = "qos-predictive.all-ip.t-online.de";
@@ -58,17 +55,24 @@ public class PredictiveQosClient {
     private int routeWidth = 20;
     private int requestNum;
 
-    public PredictiveQosClient(Context context, String host, int port) throws IOException, MexTrustStoreException, MexKeyStoreException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public PredictiveQosClient(Context context, String host, int port) throws IOException,
+            KeyManagementException, KeyStoreException, NoSuchAlgorithmException,
+            CertificateException, UnrecoverableKeyException {
         Log.i(TAG, "onMarkerDragEnd()");
 
         mContext = context;
         mMatchingEngine = new MatchingEngine(context);
+        String serverBksFileName = CERT_SERVER_BKS;
+        String clientKeyPairFileName = CERT_CLIENT_P12;
+        char[] serverBksPassword = "".toCharArray();
+        char[] clientKeyPairPassword = "".toCharArray();
+
         // the channel represents the communication to the server, here we give
         // the connection parameters, and enable TLS with the included certs/keys.
         channel = OkHttpChannelBuilder
-                .forAddress(SERVER_URI, SERVER_PORT)
-                .sslSocketFactory(mMatchingEngine.getMutualAuthSSLSocketFactoryInstance("certificates",
-                        "qos-predictive.all-ip.t-online.de", "server.crt", "client.crt", "client.pem"))
+                .forAddress(host, port)
+                .sslSocketFactory(mMatchingEngine.getMutualAuthSSLSocketFactoryInstance(serverBksFileName,
+                        clientKeyPairFileName, serverBksPassword, clientKeyPairPassword))
                 .build();
     }
 
@@ -361,7 +365,7 @@ public class PredictiveQosClient {
         if (points.size() < 2)
             return;
 
-        int routeWidth = 20;
+        routeWidth = 20;
         if(routeNum == 0) {
             routeWidth = 30;
         }
