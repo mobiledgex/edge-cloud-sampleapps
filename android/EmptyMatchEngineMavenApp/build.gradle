@@ -30,7 +30,7 @@ allprojects {
                 username nexusUser
                 password nexusPassword
             }
-            url "https://registry.mobiledgex.net/nexus/content/repositories/snapshots/"
+            url "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
         }
         mavenLocal()
         google()
