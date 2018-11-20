@@ -1,0 +1,1609 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		252C2D5421826DC10091A1D4 /* dot-menu@3x copy.png in Resources */ = {isa = PBXBuildFile; fileRef = 252C2D5321826DC10091A1D4 /* dot-menu@3x copy.png */; };
+		252C2D59218298110091A1D4 /* FindCloudlet.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2D56218298110091A1D4 /* FindCloudlet.java.swift */; };
+		252C2D5A218298110091A1D4 /* MatchingEngine.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2D57218298110091A1D4 /* MatchingEngine.java.swift */; };
+		252C2D5B218298110091A1D4 /* RegisterClient.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2D58218298110091A1D4 /* RegisterClient.java.swift */; };
+		252C2D9821857E420091A1D4 /* AddUserToGroup.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2D9721857E420091A1D4 /* AddUserToGroup.java.swift */; };
+		252C2D9A21857E4E0091A1D4 /* GetAppInstList.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2D9921857E4E0091A1D4 /* GetAppInstList.java.swift */; };
+		252C2D9C21857E590091A1D4 /* GetLocation.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2D9B21857E590091A1D4 /* GetLocation.java.swift */; };
+		252C2DA421857E9B0091A1D4 /* VerifyLocation.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DA321857E9B0091A1D4 /* VerifyLocation.java.swift */; };
+		252C2DB2218633E40091A1D4 /* DPDConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DA8218633E40091A1D4 /* DPDConstants.swift */; };
+		252C2DB3218633E40091A1D4 /* DPDKeyboardListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DA9218633E40091A1D4 /* DPDKeyboardListener.swift */; };
+		252C2DB4218633E40091A1D4 /* DPDUIView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DAA218633E40091A1D4 /* DPDUIView+Extension.swift */; };
+		252C2DB6218633E40091A1D4 /* DropDownCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 252C2DAD218633E40091A1D4 /* DropDownCell.xib */; };
+		252C2DB7218633E40091A1D4 /* DropDown+Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DAF218633E40091A1D4 /* DropDown+Appearance.swift */; };
+		252C2DB8218633E40091A1D4 /* DropDown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DB0218633E40091A1D4 /* DropDown.swift */; };
+		252C2DB9218633E40091A1D4 /* DropDownCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DB1218633E40091A1D4 /* DropDownCell.swift */; };
+		252C2DD4218782380091A1D4 /* Completion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBB218782370091A1D4 /* Completion.swift */; };
+		252C2DD5218782380091A1D4 /* ErrorTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBC218782370091A1D4 /* ErrorTypes.swift */; };
+		252C2DD6218782380091A1D4 /* Executor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBD218782370091A1D4 /* Executor.swift */; };
+		252C2DD7218782380091A1D4 /* FutureCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBF218782370091A1D4 /* FutureCache.swift */; };
+		252C2DD8218782380091A1D4 /* FutureThread.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC0218782370091A1D4 /* FutureThread.swift */; };
+		252C2DD9218782380091A1D4 /* NSData-Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC1218782370091A1D4 /* NSData-Ext.swift */; };
+		252C2DDA218782380091A1D4 /* NSFileManager-Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC2218782370091A1D4 /* NSFileManager-Ext.swift */; };
+		252C2DDB218782380091A1D4 /* NSOperation+FutureKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC3218782370091A1D4 /* NSOperation+FutureKit.swift */; };
+		252C2DDC218782380091A1D4 /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC4218782370091A1D4 /* Future.swift */; };
+		252C2DDD218782380091A1D4 /* FutureBatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC5218782370091A1D4 /* FutureBatch.swift */; };
+		252C2DDE218782380091A1D4 /* FutureFIFO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC6218782370091A1D4 /* FutureFIFO.swift */; };
+		252C2DE0218782380091A1D4 /* Promise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC9218782370091A1D4 /* Promise.swift */; };
+		252C2DE1218782380091A1D4 /* Synchronization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCA218782370091A1D4 /* Synchronization.swift */; };
+		252C2DE2218782380091A1D4 /* SyncWaitHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCB218782370091A1D4 /* SyncWaitHandler.swift */; };
+		252C2DE3218782380091A1D4 /* ExtensionVars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCD218782370091A1D4 /* ExtensionVars.swift */; };
+		252C2DE4218782380091A1D4 /* NSObject-Ext-ThreadSafe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCE218782370091A1D4 /* NSObject-Ext-ThreadSafe.swift */; };
+		252C2DE5218782380091A1D4 /* ObjectiveCExceptionHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD0218782370091A1D4 /* ObjectiveCExceptionHandler.m */; };
+		252C2DE6218782380091A1D4 /* OSAtomicInt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD1218782370091A1D4 /* OSAtomicInt.swift */; };
+		252C2DE7218782380091A1D4 /* OSFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD2218782370091A1D4 /* OSFeature.swift */; };
+		252C2DE8218782380091A1D4 /* Tuples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD3218782380091A1D4 /* Tuples.swift */; };
+		252C2DF02187A8F80091A1D4 /* mex-ca.crt in Resources */ = {isa = PBXBuildFile; fileRef = 252C2DED2187A8F80091A1D4 /* mex-ca.crt */; };
+		252C2DF12187A8F80091A1D4 /* mex-client.crt in Resources */ = {isa = PBXBuildFile; fileRef = 252C2DEE2187A8F80091A1D4 /* mex-client.crt */; };
+		252C2DF22187A8F80091A1D4 /* mex-client.key in Resources */ = {isa = PBXBuildFile; fileRef = 252C2DEF2187A8F80091A1D4 /* mex-client.key */; };
+		252C2DF42187AA200091A1D4 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DF32187AA200091A1D4 /* Reachability.swift */; };
+		252C2DF62187D1E80091A1D4 /* FileKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DF52187D1E80091A1D4 /* FileKit.swift */; };
+		252C2E19218A99590091A1D4 /* Account.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EE2217F7BD60092956D /* Account.java.swift */; };
+		252C2E1B218AA5A30091A1D4 /* MainActivity.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EE9217F7BD60092956D /* MainActivity.java.swift */; };
+		252C2E1D218B6A6E0091A1D4 /* SKToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2E1C218B6A6D0091A1D4 /* SKToastView.swift */; };
+		252C2E1E218B98940091A1D4 /* Cloudlet.jav.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EE4217F7BD60092956D /* Cloudlet.jav.swift */; };
+		252C2E1F218B997A0091A1D4 /* SpeedTestResultsListener.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EEE217F7BD60092956D /* SpeedTestResultsListener.java.swift */; };
+		252C2E20218B9A220091A1D4 /* CloudletListHolder.jav.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EE6217F7BD60092956D /* CloudletListHolder.jav.swift */; };
+		252C2E27218BA1210091A1D4 /* dot-menu@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 252C2E22218BA1210091A1D4 /* dot-menu@2x.png */; };
+		252C2E28218BA1210091A1D4 /* dot-menu@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 252C2E23218BA1210091A1D4 /* dot-menu@3x.png */; };
+		252C2E29218BA1210091A1D4 /* ic_launcher-web.png in Resources */ = {isa = PBXBuildFile; fileRef = 252C2E24218BA1210091A1D4 /* ic_launcher-web.png */; };
+		252C2E2A218BA1210091A1D4 /* ic_marker_cloudlet-web.png in Resources */ = {isa = PBXBuildFile; fileRef = 252C2E25218BA1210091A1D4 /* ic_marker_cloudlet-web.png */; };
+		252C2E2B218BA1210091A1D4 /* ic_marker_mobile-web.png in Resources */ = {isa = PBXBuildFile; fileRef = 252C2E26218BA1210091A1D4 /* ic_marker_mobile-web.png */; };
+		252C2E3F218CB19C0091A1D4 /* MatchingEngineResultsListener.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EEB217F7BD60092956D /* MatchingEngineResultsListener.java.swift */; };
+		252C2E41218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */; };
+		25623EC2217F79D30092956D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EC1217F79D30092956D /* AppDelegate.swift */; };
+		25623EC4217F79D30092956D /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EC3217F79D30092956D /* ViewController.swift */; };
+		25623EC7217F79D30092956D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 25623EC5217F79D30092956D /* Main.storyboard */; };
+		25623EC9217F79D50092956D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 25623EC8217F79D50092956D /* Assets.xcassets */; };
+		25623ECC217F79D50092956D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 25623ECA217F79D50092956D /* LaunchScreen.storyboard */; };
+		25623ED7217F79D50092956D /* MobiledgeXSDKDemo_IOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623ED6217F79D50092956D /* MobiledgeXSDKDemo_IOSTests.swift */; };
+		258BEEFC219CBF770055227D /* ic_menu_camera.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEEF8219CBF770055227D /* ic_menu_camera.png */; };
+		258BEEFD219CBF770055227D /* ic_menu_recent_history.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEEF9219CBF770055227D /* ic_menu_recent_history.png */; };
+		258BEEFE219CBF770055227D /* ic_menu_compass.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEEFA219CBF770055227D /* ic_menu_compass.png */; };
+		258BEEFF219CBF770055227D /* ic_menu_preferences.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEEFB219CBF770055227D /* ic_menu_preferences.png */; };
+		258BEF0B219F5E230055227D /* x_darkGray@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF04219F5E230055227D /* x_darkGray@2x.png */; };
+		258BEF0C219F5E230055227D /* x_darkGray@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF05219F5E230055227D /* x_darkGray@3x.png */; };
+		258BEF0E219F5E230055227D /* CircularSpinner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF08219F5E230055227D /* CircularSpinner.swift */; };
+		258BEF0F219F5E230055227D /* CircularSpinner.xib in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF09219F5E230055227D /* CircularSpinner.xib */; };
+		258BEF11219F9C120055227D /* FaceDetectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF10219F9C110055227D /* FaceDetectionViewController.swift */; };
+		258BEF13219F9D810055227D /* CMSampleBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF12219F9D810055227D /* CMSampleBufferExtension.swift */; };
+		258BEF15219F9E880055227D /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF14219F9E880055227D /* PreviewView.swift */; };
+		258BEF2221A0E0AB0055227D /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF1721A0E0AB0055227D /* LICENSE */; };
+		258BEF2321A0E0AB0055227D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF1821A0E0AB0055227D /* README.md */; };
+		258BEF2421A0E0AB0055227D /* RFAboutViewCloseX.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF1B21A0E0AB0055227D /* RFAboutViewCloseX.png */; };
+		258BEF2521A0E0AB0055227D /* RFAboutViewCloseX@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF1C21A0E0AB0055227D /* RFAboutViewCloseX@2x.png */; };
+		258BEF2621A0E0AB0055227D /* RFAboutViewCloseX@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF1D21A0E0AB0055227D /* RFAboutViewCloseX@3x.png */; };
+		258BEF2721A0E0AB0055227D /* RFAboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF1F21A0E0AB0055227D /* RFAboutView.swift */; };
+		258BEF2821A0E0AB0055227D /* RFAboutViewDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2021A0E0AB0055227D /* RFAboutViewDetailViewController.swift */; };
+		258BEF2921A0E0AB0055227D /* UIViewController+sizeForPercent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2121A0E0AB0055227D /* UIViewController+sizeForPercent.swift */; };
+		258BEF2C21A0E9A30055227D /* Acknowledgements.plist in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF2B21A0E9A20055227D /* Acknowledgements.plist */; };
+		258BEF2E21A24C020055227D /* Mex.utitities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2D21A24C020055227D /* Mex.utitities.swift */; };
+		25D5DCBD2180FB500097941C /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 25D5DCBC2180FB500097941C /* Podfile */; };
+		25DCD5C82191FCD2000437A5 /* LocationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD5C12191FCD2000437A5 /* LocationRequest.swift */; };
+		25DCD5C92191FCD2000437A5 /* Locator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD5C22191FCD2000437A5 /* Locator.swift */; };
+		25DCD6222197ABAB000437A5 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD5C32191FCD2000437A5 /* Shared.swift */; };
+		25DCD6242197AC1D000437A5 /* HeadingRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6232197AC1C000437A5 /* HeadingRequest.swift */; };
+		25DCD6262197AC91000437A5 /* IPLocationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6252197AC91000437A5 /* IPLocationRequest.swift */; };
+		25DCD6282197ACB3000437A5 /* FindPlaceRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6272197ACB3000437A5 /* FindPlaceRequest.swift */; };
+		25DCD6332198A5BF000437A5 /* Sample_client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6322198A5BF000437A5 /* Sample_client.swift */; };
+		25DCD6372198B71E000437A5 /* mex-ca.der in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6362198B5EC000437A5 /* mex-ca.der */; };
+		25DCD6382198B724000437A5 /* mex-client.der in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6342198B5EB000437A5 /* mex-client.der */; };
+		25DCD6392198B72B000437A5 /* mex-clientkey.der in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6352198B5EC000437A5 /* mex-clientkey.der */; };
+		25DCD6582199F128000437A5 /* CloudletDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD64B2199F128000437A5 /* CloudletDetailsViewController.swift */; };
+		25DCD6592199F128000437A5 /* EnhancedNetworkLocationServicesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD64C2199F128000437A5 /* EnhancedNetworkLocationServicesViewController.swift */; };
+		25DCD65A2199F128000437A5 /* FaceDectectionSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD64D2199F128000437A5 /* FaceDectectionSettingsViewController.swift */; };
+		25DCD65B2199F128000437A5 /* GeneralSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD64E2199F128000437A5 /* GeneralSettingsViewController.swift */; };
+		25DCD65C2199F128000437A5 /* About.png in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6502199F128000437A5 /* About.png */; };
+		25DCD65D2199F128000437A5 /* Cog_font_awesome.png in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6512199F128000437A5 /* Cog_font_awesome.png */; };
+		25DCD65E2199F128000437A5 /* g-logo copy.png in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6522199F128000437A5 /* g-logo copy.png */; };
+		25DCD65F2199F128000437A5 /* g-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6532199F128000437A5 /* g-logo.png */; };
+		25DCD6602199F128000437A5 /* ios11-control-center-camera-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6542199F128000437A5 /* ios11-control-center-camera-icon.png */; };
+		25DCD6612199F128000437A5 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6552199F128000437A5 /* SettingsViewController.swift */; };
+		25DCD6622199F128000437A5 /* SideMenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6562199F128000437A5 /* SideMenuViewController.swift */; };
+		25DCD6632199F128000437A5 /* SpeedTestSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6572199F128000437A5 /* SpeedTestSettingsViewController.swift */; };
+		25DCD7002199F798000437A5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6B32199F797000437A5 /* Assets.xcassets */; };
+		25DCD7012199F798000437A5 /* BaseRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6B52199F797000437A5 /* BaseRow.swift */; };
+		25DCD7022199F798000437A5 /* Cell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6B62199F797000437A5 /* Cell.swift */; };
+		25DCD7032199F798000437A5 /* CellType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6B72199F797000437A5 /* CellType.swift */; };
+		25DCD7042199F798000437A5 /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6B82199F797000437A5 /* Core.swift */; };
+		25DCD7052199F798000437A5 /* Form.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6B92199F797000437A5 /* Form.swift */; };
+		25DCD7062199F798000437A5 /* HeaderFooterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6BA2199F797000437A5 /* HeaderFooterView.swift */; };
+		25DCD7072199F798000437A5 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6BB2199F797000437A5 /* Helpers.swift */; };
+		25DCD7082199F798000437A5 /* InlineRowType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6BC2199F797000437A5 /* InlineRowType.swift */; };
+		25DCD7092199F798000437A5 /* NavigationAccessoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6BD2199F797000437A5 /* NavigationAccessoryView.swift */; };
+		25DCD70A2199F798000437A5 /* Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6BE2199F797000437A5 /* Operators.swift */; };
+		25DCD70B2199F798000437A5 /* PresenterRowType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6BF2199F797000437A5 /* PresenterRowType.swift */; };
+		25DCD70C2199F798000437A5 /* Row.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C02199F797000437A5 /* Row.swift */; };
+		25DCD70D2199F798000437A5 /* RowControllerType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C12199F797000437A5 /* RowControllerType.swift */; };
+		25DCD70E2199F798000437A5 /* RowProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C22199F797000437A5 /* RowProtocols.swift */; };
+		25DCD70F2199F798000437A5 /* RowType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C32199F797000437A5 /* RowType.swift */; };
+		25DCD7102199F798000437A5 /* Section.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C42199F797000437A5 /* Section.swift */; };
+		25DCD7112199F798000437A5 /* SelectableRowType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C52199F797000437A5 /* SelectableRowType.swift */; };
+		25DCD7122199F798000437A5 /* SelectableSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C62199F797000437A5 /* SelectableSection.swift */; };
+		25DCD7132199F798000437A5 /* SwipeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C72199F797000437A5 /* SwipeActions.swift */; };
+		25DCD7142199F798000437A5 /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C82199F797000437A5 /* Validation.swift */; };
+		25DCD7162199F798000437A5 /* Eureka.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD6CC2199F797000437A5 /* Eureka.bundle */; };
+		25DCD7172199F798000437A5 /* ActionSheetRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6CE2199F797000437A5 /* ActionSheetRow.swift */; };
+		25DCD7182199F798000437A5 /* AlertRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6CF2199F797000437A5 /* AlertRow.swift */; };
+		25DCD7192199F798000437A5 /* ButtonRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D02199F797000437A5 /* ButtonRow.swift */; };
+		25DCD71A2199F798000437A5 /* ButtonRowWithPresent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D12199F797000437A5 /* ButtonRowWithPresent.swift */; };
+		25DCD71B2199F798000437A5 /* CheckRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D22199F797000437A5 /* CheckRow.swift */; };
+		25DCD71C2199F798000437A5 /* AlertOptionsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D42199F797000437A5 /* AlertOptionsRow.swift */; };
+		25DCD71D2199F798000437A5 /* DateFieldRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D52199F797000437A5 /* DateFieldRow.swift */; };
+		25DCD71E2199F798000437A5 /* DateInlineFieldRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D62199F797000437A5 /* DateInlineFieldRow.swift */; };
+		25DCD71F2199F798000437A5 /* DecimalFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D72199F797000437A5 /* DecimalFormatter.swift */; };
+		25DCD7202199F798000437A5 /* FieldRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D82199F797000437A5 /* FieldRow.swift */; };
+		25DCD7212199F798000437A5 /* GenericMultipleSelectorRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6D92199F797000437A5 /* GenericMultipleSelectorRow.swift */; };
+		25DCD7222199F798000437A5 /* OptionsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6DA2199F797000437A5 /* OptionsRow.swift */; };
+		25DCD7232199F798000437A5 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6DB2199F797000437A5 /* Protocols.swift */; };
+		25DCD7242199F798000437A5 /* SelectorRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6DC2199F797000437A5 /* SelectorRow.swift */; };
+		25DCD7252199F798000437A5 /* MultipleSelectorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6DE2199F797000437A5 /* MultipleSelectorViewController.swift */; };
+		25DCD7262199F798000437A5 /* SelectorAlertController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6DF2199F797000437A5 /* SelectorAlertController.swift */; };
+		25DCD7272199F798000437A5 /* SelectorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E02199F797000437A5 /* SelectorViewController.swift */; };
+		25DCD7282199F798000437A5 /* DateInlineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E12199F797000437A5 /* DateInlineRow.swift */; };
+		25DCD7292199F798000437A5 /* DatePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E22199F797000437A5 /* DatePickerRow.swift */; };
+		25DCD72A2199F798000437A5 /* DateRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E32199F797000437A5 /* DateRow.swift */; };
+		25DCD72B2199F798000437A5 /* DoublePickerInputRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E42199F797000437A5 /* DoublePickerInputRow.swift */; };
+		25DCD72C2199F798000437A5 /* DoublePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E52199F797000437A5 /* DoublePickerRow.swift */; };
+		25DCD72D2199F798000437A5 /* FieldsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E62199F797000437A5 /* FieldsRow.swift */; };
+		25DCD72E2199F798000437A5 /* LabelRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E72199F797000437A5 /* LabelRow.swift */; };
+		25DCD72F2199F798000437A5 /* MultipleSelectorRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E82199F797000437A5 /* MultipleSelectorRow.swift */; };
+		25DCD7302199F798000437A5 /* PickerInlineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6E92199F797000437A5 /* PickerInlineRow.swift */; };
+		25DCD7312199F798000437A5 /* PickerInputRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6EA2199F797000437A5 /* PickerInputRow.swift */; };
+		25DCD7322199F798000437A5 /* PickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6EB2199F797000437A5 /* PickerRow.swift */; };
+		25DCD7332199F798000437A5 /* PopoverSelectorRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6EC2199F797000437A5 /* PopoverSelectorRow.swift */; };
+		25DCD7342199F798000437A5 /* PushRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6ED2199F797000437A5 /* PushRow.swift */; };
+		25DCD7352199F798000437A5 /* SegmentedRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6EE2199F797000437A5 /* SegmentedRow.swift */; };
+		25DCD7362199F798000437A5 /* ListCheckRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F02199F797000437A5 /* ListCheckRow.swift */; };
+		25DCD7372199F798000437A5 /* SliderRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F12199F797000437A5 /* SliderRow.swift */; };
+		25DCD7382199F798000437A5 /* StepperRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F22199F797000437A5 /* StepperRow.swift */; };
+		25DCD7392199F798000437A5 /* SwitchRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F32199F797000437A5 /* SwitchRow.swift */; };
+		25DCD73A2199F798000437A5 /* TextAreaRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F42199F797000437A5 /* TextAreaRow.swift */; };
+		25DCD73B2199F798000437A5 /* TriplePickerInputRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F52199F797000437A5 /* TriplePickerInputRow.swift */; };
+		25DCD73C2199F798000437A5 /* TriplePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F62199F797000437A5 /* TriplePickerRow.swift */; };
+		25DCD73D2199F798000437A5 /* RuleClosure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F82199F797000437A5 /* RuleClosure.swift */; };
+		25DCD73E2199F798000437A5 /* RuleEmail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6F92199F798000437A5 /* RuleEmail.swift */; };
+		25DCD73F2199F798000437A5 /* RuleEqualsToRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FA2199F798000437A5 /* RuleEqualsToRow.swift */; };
+		25DCD7402199F798000437A5 /* RuleLength.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FB2199F798000437A5 /* RuleLength.swift */; };
+		25DCD7412199F798000437A5 /* RuleRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FC2199F798000437A5 /* RuleRange.swift */; };
+		25DCD7422199F798000437A5 /* RuleRegExp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FD2199F798000437A5 /* RuleRegExp.swift */; };
+		25DCD7432199F798000437A5 /* RuleRequired.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FE2199F798000437A5 /* RuleRequired.swift */; };
+		25DCD7442199F798000437A5 /* RuleURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FF2199F798000437A5 /* RuleURL.swift */; };
+		25DCD7462199FE01000437A5 /* menu-512.png in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD7452199FE01000437A5 /* menu-512.png */; };
+		A0980B5C360648B8C9A89293 /* Pods_MobiledgeXSDKDemo_IOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B3BA5BBEA83B2DFE5816F072 /* Pods_MobiledgeXSDKDemo_IOS.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		25623ED3217F79D50092956D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 25623EB6217F79D30092956D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 25623EBD217F79D30092956D;
+			remoteInfo = MobiledgeXSDKDemo.IOS;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		25DCD6212197A342000437A5 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		252C2D332182561C0091A1D4 /* SwiftProtobuf.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftProtobuf.framework; path = "MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphoneos/SwiftProtobuf.framework"; sourceTree = "<group>"; };
+		252C2D5321826DC10091A1D4 /* dot-menu@3x copy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "dot-menu@3x copy.png"; path = "MobiledgeXSDKDemo.IOS/New Group/dot-menu@3x copy.png"; sourceTree = SOURCE_ROOT; };
+		252C2D56218298110091A1D4 /* FindCloudlet.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FindCloudlet.java.swift; sourceTree = "<group>"; };
+		252C2D57218298110091A1D4 /* MatchingEngine.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngine.java.swift; sourceTree = "<group>"; };
+		252C2D58218298110091A1D4 /* RegisterClient.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegisterClient.java.swift; sourceTree = "<group>"; };
+		252C2D5C218377AE0091A1D4 /* MobiledgeXSDKDemo.IOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MobiledgeXSDKDemo.IOS-Bridging-Header.h"; sourceTree = "<group>"; };
+		252C2D9721857E420091A1D4 /* AddUserToGroup.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddUserToGroup.java.swift; sourceTree = "<group>"; };
+		252C2D9921857E4E0091A1D4 /* GetAppInstList.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GetAppInstList.java.swift; sourceTree = "<group>"; };
+		252C2D9B21857E590091A1D4 /* GetLocation.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GetLocation.java.swift; sourceTree = "<group>"; };
+		252C2DA321857E9B0091A1D4 /* VerifyLocation.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VerifyLocation.java.swift; sourceTree = "<group>"; };
+		252C2DA6218633E40091A1D4 /* DropDown.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DropDown.h; sourceTree = "<group>"; };
+		252C2DA8218633E40091A1D4 /* DPDConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DPDConstants.swift; sourceTree = "<group>"; };
+		252C2DA9218633E40091A1D4 /* DPDKeyboardListener.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DPDKeyboardListener.swift; sourceTree = "<group>"; };
+		252C2DAA218633E40091A1D4 /* DPDUIView+Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DPDUIView+Extension.swift"; sourceTree = "<group>"; };
+		252C2DAD218633E40091A1D4 /* DropDownCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DropDownCell.xib; sourceTree = "<group>"; };
+		252C2DAF218633E40091A1D4 /* DropDown+Appearance.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DropDown+Appearance.swift"; sourceTree = "<group>"; };
+		252C2DB0218633E40091A1D4 /* DropDown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DropDown.swift; sourceTree = "<group>"; };
+		252C2DB1218633E40091A1D4 /* DropDownCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DropDownCell.swift; sourceTree = "<group>"; };
+		252C2DBB218782370091A1D4 /* Completion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Completion.swift; sourceTree = "<group>"; };
+		252C2DBC218782370091A1D4 /* ErrorTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorTypes.swift; sourceTree = "<group>"; };
+		252C2DBD218782370091A1D4 /* Executor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Executor.swift; sourceTree = "<group>"; };
+		252C2DBF218782370091A1D4 /* FutureCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureCache.swift; sourceTree = "<group>"; };
+		252C2DC0218782370091A1D4 /* FutureThread.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureThread.swift; sourceTree = "<group>"; };
+		252C2DC1218782370091A1D4 /* NSData-Ext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSData-Ext.swift"; sourceTree = "<group>"; };
+		252C2DC2218782370091A1D4 /* NSFileManager-Ext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSFileManager-Ext.swift"; sourceTree = "<group>"; };
+		252C2DC3218782370091A1D4 /* NSOperation+FutureKit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSOperation+FutureKit.swift"; sourceTree = "<group>"; };
+		252C2DC4218782370091A1D4 /* Future.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Future.swift; sourceTree = "<group>"; };
+		252C2DC5218782370091A1D4 /* FutureBatch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureBatch.swift; sourceTree = "<group>"; };
+		252C2DC6218782370091A1D4 /* FutureFIFO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureFIFO.swift; sourceTree = "<group>"; };
+		252C2DC7218782370091A1D4 /* FutureKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FutureKit.h; sourceTree = "<group>"; };
+		252C2DC9218782370091A1D4 /* Promise.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Promise.swift; sourceTree = "<group>"; };
+		252C2DCA218782370091A1D4 /* Synchronization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Synchronization.swift; sourceTree = "<group>"; };
+		252C2DCB218782370091A1D4 /* SyncWaitHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyncWaitHandler.swift; sourceTree = "<group>"; };
+		252C2DCD218782370091A1D4 /* ExtensionVars.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExtensionVars.swift; sourceTree = "<group>"; };
+		252C2DCE218782370091A1D4 /* NSObject-Ext-ThreadSafe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSObject-Ext-ThreadSafe.swift"; sourceTree = "<group>"; };
+		252C2DCF218782370091A1D4 /* ObjectiveCExceptionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectiveCExceptionHandler.h; sourceTree = "<group>"; };
+		252C2DD0218782370091A1D4 /* ObjectiveCExceptionHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObjectiveCExceptionHandler.m; sourceTree = "<group>"; };
+		252C2DD1218782370091A1D4 /* OSAtomicInt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OSAtomicInt.swift; sourceTree = "<group>"; };
+		252C2DD2218782370091A1D4 /* OSFeature.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OSFeature.swift; sourceTree = "<group>"; };
+		252C2DD3218782380091A1D4 /* Tuples.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Tuples.swift; sourceTree = "<group>"; };
+		252C2DED2187A8F80091A1D4 /* mex-ca.crt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "mex-ca.crt"; sourceTree = "<group>"; };
+		252C2DEE2187A8F80091A1D4 /* mex-client.crt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "mex-client.crt"; sourceTree = "<group>"; };
+		252C2DEF2187A8F80091A1D4 /* mex-client.key */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "mex-client.key"; sourceTree = "<group>"; };
+		252C2DF32187AA200091A1D4 /* Reachability.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Reachability.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/Reachability.swift-master/Sources/Reachability.swift"; sourceTree = SOURCE_ROOT; };
+		252C2DF52187D1E80091A1D4 /* FileKit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FileKit.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/FileKit-master/Sources/FileKit/FileKit.swift"; sourceTree = SOURCE_ROOT; };
+		252C2E1C218B6A6D0091A1D4 /* SKToastView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SKToastView.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/SKToast-master/SKToast/Classes/SKToastView.swift"; sourceTree = SOURCE_ROOT; };
+		252C2E22218BA1210091A1D4 /* dot-menu@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "dot-menu@2x.png"; sourceTree = "<group>"; };
+		252C2E23218BA1210091A1D4 /* dot-menu@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "dot-menu@3x.png"; sourceTree = "<group>"; };
+		252C2E24218BA1210091A1D4 /* ic_launcher-web.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ic_launcher-web.png"; sourceTree = "<group>"; };
+		252C2E25218BA1210091A1D4 /* ic_marker_cloudlet-web.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ic_marker_cloudlet-web.png"; sourceTree = "<group>"; };
+		252C2E26218BA1210091A1D4 /* ic_marker_mobile-web.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ic_marker_mobile-web.png"; sourceTree = "<group>"; };
+		252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineHelper.java2.swift; sourceTree = "<group>"; };
+		25623EBE217F79D30092956D /* MobiledgeXSDKDemo.IOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MobiledgeXSDKDemo.IOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		25623EC1217F79D30092956D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		25623EC3217F79D30092956D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		25623EC6217F79D30092956D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		25623EC8217F79D50092956D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		25623ECB217F79D50092956D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		25623ECD217F79D50092956D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		25623ED2217F79D50092956D /* MobiledgeXSDKDemo.IOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MobiledgeXSDKDemo.IOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		25623ED6217F79D50092956D /* MobiledgeXSDKDemo_IOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobiledgeXSDKDemo_IOSTests.swift; sourceTree = "<group>"; };
+		25623ED8217F79D50092956D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		25623EE2217F7BD60092956D /* Account.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Account.java.swift; sourceTree = "<group>"; };
+		25623EE3217F7BD60092956D /* AppCompatPreferenceActivity.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppCompatPreferenceActivity.java.swift; sourceTree = "<group>"; };
+		25623EE4217F7BD60092956D /* Cloudlet.jav.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cloudlet.jav.swift; sourceTree = "<group>"; };
+		25623EE5217F7BD60092956D /* CloudletDetailsActivity.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CloudletDetailsActivity.java.swift; sourceTree = "<group>"; };
+		25623EE6217F7BD60092956D /* CloudletListHolder.jav.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CloudletListHolder.jav.swift; sourceTree = "<group>"; };
+		25623EE7217F7BD60092956D /* EnhancedLocationDialog.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EnhancedLocationDialog.java.swift; sourceTree = "<group>"; };
+		25623EE8217F7BD60092956D /* FirstTimeUseActivity.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FirstTimeUseActivity.java.swift; sourceTree = "<group>"; };
+		25623EE9217F7BD60092956D /* MainActivity.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainActivity.java.swift; sourceTree = "<group>"; };
+		25623EEA217F7BD60092956D /* MatchingEngineHelper.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineHelper.java.swift; sourceTree = "<group>"; };
+		25623EEB217F7BD60092956D /* MatchingEngineResultsListener.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineResultsListener.java.swift; sourceTree = "<group>"; };
+		25623EEE217F7BD60092956D /* SpeedTestResultsListener.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeedTestResultsListener.java.swift; sourceTree = "<group>"; };
+		258BEEF8219CBF770055227D /* ic_menu_camera.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_camera.png; sourceTree = "<group>"; };
+		258BEEF9219CBF770055227D /* ic_menu_recent_history.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_recent_history.png; sourceTree = "<group>"; };
+		258BEEFA219CBF770055227D /* ic_menu_compass.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_compass.png; sourceTree = "<group>"; };
+		258BEEFB219CBF770055227D /* ic_menu_preferences.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_preferences.png; sourceTree = "<group>"; };
+		258BEF04219F5E230055227D /* x_darkGray@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "x_darkGray@2x.png"; sourceTree = "<group>"; };
+		258BEF05219F5E230055227D /* x_darkGray@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "x_darkGray@3x.png"; sourceTree = "<group>"; };
+		258BEF08219F5E230055227D /* CircularSpinner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircularSpinner.swift; sourceTree = "<group>"; };
+		258BEF09219F5E230055227D /* CircularSpinner.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CircularSpinner.xib; sourceTree = "<group>"; };
+		258BEF10219F9C110055227D /* FaceDetectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceDetectionViewController.swift; sourceTree = "<group>"; };
+		258BEF12219F9D810055227D /* CMSampleBufferExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CMSampleBufferExtension.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/AppleFaceDetection-master/VisionDetection/CMSampleBufferExtension.swift"; sourceTree = SOURCE_ROOT; };
+		258BEF14219F9E880055227D /* PreviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PreviewView.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/AppleFaceDetection-master/VisionDetection/PreviewView.swift"; sourceTree = SOURCE_ROOT; };
+		258BEF1721A0E0AB0055227D /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		258BEF1821A0E0AB0055227D /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		258BEF1B21A0E0AB0055227D /* RFAboutViewCloseX.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = RFAboutViewCloseX.png; sourceTree = "<group>"; };
+		258BEF1C21A0E0AB0055227D /* RFAboutViewCloseX@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "RFAboutViewCloseX@2x.png"; sourceTree = "<group>"; };
+		258BEF1D21A0E0AB0055227D /* RFAboutViewCloseX@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "RFAboutViewCloseX@3x.png"; sourceTree = "<group>"; };
+		258BEF1F21A0E0AB0055227D /* RFAboutView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RFAboutView.swift; sourceTree = "<group>"; };
+		258BEF2021A0E0AB0055227D /* RFAboutViewDetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RFAboutViewDetailViewController.swift; sourceTree = "<group>"; };
+		258BEF2121A0E0AB0055227D /* UIViewController+sizeForPercent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIViewController+sizeForPercent.swift"; sourceTree = "<group>"; };
+		258BEF2B21A0E9A20055227D /* Acknowledgements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Acknowledgements.plist; sourceTree = "<group>"; };
+		258BEF2D21A24C020055227D /* Mex.utitities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mex.utitities.swift; sourceTree = "<group>"; };
+		25D5DCBC2180FB500097941C /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		25D5DCCD2181647C0097941C /* OneShotLocationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = OneShotLocationManager.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/OneShotLocationManager-master-2/OneShotLocationManager.swift"; sourceTree = SOURCE_ROOT; };
+		25DCD5C12191FCD2000437A5 /* LocationRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocationRequest.swift; sourceTree = "<group>"; };
+		25DCD5C22191FCD2000437A5 /* Locator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Locator.swift; sourceTree = "<group>"; };
+		25DCD5C32191FCD2000437A5 /* Shared.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
+		25DCD6232197AC1C000437A5 /* HeadingRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeadingRequest.swift; sourceTree = "<group>"; };
+		25DCD6252197AC91000437A5 /* IPLocationRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IPLocationRequest.swift; sourceTree = "<group>"; };
+		25DCD6272197ACB3000437A5 /* FindPlaceRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FindPlaceRequest.swift; sourceTree = "<group>"; };
+		25DCD6302198A2B3000437A5 /* libreadline.7.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libreadline.7.dylib; path = ../../../../../../usr/local/Cellar/readline/7.0.5/lib/libreadline.7.dylib; sourceTree = "<group>"; };
+		25DCD6322198A5BF000437A5 /* Sample_client.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sample_client.swift; sourceTree = "<group>"; };
+		25DCD6342198B5EB000437A5 /* mex-client.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "mex-client.der"; sourceTree = "<group>"; };
+		25DCD6352198B5EC000437A5 /* mex-clientkey.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "mex-clientkey.der"; sourceTree = "<group>"; };
+		25DCD6362198B5EC000437A5 /* mex-ca.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "mex-ca.der"; sourceTree = "<group>"; };
+		25DCD64B2199F128000437A5 /* CloudletDetailsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CloudletDetailsViewController.swift; sourceTree = "<group>"; };
+		25DCD64C2199F128000437A5 /* EnhancedNetworkLocationServicesViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EnhancedNetworkLocationServicesViewController.swift; sourceTree = "<group>"; };
+		25DCD64D2199F128000437A5 /* FaceDectectionSettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceDectectionSettingsViewController.swift; sourceTree = "<group>"; };
+		25DCD64E2199F128000437A5 /* GeneralSettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneralSettingsViewController.swift; sourceTree = "<group>"; };
+		25DCD6502199F128000437A5 /* About.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = About.png; sourceTree = "<group>"; };
+		25DCD6512199F128000437A5 /* Cog_font_awesome.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Cog_font_awesome.png; sourceTree = "<group>"; };
+		25DCD6522199F128000437A5 /* g-logo copy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "g-logo copy.png"; sourceTree = "<group>"; };
+		25DCD6532199F128000437A5 /* g-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "g-logo.png"; sourceTree = "<group>"; };
+		25DCD6542199F128000437A5 /* ios11-control-center-camera-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ios11-control-center-camera-icon.png"; sourceTree = "<group>"; };
+		25DCD6552199F128000437A5 /* SettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		25DCD6562199F128000437A5 /* SideMenuViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SideMenuViewController.swift; sourceTree = "<group>"; };
+		25DCD6572199F128000437A5 /* SpeedTestSettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeedTestSettingsViewController.swift; sourceTree = "<group>"; };
+		25DCD6B32199F797000437A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		25DCD6B52199F797000437A5 /* BaseRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BaseRow.swift; sourceTree = "<group>"; };
+		25DCD6B62199F797000437A5 /* Cell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cell.swift; sourceTree = "<group>"; };
+		25DCD6B72199F797000437A5 /* CellType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CellType.swift; sourceTree = "<group>"; };
+		25DCD6B82199F797000437A5 /* Core.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Core.swift; sourceTree = "<group>"; };
+		25DCD6B92199F797000437A5 /* Form.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Form.swift; sourceTree = "<group>"; };
+		25DCD6BA2199F797000437A5 /* HeaderFooterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeaderFooterView.swift; sourceTree = "<group>"; };
+		25DCD6BB2199F797000437A5 /* Helpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
+		25DCD6BC2199F797000437A5 /* InlineRowType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InlineRowType.swift; sourceTree = "<group>"; };
+		25DCD6BD2199F797000437A5 /* NavigationAccessoryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NavigationAccessoryView.swift; sourceTree = "<group>"; };
+		25DCD6BE2199F797000437A5 /* Operators.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Operators.swift; sourceTree = "<group>"; };
+		25DCD6BF2199F797000437A5 /* PresenterRowType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PresenterRowType.swift; sourceTree = "<group>"; };
+		25DCD6C02199F797000437A5 /* Row.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Row.swift; sourceTree = "<group>"; };
+		25DCD6C12199F797000437A5 /* RowControllerType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowControllerType.swift; sourceTree = "<group>"; };
+		25DCD6C22199F797000437A5 /* RowProtocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowProtocols.swift; sourceTree = "<group>"; };
+		25DCD6C32199F797000437A5 /* RowType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowType.swift; sourceTree = "<group>"; };
+		25DCD6C42199F797000437A5 /* Section.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Section.swift; sourceTree = "<group>"; };
+		25DCD6C52199F797000437A5 /* SelectableRowType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectableRowType.swift; sourceTree = "<group>"; };
+		25DCD6C62199F797000437A5 /* SelectableSection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectableSection.swift; sourceTree = "<group>"; };
+		25DCD6C72199F797000437A5 /* SwipeActions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwipeActions.swift; sourceTree = "<group>"; };
+		25DCD6C82199F797000437A5 /* Validation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Validation.swift; sourceTree = "<group>"; };
+		25DCD6C92199F797000437A5 /* Eureka.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Eureka.h; sourceTree = "<group>"; };
+		25DCD6CC2199F797000437A5 /* Eureka.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Eureka.bundle; sourceTree = "<group>"; };
+		25DCD6CE2199F797000437A5 /* ActionSheetRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActionSheetRow.swift; sourceTree = "<group>"; };
+		25DCD6CF2199F797000437A5 /* AlertRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertRow.swift; sourceTree = "<group>"; };
+		25DCD6D02199F797000437A5 /* ButtonRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonRow.swift; sourceTree = "<group>"; };
+		25DCD6D12199F797000437A5 /* ButtonRowWithPresent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ButtonRowWithPresent.swift; sourceTree = "<group>"; };
+		25DCD6D22199F797000437A5 /* CheckRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CheckRow.swift; sourceTree = "<group>"; };
+		25DCD6D42199F797000437A5 /* AlertOptionsRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertOptionsRow.swift; sourceTree = "<group>"; };
+		25DCD6D52199F797000437A5 /* DateFieldRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateFieldRow.swift; sourceTree = "<group>"; };
+		25DCD6D62199F797000437A5 /* DateInlineFieldRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateInlineFieldRow.swift; sourceTree = "<group>"; };
+		25DCD6D72199F797000437A5 /* DecimalFormatter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DecimalFormatter.swift; sourceTree = "<group>"; };
+		25DCD6D82199F797000437A5 /* FieldRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FieldRow.swift; sourceTree = "<group>"; };
+		25DCD6D92199F797000437A5 /* GenericMultipleSelectorRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GenericMultipleSelectorRow.swift; sourceTree = "<group>"; };
+		25DCD6DA2199F797000437A5 /* OptionsRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OptionsRow.swift; sourceTree = "<group>"; };
+		25DCD6DB2199F797000437A5 /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
+		25DCD6DC2199F797000437A5 /* SelectorRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectorRow.swift; sourceTree = "<group>"; };
+		25DCD6DE2199F797000437A5 /* MultipleSelectorViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MultipleSelectorViewController.swift; sourceTree = "<group>"; };
+		25DCD6DF2199F797000437A5 /* SelectorAlertController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectorAlertController.swift; sourceTree = "<group>"; };
+		25DCD6E02199F797000437A5 /* SelectorViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectorViewController.swift; sourceTree = "<group>"; };
+		25DCD6E12199F797000437A5 /* DateInlineRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateInlineRow.swift; sourceTree = "<group>"; };
+		25DCD6E22199F797000437A5 /* DatePickerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DatePickerRow.swift; sourceTree = "<group>"; };
+		25DCD6E32199F797000437A5 /* DateRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateRow.swift; sourceTree = "<group>"; };
+		25DCD6E42199F797000437A5 /* DoublePickerInputRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoublePickerInputRow.swift; sourceTree = "<group>"; };
+		25DCD6E52199F797000437A5 /* DoublePickerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoublePickerRow.swift; sourceTree = "<group>"; };
+		25DCD6E62199F797000437A5 /* FieldsRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FieldsRow.swift; sourceTree = "<group>"; };
+		25DCD6E72199F797000437A5 /* LabelRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LabelRow.swift; sourceTree = "<group>"; };
+		25DCD6E82199F797000437A5 /* MultipleSelectorRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MultipleSelectorRow.swift; sourceTree = "<group>"; };
+		25DCD6E92199F797000437A5 /* PickerInlineRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PickerInlineRow.swift; sourceTree = "<group>"; };
+		25DCD6EA2199F797000437A5 /* PickerInputRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PickerInputRow.swift; sourceTree = "<group>"; };
+		25DCD6EB2199F797000437A5 /* PickerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PickerRow.swift; sourceTree = "<group>"; };
+		25DCD6EC2199F797000437A5 /* PopoverSelectorRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PopoverSelectorRow.swift; sourceTree = "<group>"; };
+		25DCD6ED2199F797000437A5 /* PushRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PushRow.swift; sourceTree = "<group>"; };
+		25DCD6EE2199F797000437A5 /* SegmentedRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SegmentedRow.swift; sourceTree = "<group>"; };
+		25DCD6F02199F797000437A5 /* ListCheckRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListCheckRow.swift; sourceTree = "<group>"; };
+		25DCD6F12199F797000437A5 /* SliderRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SliderRow.swift; sourceTree = "<group>"; };
+		25DCD6F22199F797000437A5 /* StepperRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StepperRow.swift; sourceTree = "<group>"; };
+		25DCD6F32199F797000437A5 /* SwitchRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwitchRow.swift; sourceTree = "<group>"; };
+		25DCD6F42199F797000437A5 /* TextAreaRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextAreaRow.swift; sourceTree = "<group>"; };
+		25DCD6F52199F797000437A5 /* TriplePickerInputRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TriplePickerInputRow.swift; sourceTree = "<group>"; };
+		25DCD6F62199F797000437A5 /* TriplePickerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TriplePickerRow.swift; sourceTree = "<group>"; };
+		25DCD6F82199F797000437A5 /* RuleClosure.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleClosure.swift; sourceTree = "<group>"; };
+		25DCD6F92199F798000437A5 /* RuleEmail.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleEmail.swift; sourceTree = "<group>"; };
+		25DCD6FA2199F798000437A5 /* RuleEqualsToRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleEqualsToRow.swift; sourceTree = "<group>"; };
+		25DCD6FB2199F798000437A5 /* RuleLength.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleLength.swift; sourceTree = "<group>"; };
+		25DCD6FC2199F798000437A5 /* RuleRange.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleRange.swift; sourceTree = "<group>"; };
+		25DCD6FD2199F798000437A5 /* RuleRegExp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleRegExp.swift; sourceTree = "<group>"; };
+		25DCD6FE2199F798000437A5 /* RuleRequired.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleRequired.swift; sourceTree = "<group>"; };
+		25DCD6FF2199F798000437A5 /* RuleURL.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleURL.swift; sourceTree = "<group>"; };
+		25DCD7452199FE01000437A5 /* menu-512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menu-512.png"; sourceTree = "<group>"; };
+		5DBF0F28B31E36202240C4D0 /* Pods-MobiledgeXSDKDemo.IOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MobiledgeXSDKDemo.IOS.release.xcconfig"; path = "Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS.release.xcconfig"; sourceTree = "<group>"; };
+		B3BA5BBEA83B2DFE5816F072 /* Pods_MobiledgeXSDKDemo_IOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MobiledgeXSDKDemo_IOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B88B2C9D512A5BAA0BA2DCFF /* Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig"; path = "Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		25623EBB217F79D30092956D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0980B5C360648B8C9A89293 /* Pods_MobiledgeXSDKDemo_IOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		25623ECF217F79D50092956D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		252C2D55218298110091A1D4 /* matchingengine */ = {
+			isa = PBXGroup;
+			children = (
+				252C2D57218298110091A1D4 /* MatchingEngine.java.swift */,
+				252C2D9721857E420091A1D4 /* AddUserToGroup.java.swift */,
+				252C2D56218298110091A1D4 /* FindCloudlet.java.swift */,
+				252C2D9921857E4E0091A1D4 /* GetAppInstList.java.swift */,
+				252C2D9B21857E590091A1D4 /* GetLocation.java.swift */,
+				252C2D58218298110091A1D4 /* RegisterClient.java.swift */,
+				252C2DA321857E9B0091A1D4 /* VerifyLocation.java.swift */,
+			);
+			path = matchingengine;
+			sourceTree = "<group>";
+		};
+		252C2DA5218633E40091A1D4 /* DropDown */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DA6218633E40091A1D4 /* DropDown.h */,
+				252C2DA7218633E40091A1D4 /* helpers */,
+				252C2DAC218633E40091A1D4 /* resources */,
+				252C2DAE218633E40091A1D4 /* src */,
+			);
+			name = DropDown;
+			path = "MobiledgeXSDKDemo.IOS/ThirdParty/DropDown-master-2/DropDown";
+			sourceTree = SOURCE_ROOT;
+		};
+		252C2DA7218633E40091A1D4 /* helpers */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DA8218633E40091A1D4 /* DPDConstants.swift */,
+				252C2DA9218633E40091A1D4 /* DPDKeyboardListener.swift */,
+				252C2DAA218633E40091A1D4 /* DPDUIView+Extension.swift */,
+			);
+			path = helpers;
+			sourceTree = "<group>";
+		};
+		252C2DAC218633E40091A1D4 /* resources */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DAD218633E40091A1D4 /* DropDownCell.xib */,
+			);
+			path = resources;
+			sourceTree = "<group>";
+		};
+		252C2DAE218633E40091A1D4 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DAF218633E40091A1D4 /* DropDown+Appearance.swift */,
+				252C2DB0218633E40091A1D4 /* DropDown.swift */,
+				252C2DB1218633E40091A1D4 /* DropDownCell.swift */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		252C2DBA218782370091A1D4 /* FutureKit */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DBB218782370091A1D4 /* Completion.swift */,
+				252C2DBC218782370091A1D4 /* ErrorTypes.swift */,
+				252C2DBD218782370091A1D4 /* Executor.swift */,
+				252C2DBE218782370091A1D4 /* FoundationExtensions */,
+				252C2DC4218782370091A1D4 /* Future.swift */,
+				252C2DC5218782370091A1D4 /* FutureBatch.swift */,
+				252C2DC6218782370091A1D4 /* FutureFIFO.swift */,
+				252C2DC7218782370091A1D4 /* FutureKit.h */,
+				252C2DC9218782370091A1D4 /* Promise.swift */,
+				252C2DCA218782370091A1D4 /* Synchronization.swift */,
+				252C2DCB218782370091A1D4 /* SyncWaitHandler.swift */,
+				252C2DCC218782370091A1D4 /* Utils */,
+			);
+			name = FutureKit;
+			path = "MobiledgeXSDKDemo.IOS/ThirdParty/FutureKit-master/FutureKit";
+			sourceTree = SOURCE_ROOT;
+		};
+		252C2DBE218782370091A1D4 /* FoundationExtensions */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DBF218782370091A1D4 /* FutureCache.swift */,
+				252C2DC0218782370091A1D4 /* FutureThread.swift */,
+				252C2DC1218782370091A1D4 /* NSData-Ext.swift */,
+				252C2DC2218782370091A1D4 /* NSFileManager-Ext.swift */,
+				252C2DC3218782370091A1D4 /* NSOperation+FutureKit.swift */,
+			);
+			path = FoundationExtensions;
+			sourceTree = "<group>";
+		};
+		252C2DCC218782370091A1D4 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DCD218782370091A1D4 /* ExtensionVars.swift */,
+				252C2DCE218782370091A1D4 /* NSObject-Ext-ThreadSafe.swift */,
+				252C2DCF218782370091A1D4 /* ObjectiveCExceptionHandler.h */,
+				252C2DD0218782370091A1D4 /* ObjectiveCExceptionHandler.m */,
+				252C2DD1218782370091A1D4 /* OSAtomicInt.swift */,
+				252C2DD2218782370091A1D4 /* OSFeature.swift */,
+				252C2DD3218782380091A1D4 /* Tuples.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		252C2DEB2187A8F80091A1D4 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF2B21A0E9A20055227D /* Acknowledgements.plist */,
+				252C2E21218BA1210091A1D4 /* Images */,
+				252C2DEC2187A8F80091A1D4 /* certs */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		252C2DEC2187A8F80091A1D4 /* certs */ = {
+			isa = PBXGroup;
+			children = (
+				252C2DED2187A8F80091A1D4 /* mex-ca.crt */,
+				252C2DEE2187A8F80091A1D4 /* mex-client.crt */,
+				252C2DEF2187A8F80091A1D4 /* mex-client.key */,
+				25DCD6362198B5EC000437A5 /* mex-ca.der */,
+				25DCD6342198B5EB000437A5 /* mex-client.der */,
+				25DCD6352198B5EC000437A5 /* mex-clientkey.der */,
+			);
+			path = certs;
+			sourceTree = "<group>";
+		};
+		252C2E21218BA1210091A1D4 /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				252C2E22218BA1210091A1D4 /* dot-menu@2x.png */,
+				252C2E23218BA1210091A1D4 /* dot-menu@3x.png */,
+				252C2E24218BA1210091A1D4 /* ic_launcher-web.png */,
+				252C2E25218BA1210091A1D4 /* ic_marker_cloudlet-web.png */,
+				252C2E26218BA1210091A1D4 /* ic_marker_mobile-web.png */,
+				258BEEFA219CBF770055227D /* ic_menu_compass.png */,
+				258BEEF8219CBF770055227D /* ic_menu_camera.png */,
+				258BEEFB219CBF770055227D /* ic_menu_preferences.png */,
+				258BEEF9219CBF770055227D /* ic_menu_recent_history.png */,
+			);
+			path = Images;
+			sourceTree = "<group>";
+		};
+		25623EB5217F79D30092956D = {
+			isa = PBXGroup;
+			children = (
+				25623EC0217F79D30092956D /* MobiledgeXSDKDemo.IOS */,
+				25623ED5217F79D50092956D /* MobiledgeXSDKDemo.IOSTests */,
+				25623EBF217F79D30092956D /* Products */,
+				D0A63DBB39D2665B79106411 /* Pods */,
+				B6D538BC6126FB1585120F7F /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		25623EBF217F79D30092956D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				25623EBE217F79D30092956D /* MobiledgeXSDKDemo.IOS.app */,
+				25623ED2217F79D50092956D /* MobiledgeXSDKDemo.IOSTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		25623EC0217F79D30092956D /* MobiledgeXSDKDemo.IOS */ = {
+			isa = PBXGroup;
+			children = (
+				252C2D5C218377AE0091A1D4 /* MobiledgeXSDKDemo.IOS-Bridging-Header.h */,
+				25D5DCBC2180FB500097941C /* Podfile */,
+				25DCD6302198A2B3000437A5 /* libreadline.7.dylib */,
+				25D5DC8121801C6B0097941C /* ThirdParty2 */,
+				25623EE1217F7BD60092956D /* Classes */,
+				25623EC1217F79D30092956D /* AppDelegate.swift */,
+				25623EC3217F79D30092956D /* ViewController.swift */,
+				25623EC5217F79D30092956D /* Main.storyboard */,
+				25623EC8217F79D50092956D /* Assets.xcassets */,
+				25623ECA217F79D50092956D /* LaunchScreen.storyboard */,
+				25623ECD217F79D50092956D /* Info.plist */,
+				252C2DEB2187A8F80091A1D4 /* Resources */,
+			);
+			path = MobiledgeXSDKDemo.IOS;
+			sourceTree = "<group>";
+		};
+		25623ED5217F79D50092956D /* MobiledgeXSDKDemo.IOSTests */ = {
+			isa = PBXGroup;
+			children = (
+				25623ED6217F79D50092956D /* MobiledgeXSDKDemo_IOSTests.swift */,
+				25623ED8217F79D50092956D /* Info.plist */,
+			);
+			path = MobiledgeXSDKDemo.IOSTests;
+			sourceTree = "<group>";
+		};
+		25623EE1217F7BD60092956D /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD64B2199F128000437A5 /* CloudletDetailsViewController.swift */,
+				258BEF10219F9C110055227D /* FaceDetectionViewController.swift */,
+				25DCD64A2199F128000437A5 /* Side */,
+				25DCD6322198A5BF000437A5 /* Sample_client.swift */,
+				258BEF2D21A24C020055227D /* Mex.utitities.swift */,
+				25623EE4217F7BD60092956D /* Cloudlet.jav.swift */,
+				25623EE6217F7BD60092956D /* CloudletListHolder.jav.swift */,
+				258BEF2A21A0E5730055227D /* unused */,
+			);
+			path = Classes;
+			sourceTree = "<group>";
+		};
+		258BEF01219F5E220055227D /* CircularSpinner */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF02219F5E220055227D /* Assets */,
+				258BEF06219F5E230055227D /* Classes */,
+			);
+			name = CircularSpinner;
+			path = "MobiledgeXSDKDemo.IOS/ThirdParty/CircularSpinner-master-2/CircularSpinner";
+			sourceTree = SOURCE_ROOT;
+		};
+		258BEF02219F5E220055227D /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF04219F5E230055227D /* x_darkGray@2x.png */,
+				258BEF05219F5E230055227D /* x_darkGray@3x.png */,
+			);
+			path = Assets;
+			sourceTree = "<group>";
+		};
+		258BEF06219F5E230055227D /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF08219F5E230055227D /* CircularSpinner.swift */,
+				258BEF09219F5E230055227D /* CircularSpinner.xib */,
+			);
+			path = Classes;
+			sourceTree = "<group>";
+		};
+		258BEF1621A0E0AB0055227D /* RFAboutView-Swift */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF1721A0E0AB0055227D /* LICENSE */,
+				258BEF1821A0E0AB0055227D /* README.md */,
+				258BEF1921A0E0AB0055227D /* WasPod */,
+			);
+			name = "RFAboutView-Swift";
+			path = "MobiledgeXSDKDemo.IOS/ThirdParty/RFAboutView-Swift";
+			sourceTree = SOURCE_ROOT;
+		};
+		258BEF1921A0E0AB0055227D /* WasPod */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF1A21A0E0AB0055227D /* Assets */,
+				258BEF1E21A0E0AB0055227D /* Classes */,
+			);
+			path = WasPod;
+			sourceTree = "<group>";
+		};
+		258BEF1A21A0E0AB0055227D /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF1B21A0E0AB0055227D /* RFAboutViewCloseX.png */,
+				258BEF1C21A0E0AB0055227D /* RFAboutViewCloseX@2x.png */,
+				258BEF1D21A0E0AB0055227D /* RFAboutViewCloseX@3x.png */,
+			);
+			path = Assets;
+			sourceTree = "<group>";
+		};
+		258BEF1E21A0E0AB0055227D /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF1F21A0E0AB0055227D /* RFAboutView.swift */,
+				258BEF2021A0E0AB0055227D /* RFAboutViewDetailViewController.swift */,
+				258BEF2121A0E0AB0055227D /* UIViewController+sizeForPercent.swift */,
+			);
+			path = Classes;
+			sourceTree = "<group>";
+		};
+		258BEF2A21A0E5730055227D /* unused */ = {
+			isa = PBXGroup;
+			children = (
+				25623EE9217F7BD60092956D /* MainActivity.java.swift */,
+				25623EE5217F7BD60092956D /* CloudletDetailsActivity.java.swift */,
+				25623EE8217F7BD60092956D /* FirstTimeUseActivity.java.swift */,
+				25623EE2217F7BD60092956D /* Account.java.swift */,
+				25623EE3217F7BD60092956D /* AppCompatPreferenceActivity.java.swift */,
+				25623EE7217F7BD60092956D /* EnhancedLocationDialog.java.swift */,
+				25623EEA217F7BD60092956D /* MatchingEngineHelper.java.swift */,
+				252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */,
+				25623EEB217F7BD60092956D /* MatchingEngineResultsListener.java.swift */,
+				25623EEE217F7BD60092956D /* SpeedTestResultsListener.java.swift */,
+				252C2D55218298110091A1D4 /* matchingengine */,
+			);
+			path = unused;
+			sourceTree = "<group>";
+		};
+		25D5DC8121801C6B0097941C /* ThirdParty2 */ = {
+			isa = PBXGroup;
+			children = (
+				258BEF1621A0E0AB0055227D /* RFAboutView-Swift */,
+				258BEF12219F9D810055227D /* CMSampleBufferExtension.swift */,
+				258BEF14219F9E880055227D /* PreviewView.swift */,
+				258BEF01219F5E220055227D /* CircularSpinner */,
+				25DCD6B22199F797000437A5 /* Source */,
+				25DCD5BC2191FCD2000437A5 /* Sources */,
+				252C2E1C218B6A6D0091A1D4 /* SKToastView.swift */,
+				252C2DF52187D1E80091A1D4 /* FileKit.swift */,
+				252C2DF32187AA200091A1D4 /* Reachability.swift */,
+				252C2DBA218782370091A1D4 /* FutureKit */,
+				252C2DA5218633E40091A1D4 /* DropDown */,
+				252C2D5321826DC10091A1D4 /* dot-menu@3x copy.png */,
+				25D5DCCD2181647C0097941C /* OneShotLocationManager.swift */,
+			);
+			name = ThirdParty2;
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		25DCD5BC2191FCD2000437A5 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6272197ACB3000437A5 /* FindPlaceRequest.swift */,
+				25DCD6252197AC91000437A5 /* IPLocationRequest.swift */,
+				25DCD6232197AC1C000437A5 /* HeadingRequest.swift */,
+				25DCD5C12191FCD2000437A5 /* LocationRequest.swift */,
+				25DCD5C22191FCD2000437A5 /* Locator.swift */,
+				25DCD5C32191FCD2000437A5 /* Shared.swift */,
+			);
+			name = Sources;
+			path = "MobiledgeXSDKDemo.IOS/ThirdParty/SwiftLocation-master-3/Sources";
+			sourceTree = SOURCE_ROOT;
+		};
+		25DCD64A2199F128000437A5 /* Side */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD64F2199F128000437A5 /* images */,
+				25DCD6562199F128000437A5 /* SideMenuViewController.swift */,
+				25DCD6552199F128000437A5 /* SettingsViewController.swift */,
+				25DCD64C2199F128000437A5 /* EnhancedNetworkLocationServicesViewController.swift */,
+				25DCD64E2199F128000437A5 /* GeneralSettingsViewController.swift */,
+				25DCD6572199F128000437A5 /* SpeedTestSettingsViewController.swift */,
+				25DCD64D2199F128000437A5 /* FaceDectectionSettingsViewController.swift */,
+			);
+			path = Side;
+			sourceTree = "<group>";
+		};
+		25DCD64F2199F128000437A5 /* images */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD7452199FE01000437A5 /* menu-512.png */,
+				25DCD6502199F128000437A5 /* About.png */,
+				25DCD6512199F128000437A5 /* Cog_font_awesome.png */,
+				25DCD6522199F128000437A5 /* g-logo copy.png */,
+				25DCD6532199F128000437A5 /* g-logo.png */,
+				25DCD6542199F128000437A5 /* ios11-control-center-camera-icon.png */,
+			);
+			path = images;
+			sourceTree = "<group>";
+		};
+		25DCD6B22199F797000437A5 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6B32199F797000437A5 /* Assets.xcassets */,
+				25DCD6B42199F797000437A5 /* Core */,
+				25DCD6C92199F797000437A5 /* Eureka.h */,
+				25DCD6CB2199F797000437A5 /* Resources */,
+				25DCD6CD2199F797000437A5 /* Rows */,
+				25DCD6F72199F797000437A5 /* Validations */,
+			);
+			name = Source;
+			path = "MobiledgeXSDKDemo.IOS/ThirdParty/Eureka-master-2/Source";
+			sourceTree = SOURCE_ROOT;
+		};
+		25DCD6B42199F797000437A5 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6B52199F797000437A5 /* BaseRow.swift */,
+				25DCD6B62199F797000437A5 /* Cell.swift */,
+				25DCD6B72199F797000437A5 /* CellType.swift */,
+				25DCD6B82199F797000437A5 /* Core.swift */,
+				25DCD6B92199F797000437A5 /* Form.swift */,
+				25DCD6BA2199F797000437A5 /* HeaderFooterView.swift */,
+				25DCD6BB2199F797000437A5 /* Helpers.swift */,
+				25DCD6BC2199F797000437A5 /* InlineRowType.swift */,
+				25DCD6BD2199F797000437A5 /* NavigationAccessoryView.swift */,
+				25DCD6BE2199F797000437A5 /* Operators.swift */,
+				25DCD6BF2199F797000437A5 /* PresenterRowType.swift */,
+				25DCD6C02199F797000437A5 /* Row.swift */,
+				25DCD6C12199F797000437A5 /* RowControllerType.swift */,
+				25DCD6C22199F797000437A5 /* RowProtocols.swift */,
+				25DCD6C32199F797000437A5 /* RowType.swift */,
+				25DCD6C42199F797000437A5 /* Section.swift */,
+				25DCD6C52199F797000437A5 /* SelectableRowType.swift */,
+				25DCD6C62199F797000437A5 /* SelectableSection.swift */,
+				25DCD6C72199F797000437A5 /* SwipeActions.swift */,
+				25DCD6C82199F797000437A5 /* Validation.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		25DCD6CB2199F797000437A5 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6CC2199F797000437A5 /* Eureka.bundle */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		25DCD6CD2199F797000437A5 /* Rows */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6CE2199F797000437A5 /* ActionSheetRow.swift */,
+				25DCD6CF2199F797000437A5 /* AlertRow.swift */,
+				25DCD6D02199F797000437A5 /* ButtonRow.swift */,
+				25DCD6D12199F797000437A5 /* ButtonRowWithPresent.swift */,
+				25DCD6D22199F797000437A5 /* CheckRow.swift */,
+				25DCD6D32199F797000437A5 /* Common */,
+				25DCD6DD2199F797000437A5 /* Controllers */,
+				25DCD6E12199F797000437A5 /* DateInlineRow.swift */,
+				25DCD6E22199F797000437A5 /* DatePickerRow.swift */,
+				25DCD6E32199F797000437A5 /* DateRow.swift */,
+				25DCD6E42199F797000437A5 /* DoublePickerInputRow.swift */,
+				25DCD6E52199F797000437A5 /* DoublePickerRow.swift */,
+				25DCD6E62199F797000437A5 /* FieldsRow.swift */,
+				25DCD6E72199F797000437A5 /* LabelRow.swift */,
+				25DCD6E82199F797000437A5 /* MultipleSelectorRow.swift */,
+				25DCD6E92199F797000437A5 /* PickerInlineRow.swift */,
+				25DCD6EA2199F797000437A5 /* PickerInputRow.swift */,
+				25DCD6EB2199F797000437A5 /* PickerRow.swift */,
+				25DCD6EC2199F797000437A5 /* PopoverSelectorRow.swift */,
+				25DCD6ED2199F797000437A5 /* PushRow.swift */,
+				25DCD6EE2199F797000437A5 /* SegmentedRow.swift */,
+				25DCD6EF2199F797000437A5 /* SelectableRows */,
+				25DCD6F12199F797000437A5 /* SliderRow.swift */,
+				25DCD6F22199F797000437A5 /* StepperRow.swift */,
+				25DCD6F32199F797000437A5 /* SwitchRow.swift */,
+				25DCD6F42199F797000437A5 /* TextAreaRow.swift */,
+				25DCD6F52199F797000437A5 /* TriplePickerInputRow.swift */,
+				25DCD6F62199F797000437A5 /* TriplePickerRow.swift */,
+			);
+			path = Rows;
+			sourceTree = "<group>";
+		};
+		25DCD6D32199F797000437A5 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6D42199F797000437A5 /* AlertOptionsRow.swift */,
+				25DCD6D52199F797000437A5 /* DateFieldRow.swift */,
+				25DCD6D62199F797000437A5 /* DateInlineFieldRow.swift */,
+				25DCD6D72199F797000437A5 /* DecimalFormatter.swift */,
+				25DCD6D82199F797000437A5 /* FieldRow.swift */,
+				25DCD6D92199F797000437A5 /* GenericMultipleSelectorRow.swift */,
+				25DCD6DA2199F797000437A5 /* OptionsRow.swift */,
+				25DCD6DB2199F797000437A5 /* Protocols.swift */,
+				25DCD6DC2199F797000437A5 /* SelectorRow.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		25DCD6DD2199F797000437A5 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6DE2199F797000437A5 /* MultipleSelectorViewController.swift */,
+				25DCD6DF2199F797000437A5 /* SelectorAlertController.swift */,
+				25DCD6E02199F797000437A5 /* SelectorViewController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
+		25DCD6EF2199F797000437A5 /* SelectableRows */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6F02199F797000437A5 /* ListCheckRow.swift */,
+			);
+			path = SelectableRows;
+			sourceTree = "<group>";
+		};
+		25DCD6F72199F797000437A5 /* Validations */ = {
+			isa = PBXGroup;
+			children = (
+				25DCD6F82199F797000437A5 /* RuleClosure.swift */,
+				25DCD6F92199F798000437A5 /* RuleEmail.swift */,
+				25DCD6FA2199F798000437A5 /* RuleEqualsToRow.swift */,
+				25DCD6FB2199F798000437A5 /* RuleLength.swift */,
+				25DCD6FC2199F798000437A5 /* RuleRange.swift */,
+				25DCD6FD2199F798000437A5 /* RuleRegExp.swift */,
+				25DCD6FE2199F798000437A5 /* RuleRequired.swift */,
+				25DCD6FF2199F798000437A5 /* RuleURL.swift */,
+			);
+			path = Validations;
+			sourceTree = "<group>";
+		};
+		B6D538BC6126FB1585120F7F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				252C2D332182561C0091A1D4 /* SwiftProtobuf.framework */,
+				B3BA5BBEA83B2DFE5816F072 /* Pods_MobiledgeXSDKDemo_IOS.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D0A63DBB39D2665B79106411 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				B88B2C9D512A5BAA0BA2DCFF /* Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig */,
+				5DBF0F28B31E36202240C4D0 /* Pods-MobiledgeXSDKDemo.IOS.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		25623EBD217F79D30092956D /* MobiledgeXSDKDemo.IOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 25623EDB217F79D50092956D /* Build configuration list for PBXNativeTarget "MobiledgeXSDKDemo.IOS" */;
+			buildPhases = (
+				E7F6C99E11CD1FFDE1DBC161 /* [CP] Check Pods Manifest.lock */,
+				25623EBA217F79D30092956D /* Sources */,
+				25623EBB217F79D30092956D /* Frameworks */,
+				25623EBC217F79D30092956D /* Resources */,
+				0459970542815CB277B952E0 /* [CP] Copy Pods Resources */,
+				25DCD6212197A342000437A5 /* Embed Frameworks */,
+				7BFC8596C48C9418F554EF35 /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MobiledgeXSDKDemo.IOS;
+			productName = MobiledgeXSDKDemo.IOS;
+			productReference = 25623EBE217F79D30092956D /* MobiledgeXSDKDemo.IOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		25623ED1217F79D50092956D /* MobiledgeXSDKDemo.IOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 25623EDE217F79D50092956D /* Build configuration list for PBXNativeTarget "MobiledgeXSDKDemo.IOSTests" */;
+			buildPhases = (
+				25623ECE217F79D50092956D /* Sources */,
+				25623ECF217F79D50092956D /* Frameworks */,
+				25623ED0217F79D50092956D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				25623ED4217F79D50092956D /* PBXTargetDependency */,
+			);
+			name = MobiledgeXSDKDemo.IOSTests;
+			productName = MobiledgeXSDKDemo.IOSTests;
+			productReference = 25623ED2217F79D50092956D /* MobiledgeXSDKDemo.IOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		25623EB6217F79D30092956D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1000;
+				LastUpgradeCheck = 1000;
+				ORGANIZATIONNAME = metatheory;
+				TargetAttributes = {
+					25623EBD217F79D30092956D = {
+						CreatedOnToolsVersion = 10.0;
+						LastSwiftMigration = 1000;
+					};
+					25623ED1217F79D50092956D = {
+						CreatedOnToolsVersion = 10.0;
+						TestTargetID = 25623EBD217F79D30092956D;
+					};
+				};
+			};
+			buildConfigurationList = 25623EB9217F79D30092956D /* Build configuration list for PBXProject "MobiledgeXSDKDemo.IOS" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 25623EB5217F79D30092956D;
+			productRefGroup = 25623EBF217F79D30092956D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				25623EBD217F79D30092956D /* MobiledgeXSDKDemo.IOS */,
+				25623ED1217F79D50092956D /* MobiledgeXSDKDemo.IOSTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		25623EBC217F79D30092956D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				25DCD6372198B71E000437A5 /* mex-ca.der in Resources */,
+				252C2DF02187A8F80091A1D4 /* mex-ca.crt in Resources */,
+				252C2DF12187A8F80091A1D4 /* mex-client.crt in Resources */,
+				252C2DF22187A8F80091A1D4 /* mex-client.key in Resources */,
+				25DCD7162199F798000437A5 /* Eureka.bundle in Resources */,
+				25DCD7002199F798000437A5 /* Assets.xcassets in Resources */,
+				25DCD65F2199F128000437A5 /* g-logo.png in Resources */,
+				25623ECC217F79D50092956D /* LaunchScreen.storyboard in Resources */,
+				25623EC9217F79D50092956D /* Assets.xcassets in Resources */,
+				25DCD7462199FE01000437A5 /* menu-512.png in Resources */,
+				252C2E2A218BA1210091A1D4 /* ic_marker_cloudlet-web.png in Resources */,
+				258BEEFD219CBF770055227D /* ic_menu_recent_history.png in Resources */,
+				252C2E27218BA1210091A1D4 /* dot-menu@2x.png in Resources */,
+				258BEEFF219CBF770055227D /* ic_menu_preferences.png in Resources */,
+				252C2DB6218633E40091A1D4 /* DropDownCell.xib in Resources */,
+				25DCD65C2199F128000437A5 /* About.png in Resources */,
+				258BEF0B219F5E230055227D /* x_darkGray@2x.png in Resources */,
+				258BEF2521A0E0AB0055227D /* RFAboutViewCloseX@2x.png in Resources */,
+				258BEF2621A0E0AB0055227D /* RFAboutViewCloseX@3x.png in Resources */,
+				258BEEFE219CBF770055227D /* ic_menu_compass.png in Resources */,
+				25D5DCBD2180FB500097941C /* Podfile in Resources */,
+				25DCD6602199F128000437A5 /* ios11-control-center-camera-icon.png in Resources */,
+				252C2E28218BA1210091A1D4 /* dot-menu@3x.png in Resources */,
+				258BEF2C21A0E9A30055227D /* Acknowledgements.plist in Resources */,
+				258BEEFC219CBF770055227D /* ic_menu_camera.png in Resources */,
+				25DCD65D2199F128000437A5 /* Cog_font_awesome.png in Resources */,
+				252C2E2B218BA1210091A1D4 /* ic_marker_mobile-web.png in Resources */,
+				252C2D5421826DC10091A1D4 /* dot-menu@3x copy.png in Resources */,
+				25DCD6382198B724000437A5 /* mex-client.der in Resources */,
+				252C2E29218BA1210091A1D4 /* ic_launcher-web.png in Resources */,
+				258BEF2221A0E0AB0055227D /* LICENSE in Resources */,
+				258BEF2321A0E0AB0055227D /* README.md in Resources */,
+				258BEF0C219F5E230055227D /* x_darkGray@3x.png in Resources */,
+				25DCD6392198B72B000437A5 /* mex-clientkey.der in Resources */,
+				258BEF2421A0E0AB0055227D /* RFAboutViewCloseX.png in Resources */,
+				25DCD65E2199F128000437A5 /* g-logo copy.png in Resources */,
+				258BEF0F219F5E230055227D /* CircularSpinner.xib in Resources */,
+				25623EC7217F79D30092956D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		25623ED0217F79D50092956D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0459970542815CB277B952E0 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${SRCROOT}/Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS-resources.sh",
+				"${PODS_ROOT}/GoogleMaps/Maps/Frameworks/GoogleMaps.framework/Resources/GoogleMaps.bundle",
+				"${PODS_ROOT}/GoogleSignIn/Resources/GoogleSignIn.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleMaps.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSignIn.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7BFC8596C48C9418F554EF35 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${SRCROOT}/Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Alamofire/Alamofire.framework",
+				"${BUILT_PRODUCTS_DIR}/GTMOAuth2/GTMOAuth2.framework",
+				"${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework",
+				"${BUILT_PRODUCTS_DIR}/GoogleToolboxForMac/GoogleToolboxForMac.framework",
+				"${BUILT_PRODUCTS_DIR}/PlainPing/PlainPing.framework",
+				"${BUILT_PRODUCTS_DIR}/SideMenu/SideMenu.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftyJSON/SwiftyJSON.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Alamofire.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMOAuth2.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMSessionFetcher.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleToolboxForMac.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PlainPing.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SideMenu.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftyJSON.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E7F6C99E11CD1FFDE1DBC161 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-MobiledgeXSDKDemo.IOS-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		25623EBA217F79D30092956D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				25DCD70D2199F798000437A5 /* RowControllerType.swift in Sources */,
+				25DCD7352199F798000437A5 /* SegmentedRow.swift in Sources */,
+				252C2DD4218782380091A1D4 /* Completion.swift in Sources */,
+				252C2DB2218633E40091A1D4 /* DPDConstants.swift in Sources */,
+				25DCD71A2199F798000437A5 /* ButtonRowWithPresent.swift in Sources */,
+				25DCD7382199F798000437A5 /* StepperRow.swift in Sources */,
+				25DCD5C92191FCD2000437A5 /* Locator.swift in Sources */,
+				25DCD7192199F798000437A5 /* ButtonRow.swift in Sources */,
+				252C2DB9218633E40091A1D4 /* DropDownCell.swift in Sources */,
+				258BEF13219F9D810055227D /* CMSampleBufferExtension.swift in Sources */,
+				25DCD7252199F798000437A5 /* MultipleSelectorViewController.swift in Sources */,
+				25DCD6622199F128000437A5 /* SideMenuViewController.swift in Sources */,
+				25DCD73A2199F798000437A5 /* TextAreaRow.swift in Sources */,
+				25DCD7262199F798000437A5 /* SelectorAlertController.swift in Sources */,
+				25DCD7412199F798000437A5 /* RuleRange.swift in Sources */,
+				25DCD72B2199F798000437A5 /* DoublePickerInputRow.swift in Sources */,
+				25DCD73C2199F798000437A5 /* TriplePickerRow.swift in Sources */,
+				252C2D59218298110091A1D4 /* FindCloudlet.java.swift in Sources */,
+				25DCD6582199F128000437A5 /* CloudletDetailsViewController.swift in Sources */,
+				258BEF2721A0E0AB0055227D /* RFAboutView.swift in Sources */,
+				252C2DA421857E9B0091A1D4 /* VerifyLocation.java.swift in Sources */,
+				25DCD73D2199F798000437A5 /* RuleClosure.swift in Sources */,
+				252C2D9C21857E590091A1D4 /* GetLocation.java.swift in Sources */,
+				25DCD72C2199F798000437A5 /* DoublePickerRow.swift in Sources */,
+				25DCD7032199F798000437A5 /* CellType.swift in Sources */,
+				258BEF2921A0E0AB0055227D /* UIViewController+sizeForPercent.swift in Sources */,
+				25DCD7282199F798000437A5 /* DateInlineRow.swift in Sources */,
+				252C2E20218B9A220091A1D4 /* CloudletListHolder.jav.swift in Sources */,
+				252C2E41218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift in Sources */,
+				252C2DD9218782380091A1D4 /* NSData-Ext.swift in Sources */,
+				258BEF11219F9C120055227D /* FaceDetectionViewController.swift in Sources */,
+				252C2DD6218782380091A1D4 /* Executor.swift in Sources */,
+				252C2DE2218782380091A1D4 /* SyncWaitHandler.swift in Sources */,
+				25DCD71F2199F798000437A5 /* DecimalFormatter.swift in Sources */,
+				252C2DD7218782380091A1D4 /* FutureCache.swift in Sources */,
+				25DCD6632199F128000437A5 /* SpeedTestSettingsViewController.swift in Sources */,
+				25DCD7132199F798000437A5 /* SwipeActions.swift in Sources */,
+				25DCD70F2199F798000437A5 /* RowType.swift in Sources */,
+				252C2DE5218782380091A1D4 /* ObjectiveCExceptionHandler.m in Sources */,
+				25DCD6262197AC91000437A5 /* IPLocationRequest.swift in Sources */,
+				258BEF15219F9E880055227D /* PreviewView.swift in Sources */,
+				252C2D9A21857E4E0091A1D4 /* GetAppInstList.java.swift in Sources */,
+				25DCD6282197ACB3000437A5 /* FindPlaceRequest.swift in Sources */,
+				25DCD7342199F798000437A5 /* PushRow.swift in Sources */,
+				252C2DE1218782380091A1D4 /* Synchronization.swift in Sources */,
+				25DCD71D2199F798000437A5 /* DateFieldRow.swift in Sources */,
+				25623EC4217F79D30092956D /* ViewController.swift in Sources */,
+				25DCD7302199F798000437A5 /* PickerInlineRow.swift in Sources */,
+				25DCD6612199F128000437A5 /* SettingsViewController.swift in Sources */,
+				252C2DE4218782380091A1D4 /* NSObject-Ext-ThreadSafe.swift in Sources */,
+				25DCD71C2199F798000437A5 /* AlertOptionsRow.swift in Sources */,
+				25DCD72F2199F798000437A5 /* MultipleSelectorRow.swift in Sources */,
+				25DCD7102199F798000437A5 /* Section.swift in Sources */,
+				252C2E1B218AA5A30091A1D4 /* MainActivity.java.swift in Sources */,
+				252C2DDA218782380091A1D4 /* NSFileManager-Ext.swift in Sources */,
+				252C2DD5218782380091A1D4 /* ErrorTypes.swift in Sources */,
+				252C2DE7218782380091A1D4 /* OSFeature.swift in Sources */,
+				252C2E3F218CB19C0091A1D4 /* MatchingEngineResultsListener.java.swift in Sources */,
+				258BEF2821A0E0AB0055227D /* RFAboutViewDetailViewController.swift in Sources */,
+				25DCD6222197ABAB000437A5 /* Shared.swift in Sources */,
+				25DCD7272199F798000437A5 /* SelectorViewController.swift in Sources */,
+				252C2DB7218633E40091A1D4 /* DropDown+Appearance.swift in Sources */,
+				252C2DDE218782380091A1D4 /* FutureFIFO.swift in Sources */,
+				25DCD7432199F798000437A5 /* RuleRequired.swift in Sources */,
+				25DCD7242199F798000437A5 /* SelectorRow.swift in Sources */,
+				25DCD7062199F798000437A5 /* HeaderFooterView.swift in Sources */,
+				25DCD7142199F798000437A5 /* Validation.swift in Sources */,
+				25DCD7422199F798000437A5 /* RuleRegExp.swift in Sources */,
+				25DCD70C2199F798000437A5 /* Row.swift in Sources */,
+				25DCD72D2199F798000437A5 /* FieldsRow.swift in Sources */,
+				25DCD7202199F798000437A5 /* FieldRow.swift in Sources */,
+				252C2D5A218298110091A1D4 /* MatchingEngine.java.swift in Sources */,
+				25DCD72E2199F798000437A5 /* LabelRow.swift in Sources */,
+				252C2E1D218B6A6E0091A1D4 /* SKToastView.swift in Sources */,
+				25DCD7052199F798000437A5 /* Form.swift in Sources */,
+				25DCD7232199F798000437A5 /* Protocols.swift in Sources */,
+				252C2DDD218782380091A1D4 /* FutureBatch.swift in Sources */,
+				25DCD7322199F798000437A5 /* PickerRow.swift in Sources */,
+				25DCD70E2199F798000437A5 /* RowProtocols.swift in Sources */,
+				25DCD7042199F798000437A5 /* Core.swift in Sources */,
+				25DCD7332199F798000437A5 /* PopoverSelectorRow.swift in Sources */,
+				25DCD6242197AC1D000437A5 /* HeadingRequest.swift in Sources */,
+				25DCD7392199F798000437A5 /* SwitchRow.swift in Sources */,
+				252C2DE8218782380091A1D4 /* Tuples.swift in Sources */,
+				25DCD7092199F798000437A5 /* NavigationAccessoryView.swift in Sources */,
+				252C2DE0218782380091A1D4 /* Promise.swift in Sources */,
+				25DCD7182199F798000437A5 /* AlertRow.swift in Sources */,
+				252C2DDB218782380091A1D4 /* NSOperation+FutureKit.swift in Sources */,
+				25DCD7292199F798000437A5 /* DatePickerRow.swift in Sources */,
+				25DCD7362199F798000437A5 /* ListCheckRow.swift in Sources */,
+				25DCD65A2199F128000437A5 /* FaceDectectionSettingsViewController.swift in Sources */,
+				25DCD7112199F798000437A5 /* SelectableRowType.swift in Sources */,
+				252C2DF62187D1E80091A1D4 /* FileKit.swift in Sources */,
+				25DCD7022199F798000437A5 /* Cell.swift in Sources */,
+				25DCD65B2199F128000437A5 /* GeneralSettingsViewController.swift in Sources */,
+				258BEF2E21A24C020055227D /* Mex.utitities.swift in Sources */,
+				252C2DB3218633E40091A1D4 /* DPDKeyboardListener.swift in Sources */,
+				25DCD7312199F798000437A5 /* PickerInputRow.swift in Sources */,
+				25DCD6592199F128000437A5 /* EnhancedNetworkLocationServicesViewController.swift in Sources */,
+				252C2DE6218782380091A1D4 /* OSAtomicInt.swift in Sources */,
+				25DCD6332198A5BF000437A5 /* Sample_client.swift in Sources */,
+				25DCD5C82191FCD2000437A5 /* LocationRequest.swift in Sources */,
+				25DCD7372199F798000437A5 /* SliderRow.swift in Sources */,
+				25DCD72A2199F798000437A5 /* DateRow.swift in Sources */,
+				252C2E1E218B98940091A1D4 /* Cloudlet.jav.swift in Sources */,
+				25DCD7402199F798000437A5 /* RuleLength.swift in Sources */,
+				252C2DD8218782380091A1D4 /* FutureThread.swift in Sources */,
+				25DCD73E2199F798000437A5 /* RuleEmail.swift in Sources */,
+				252C2E1F218B997A0091A1D4 /* SpeedTestResultsListener.java.swift in Sources */,
+				25DCD7122199F798000437A5 /* SelectableSection.swift in Sources */,
+				252C2DF42187AA200091A1D4 /* Reachability.swift in Sources */,
+				252C2DB8218633E40091A1D4 /* DropDown.swift in Sources */,
+				252C2E19218A99590091A1D4 /* Account.java.swift in Sources */,
+				25DCD7212199F798000437A5 /* GenericMultipleSelectorRow.swift in Sources */,
+				25DCD73F2199F798000437A5 /* RuleEqualsToRow.swift in Sources */,
+				25623EC2217F79D30092956D /* AppDelegate.swift in Sources */,
+				25DCD71B2199F798000437A5 /* CheckRow.swift in Sources */,
+				252C2DB4218633E40091A1D4 /* DPDUIView+Extension.swift in Sources */,
+				25DCD7072199F798000437A5 /* Helpers.swift in Sources */,
+				25DCD73B2199F798000437A5 /* TriplePickerInputRow.swift in Sources */,
+				252C2DDC218782380091A1D4 /* Future.swift in Sources */,
+				252C2D9821857E420091A1D4 /* AddUserToGroup.java.swift in Sources */,
+				25DCD7082199F798000437A5 /* InlineRowType.swift in Sources */,
+				25DCD7442199F798000437A5 /* RuleURL.swift in Sources */,
+				258BEF0E219F5E230055227D /* CircularSpinner.swift in Sources */,
+				25DCD70A2199F798000437A5 /* Operators.swift in Sources */,
+				252C2DE3218782380091A1D4 /* ExtensionVars.swift in Sources */,
+				25DCD7222199F798000437A5 /* OptionsRow.swift in Sources */,
+				252C2D5B218298110091A1D4 /* RegisterClient.java.swift in Sources */,
+				25DCD7012199F798000437A5 /* BaseRow.swift in Sources */,
+				25DCD7172199F798000437A5 /* ActionSheetRow.swift in Sources */,
+				25DCD71E2199F798000437A5 /* DateInlineFieldRow.swift in Sources */,
+				25DCD70B2199F798000437A5 /* PresenterRowType.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		25623ECE217F79D50092956D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				25623ED7217F79D50092956D /* MobiledgeXSDKDemo_IOSTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		25623ED4217F79D50092956D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 25623EBD217F79D30092956D /* MobiledgeXSDKDemo.IOS */;
+			targetProxy = 25623ED3217F79D50092956D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		25623EC5217F79D30092956D /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				25623EC6217F79D30092956D /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		25623ECA217F79D50092956D /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				25623ECB217F79D50092956D /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		25623ED9217F79D50092956D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/Frameworks/Products/**";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		25623EDA217F79D50092956D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = "/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/Frameworks/Products/**";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		25623EDC217F79D50092956D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = B88B2C9D512A5BAA0BA2DCFF /* Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XHQK92K282;
+				EXCLUDED_SOURCE_FILE_NAMES = "*.java*";
+				FRAMEWORK_SEARCH_PATHS = (
+					"/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/Frameworks/Products/**",
+					"$(inherited)",
+					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphoneos",
+					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator",
+					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products\"/**",
+					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator\"",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_ROOT}/Headers/Public\"",
+					"\"${PODS_ROOT}/Headers/Public/BoringSSL\"",
+					"\"${PODS_ROOT}/Headers/Public/GTMOAuth2\"",
+					"\"${PODS_ROOT}/Headers/Public/GTMSessionFetcher\"",
+					"\"${PODS_ROOT}/Headers/Public/GoogleMaps\"",
+					"\"${PODS_ROOT}/Headers/Public/GoogleSignIn\"",
+					"\"${PODS_ROOT}/Headers/Public/GoogleToolboxForMac\"",
+					"\"${PODS_ROOT}/Headers/Public/OpenSSL-Universal\"",
+					"\"${PODS_ROOT}/Headers/Public/Protobuf\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC-Core\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC-ProtoRPC\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC-RxLibrary\"",
+					"\"${PODS_ROOT}/Headers/Public/nanopb\"",
+					"\"$(SRCROOT)/Pods/gRPC/src/objective-c/GRPCClient/private\"",
+				);
+				INFOPLIST_FILE = MobiledgeXSDKDemo.IOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Pods/OpenSSL-Universal/lib-ios",
+					/usr/local/Cellar/readline/7.0.5/lib,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		25623EDD217F79D50092956D /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5DBF0F28B31E36202240C4D0 /* Pods-MobiledgeXSDKDemo.IOS.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XHQK92K282;
+				EXCLUDED_SOURCE_FILE_NAMES = "*.java*";
+				FRAMEWORK_SEARCH_PATHS = (
+					"/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/Frameworks/Products/**",
+					"$(inherited)",
+					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphoneos",
+					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator",
+					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products\"/**",
+					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator\"",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_ROOT}/Headers/Public\"",
+					"\"${PODS_ROOT}/Headers/Public/BoringSSL\"",
+					"\"${PODS_ROOT}/Headers/Public/GTMOAuth2\"",
+					"\"${PODS_ROOT}/Headers/Public/GTMSessionFetcher\"",
+					"\"${PODS_ROOT}/Headers/Public/GoogleMaps\"",
+					"\"${PODS_ROOT}/Headers/Public/GoogleSignIn\"",
+					"\"${PODS_ROOT}/Headers/Public/GoogleToolboxForMac\"",
+					"\"${PODS_ROOT}/Headers/Public/OpenSSL-Universal\"",
+					"\"${PODS_ROOT}/Headers/Public/Protobuf\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC-Core\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC-ProtoRPC\"",
+					"\"${PODS_ROOT}/Headers/Public/gRPC-RxLibrary\"",
+					"\"${PODS_ROOT}/Headers/Public/nanopb\"",
+					"\"$(SRCROOT)/Pods/gRPC/src/objective-c/GRPCClient/private\"",
+				);
+				INFOPLIST_FILE = MobiledgeXSDKDemo.IOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Pods/OpenSSL-Universal/lib-ios",
+					/usr/local/Cellar/readline/7.0.5/lib,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS-Bridging-Header.h";
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		25623EDF217F79D50092956D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XHQK92K282;
+				INFOPLIST_FILE = MobiledgeXSDKDemo.IOSTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MobiledgeXSDKDemo.IOS.app/MobiledgeXSDKDemo.IOS";
+			};
+			name = Debug;
+		};
+		25623EE0217F79D50092956D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XHQK92K282;
+				INFOPLIST_FILE = MobiledgeXSDKDemo.IOSTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MobiledgeXSDKDemo.IOS.app/MobiledgeXSDKDemo.IOS";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		25623EB9217F79D30092956D /* Build configuration list for PBXProject "MobiledgeXSDKDemo.IOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				25623ED9217F79D50092956D /* Debug */,
+				25623EDA217F79D50092956D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		25623EDB217F79D50092956D /* Build configuration list for PBXNativeTarget "MobiledgeXSDKDemo.IOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				25623EDC217F79D50092956D /* Debug */,
+				25623EDD217F79D50092956D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		25623EDE217F79D50092956D /* Build configuration list for PBXNativeTarget "MobiledgeXSDKDemo.IOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				25623EDF217F79D50092956D /* Debug */,
+				25623EE0217F79D50092956D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 25623EB6217F79D30092956D /* Project object */;
+}

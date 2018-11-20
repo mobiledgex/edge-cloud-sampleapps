@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:Cancellation.MD">
+   </FileRef>
+   <FileRef
+      location = "group:Welcome To FutureKit - The Playground.playground">
+   </FileRef>
+   <FileRef
+      location = "group:FutureKit.xcodeproj">
+   </FileRef>
+</Workspace>

@@ -1,0 +1,36 @@
+source 'https://github.com/CocoaPods/Specs.git'
+
+
+target 'MobiledgeXSDKDemo.IOS' do
+    use_frameworks!
+
+    pod 'GoogleMaps', '= 2.7.0'
+    pod 'GoogleSignIn'
+    #   pod 'OpenSSL-Universal'
+    pod 'PlainPing'
+    pod 'SwiftyJSON'
+    #     pod 'gRPC-ProtoRPC'
+    pod 'Alamofire'
+    pod 'SideMenu'
+    #      pod 'RFAboutView-Swift' cat because we fixed compile error
+    
+    ##    pod 'Eureka' cant do this as we modified ButtonRow and SwitdhRow for subtitle
+
+end
+
+#comment
+
+post_install do |installer|
+    
+    require 'fileutils'
+    FileUtils.cp_r('Pods/Target Support Files/Pods-<MobiledgeXSDKDemo.IOS>/Pods-<MobiledgeXSDKDemo.IOS>-acknowledgements.plist', '<Project Dir>/Acknowledgements.plist', :remove_destination => true)
+
+    installer.pods_project.targets.each do |target|
+        target.build_configurations.each do |config|
+            if config.name == 'Debug'
+                config.build_settings['OTHER_SWIFT_FLAGS'] = ['$(inherited)', '-Onone']
+                config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Owholemodule'
+            end
+        end
+    end
+end

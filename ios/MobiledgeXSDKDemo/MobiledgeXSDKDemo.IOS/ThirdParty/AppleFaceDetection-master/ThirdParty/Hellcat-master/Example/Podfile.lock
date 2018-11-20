@@ -1,0 +1,16 @@
+PODS:
+  - Hellcat (0.4.0)
+
+DEPENDENCIES:
+  - Hellcat (from `../`)
+
+EXTERNAL SOURCES:
+  Hellcat:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  Hellcat: 86fc5ff408d9ee348967e3bb0ed234e19667149e
+
+PODFILE CHECKSUM: 342b09c8975c01b6d2078bc3cc3dd13184af9269
+
+COCOAPODS: 1.2.0.beta.1

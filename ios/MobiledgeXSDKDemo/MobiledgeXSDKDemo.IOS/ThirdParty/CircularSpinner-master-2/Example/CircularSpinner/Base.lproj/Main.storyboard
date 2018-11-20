@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11201" systemVersion="16A323" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="1eP-7D-fsx">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="DXJ-8l-TWt">
+            <objects>
+                <viewController id="1eP-7D-fsx" customClass="ViewController" customModule="CircularSpinner_Example" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Opj-XA-VAP"/>
+                        <viewControllerLayoutGuide type="bottom" id="o3E-Bz-1Q9"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="oW4-TZ-Uif">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="backgroundImage" translatesAutoresizingMaskIntoConstraints="NO" id="NZz-24-edl"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1ds-m4-FpJ">
+                                <state key="normal" title="Determinate">
+                                    <color key="titleColor" red="0.011764705882352941" green="0.38823529411764707" blue="0.82352941176470584" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="showDeterminateSpinnerWithSender:" destination="1eP-7D-fsx" eventType="touchUpInside" id="kR0-xb-1Wb"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BWX-Tb-3ZD">
+                                <state key="normal" title="Indeterminate"/>
+                                <connections>
+                                    <action selector="showIndeterminateSpinnerWithSender:" destination="1eP-7D-fsx" eventType="touchUpInside" id="73R-XU-vHY"/>
+                                </connections>
+                            </button>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="uXX-fP-zDK" userLabel="Switch View">
+                                <subviews>
+                                    <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="bsz-6h-Oo1">
+                                        <connections>
+                                            <action selector="switchChangeValueWithSender:" destination="1eP-7D-fsx" eventType="valueChanged" id="nSl-aw-Q8n"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Use custom container view" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="UPR-B1-Ehv">
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <color key="textColor" red="0.011764705882352941" green="0.38823529411764707" blue="0.82352941176470584" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstItem="UPR-B1-Ehv" firstAttribute="leading" secondItem="uXX-fP-zDK" secondAttribute="leading" id="FRV-ar-670"/>
+                                    <constraint firstItem="bsz-6h-Oo1" firstAttribute="top" secondItem="uXX-fP-zDK" secondAttribute="top" id="RG2-SX-0YD"/>
+                                    <constraint firstAttribute="bottom" secondItem="bsz-6h-Oo1" secondAttribute="bottom" id="ZTh-3C-d3H"/>
+                                    <constraint firstAttribute="trailing" secondItem="bsz-6h-Oo1" secondAttribute="trailing" id="hUZ-j0-zpI"/>
+                                    <constraint firstItem="UPR-B1-Ehv" firstAttribute="centerY" secondItem="bsz-6h-Oo1" secondAttribute="centerY" id="jHC-MV-x3z"/>
+                                    <constraint firstItem="bsz-6h-Oo1" firstAttribute="leading" secondItem="UPR-B1-Ehv" secondAttribute="trailing" constant="10" id="k8d-0U-RP3"/>
+                                </constraints>
+                            </view>
+                            <view contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="Yhx-DM-Rl9">
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="o3E-Bz-1Q9" firstAttribute="top" secondItem="BWX-Tb-3ZD" secondAttribute="bottom" constant="15" id="2MW-3w-YRP"/>
+                            <constraint firstItem="BWX-Tb-3ZD" firstAttribute="centerX" secondItem="oW4-TZ-Uif" secondAttribute="centerX" id="5FB-JG-dPN"/>
+                            <constraint firstItem="o3E-Bz-1Q9" firstAttribute="top" secondItem="NZz-24-edl" secondAttribute="bottom" id="5Ju-tu-lid"/>
+                            <constraint firstItem="NZz-24-edl" firstAttribute="top" secondItem="Opj-XA-VAP" secondAttribute="bottom" constant="-20" id="7KA-Fq-Zq2"/>
+                            <constraint firstAttribute="trailing" secondItem="NZz-24-edl" secondAttribute="trailing" id="Bmq-In-ZE6"/>
+                            <constraint firstAttribute="trailing" secondItem="Yhx-DM-Rl9" secondAttribute="trailing" constant="60" id="EMl-lz-cEm"/>
+                            <constraint firstItem="uXX-fP-zDK" firstAttribute="centerX" secondItem="oW4-TZ-Uif" secondAttribute="centerX" id="Nqe-qX-oft"/>
+                            <constraint firstItem="1ds-m4-FpJ" firstAttribute="top" secondItem="uXX-fP-zDK" secondAttribute="bottom" constant="10" id="Wdg-f5-gnP"/>
+                            <constraint firstItem="BWX-Tb-3ZD" firstAttribute="top" secondItem="1ds-m4-FpJ" secondAttribute="bottom" constant="15" id="cMQ-9H-NyP"/>
+                            <constraint firstItem="NZz-24-edl" firstAttribute="leading" secondItem="oW4-TZ-Uif" secondAttribute="leading" id="fgQ-jK-1ut"/>
+                            <constraint firstItem="uXX-fP-zDK" firstAttribute="top" secondItem="Yhx-DM-Rl9" secondAttribute="bottom" constant="30" id="gh5-zf-NKx"/>
+                            <constraint firstItem="1ds-m4-FpJ" firstAttribute="centerX" secondItem="BWX-Tb-3ZD" secondAttribute="centerX" id="jh5-Am-6Uw"/>
+                            <constraint firstItem="Yhx-DM-Rl9" firstAttribute="top" secondItem="Opj-XA-VAP" secondAttribute="bottom" constant="30" id="lBS-mL-cfI"/>
+                            <constraint firstItem="Yhx-DM-Rl9" firstAttribute="leading" secondItem="oW4-TZ-Uif" secondAttribute="leading" constant="60" id="wKe-2d-5wg"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="containerView" destination="Yhx-DM-Rl9" id="tDW-YO-7yu"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="msj-9w-Yd1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-511.19999999999999" y="-553.67316341829087"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="backgroundImage" width="236" height="441"/>
+    </resources>
+</document>
