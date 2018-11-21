@@ -308,7 +308,6 @@
 		25DCD6232197AC1C000437A5 /* HeadingRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeadingRequest.swift; sourceTree = "<group>"; };
 		25DCD6252197AC91000437A5 /* IPLocationRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IPLocationRequest.swift; sourceTree = "<group>"; };
 		25DCD6272197ACB3000437A5 /* FindPlaceRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FindPlaceRequest.swift; sourceTree = "<group>"; };
-		25DCD6302198A2B3000437A5 /* libreadline.7.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libreadline.7.dylib; path = ../../../../../../usr/local/Cellar/readline/7.0.5/lib/libreadline.7.dylib; sourceTree = "<group>"; };
 		25DCD6322198A5BF000437A5 /* Sample_client.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sample_client.swift; sourceTree = "<group>"; };
 		25DCD6342198B5EB000437A5 /* mex-client.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "mex-client.der"; sourceTree = "<group>"; };
 		25DCD6352198B5EC000437A5 /* mex-clientkey.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = "mex-clientkey.der"; sourceTree = "<group>"; };
@@ -583,7 +582,6 @@
 			children = (
 				252C2D5C218377AE0091A1D4 /* MobiledgeXSDKDemo.IOS-Bridging-Header.h */,
 				25D5DCBC2180FB500097941C /* Podfile */,
-				25DCD6302198A2B3000437A5 /* libreadline.7.dylib */,
 				25D5DC8121801C6B0097941C /* ThirdParty2 */,
 				25623EE1217F7BD60092956D /* Classes */,
 				25623EC1217F79D30092956D /* AppDelegate.swift */,
@@ -1471,7 +1469,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1525,7 +1523,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "/Users/meta30/Recent30/mobiledgex.com.2018/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "MobiledgeXSDKDemo.IOS/MobiledgeXSDKDemo.IOS-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
