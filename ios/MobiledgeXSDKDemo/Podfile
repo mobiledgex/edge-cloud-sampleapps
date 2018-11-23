@@ -15,7 +15,7 @@ target 'MobiledgeXSDKDemo.IOS' do
     #      pod 'RFAboutView-Swift' cat because we fixed compile error
     
     ##    pod 'Eureka' cant do this as we modified ButtonRow and SwitdhRow for subtitle
-
+    pod 'SwiftLog'
 end
 
 #comment
