@@ -13,13 +13,16 @@ public class Cloudlet // implements Serializable
     private static let TAG: String = "Cloudlet"
     public static let BYTES_TO_MBYTES: Int = 1024 * 1024
 
-    var mCloudletName: String = ""
+    var mCloudletName: String = ""  // JT 18.11.22 leave lagacy m prefix nameing convention
     private var mAppName: String = ""
     private var mCarrierName: String = ""
+    
     private var mLatitude: Double = 0
     private var mLongitude: Double = 0
+    
     private var mDistance: Double = 0
     private var bestMatch: Bool = false
+    
     private var mMarker: GMSMarker? // JT 18.10.23
 
     var latencyMin: Double = 9999.0
@@ -29,12 +32,12 @@ public class Cloudlet // implements Serializable
     var latencyTotal: Double = 0
    // var mNumPings: Int = 3 // JT 18.11.13
 
-    var pings: [String] = [] // JT 18.11.13
+    var pings: [String] = [String]() // JT 18.11.13 // JT 18.11.22
     var latencies = [Double]() // JT 18.11.13
 
-    private var mbps: Int64 = 0 // BigDecimal.valueOf(0);  // JT 18.10.23 todo
-    var latencyTestProgress: Int = 0
-    private var speedTestProgress: Int = 0
+    private var mbps: Int64 = 0 // BigDecimal.valueOf(0);  // JT 18.10.23 todo?
+    //var latencyTestProgress: Double = 0
+    private var speedTestProgress: Double = 0 // 0-1  // JT 18.11.22 updating
     var startTime: Double = 0 // Int64 // JT 18.10.24
        var startTime1:DispatchTime? // JT 18.11.16
     var timeDifference: Double = 0
@@ -255,12 +258,12 @@ public class Cloudlet // implements Serializable
         {
             runningOnEmulator = true
             // Log.i(TAG, "YES, I am an emulator.");
-            Swift.print("YES, I am an emulator.")
+            Swift.print("YES, I am an emulator/simulator.")
         }
         else
         {
             runningOnEmulator = false
-            Swift.print("NO, I am NOT an emulator.")
+            Swift.print("NO, I am NOT an emulator/simulator.")
         }
 
         var latencyTestMethod: CloudletListHolder.LatencyTestMethod // CloudletListHolder.  // JT 18.11.01
@@ -383,12 +386,12 @@ public class Cloudlet // implements Serializable
         return mbps
     }
 
-    public func getLatencyTestProgress() -> Int
-    {
-        return latencyTestProgress
-    }
+//    public func getLatencyTestProgress() -> Double
+//    {
+//        return latencyTestProgress
+//    }
 
-    public func getSpeedTestProgress() -> Int
+    public func getSpeedTestProgress() -> Double    // JT 18.11.22
     {
         return speedTestProgress
     }
@@ -463,6 +466,7 @@ public class Cloudlet // implements Serializable
            //     print("Progress: \(progress.fractionCompleted)")
                 NotificationCenter.default.post(name: NSNotification.Name(rawValue: "speedTestProgress"), object: progress.fractionCompleted)   // JT 18.11.16
 
+                self.speedTestProgress = progress.fractionCompleted    // JT 18.11.22
             }
             .responseString
             { response in

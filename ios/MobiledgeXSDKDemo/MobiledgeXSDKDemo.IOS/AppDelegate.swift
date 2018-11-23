@@ -18,7 +18,7 @@ var services: Any? // JT 18.10.25
 class AppDelegate: UIResponder, UIApplicationDelegate //, GIDSignInDelegate // JT 18.10.24 GIDSignInUIDelegate
 {
     let kAPIKey = "AIzaSyCNWqii1sVJ0NGU12UvRBbvDhqBqpcSyP0" // JT 18.10.20  // JT 18.10.22
-    let kClientID = "406366254062-ci2micbnconnti5hhb7ltku9natmegct.apps.googleusercontent.com" // JT 18.11.17 for google signin
+    let kClientID = "406366254062-ci2micbnconnti5hhb7ltku9natmegct.apps.googleusercontent.com" // JT 18.11.17 for google signin, tmp use mine
 
     var window: UIWindow?
 
@@ -35,6 +35,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate //, GIDSignInDelegate // J
         services = GMSServices.sharedServices()
 
         // setupSideMenu()     // JT 18.11.12 nogo, would like
+
+        // This writes to the log
+      //  logw("write to the log")    // JT 18.11.22 and console
 
         return true
     }
@@ -120,11 +123,13 @@ extension  AppDelegate: GIDSignInDelegate
             let userId: String = user.userID // For client-side use only!
             let idToken: String = user.authentication.idToken // Safe to send to the server
             let fullName: String = user.profile.name
-            let givenName: String = user.profile.givenName
-            let familyName: String = user.profile.familyName
+//            let givenName: String = user.profile.givenName
+//            let familyName: String = user.profile.familyName
             let email: String = user.profile.email
+          
+            Swift.print("\(userId), \(idToken), \(fullName), \(email)")
             // JT 18.11.17 todo what to save
-            Swift.print("GIDSignIn \(user)") // JT 18.11.17
+            Swift.print("GIDSignIn \(user!), what todo with result?") // JT 18.11.17
         }
     }
     

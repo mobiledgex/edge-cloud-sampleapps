@@ -139,7 +139,7 @@ func postRequest(_ uri: String,
         headers: MexUtil().headers
     ).responseJSON
     { response in
-        debugPrint("\n••\n\(response.request)\n") // JT 18.11.09
+        debugPrint("\n••\n\(response.request! )\n") // JT 18.11.09
 
         guard response.result.isSuccess else
         {
@@ -270,7 +270,7 @@ func getAppInstNow()
 
     let getAppInstListRequest = mexClient2!.createGetAppInstListRequest(MexUtil().carrierNameDefault3, loc)
 
-    let reply = mexClient2!.getAppInstList(baseuri, getAppInstListRequest, &unused)
+    let _ = mexClient2!.getAppInstList(baseuri, getAppInstListRequest, &unused)
 }
 
 class MexRestClient2 // JT 18.11.12
@@ -337,7 +337,7 @@ class MexRestClient2 // JT 18.11.12
 
                         Swift.print("cloudlet uri: \(uri)") // JT 18.11.13
                         Swift.print("dd \(dd)")
-                        let loc2 = CLLocationCoordinate2D() // JT 18.11.12
+                    //    let loc2 = CLLocationCoordinate2D() // JT 18.11.12
 
                         let carrierName = d["CarrierName"] as! String
                         let cloudletName = d["CloudletName"] as! String
@@ -392,10 +392,13 @@ class MexRestClient2 // JT 18.11.12
             if !(boundsBuilder.southWest == boundsBuilder.northEast)
             {
                 Swift.print("Using cloudlet boundaries")
-                let padding: CGFloat  = 240.0 // offset from edges of the map in pixels
+                let padding: CGFloat  = 125.0 // offset from edges of the map in pixels
 
-                let update = GMSCameraUpdate.fit(boundsBuilder, withPadding: padding)   // JT 18.11.18
-                theMap!.moveCamera(update) // JT 18.11.06
+//                let update = GMSCameraUpdate.fit(boundsBuilder, withPadding: 64)   // JT 18.11.18
+//                theMap!.moveCamera(update) // JT 18.11.06
+                
+                theMap!.animate(with: .fit(boundsBuilder, withPadding: 64.0))
+                // JT 18.11.20 BUG padding is being ignored todo
             }
             else
             {
@@ -458,7 +461,6 @@ class MexRestClient1
 
             SKToast.show(withMessage: "Client registered")  // JT 18.11.16
 
-            // doGetCloudlets()
         }
 
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FindCloudlet1"), object: nil, queue: nil)
@@ -676,7 +678,8 @@ func doUserMarker(_ loc: CLLocationCoordinate2D) // JT 18.11.14
 }
 
 func createVerifyLocationRequest(_ carrierName: String,
-                                 _ gpslocation: [String: Any], _ verifyloctoken: String)
+                                 _ gpslocation: [String: Any],
+                                 _ verifyloctoken: String)
     -> [String: Any]
 {
     // json verifyLocationRequest;
@@ -1106,14 +1109,14 @@ func useCloudlets(_ findCloudletReply: [String: Any]) // JT 18.11.09
         let longN = loooc["long"] as? NSNumber
         let long = "\(longN!)"
 
-        let line1 = "REST FindCloudlet Status: "
+        let line1 = "REST FindCloudlet Status: \n"
         let ver = findCloudletReply["ver"] as? NSNumber
-        let line2 = "Version: " + "\(ver)" // JT 18.11.09
-        let line3 = ", Location Found Status: " + (findCloudletReply["status"] as! String)
-        let line4 = ", Location of cloudlet. Latitude: " + lat
-        let line5 = ", Longitude: " + long
+        let line2 = "Version: " + "\(ver)\n" // JT 18.11.09
+        let line3 = ", Location Found Status: " + (findCloudletReply["status"] as! String) + "\n"
+        let line4 = ", Location of cloudlet. Latitude: " + lat + "\n"   // JT 18.11.22
+        let line5 = ", Longitude: " + long + "\n"
         Swift.print("\(findCloudletReply["FQDN"])")
-        let line6 = ", Cloudlet FQDN: " + (findCloudletReply["FQDN"] as! String)
+        let line6 = ", Cloudlet FQDN: " + (findCloudletReply["FQDN"] as! String ) + "\n"
 
         Swift.print(line1 + line2 + line3 + line4 + line5 + line6) // JT 18.11.07
         let ports: [[String: Any]] = findCloudletReply["ports"] as! [[String: Any]]
@@ -1160,11 +1163,10 @@ func doMEXTest() // JT 18.11.08
         let d = notification.object as! [String: Any] // JT 18.11.09
         registerClientResult(d)
 
-        // doVerifyLocation()  // JT 18.11.09 chain
-        //      doGetCloudlets()
+ 
     }
 
-    NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "VerifyLocation"), object: nil, queue: nil)
+    NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "VerifyLocation"), object: nil, queue: nil)   // JT 18.11.21 unused
     { notification in
         // Swift.print("RegisterClient \(notification)")
 
@@ -1195,93 +1197,23 @@ func doMEXTest() // JT 18.11.08
     mexClient = MexRestClient()
     do
     {
-        var loc = mexClient!.retrieveLocation()
+        let loc = mexClient!.retrieveLocation()
         Swift.print("\(loc)") // JT 18.11.08
  
         Swift.print("Register MEX client.")
         Swift.print("====================\n")
 
-        var baseuri = mexClient!.generateBaseUri(mexClient!.getCarrierName(), mexClient!.dmePort)
+        let baseuri = mexClient!.generateBaseUri(mexClient!.getCarrierName(), mexClient!.dmePort)
         Swift.print("\(baseuri)")
-        var strRegisterClientReply: String = ""
+        var strRegisterClientReply: String = "" // JT 18.11.21 todo get rid of
         let registerClientRequest = mexClient!.createRegisterClientRequest()
 
         let registerClientReply = mexClient!.RegisterClient(baseuri, registerClientRequest, &strRegisterClientReply)
         Swift.print("\(registerClientReply)")
         return // JT 18.11.08
 
-            Swift.print("Finding nearest Cloudlet appInsts matching this Mex client.")
-        Swift.print("===========================================================")
-
-        baseuri = mexClient!.generateBaseUri(mexClient!.getCarrierName(), mexClient!.dmePort)
-        loc = mexClient!.retrieveLocation()
-        var strFindCloudletReply: String = ""
-        var findCloudletRequest = mexClient!.createFindCloudletRequest(mexClient!.getCarrierName(), loc)
-        var findCloudletReply = mexClient!.FindCloudlet(baseuri,
-                                                        findCloudletRequest,
-                                                        &strFindCloudletReply)
-
-        if findCloudletReply.count == 0
-        {
-            Swift.print("REST VerifyLocation Status: NO RESPONSE")
-        }
-        else
-        {
-//            cout << "REST FindCloudlet Status: "
-//                 << "Version: " << findCloudletReply["ver"]
-//                 << ", Location Found Status: " << findCloudletReply["status"]
-//                 << ", Location of cloudlet. Latitude: " << findCloudletReply["cloudlet_location"]["lat"]
-//                 << ", Longitude: " << findCloudletReply["cloudlet_location"]["long"]
-//                 << ", Cloudlet FQDN: " << findCloudletReply["fqdn"] << endl;
-
-            let loooc = findCloudletReply["cloudlet_location"] as! [String: Any]
-            let lat = (loooc["lat"] as! String)
-            let long = (loooc["long"] as! String)
-            let line1 = "REST FindCloudlet Status: "
-            let line2 = "Version: " + (findCloudletReply["ver"] as! String)
-            let line3 = ", Location Found Status: " + (findCloudletReply["status"] as! String)
-            let line4 = ", Location of cloudlet. Latitude: " + lat
-            let line5 = ", Longitude: " + long
-            let line6 = ", Cloudlet FQDN: " + (findCloudletReply["fqdn"] as! String) // << endl;
-
-            Swift.print(line1 + line2 + line3 + line4 + line5 + line6) // JT 18.11.07
-            let ports: [String: Any] = findCloudletReply["ports"] as! [String: Any] // json
-            let size = ports.count // size_t
-            for appPort in ports
-            {
-                Swift.print("\(appPort)") // JT 18.11.08
-                //  let ap = appPort as [String:Any]
-//                cout << ", AppPort: Protocol: " << appPort["proto"]
-//                     << ", AppPort: Internal Port: " << appPort["internal_port"]
-//                     << ", AppPort: Public Port: " << appPort["public_port"]
-//                     << ", AppPort: Public Path: " << appPort["public_path"]
-//                     << endl;
-//
-//                let proto = appPort["proto"]
-//                let internal_port = appPort["internal_port"]
-//
-//                let public_port = appPort["public_port"]
-//                let public_path = appPort["public_path"]
-//
-//                Swift.print(", AppPort: Protocol: \(proto)" +
-//                ", AppPort: Internal Port: \(internal_port)" +
-//                    ", AppPort: Internal Port: \(public_port)" +
-//                    ", AppPort: ublic Path:  \(public_path)"
-
-//                )
-            }
-        }
-
-        //  cout << endl;
-        Swift.print("")
     }
-//    catch (std::runtime_error &re) {
-//        cerr << "Runtime error occurred: " << re.what() << endl;
-//    } catch (std::exception &ex) {
-//        cerr << "Exception ocurred: " << ex.what() << endl;
-//    } catch (char *what) {
-//        cerr << "Exception: " << what << endl;
-//    }
+
     catch
     {
         //  cerr << "Unknown failure happened." << endl;
@@ -1330,6 +1262,7 @@ public func updateLocSimLocation(_ lat: Double, _ lng: Double)
 }
 
 // Sets: sessioncookie, tokenserveruri  // JT 18.11.14
+
 func registerClientResult(_ registerClientReply: [String: Any])
 {
     if registerClientReply.count == 0

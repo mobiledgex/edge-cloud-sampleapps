@@ -31,7 +31,7 @@ class EnhancedNetworkLocationServicesViewController: FormViewController
             $0.value = UserDefaults.standard.bool(forKey: "Location Verification") // initially selected
         }.onChange
         { /*[weak self]*/ row in
-            Swift.print("Location Verification \(row) \(row.value)")
+            Swift.print("Location Verification \(row) \(row.value!)")
 
             UserDefaults.standard.set(row.value, forKey: "Location Verification") // JT 18.11.03
 

@@ -458,7 +458,7 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 
         let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: exifOrientation, options: requestOptions)
 
-        let image = sampleBuffer.uiImage // JT 18.10.18
+      ///  let image = sampleBuffer.uiImage // JT 18.10.18
         // JT 18.10.18 todo send to server
 
         do

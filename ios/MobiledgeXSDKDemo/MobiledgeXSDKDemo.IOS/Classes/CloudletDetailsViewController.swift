@@ -145,8 +145,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
         form +++ Section()
             <<< ButtonRow
         { (row: ButtonRow) -> Void in
-            let downloadSize = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5") // JT 18.11.16
-            let downLoadStringSize = UserDefaults.standard.string(forKey: "Download Size") ?? "1 MB"
+             let downLoadStringSize = UserDefaults.standard.string(forKey: "Download Size") ?? "1 MB"
 
             row.title = "Speed Test: " + downLoadStringSize // JT 18.11.19
         }
@@ -199,7 +198,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
     {
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "updateLatencies"), object: nil, queue: nil)
         { [weak self] _ in
-            guard let me = self else { return }
+            guard let _ = self else { return }
 
             Swift.print("reload")
             DispatchQueue.main.async
@@ -213,7 +212,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
 
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "speedTestProgress"), object: nil, queue: nil)
         { [weak self] notification in
-            guard let me = self else { return }
+            guard let _ = self else { return }  // bullet proff for getting called after self deinit
 
             let n = notification.object as! NSNumber // JT 18.11.18
             let progress = Float(n.doubleValue) // notification.object as! Float // JT 18.11.09

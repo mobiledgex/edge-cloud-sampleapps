@@ -1258,7 +1258,7 @@ public class MainActivity: UIViewController, GMSMapViewDelegate, MatchingEngineR
             {
                 // Log.d(TAG, "Using cloudlet boundaries");
                 Swift.print("Using cloudlet boundaries")
-                let padding: Int = 240 // offset from edges of the map in pixels
+                let padding: Int = 125 // offset from edges of the map in pixels
                 /// cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
 
                 let update = GMSCameraUpdate.fit(boundsBuilder, withPadding: padding)
@@ -1275,6 +1275,7 @@ public class MainActivity: UIViewController, GMSMapViewDelegate, MatchingEngineR
 
                 self.mGoogleMap!.animate(toLocation: self.mUserLocationMarker!.position)
             }
+            
             do
             {
                 // mGoogleMap.moveCamera(cu);
