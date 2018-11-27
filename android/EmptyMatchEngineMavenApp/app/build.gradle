@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 
-def grpcVersion = '1.13.1'
+def grpcVersion = '1.15.1'
 
 android {
     compileSdkVersion 28
@@ -32,7 +32,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     // Matching Engine SDK
-    implementation 'com.mobiledgex:matchingengine:0.0.7'
+    implementation 'com.mobiledgex:matchingengine:1.3.0'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
