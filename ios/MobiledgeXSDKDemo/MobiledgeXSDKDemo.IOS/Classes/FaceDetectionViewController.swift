@@ -10,11 +10,16 @@ import AVFoundation
 import UIKit
 import Vision
 
+var doAFaceDetection = true // JT 18.11.26
+var sentImageSize = CGSize(width:0, height:0)  // JT 18.11.28
+
 class FaceDetectionViewController: UIViewController
 {
     // VNRequest: Either Retangles or Landmarks
     var faceDetectionRequest: VNRequest!
 
+ //   @IBOutlet weak var tmpImageView: UIImageView!   // JT 18.11.27
+    
     override func viewDidLoad()
     {
         super.viewDidLoad()
@@ -71,6 +76,21 @@ class FaceDetectionViewController: UIViewController
         { [unowned self] in
             self.configureSession()
         }
+        
+        /// --- tmp
+        
+        let barButtonItem = UIBarButtonItem(title: "StopTmp", style: .plain, target: self, action: #selector(FaceDetectionViewController.stopIt(sender:)))
+
+        navigationItem.rightBarButtonItem = barButtonItem   // JT 18.11.28 tmp
+
+        
+    }
+    
+    @objc public func stopIt(sender _: UIBarButtonItem) // JT 18.11.28
+    {
+        Swift.print("stop") // JT 18.11.28
+        self.session.stopRunning()  // JT 18.11.28
+
     }
 
     override func viewWillAppear(_ animated: Bool)
@@ -351,6 +371,29 @@ extension FaceDetectionViewController
          */
         NotificationCenter.default.addObserver(self, selector: #selector(sessionWasInterrupted), name: Notification.Name("AVCaptureSessionWasInterruptedNotification"), object: session)
         NotificationCenter.default.addObserver(self, selector: #selector(sessionInterruptionEnded), name: Notification.Name("AVCaptureSessionInterruptionEndedNotification"), object: session)
+
+        if true // JT 18.11.26
+        {
+            NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FaceDetection"), object: nil, queue: nil) // JT 18.11.26
+            { notification in
+                // Swift.print("RegisterClient \(notification)")
+
+                let d = notification.object as! [[Int]]
+
+                SKToast.show(withMessage: "FaceDetection result\(d)")
+
+               // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
+                doAFaceDetection = true // JT 18.11.26
+                // JT 18.11.26 todo timing
+
+                let a = d[0]    // get face rect
+                
+                let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3]-a[1]))
+                self.previewView.drawFaceboundingBox2(rect: r )     // JT 18.11.28
+                
+                Swift.print("face r= \(r)")  // JT 18.11.28
+            }
+        }
     }
 
     private func removeObservers()
@@ -451,21 +494,55 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
             let exifOrientation = CGImagePropertyOrientation(rawValue: exifOrientationFromDeviceOrientation()) else { return }
         var requestOptions: [VNImageOption: Any] = [:]
 
-        if let cameraIntrinsicData = CMGetAttachment(sampleBuffer, key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, attachmentModeOut: nil)
+        if let cameraIntrinsicData = CMGetAttachment(sampleBuffer, key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix,
+                                                     attachmentModeOut: nil)
         {
             requestOptions = [.cameraIntrinsics: cameraIntrinsicData]
         }
 
         let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: exifOrientation, options: requestOptions)
 
-      ///  let image = sampleBuffer.uiImage // JT 18.10.18
+        if doAFaceDetection
+        {
+            doAFaceDetection = false
+            let image = sampleBuffer.uiImage // JT 18.11.26
+
+            let size = image!.size // JT 18.11.27
+            let fudge: CGFloat = 8.0 // JT 18.11.27
+            let newSize = CGSize(width: size.width / fudge, height: size.height / fudge) // JT 18.11.27
+            let smaller: UIImage? = image?.imageResize(sizeChange: newSize) // JT 18.11.27
+            
+            let rotateImage = smaller!.rotate( radians: .pi/2.0) // JT 18.11.27
+         //   Swift.print("\(rotateImage!.size)") // JT 18.11.27
+
+            sentImageSize = rotateImage!.size   // JT 18.11.28
+            
+//            DispatchQueue.main.async
+//                { [unowned self] in
+//                 //   self.tmpImageView.image = rotateImage    // JT 18.11.27
+//
+//            }
+            
+//            // Create path.
+//            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+//            if let filePath = paths.first?.appendingPathComponent("MyImageName.png") {
+//                // Save image.
+//                do {
+//                    try smaller!.pngData()?.write(to: filePath, options: .atomic)   // JT 18.11.27 tmp
+//                }
+//                catch {
+//                    // Handle the error
+//                }
+//            }
+
+            FaceDetection(rotateImage) // JT 18.11.26
+        }
         // JT 18.10.18 todo send to server
 
         do
         {
             try imageRequestHandler.perform(requests)
         }
-
         catch
         {
             print(error)

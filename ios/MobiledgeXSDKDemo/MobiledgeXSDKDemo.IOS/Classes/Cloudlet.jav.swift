@@ -164,7 +164,7 @@ public class Cloudlet // implements Serializable
         PlainPing.ping(ping, withTimeout: 1.0, completionBlock: { (timeElapsed: Double?, error: Error?) in
             if let latency = timeElapsed
             {
-                print("\(ping) latency (ms): \(latency)")
+               // print("\(ping) latency (ms): \(latency)") // JT 18.11.27
                 self.latencies.append(latency)
                 self.latencyMin = self.latencies.min()! // JT 18.11.13
                 self.latencyMax = self.latencies.max()! // JT 18.11.13

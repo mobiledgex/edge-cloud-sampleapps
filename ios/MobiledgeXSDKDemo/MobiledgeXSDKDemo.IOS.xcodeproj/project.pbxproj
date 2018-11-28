@@ -87,6 +87,9 @@
 		258BEF2921A0E0AB0055227D /* UIViewController+sizeForPercent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2121A0E0AB0055227D /* UIViewController+sizeForPercent.swift */; };
 		258BEF2C21A0E9A30055227D /* Acknowledgements.plist in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF2B21A0E9A20055227D /* Acknowledgements.plist */; };
 		258BEF2E21A24C020055227D /* Mex.utitities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2D21A24C020055227D /* Mex.utitities.swift */; };
+		25C9410221AB9DBE00C9424B /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410121AB9DBE00C9424B /* Log.swift */; };
+		25C9410421ACE68900C9424B /* RegExReplace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410321ACE68900C9424B /* RegExReplace.swift */; };
+		25C9410621ADA18800C9424B /* face_20181018-204419.f.png in Resources */ = {isa = PBXBuildFile; fileRef = 25C9410521ADA18800C9424B /* face_20181018-204419.f.png */; };
 		25D5DCBD2180FB500097941C /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 25D5DCBC2180FB500097941C /* Podfile */; };
 		25DCD5C82191FCD2000437A5 /* LocationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD5C12191FCD2000437A5 /* LocationRequest.swift */; };
 		25DCD5C92191FCD2000437A5 /* Locator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD5C22191FCD2000437A5 /* Locator.swift */; };
@@ -300,6 +303,9 @@
 		258BEF2121A0E0AB0055227D /* UIViewController+sizeForPercent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIViewController+sizeForPercent.swift"; sourceTree = "<group>"; };
 		258BEF2B21A0E9A20055227D /* Acknowledgements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Acknowledgements.plist; sourceTree = "<group>"; };
 		258BEF2D21A24C020055227D /* Mex.utitities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mex.utitities.swift; sourceTree = "<group>"; };
+		25C9410121AB9DBE00C9424B /* Log.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Log.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/SwiftLog-master/Log.swift"; sourceTree = SOURCE_ROOT; };
+		25C9410321ACE68900C9424B /* RegExReplace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RegExReplace.swift; path = ../../../../../../../venuetise/ios_lca_suite/Venuetize2/Venuetize2/ThirdParty/RegExReplace.swift; sourceTree = "<group>"; };
+		25C9410521ADA18800C9424B /* face_20181018-204419.f.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "face_20181018-204419.f.png"; sourceTree = "<group>"; };
 		25D5DCBC2180FB500097941C /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		25D5DCCD2181647C0097941C /* OneShotLocationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = OneShotLocationManager.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/OneShotLocationManager-master-2/OneShotLocationManager.swift"; sourceTree = SOURCE_ROOT; };
 		25DCD5C12191FCD2000437A5 /* LocationRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocationRequest.swift; sourceTree = "<group>"; };
@@ -521,6 +527,7 @@
 		252C2DEB2187A8F80091A1D4 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				25C9410521ADA18800C9424B /* face_20181018-204419.f.png */,
 				258BEF2B21A0E9A20055227D /* Acknowledgements.plist */,
 				252C2E21218BA1210091A1D4 /* Images */,
 				252C2DEC2187A8F80091A1D4 /* certs */,
@@ -708,6 +715,8 @@
 		25D5DC8121801C6B0097941C /* ThirdParty2 */ = {
 			isa = PBXGroup;
 			children = (
+				25C9410321ACE68900C9424B /* RegExReplace.swift */,
+				25C9410121AB9DBE00C9424B /* Log.swift */,
 				258BEF1621A0E0AB0055227D /* RFAboutView-Swift */,
 				258BEF12219F9D810055227D /* CMSampleBufferExtension.swift */,
 				258BEF14219F9E880055227D /* PreviewView.swift */,
@@ -1025,6 +1034,7 @@
 				258BEF2621A0E0AB0055227D /* RFAboutViewCloseX@3x.png in Resources */,
 				258BEEFE219CBF770055227D /* ic_menu_compass.png in Resources */,
 				25D5DCBD2180FB500097941C /* Podfile in Resources */,
+				25C9410621ADA18800C9424B /* face_20181018-204419.f.png in Resources */,
 				25DCD6602199F128000437A5 /* ios11-control-center-camera-icon.png in Resources */,
 				252C2E28218BA1210091A1D4 /* dot-menu@3x.png in Resources */,
 				258BEF2C21A0E9A30055227D /* Acknowledgements.plist in Resources */,
@@ -1088,6 +1098,7 @@
 				"${BUILT_PRODUCTS_DIR}/GoogleToolboxForMac/GoogleToolboxForMac.framework",
 				"${BUILT_PRODUCTS_DIR}/PlainPing/PlainPing.framework",
 				"${BUILT_PRODUCTS_DIR}/SideMenu/SideMenu.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftLog/SwiftLog.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftyJSON/SwiftyJSON.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -1098,6 +1109,7 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleToolboxForMac.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PlainPing.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SideMenu.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftLog.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftyJSON.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1180,6 +1192,7 @@
 				25DCD7302199F798000437A5 /* PickerInlineRow.swift in Sources */,
 				25DCD6612199F128000437A5 /* SettingsViewController.swift in Sources */,
 				252C2DE4218782380091A1D4 /* NSObject-Ext-ThreadSafe.swift in Sources */,
+				25C9410421ACE68900C9424B /* RegExReplace.swift in Sources */,
 				25DCD71C2199F798000437A5 /* AlertOptionsRow.swift in Sources */,
 				25DCD72F2199F798000437A5 /* MultipleSelectorRow.swift in Sources */,
 				25DCD7102199F798000437A5 /* Section.swift in Sources */,
@@ -1256,6 +1269,7 @@
 				25DCD7442199F798000437A5 /* RuleURL.swift in Sources */,
 				258BEF0E219F5E230055227D /* CircularSpinner.swift in Sources */,
 				25DCD70A2199F798000437A5 /* Operators.swift in Sources */,
+				25C9410221AB9DBE00C9424B /* Log.swift in Sources */,
 				252C2DE3218782380091A1D4 /* ExtensionVars.swift in Sources */,
 				25DCD7222199F798000437A5 /* OptionsRow.swift in Sources */,
 				252C2D5B218298110091A1D4 /* RegisterClient.java.swift in Sources */,

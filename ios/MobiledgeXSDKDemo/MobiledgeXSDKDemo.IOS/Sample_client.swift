@@ -3,7 +3,7 @@
 //  Sample_client.swift
 //  MobiledgeXSDKDemo.IOS
 //
-//  Port from cpp SDK demo by meta30
+//  Port from cpp SDK demo to swift by meta30
 //  Copyright © 2018 MobiledgeX. All rights reserved.
 //
 
@@ -16,31 +16,37 @@ import Security
 
 private var locationRequest: LocationRequest? // so we can stop updates
 
-var userMarker: GMSMarker?   // set by RegisterClient , was: mUserLocationMarker
+var userMarker: GMSMarker?   // set by RegisterClient , was: mUserLocationMarker. todo code review. who should own this?
+
+var startTime1:DispatchTime?    // JT 18.11.28
 
 // This file Handles:
-//
+//  Menu:
 //  "Register Client",
 //  "Get App Instances",
 //  "Verify Location",
-//  "Find Closet Cloudlet",
+//  "Find Closest Cloudlet",
 //  "Reset Location",
 
 // MARK: MexUtil
 // common
 //
+
+private var closestCloudlet = ""    // JT 18.11.27
+
 private class MexUtil
 {
     static let shared = MexUtil()   // JT 18.11.18
 
     var sessionManager: SessionManager?  // JT 18.11.25
 
-    let carrierNameDefault3: String = "TDG"
+    // url
     let baseDmeHost: String = "dme.mobiledgex.net"
-
+    let carrierNameDefault3: String = "TDG"
     let carrierNameDefault4: String = "mexdemo"
+    let dmePort: UInt = 38001
 
-    var baseDmeHostInUse: String = "" // baseDmeHost2
+    var baseDmeHostInUse: String = ""
     var carrierNameDefaultInUse: String = "" // carrierNameDefault4
 
     // API Paths:
@@ -49,12 +55,11 @@ private class MexUtil
     let appinstlistAPI: String = "/v1/getappinstlist"
 
     let timeoutSec: UInt64 = 5000
-    let dmePort: UInt = 38001
 
-    var appName = "EmptyMatchEngineApp" // Your application name
-    var devName = "EmptyMatchEngineApp" // Your developer name
+    var appName = "" // Your application name. was "EmptyMatchEngineApp"
+    var devName = "" // Your developer name
 
-    let appVersionStr = "1.0"
+    let appVersionStr = "1.0"   // used by createRegisterClientRequest
 
     let headers: HTTPHeaders = [
         "Accept": "application/json",
@@ -62,7 +67,7 @@ private class MexUtil
         "Charsets": "utf-8",
     ]
 
-    init()
+     init()  // JT 18.11.26  singleton
     {
         baseDmeHostInUse = baseDmeHost
 
@@ -94,6 +99,11 @@ private class MexUtil
     {
         return "https://\(generateDmeHostPath(carrierName)):\(dmePort)"
     }
+    
+    func generateBaseUri2(_ carrierName: String,_ portN: UInt) -> String
+    {
+        return "https://\(generateDmeHostPath(carrierName)):\(portN)"
+    }
 }
 
 
@@ -101,12 +111,18 @@ private class MexUtil
 // MARK: postRequest
 
 private func postRequest(_ uri: String,
-                 _ request: [String: Any],
+                 _ request: [String: Any],  // Dictionary/json
                  _ postName: String) // this is posted after results
-    //-> [String: Any]
 {
     Swift.print("URI to post to:\n \(uri)\n")
-    Swift.print("\(request)")
+    if postName != "FaceDetection"
+    {
+        Swift.print("\(request)")
+
+    }
+      logw("•uri:\n\(uri)\n") // JT 18.11.26 log to file
+
+  //  logw("•request:\n\(request)\n") // JT 18.11.26 log to file
 
     dealWithTrustPolicy(uri) // certs
     Swift.print("==========\n")
@@ -116,10 +132,14 @@ private func postRequest(_ uri: String,
         method: .post,
         parameters: request,
         encoding: JSONEncoding.default,
-        headers: MexUtil().headers
+        headers: MexUtil.shared.headers // JT 18.11.27
     ).responseJSON
     { response in
-        debugPrint("\n••\n\(response.request! )\n")
+        if postName != "FaceDetection"  // JT 18.11.27
+        {
+            debugPrint("\n••\n\(response.request! )\n")
+
+        }
 
         guard response.result.isSuccess else
         {
@@ -128,7 +148,7 @@ private func postRequest(_ uri: String,
             let msg = String(describing: response.result.error)
 
             // hack parse error
-            if msg.contains("dt-id=") // && postName == "GetToken"
+            if msg.contains("dt-id=") // special case // && postName == "GetToken"
             {
                 let dtId = msg.components(separatedBy: "dt-id=")
                 let s1 = dtId[1].components(separatedBy: ",")
@@ -155,13 +175,15 @@ private func postRequest(_ uri: String,
             // First make sure you got back a dictionary if that's what you expect
             guard let json = data as? [String: AnyObject] else
             {
-                Swift.print("errorrrrr")
+                Swift.print("json = data as? [String: AnyObject]  errorrrrr")
                 return
             }
             Swift.print("=\(postName)=\n \(json)")
 
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName),
                                             object: json)
+            
+            logw("postName:\(postName)\nresult:\n\(json)") // JT 18.11.26  log to file
         }
 
         Swift.print("\(response)")
@@ -172,13 +194,16 @@ private func postRequest(_ uri: String,
         //           print(response.timeline)
     }
 
-    debugPrint(requestObj) // dump curl
+    if postName != "FaceDetection"  // JT 18.11.27
+    {
+        debugPrint(requestObj) // dump curl
 
-  //  return [String: Any]() // json //replyData;
+    }
+
 }
 
 private  func dealWithTrustPolicy(
-    _ url: URLConvertible // ,      // a string
+    _ url: URLConvertible  // a string
 )
 {
     // let certificates = getCertificates()
@@ -187,14 +212,28 @@ private  func dealWithTrustPolicy(
 
     let trustPolicy = ServerTrustPolicy.pinCertificates(
         certificates: certificates,
-        validateCertificateChain: true, // true
+        validateCertificateChain: true,
         validateHost: true
-    ) // true
+    )
 
     do
     {
-        let whoToTrust = try url.asURL().host
+        var whoToTrust = try url.asURL().host
         //     Swift.print("\(whoToTrust)")
+
+//        if whoToTrust == nil    // JT 18.11.27
+//        {
+//            let host = (url as! String).components(separatedBy: ":") // JT 18.11.27
+//            var ss = host[0]
+//          //  ss.remove(at: ss.startIndex)
+//
+//          //  ss.remove(at: ss.startIndex)
+//
+//            whoToTrust = ss
+//            Swift.print("\(ss)")
+//            Swift.print("")
+//        }
+//
         let trustPolicies = [whoToTrust!: trustPolicy]
 
         let policyManager = ServerTrustPolicyManager(policies: trustPolicies)
@@ -222,20 +261,20 @@ class MexRegisterClient
     var tokenserveruri = "" // set by RegisterClient    // JT 18.11.25
     var sessioncookie = ""  // set by RegisterClient    // JT 18.11.25 used by getApp and verifyLoc
 
-    var theRequest: DataRequest?
+   // var theRequest: DataRequest?  // JT 18.11.25
     
     public static let COLOR_NEUTRAL: UInt32 = 0xFF67_6798
     public static let COLOR_VERIFIED: UInt32 = 0xFF00_9933
     public static let COLOR_FAILURE: UInt32 = 0xFFFF_3300
     public static let COLOR_CAUTION: UInt32 = 0xFF00_B33C // Amber: ffbf00;
 
-    init()
+    private init() // singleton
     {
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "RegisterClient1"), object: nil, queue: nil)
         { notification in
             // Swift.print("RegisterClient \(notification)")
 
-            let d = notification.object as! [String: Any]
+            let d = notification.object as! [String: Any]   // Dictionary/json
             self.registerClientResult(d)
 
             self.getLocaltionUpdates()
@@ -247,7 +286,7 @@ class MexRegisterClient
         { notification in
             // Swift.print("RegisterClient \(notification)")
 
-            let d = notification.object as! [String: Any]
+            let d = notification.object as! [String: Any]   // Dictionary/json
 
             Swift.print("FindCloudlet1 \(d)")
 
@@ -280,9 +319,19 @@ class MexRegisterClient
 //                    uri = cld.value as! String
 //                }
                 Swift.print("\(index): \(cld.key)")
+                
+                if cld.key == "FQDN"
+                {
+                    let v = cld.value
+                    Swift.print("•FQDN• \(v)")
+                    
+                    closestCloudlet = v as! String // JT 18.11.27
+Swift.print("")
+                }
+                
                 if cld.key == "cloudlet_location"
                 {
-                    let dd = cld.value as! [String: Any]
+                    let dd = cld.value as! [String: Any]    // Dictionary/json
 
                     Swift.print("••• \(dd)")
 
@@ -294,7 +343,7 @@ class MexRegisterClient
                     theMap!.animate(toLocation: loc)
                     SKToast.show(withMessage: "Found cloest cloudlet")
 
-                    break
+                    //break
                 }
             }
         }
@@ -309,11 +358,11 @@ class MexRegisterClient
 
             let loc = retrieveLocation()
 
-            var verifyLocationRequest = createVerifyLocationRequest(MexUtil().carrierNameDefaultInUse, loc, "")
+            var verifyLocationRequest = createVerifyLocationRequest(MexUtil.shared.carrierNameDefaultInUse, loc, "")    // JT 18.11.27
 
             // Update request with the new token:
             // json tokenizedRequest;
-            var tokenizedRequest = [String: Any]()
+            var tokenizedRequest = [String: Any]()  // Dictionary/json
 
             tokenizedRequest["ver"] = verifyLocationRequest["ver"]
             tokenizedRequest["SessionCookie"] = verifyLocationRequest["SessionCookie"]
@@ -324,7 +373,7 @@ class MexRegisterClient
 
             Swift.print("VeriyLocation actual call...")
            // let reply = ""
-            let baseuri = MexUtil().generateBaseUri(MexUtil().carrierNameDefaultInUse, MexUtil().dmePort)
+            let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.carrierNameDefaultInUse, MexUtil.shared.dmePort)  // JT 18.11.27
             let verifylocationAPI: String = "/v1/verifylocation"
 
             let uri = baseuri + verifylocationAPI
@@ -387,10 +436,11 @@ class MexRegisterClient
 
     // MARK: create requests
     
-    func createRegisterClientRequest() -> [String: Any]
+    func createRegisterClientRequest()
+        -> [String: Any] // Dictionary/json
     {
-        let u = MexUtil()
-        //   json regClientRequest;
+        let u = MexUtil.shared  // JT 18.11.25
+        // Dictionary/json regClientRequest;
         var regClientRequest = [String: String]()
 
         regClientRequest["ver"] = "1"
@@ -407,7 +457,7 @@ class MexRegisterClient
     func createFindCloudletRequest(_ carrierName: String, _ gpslocation: [String: Any]) -> [String: Any]
     {
         //    findCloudletRequest;
-        var findCloudletRequest = [String: Any]()
+        var findCloudletRequest = [String: Any]()   // Dictionary/json
 
         findCloudletRequest["vers"] = 1
         findCloudletRequest["SessionCookie"] = sessioncookie
@@ -455,15 +505,15 @@ private class MexGetAppInst
 {
     static let shared = MexGetAppInst()
     
-    var theRequest: DataRequest?
+    //var theRequest: DataRequest?  // JT 18.11.25
     
-    init()
+    private init()  // singleton
     {
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "GetAppInstlist1"), object: nil, queue: nil)
         { notification in
             // Swift.print("RegisterClient \(notification)")
             
-            let d = notification.object as! [String: Any]
+            let d = notification.object as! [String: Any]   // Dictionary/json
             
             
             Swift.print("GetAppInstlist1 \(d)")
@@ -489,7 +539,7 @@ private class MexGetAppInst
                 if cld.key == "Cloudlets" // "cloudlet_location"
                 {
                     //       let ddd = cld.value
-                    let a = cld.value as! [[String: Any]]
+                    let a = cld.value as! [[String: Any]]   // Dictionary/json
                     
                     Swift.print("••• \(a)")
                     
@@ -512,7 +562,7 @@ private class MexGetAppInst
                         Swift.print("\(Array(d.keys))\n")
                         Swift.print("d ••••• \(d)")
                         
-                        let dd = d["Appinstances"] as! [[String: Any]]
+                        let dd = d["Appinstances"] as! [[String: Any]]  // Dictionary/json
                         let uri = dd[0]["FQDN"] as! String // todo, now just use first
                         let appName = dd[0]["AppName"] as! String
                         
@@ -602,7 +652,7 @@ private class MexGetAppInst
     func createGetAppInstListRequest(_ carrierName: String, _ gpslocation: [String: Any]) -> [String: Any]
     {
         //   json findCloudletRequest;
-        var appInstListRequest = [String: Any]()
+        var appInstListRequest = [String: Any]()    // Dictionary/json
         
         appInstListRequest["vers"] = 1
         appInstListRequest["SessionCookie"] = MexRegisterClient.shared.sessioncookie
@@ -622,7 +672,7 @@ func doUserMarker(_ loc: CLLocationCoordinate2D)
 
     userMarker = GMSMarker(position: loc)
     userMarker!.title = "You are here"
-    userMarker!.snippet = "Drag to spoof" //                         marker!.snippet = "Tap for details"
+    userMarker!.snippet = "Drag to spoof" //   marker!.snippet = "Tap for details"
 
     //  marker.map = self.mGoogleMap
     let iconTemplate = UIImage(named: "ic_marker_mobile-web")
@@ -647,12 +697,12 @@ func registerClientNow() // called by top right menu
     Swift.print("Register MEX client.")
     Swift.print("====================\n")
 
-    let baseuri = MexUtil().generateBaseUri(MexUtil().getCarrierName(), MexUtil().dmePort)
+    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
     Swift.print("\(baseuri)")
 
     let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
     
-    let urlStr = baseuri + MexUtil().registerAPI
+    let urlStr = baseuri + MexUtil.shared.registerAPI   // JT 18.11.27
     postRequest(urlStr, registerClientRequest, "RegisterClient1")
     
 }
@@ -669,14 +719,14 @@ func getAppInstNow()    // called by top right menu
     Swift.print(" MEX client.")
     Swift.print("====================\n")
     
-    let baseuri = MexUtil().generateBaseUri(MexUtil().getCarrierName(), MexUtil().dmePort)
+    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
     Swift.print("\(baseuri)")
     
     let loc = retrieveLocation()
     
-    let getAppInstListRequest = MexGetAppInst.shared.createGetAppInstListRequest(MexUtil().carrierNameDefault3, loc)
+    let getAppInstListRequest = MexGetAppInst.shared.createGetAppInstListRequest(MexUtil.shared.carrierNameDefault3, loc)
     
-    postRequest(baseuri + MexUtil().appinstlistAPI, getAppInstListRequest, "GetAppInstlist1")
+    postRequest(baseuri + MexUtil.shared.appinstlistAPI, getAppInstListRequest, "GetAppInstlist1")  // JT 18.11.27
     
 }
 
@@ -752,16 +802,15 @@ private func useCloudlets(_ findCloudletReply: [String: Any]) // unused
  */
 public func updateLocSimLocation(_ lat: Double, _ lng: Double)
 {
-    let jd: [String: Any]? = ["latitude": lat, "longitude": lng]
+    let jd: [String: Any]? = ["latitude": lat, "longitude": lng]    // Dictionary/json
 
-    let hostName: String = MexUtil().generateDmeHostPath(MexUtil().getCarrierName()).replacingOccurrences(of: "dme", with: "locsim")
+    let hostName: String = MexUtil.shared.generateDmeHostPath(MexUtil.shared.getCarrierName()).replacingOccurrences(of: "dme", with: "locsim")
 
     let urlString: URLConvertible = "http://\(hostName):8888/updateLocation"
 
     Swift.print("\(urlString)")
-    // let headers2:HTTPHeaders? =  MexUtil().headers
 
-    Alamofire.request(urlString,
+    Alamofire.request( urlString,
                       method: HTTPMethod.post,
                       parameters: jd,
                       encoding: JSONEncoding.default)
@@ -794,10 +843,10 @@ func doVerifyLocation() // call by top right menu
     Swift.print("Verify Location of this Mex client.")
     Swift.print("===================================\n\n")
     
-    let baseuri = MexUtil().generateBaseUri(MexUtil().carrierNameDefaultInUse, MexUtil().dmePort)
+    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.carrierNameDefaultInUse, MexUtil.shared.dmePort)
     let loc = retrieveLocation()
     
-    let verifyLocationRequest = createVerifyLocationRequest(MexUtil().carrierNameDefaultInUse, loc, "")
+    let verifyLocationRequest = createVerifyLocationRequest(MexUtil.shared.carrierNameDefaultInUse, loc, "")
     
     VerifyLocation(baseuri, verifyLocationRequest)
 }
@@ -809,7 +858,7 @@ private func createVerifyLocationRequest(_ carrierName: String,
     -> [String: Any]
 {
     
-    var verifyLocationRequest = [String: Any]() // // json verifyLocationRequest;
+    var verifyLocationRequest = [String: Any]() // Dictionary/json verifyLocationRequest;
     
     verifyLocationRequest["ver"] = 1
     verifyLocationRequest["SessionCookie"] = MexRegisterClient.shared.sessioncookie
@@ -862,12 +911,12 @@ func findNearestCloudlet() //   called by top right menu
     Swift.print("Finding nearest Cloudlet appInsts matching this Mex client.")
     Swift.print("===========================================================")
     
-    let baseuri = MexUtil().generateBaseUri(MexUtil().getCarrierName(), MexUtil().dmePort)
+    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
     let loc = retrieveLocation()
     
-    let findCloudletRequest = MexRegisterClient.shared.createFindCloudletRequest(MexUtil().carrierNameDefault3, loc)
+    let findCloudletRequest = MexRegisterClient.shared.createFindCloudletRequest(MexUtil.shared.carrierNameDefault3, loc)
     
-    postRequest(baseuri + MexUtil().findcloudletAPI, findCloudletRequest,  "FindCloudlet1")
+    postRequest(baseuri + MexUtil.shared.findcloudletAPI, findCloudletRequest,  "FindCloudlet1")
     
 }
 
@@ -912,8 +961,8 @@ private func stopGPS()
 private func retrieveLocation() -> [String: Any]
 {
     var location = [String: Any]() //     //  json location;
-    
-    if userMarker != nil    // get app isnt sets userMarker
+
+    if userMarker != nil // get app isnt sets userMarker
     {
         location["lat"] = userMarker!.position.latitude // -122.149349;
         location["long"] = userMarker!.position.longitude // 37.459609;
@@ -923,6 +972,108 @@ private func retrieveLocation() -> [String: Any]
         location["lat"] = -122.149349
         location["long"] = 37.459609
     }
-    
+
     return location
+}
+
+// Mark: -
+
+func FaceDetection(_ image: UIImage?) // JT 18.11.26
+{
+    if closestCloudlet == ""
+    {
+        SKToast.show(withMessage: "Need to Find closest cloudlet first")
+Swift.print("Need to Find closest cloudlet first")
+        return
+    }
+    // detector/detect
+    // Used to send a face image to the server and get back a set of coordinates for any detected faces.
+    // POST http://<hostname>:8000/detector/detect/
+
+    let faceDetectionAPI: String = "/detector/detect/"
+
+//    Swift.print("FaceDetection")
+//    Swift.print("FaceDetection MEX .")
+//    Swift.print("====================\n")
+//
+//    let DEF_FACE_HOST_CLOUD = "mobiledgexsdkdemomobiledgexsdkdemo10.azcentraluscloudlet.azure.mobiledgex.net"
+//    let DEF_FACE_HOST_EDGE = "mobiledgexsdkdemomobiledgexsdkdemo10.bonndemocloudlet.tdg.mobiledgex.net"
+
+    //  let baseuri = MexUtil.shared.generateBaseUri2(MexUtil.shared.getCarrierName(), 8000) // JT 18.11.26
+
+    //   let baseuri = DEF_FACE_HOST_CLOUD + ":" + "8000"
+    let baseuri = closestCloudlet + ":" + "8000" // JT 18.11.27
+    var urlStr = "http://" + baseuri + faceDetectionAPI // JT 18.11.27 URLConvertible
+
+    // Swift.print("\(urlStr)")
+
+    var params: [String: String] = [:] // JT 18.11.27
+
+    //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/detector/detect/"
+
+    if let image = image
+    {
+        let imageData = (image.pngData()! as NSData).base64EncodedString(
+            options: NSData.Base64EncodingOptions.lineLength64Characters
+        )
+
+        params["image"] = imageData // JT 18.11.26
+
+        //   let imageData2 = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"  // JT 18.11.27 tmp
+        //   params["image"] = imageData2 // JT 18.11.26 tmp
+
+        let headers: HTTPHeaders = [
+            "Accept": "application/json",
+            // "Content-Type": "application/json",    // JT 18.11.27 fails
+            "Charsets": "utf-8",
+        ]
+//    postRequest(urlStr, params, "FaceDetection")
+
+        startTime1 = DispatchTime.now() // <<<<<<<<<< Start time
+        
+        let requestObj = Alamofire.request(urlStr,
+                                           method: HTTPMethod.post,
+                                           parameters: params
+                                           // , encoding: JSONEncoding.default // of -d
+                                           , headers: headers) // JT 18.11.27
+
+            .responseJSON
+        { response in
+            //    Swift.print("----\n")
+            //    Swift.print("\(response)")
+            //    debugPrint(response)
+
+            switch response.result {
+            case let .success(data):
+
+                // Swift.print("")
+                let d = data as! [String: Any]
+                let success = d["success"] as! String
+                if success == "true"
+                {
+                   // Swift.print("data: \(data)") // JT 18.11.27
+
+                    let end = DispatchTime.now()   // <<<<<<<<<<   end time
+                    let nanoTime = end.uptimeNanoseconds -  startTime1!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+                    let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
+                    
+                    Swift.print("FaceDetection time: \(timeInterval)")  // JT 18.11.28
+                    SKToast.show(withMessage: "UpdateLocSimLocation result: \(data)")
+
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceDetection"), object: d["rects"]) // JT 18.11.27
+                }
+                else
+                {
+                    doAFaceDetection = true // JT 18.11.26
+                }
+
+            case let .failure(error):
+                print(error)
+                SKToast.show(withMessage: "UpdateLocSimLocation Failed: \(error)")
+            }
+        }
+
+        // debugPrint(requestObj) // dump curl
+        // Swift.print("")
+    }
 }

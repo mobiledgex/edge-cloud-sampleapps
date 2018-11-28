@@ -36,8 +36,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate //, GIDSignInDelegate // J
 
         // setupSideMenu()     // JT 18.11.12 nogo, would like
 
+          // JT 18.11.25 rotate log
+         Log.logger.rename(0)  // JT 18.11.25
         // This writes to the log
-      //  logw("write to the log")    // JT 18.11.22 and console
+        logw("•• write to the log")    // JT 18.11.22 and console
 
         return true
     }

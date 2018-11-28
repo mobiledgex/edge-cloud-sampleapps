@@ -10,6 +10,8 @@ import AVFoundation
 import UIKit
 import Vision
 
+var lastFaceRect = CGRect(0,0,0,0)  // JT 18.11.27
+
 class PreviewView: UIView
 {
     private var maskLayer = [CAShapeLayer]()
@@ -54,6 +56,22 @@ class PreviewView: UIView
 
         return mask
     }
+    
+    private func createLayer2(in rect: CGRect) -> CAShapeLayer
+    {
+        let mask = CAShapeLayer()
+        mask.frame = rect
+        mask.cornerRadius = 10
+        mask.opacity = 0.75
+        mask.borderColor = UIColor.blue.cgColor // JT 18.11.27
+        mask.borderWidth = 2.0
+        
+        maskLayer.append(mask)
+        layer.insertSublayer(mask, at: 1)
+        
+        return mask
+    }
+    
 
     func drawFaceboundingBox(face: VNFaceObservation)
     {
@@ -65,7 +83,39 @@ class PreviewView: UIView
         let facebounds = face.boundingBox.applying(translate).applying(transform)
 
         _ = createLayer(in: facebounds)
+  //      Swift.print(":  \(facebounds)")    // JT 18.11.27
+        
+    ///    _ = createLayer2(in: lastFaceRect)    // JT 18.11.27 // JT 18.11.28
+        
+       // Swift.print("#  \(lastFaceRect)")    // JT 18.11.27
+
+
     }
+    
+    func drawFaceboundingBox2( rect:CGRect)    // JT 18.11.27
+    {
+     //       Swift.print("rect: \(rect)")  // JT 18.11.28
+
+        let transform = CGAffineTransform(scaleX: 1, y: 1).translatedBy(x: 0, y: 0)
+        
+        //let translate = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height)
+        
+        let ratioW = frame.width   / (sentImageSize.width * 2)  // JT 18.11.28
+        let ratioH = frame.height   / (sentImageSize.height * 2)  // JT 18.11.28
+      // Swift.print(" frame.width: \( frame.width),sentImageSize \( sentImageSize.width)")  // JT 18.11.28
+     //  Swift.print("ratio: \(ratioW), \(ratioH)")  // JT 18.11.28
+        
+        let translate = CGAffineTransform.identity.scaledBy(x: ratioW, y: ratioH)
+
+        // The coordinates are normalized to the dimensions of the processed image, with the origin at the image's lower-left corner.
+        let facebounds = rect.applying(translate).applying(transform)
+        
+        lastFaceRect = facebounds   // JT 18.11.27
+   //     Swift.print("lastFaceRect: \(lastFaceRect)")  // JT 18.11.28
+
+        _ = createLayer2(in: facebounds)    // JT 18.11.27
+    }
+    
 
     func drawFaceWithLandmarks(face: VNFaceObservation)
     {
