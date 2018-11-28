@@ -163,7 +163,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 //            "Register Client",
 //            "Get App Instances",
 //            "Verify Location",
-//            "Find Closet Cloudlet",
+//            "Find Closest Cloudlet",
 //            "Reset Location",
             
             switch index
@@ -180,7 +180,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
                 doVerifyLocation() // JT 18.11.14
                 
             case 3:
-                Swift.print("Find Closet Cloudlet")
+                Swift.print("Find Closest Cloudlet")
                 findNearestCloudlet() // JT 18.11.14
                 
             case 4:

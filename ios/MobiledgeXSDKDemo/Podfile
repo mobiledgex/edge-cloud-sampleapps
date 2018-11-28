@@ -6,16 +6,19 @@ target 'MobiledgeXSDKDemo.IOS' do
 
     pod 'GoogleMaps', '= 2.7.0'
     pod 'GoogleSignIn'
-    #   pod 'OpenSSL-Universal'
+    
+    pod 'Alamofire'
     pod 'PlainPing'
     pod 'SwiftyJSON'
-    #     pod 'gRPC-ProtoRPC'
-    pod 'Alamofire'
     pod 'SideMenu'
-    #      pod 'RFAboutView-Swift' cat because we fixed compile error
-    
-    ##    pod 'Eureka' cant do this as we modified ButtonRow and SwitdhRow for subtitle
     pod 'SwiftLog'
+    
+    #   pod 'OpenSSL-Universal'
+    #     pod 'gRPC-ProtoRPC'
+
+    ##      pod 'RFAboutView-Swift' cant because we fixed compile error
+    ##    pod 'Eureka' cant do this as we modified ButtonRow and SwitdhRow for subtitle
+
 end
 
 #comment
