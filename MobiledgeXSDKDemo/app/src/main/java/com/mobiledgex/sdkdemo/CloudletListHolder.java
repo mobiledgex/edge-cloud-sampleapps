@@ -10,6 +10,7 @@ public class CloudletListHolder {
 
     private ArrayMap<String, Cloudlet> mCloudletList = new ArrayMap<>();
     private LatencyTestMethod latencyTestMethod = LatencyTestMethod.ping;
+    private DownloadTestType downloadTestType = DownloadTestType.dynamic;
     private boolean latencyTestAutoStart;
 
     public static CloudletListHolder getSingleton() {
@@ -21,6 +22,11 @@ public class CloudletListHolder {
         socket
     }
 
+    public enum DownloadTestType {
+        dynamic,
+        staticFile
+    }
+
     private CloudletListHolder() {
     }
 
@@ -30,6 +36,15 @@ public class CloudletListHolder {
 
     public void setCloudlets(ArrayMap<String, Cloudlet> mCloudlets) {
         this.mCloudletList = mCloudlets;
+    }
+
+    public DownloadTestType getDownloadTestType() {
+        return downloadTestType;
+    }
+
+    public void setDownloadTestType(String downloadTestType) {
+        this.downloadTestType = DownloadTestType.valueOf(downloadTestType);
+        System.out.println("String DownloadTestType="+downloadTestType+" enum downloadTestType="+this.downloadTestType);
     }
 
     public boolean getLatencyTestAutoStart() {

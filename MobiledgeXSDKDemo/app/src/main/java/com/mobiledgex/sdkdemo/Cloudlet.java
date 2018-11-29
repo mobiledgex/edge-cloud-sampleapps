@@ -24,6 +24,8 @@ import fr.bmartel.speedtest.SpeedTestSocket;
 import fr.bmartel.speedtest.inter.ISpeedTestListener;
 import fr.bmartel.speedtest.model.SpeedTestError;
 
+import static com.mobiledgex.sdkdemo.CloudletListHolder.DownloadTestType.staticFile;
+
 public class Cloudlet implements Serializable {
     private static final String TAG = "Cloudlet";
     public static final int BYTES_TO_MBYTES = 1024*1024;
@@ -54,7 +56,6 @@ public class Cloudlet implements Serializable {
 
     private SpeedTestResultsListener mSpeedTestResultsListener;
 
-    private String downloadUri;
     private String hostName;
     private int openPort = 7777;
     private final int socketTimeout = 3000;
@@ -89,20 +90,50 @@ public class Cloudlet implements Serializable {
     }
 
     /**
-     * From the given string, create the hostname that will be pinged,
-     * and the URI that will be downloaded from.
+     * From the given string, create the hostname that will be pinged.
      * @param uri
      */
     public void setUri(String uri) {
         Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+uri+")");
         this.openPort = 7777;
         this.hostName = uri;
-        this.downloadUri = "http://"+hostName+":"+openPort+"/getdata?numbytes="+ mNumBytes;
         this.uri = uri;
     }
 
     public String getUri() {
         return uri;
+    }
+
+    /**
+     * Build the download URI based on the download type and size preferences.
+     * @return
+     */
+    private String getDownloadUri() {
+        String downloadUri;
+        if(CloudletListHolder.getSingleton().getDownloadTestType() == staticFile) {
+            String size;
+            switch(mNumBytes) {
+                case 1024*1024:
+                    size = "1MB";
+                    break;
+                case 5*1024*1024:
+                    size = "5MB";
+                    break;
+                case 10*1024*1024:
+                    size = "10MB";
+                    break;
+                case 20*1024*1024:
+                    size = "20MB";
+                    break;
+                default:
+                    size = "UNKNOWN";
+                    Log.e(TAG, "Unknown download size: "+mNumBytes);
+            }
+            downloadUri = "http://"+hostName+":"+openPort+"/getfile?filename=download_"+size+".txt";
+        } else {
+            downloadUri = "http://"+hostName+":"+openPort+"/getdata?numbytes="+ mNumBytes;
+        }
+        return downloadUri;
     }
 
     public String toString() {
@@ -162,7 +193,7 @@ public class Cloudlet implements Serializable {
             Log.d(TAG, "SpeedTest already running");
             return;
         }
-        Log.d(TAG, "downloadUri=" + downloadUri + " speedTestTaskRunning="+speedTestTaskRunning);
+        Log.d(TAG, "downloadUri=" + getDownloadUri() + " speedTestTaskRunning="+speedTestTaskRunning);
         if(!speedTestTaskRunning) {
             new SpeedTestTask().execute();
         }
@@ -392,7 +423,7 @@ public class Cloudlet implements Serializable {
                 }
             });
 
-            speedTestSocket.startDownload(downloadUri);
+            speedTestSocket.startDownload(getDownloadUri());
 
             return null;
         }
