@@ -23,4 +23,34 @@
         android:theme="?attr/actionBarTheme"
         map:title="@string/title_activity_qoe_map" />
 
+    <include
+        layout="@layout/pqoe_legend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        map:layout_constraintLeft_toLeftOf="parent"
+        map:layout_constraintTop_toBottomOf="@+id/toolbar_qoe" />
+
+    <Button
+        android:id="@+id/buttonTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="selectTime"
+        android:layout_marginStart="8dp"
+        android:text="Button"
+        map:layout_constraintBottom_toTopOf="@id/buttonDate"
+        map:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/buttonDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:onClick="selectDate"
+        android:text="Button"
+        map:layout_constraintBottom_toBottomOf="parent"
+        map:layout_constraintStart_toStartOf="parent" />
+
 </android.support.constraint.ConstraintLayout>
