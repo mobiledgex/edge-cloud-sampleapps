@@ -699,9 +699,7 @@ public class MainActivity extends AppCompatActivity
      */
     private String getBadgeText(Cloudlet cloudlet) {
         String badgeText = "";
-        if(cloudlet.getUri().indexOf("microsoft") >= 0) {
-            badgeText = "M";
-        } else if(cloudlet.getCarrierName().equalsIgnoreCase("gcp")) {
+        if(cloudlet.getCarrierName().equalsIgnoreCase("gcp")) {
             badgeText = "G";
         } else if(cloudlet.getCarrierName().equalsIgnoreCase("azure")) {
             badgeText = "A";
@@ -973,6 +971,7 @@ public class MainActivity extends AppCompatActivity
         String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+        String prefKeyResetFdHosts = getResources().getString(R.string.preference_fd_reset_both_hosts);
 
         if (key.equals(prefKeyAllowMEX)) {
             boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
@@ -1021,6 +1020,20 @@ public class MainActivity extends AppCompatActivity
         if(key.equals(prefKeyHostEdge)) {
             String defValueEdge = DEF_FACE_HOST_EDGE;
             new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, defValueEdge, key);
+        }
+
+        if(key.equals(prefKeyResetFdHosts)) {
+            String value = sharedPreferences.getString(prefKeyResetFdHosts, "No");
+            Log.i(TAG, prefKeyResetFdHosts+" "+value);
+            if(value.startsWith("Yes")) {
+                Log.i(TAG, "Resetting.");
+                sharedPreferences.edit().putString(prefKeyHostCloud, DEF_FACE_HOST_CLOUD).apply();
+                sharedPreferences.edit().putString(prefKeyHostEdge, DEF_FACE_HOST_EDGE).apply();
+                Toast.makeText(this, "Face detection hosts reset to default.", Toast.LENGTH_SHORT).show();
+            }
+            //Always set the value back to something so that either clicking Yes or No in the dialog
+            //will activate this "changed" call.
+            sharedPreferences.edit().putString(prefKeyResetFdHosts, "invalid").apply();
         }
 
     }

@@ -46,6 +46,8 @@ public class PredictiveQosClient {
     // set the public address/port for dt.qos.predictive.api project
     public static final String SERVER_URI = "qos-predictive.all-ip.t-online.de";
     public static final int SERVER_PORT = 8001;
+    public static final String[] COLORS = {"#000000", "#ff0000", "#ff8900", "#ffff00", "#bbff99", "#339933", "#006600"};
+    public static final String[] SPEEDS = {"no data", "bad", "slow", "ok", "good", "fast", "very fast"};
 
     private final ManagedChannel channel;
     private final Context mContext;
@@ -304,32 +306,29 @@ public class PredictiveQosClient {
         public int color;
         public String colorString;
 
-        String colors[] = {"#000000", "#ff0000", "#ff8900", "#ffff00", "#bbff99", "#339933", "#006600"};
-        String classes[] = {"bad", "slow", "ok", "good", "fast", "very fast"};
-
         public ColoredPoint(LatLng coords, float dlSpeed, float upSpeed) {
             this.coords = coords;
             if(dlSpeed > 60) {
-                colorString = colors[6];
-                color = Color.parseColor(colors[6]);
+                colorString = COLORS[6];
+                color = Color.parseColor(COLORS[6]);
             } else if(dlSpeed <= 60 && dlSpeed > 40 ) {
-                colorString = colors[5];
-                color = Color.parseColor(colors[5]);
+                colorString = COLORS[5];
+                color = Color.parseColor(COLORS[5]);
             } else if(dlSpeed <= 40 && dlSpeed > 25 ) {
-                colorString = colors[4];
-                color = Color.parseColor(colors[4]);
+                colorString = COLORS[4];
+                color = Color.parseColor(COLORS[4]);
             } else if(dlSpeed <= 25 && dlSpeed > 10 ) {
-                colorString = colors[3];
-                color = Color.parseColor(colors[3]);
+                colorString = COLORS[3];
+                color = Color.parseColor(COLORS[3]);
             } else if(dlSpeed <= 10 && dlSpeed > 2 ) {
-                colorString = colors[2];
-                color = Color.parseColor(colors[2]);
+                colorString = COLORS[2];
+                color = Color.parseColor(COLORS[2]);
             } else if(dlSpeed <= 2 && dlSpeed > 0) {
-                colorString = colors[1];
-                color = Color.parseColor(colors[1]);
+                colorString = COLORS[1];
+                color = Color.parseColor(COLORS[1]);
             } else {
-                colorString = colors[0];
-                color = Color.parseColor(colors[0]);
+                colorString = COLORS[0];
+                color = Color.parseColor(COLORS[0]);
             }
         }
     }
