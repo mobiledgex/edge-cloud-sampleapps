@@ -87,6 +87,8 @@ import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGIST
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
 import static com.mobiledgex.sdkdemo.camera.VolleyRequestHandler.DEF_FACE_HOST_CLOUD;
 import static com.mobiledgex.sdkdemo.camera.VolleyRequestHandler.DEF_FACE_HOST_EDGE;
+import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
+import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_VERIFIED;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -691,21 +693,21 @@ public class MainActivity extends AppCompatActivity
 
                 mUserLocationMarker.hideInfoWindow();
                 // We handle this differently for the demo environment, than in real life.
-//                if(mHostname.equals("mexdemo.dme.mobiledgex.net")) {
-//                    if(status == LOC_VERIFIED) {
-//                        fabFindCloudlets.setEnabled(true);
-//                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
-//                        message = "User Location - Verified";
-//                        message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
-//                    } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
-//                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
-//                        message = "User Location - Verified";
-//                    } else {
-//                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
-//                        message = "User Location - Failed Verify";
-//                    }
-//
-//                } else {
+                if(mHostname.equals("mexdemo.dme.mobiledgex.net")) {
+                    if(status == LOC_VERIFIED) {
+                        fabFindCloudlets.setEnabled(true);
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
+                        message = "User Location - Verified";
+                        message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
+                    } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
+                        message = "User Location - Verified";
+                    } else {
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
+                        message = "User Location - Failed Verify";
+                    }
+
+                } else {
                     switch (status) {
                         case LOC_VERIFIED:
                             message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
@@ -734,7 +736,7 @@ public class MainActivity extends AppCompatActivity
                             break;
                     }
                     message = "User Location - "+status;
-//                }
+                }
                 mUserLocationMarker.setTitle(message);
                 Toast.makeText(MainActivity.this, message+message2, Toast.LENGTH_LONG).show();
             }
