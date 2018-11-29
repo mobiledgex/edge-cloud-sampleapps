@@ -21,7 +21,6 @@ Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 def nexusUser = properties.getProperty("nexus.user")
 def nexusPassword = properties.getProperty("nexus.password")
-println "Nexus Credentials: ${nexusUser} ${nexusPassword}"
 
 allprojects {
     repositories {

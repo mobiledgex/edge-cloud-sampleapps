@@ -49,5 +49,11 @@
         android:singleLine="false"
         android:summary="@string/preference_fd_host_edge_summary"
         android:title="@string/preference_fd_host_edge_title" />
+    <ListPreference
+        android:defaultValue="invalid"
+        android:entries="@array/pref_fd_reset_both_hosts_choices"
+        android:entryValues="@array/pref_fd_reset_both_hosts_choices"
+        android:key="@string/preference_fd_reset_both_hosts"
+        android:title="@string/preference_fd_reset_both_hosts_title" />
 
 </PreferenceScreen>

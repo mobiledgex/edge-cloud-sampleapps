@@ -238,11 +238,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            System.out.println("key="+key);
-
             getPreferenceScreen().removeAll();
             addPreferencesFromResource(R.xml.pref_face_detection);
-
         }
     }
 

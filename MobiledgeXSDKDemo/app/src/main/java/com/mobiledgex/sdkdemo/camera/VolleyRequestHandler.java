@@ -52,10 +52,8 @@ public class VolleyRequestHandler {
     private boolean doNetLatency = true;
     private final int rollingAvgSize = 100;
 
-    public static final String DEF_FACE_HOST_CLOUD = "23.99.193.4"; // facerec-central
+    public static final String DEF_FACE_HOST_CLOUD = "mobiledgexsdkdemomobiledgexsdkdemo10.azcentraluscloudlet.azure.mobiledgex.net";
     public static final String DEF_FACE_HOST_EDGE = "mobiledgexsdkdemomobiledgexsdkdemo10.bonndemocloudlet.tdg.mobiledgex.net";
-//    public static String DEF_FACE_HOST_CLOUD = "104.42.217.135"; //West US
-//    public static String DEF_FACE_HOST_EDGE = "80.187.128.15"; //Berlin
 
     //Bruce's private test environment
 //    public static String DEF_FACE_HOST_CLOUD = "acrotopia.com";
