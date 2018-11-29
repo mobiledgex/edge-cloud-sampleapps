@@ -22,26 +22,6 @@
 		252C2DB7218633E40091A1D4 /* DropDown+Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DAF218633E40091A1D4 /* DropDown+Appearance.swift */; };
 		252C2DB8218633E40091A1D4 /* DropDown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DB0218633E40091A1D4 /* DropDown.swift */; };
 		252C2DB9218633E40091A1D4 /* DropDownCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DB1218633E40091A1D4 /* DropDownCell.swift */; };
-		252C2DD4218782380091A1D4 /* Completion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBB218782370091A1D4 /* Completion.swift */; };
-		252C2DD5218782380091A1D4 /* ErrorTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBC218782370091A1D4 /* ErrorTypes.swift */; };
-		252C2DD6218782380091A1D4 /* Executor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBD218782370091A1D4 /* Executor.swift */; };
-		252C2DD7218782380091A1D4 /* FutureCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DBF218782370091A1D4 /* FutureCache.swift */; };
-		252C2DD8218782380091A1D4 /* FutureThread.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC0218782370091A1D4 /* FutureThread.swift */; };
-		252C2DD9218782380091A1D4 /* NSData-Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC1218782370091A1D4 /* NSData-Ext.swift */; };
-		252C2DDA218782380091A1D4 /* NSFileManager-Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC2218782370091A1D4 /* NSFileManager-Ext.swift */; };
-		252C2DDB218782380091A1D4 /* NSOperation+FutureKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC3218782370091A1D4 /* NSOperation+FutureKit.swift */; };
-		252C2DDC218782380091A1D4 /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC4218782370091A1D4 /* Future.swift */; };
-		252C2DDD218782380091A1D4 /* FutureBatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC5218782370091A1D4 /* FutureBatch.swift */; };
-		252C2DDE218782380091A1D4 /* FutureFIFO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC6218782370091A1D4 /* FutureFIFO.swift */; };
-		252C2DE0218782380091A1D4 /* Promise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DC9218782370091A1D4 /* Promise.swift */; };
-		252C2DE1218782380091A1D4 /* Synchronization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCA218782370091A1D4 /* Synchronization.swift */; };
-		252C2DE2218782380091A1D4 /* SyncWaitHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCB218782370091A1D4 /* SyncWaitHandler.swift */; };
-		252C2DE3218782380091A1D4 /* ExtensionVars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCD218782370091A1D4 /* ExtensionVars.swift */; };
-		252C2DE4218782380091A1D4 /* NSObject-Ext-ThreadSafe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DCE218782370091A1D4 /* NSObject-Ext-ThreadSafe.swift */; };
-		252C2DE5218782380091A1D4 /* ObjectiveCExceptionHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD0218782370091A1D4 /* ObjectiveCExceptionHandler.m */; };
-		252C2DE6218782380091A1D4 /* OSAtomicInt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD1218782370091A1D4 /* OSAtomicInt.swift */; };
-		252C2DE7218782380091A1D4 /* OSFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD2218782370091A1D4 /* OSFeature.swift */; };
-		252C2DE8218782380091A1D4 /* Tuples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2DD3218782380091A1D4 /* Tuples.swift */; };
 		252C2DF02187A8F80091A1D4 /* mex-ca.crt in Resources */ = {isa = PBXBuildFile; fileRef = 252C2DED2187A8F80091A1D4 /* mex-ca.crt */; };
 		252C2DF12187A8F80091A1D4 /* mex-client.crt in Resources */ = {isa = PBXBuildFile; fileRef = 252C2DEE2187A8F80091A1D4 /* mex-client.crt */; };
 		252C2DF22187A8F80091A1D4 /* mex-client.key in Resources */ = {isa = PBXBuildFile; fileRef = 252C2DEF2187A8F80091A1D4 /* mex-client.key */; };
@@ -90,6 +70,10 @@
 		25C9410221AB9DBE00C9424B /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410121AB9DBE00C9424B /* Log.swift */; };
 		25C9410421ACE68900C9424B /* RegExReplace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410321ACE68900C9424B /* RegExReplace.swift */; };
 		25C9410621ADA18800C9424B /* face_20181018-204419.f.png in Resources */ = {isa = PBXBuildFile; fileRef = 25C9410521ADA18800C9424B /* face_20181018-204419.f.png */; };
+		25C9410C21AF7CB800C9424B /* CancellationToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410821AF7CB700C9424B /* CancellationToken.swift */; };
+		25C9410D21AF7CB800C9424B /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410921AF7CB700C9424B /* Future.swift */; };
+		25C9410E21AF7CB800C9424B /* FutureCompatible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410A21AF7CB700C9424B /* FutureCompatible.swift */; };
+		25C9410F21AF7CB800C9424B /* FutureExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410B21AF7CB700C9424B /* FutureExtensions.swift */; };
 		25D5DCBD2180FB500097941C /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 25D5DCBC2180FB500097941C /* Podfile */; };
 		25DCD5C82191FCD2000437A5 /* LocationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD5C12191FCD2000437A5 /* LocationRequest.swift */; };
 		25DCD5C92191FCD2000437A5 /* Locator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD5C22191FCD2000437A5 /* Locator.swift */; };
@@ -227,28 +211,6 @@
 		252C2DAF218633E40091A1D4 /* DropDown+Appearance.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DropDown+Appearance.swift"; sourceTree = "<group>"; };
 		252C2DB0218633E40091A1D4 /* DropDown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DropDown.swift; sourceTree = "<group>"; };
 		252C2DB1218633E40091A1D4 /* DropDownCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DropDownCell.swift; sourceTree = "<group>"; };
-		252C2DBB218782370091A1D4 /* Completion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Completion.swift; sourceTree = "<group>"; };
-		252C2DBC218782370091A1D4 /* ErrorTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorTypes.swift; sourceTree = "<group>"; };
-		252C2DBD218782370091A1D4 /* Executor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Executor.swift; sourceTree = "<group>"; };
-		252C2DBF218782370091A1D4 /* FutureCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureCache.swift; sourceTree = "<group>"; };
-		252C2DC0218782370091A1D4 /* FutureThread.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureThread.swift; sourceTree = "<group>"; };
-		252C2DC1218782370091A1D4 /* NSData-Ext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSData-Ext.swift"; sourceTree = "<group>"; };
-		252C2DC2218782370091A1D4 /* NSFileManager-Ext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSFileManager-Ext.swift"; sourceTree = "<group>"; };
-		252C2DC3218782370091A1D4 /* NSOperation+FutureKit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSOperation+FutureKit.swift"; sourceTree = "<group>"; };
-		252C2DC4218782370091A1D4 /* Future.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Future.swift; sourceTree = "<group>"; };
-		252C2DC5218782370091A1D4 /* FutureBatch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureBatch.swift; sourceTree = "<group>"; };
-		252C2DC6218782370091A1D4 /* FutureFIFO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureFIFO.swift; sourceTree = "<group>"; };
-		252C2DC7218782370091A1D4 /* FutureKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FutureKit.h; sourceTree = "<group>"; };
-		252C2DC9218782370091A1D4 /* Promise.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Promise.swift; sourceTree = "<group>"; };
-		252C2DCA218782370091A1D4 /* Synchronization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Synchronization.swift; sourceTree = "<group>"; };
-		252C2DCB218782370091A1D4 /* SyncWaitHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyncWaitHandler.swift; sourceTree = "<group>"; };
-		252C2DCD218782370091A1D4 /* ExtensionVars.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExtensionVars.swift; sourceTree = "<group>"; };
-		252C2DCE218782370091A1D4 /* NSObject-Ext-ThreadSafe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSObject-Ext-ThreadSafe.swift"; sourceTree = "<group>"; };
-		252C2DCF218782370091A1D4 /* ObjectiveCExceptionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectiveCExceptionHandler.h; sourceTree = "<group>"; };
-		252C2DD0218782370091A1D4 /* ObjectiveCExceptionHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObjectiveCExceptionHandler.m; sourceTree = "<group>"; };
-		252C2DD1218782370091A1D4 /* OSAtomicInt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OSAtomicInt.swift; sourceTree = "<group>"; };
-		252C2DD2218782370091A1D4 /* OSFeature.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OSFeature.swift; sourceTree = "<group>"; };
-		252C2DD3218782380091A1D4 /* Tuples.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Tuples.swift; sourceTree = "<group>"; };
 		252C2DED2187A8F80091A1D4 /* mex-ca.crt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "mex-ca.crt"; sourceTree = "<group>"; };
 		252C2DEE2187A8F80091A1D4 /* mex-client.crt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "mex-client.crt"; sourceTree = "<group>"; };
 		252C2DEF2187A8F80091A1D4 /* mex-client.key */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "mex-client.key"; sourceTree = "<group>"; };
@@ -306,6 +268,10 @@
 		25C9410121AB9DBE00C9424B /* Log.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Log.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/SwiftLog-master/Log.swift"; sourceTree = SOURCE_ROOT; };
 		25C9410321ACE68900C9424B /* RegExReplace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RegExReplace.swift; path = ../../../../../../../venuetise/ios_lca_suite/Venuetize2/Venuetize2/ThirdParty/RegExReplace.swift; sourceTree = "<group>"; };
 		25C9410521ADA18800C9424B /* face_20181018-204419.f.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "face_20181018-204419.f.png"; sourceTree = "<group>"; };
+		25C9410821AF7CB700C9424B /* CancellationToken.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CancellationToken.swift; sourceTree = "<group>"; };
+		25C9410921AF7CB700C9424B /* Future.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Future.swift; sourceTree = "<group>"; };
+		25C9410A21AF7CB700C9424B /* FutureCompatible.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureCompatible.swift; sourceTree = "<group>"; };
+		25C9410B21AF7CB700C9424B /* FutureExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureExtensions.swift; sourceTree = "<group>"; };
 		25D5DCBC2180FB500097941C /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		25D5DCCD2181647C0097941C /* OneShotLocationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = OneShotLocationManager.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/OneShotLocationManager-master-2/OneShotLocationManager.swift"; sourceTree = SOURCE_ROOT; };
 		25DCD5C12191FCD2000437A5 /* LocationRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocationRequest.swift; sourceTree = "<group>"; };
@@ -476,52 +442,6 @@
 				252C2DB1218633E40091A1D4 /* DropDownCell.swift */,
 			);
 			path = src;
-			sourceTree = "<group>";
-		};
-		252C2DBA218782370091A1D4 /* FutureKit */ = {
-			isa = PBXGroup;
-			children = (
-				252C2DBB218782370091A1D4 /* Completion.swift */,
-				252C2DBC218782370091A1D4 /* ErrorTypes.swift */,
-				252C2DBD218782370091A1D4 /* Executor.swift */,
-				252C2DBE218782370091A1D4 /* FoundationExtensions */,
-				252C2DC4218782370091A1D4 /* Future.swift */,
-				252C2DC5218782370091A1D4 /* FutureBatch.swift */,
-				252C2DC6218782370091A1D4 /* FutureFIFO.swift */,
-				252C2DC7218782370091A1D4 /* FutureKit.h */,
-				252C2DC9218782370091A1D4 /* Promise.swift */,
-				252C2DCA218782370091A1D4 /* Synchronization.swift */,
-				252C2DCB218782370091A1D4 /* SyncWaitHandler.swift */,
-				252C2DCC218782370091A1D4 /* Utils */,
-			);
-			name = FutureKit;
-			path = "MobiledgeXSDKDemo.IOS/ThirdParty/FutureKit-master/FutureKit";
-			sourceTree = SOURCE_ROOT;
-		};
-		252C2DBE218782370091A1D4 /* FoundationExtensions */ = {
-			isa = PBXGroup;
-			children = (
-				252C2DBF218782370091A1D4 /* FutureCache.swift */,
-				252C2DC0218782370091A1D4 /* FutureThread.swift */,
-				252C2DC1218782370091A1D4 /* NSData-Ext.swift */,
-				252C2DC2218782370091A1D4 /* NSFileManager-Ext.swift */,
-				252C2DC3218782370091A1D4 /* NSOperation+FutureKit.swift */,
-			);
-			path = FoundationExtensions;
-			sourceTree = "<group>";
-		};
-		252C2DCC218782370091A1D4 /* Utils */ = {
-			isa = PBXGroup;
-			children = (
-				252C2DCD218782370091A1D4 /* ExtensionVars.swift */,
-				252C2DCE218782370091A1D4 /* NSObject-Ext-ThreadSafe.swift */,
-				252C2DCF218782370091A1D4 /* ObjectiveCExceptionHandler.h */,
-				252C2DD0218782370091A1D4 /* ObjectiveCExceptionHandler.m */,
-				252C2DD1218782370091A1D4 /* OSAtomicInt.swift */,
-				252C2DD2218782370091A1D4 /* OSFeature.swift */,
-				252C2DD3218782380091A1D4 /* Tuples.swift */,
-			);
-			path = Utils;
 			sourceTree = "<group>";
 		};
 		252C2DEB2187A8F80091A1D4 /* Resources */ = {
@@ -712,9 +632,22 @@
 			path = unused;
 			sourceTree = "<group>";
 		};
+		25C9410721AF7CB700C9424B /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				25C9410821AF7CB700C9424B /* CancellationToken.swift */,
+				25C9410921AF7CB700C9424B /* Future.swift */,
+				25C9410A21AF7CB700C9424B /* FutureCompatible.swift */,
+				25C9410B21AF7CB700C9424B /* FutureExtensions.swift */,
+			);
+			name = Sources;
+			path = "MobiledgeXSDKDemo.IOS/ThirdParty/FutureX-master/Sources";
+			sourceTree = SOURCE_ROOT;
+		};
 		25D5DC8121801C6B0097941C /* ThirdParty2 */ = {
 			isa = PBXGroup;
 			children = (
+				25C9410721AF7CB700C9424B /* Sources */,
 				25C9410321ACE68900C9424B /* RegExReplace.swift */,
 				25C9410121AB9DBE00C9424B /* Log.swift */,
 				258BEF1621A0E0AB0055227D /* RFAboutView-Swift */,
@@ -726,7 +659,6 @@
 				252C2E1C218B6A6D0091A1D4 /* SKToastView.swift */,
 				252C2DF52187D1E80091A1D4 /* FileKit.swift */,
 				252C2DF32187AA200091A1D4 /* Reachability.swift */,
-				252C2DBA218782370091A1D4 /* FutureKit */,
 				252C2DA5218633E40091A1D4 /* DropDown */,
 				252C2D5321826DC10091A1D4 /* dot-menu@3x copy.png */,
 				25D5DCCD2181647C0097941C /* OneShotLocationManager.swift */,
@@ -1144,7 +1076,7 @@
 			files = (
 				25DCD70D2199F798000437A5 /* RowControllerType.swift in Sources */,
 				25DCD7352199F798000437A5 /* SegmentedRow.swift in Sources */,
-				252C2DD4218782380091A1D4 /* Completion.swift in Sources */,
+				25C9410D21AF7CB800C9424B /* Future.swift in Sources */,
 				252C2DB2218633E40091A1D4 /* DPDConstants.swift in Sources */,
 				25DCD71A2199F798000437A5 /* ButtonRowWithPresent.swift in Sources */,
 				25DCD7382199F798000437A5 /* StepperRow.swift in Sources */,
@@ -1171,47 +1103,37 @@
 				25DCD7282199F798000437A5 /* DateInlineRow.swift in Sources */,
 				252C2E20218B9A220091A1D4 /* CloudletListHolder.jav.swift in Sources */,
 				252C2E41218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift in Sources */,
-				252C2DD9218782380091A1D4 /* NSData-Ext.swift in Sources */,
 				258BEF11219F9C120055227D /* FaceDetectionViewController.swift in Sources */,
-				252C2DD6218782380091A1D4 /* Executor.swift in Sources */,
-				252C2DE2218782380091A1D4 /* SyncWaitHandler.swift in Sources */,
 				25DCD71F2199F798000437A5 /* DecimalFormatter.swift in Sources */,
-				252C2DD7218782380091A1D4 /* FutureCache.swift in Sources */,
 				25DCD6632199F128000437A5 /* SpeedTestSettingsViewController.swift in Sources */,
 				25DCD7132199F798000437A5 /* SwipeActions.swift in Sources */,
 				25DCD70F2199F798000437A5 /* RowType.swift in Sources */,
-				252C2DE5218782380091A1D4 /* ObjectiveCExceptionHandler.m in Sources */,
 				25DCD6262197AC91000437A5 /* IPLocationRequest.swift in Sources */,
 				258BEF15219F9E880055227D /* PreviewView.swift in Sources */,
 				252C2D9A21857E4E0091A1D4 /* GetAppInstList.java.swift in Sources */,
 				25DCD6282197ACB3000437A5 /* FindPlaceRequest.swift in Sources */,
 				25DCD7342199F798000437A5 /* PushRow.swift in Sources */,
-				252C2DE1218782380091A1D4 /* Synchronization.swift in Sources */,
 				25DCD71D2199F798000437A5 /* DateFieldRow.swift in Sources */,
 				25623EC4217F79D30092956D /* ViewController.swift in Sources */,
 				25DCD7302199F798000437A5 /* PickerInlineRow.swift in Sources */,
 				25DCD6612199F128000437A5 /* SettingsViewController.swift in Sources */,
-				252C2DE4218782380091A1D4 /* NSObject-Ext-ThreadSafe.swift in Sources */,
 				25C9410421ACE68900C9424B /* RegExReplace.swift in Sources */,
 				25DCD71C2199F798000437A5 /* AlertOptionsRow.swift in Sources */,
 				25DCD72F2199F798000437A5 /* MultipleSelectorRow.swift in Sources */,
 				25DCD7102199F798000437A5 /* Section.swift in Sources */,
 				252C2E1B218AA5A30091A1D4 /* MainActivity.java.swift in Sources */,
-				252C2DDA218782380091A1D4 /* NSFileManager-Ext.swift in Sources */,
-				252C2DD5218782380091A1D4 /* ErrorTypes.swift in Sources */,
-				252C2DE7218782380091A1D4 /* OSFeature.swift in Sources */,
 				252C2E3F218CB19C0091A1D4 /* MatchingEngineResultsListener.java.swift in Sources */,
 				258BEF2821A0E0AB0055227D /* RFAboutViewDetailViewController.swift in Sources */,
 				25DCD6222197ABAB000437A5 /* Shared.swift in Sources */,
 				25DCD7272199F798000437A5 /* SelectorViewController.swift in Sources */,
 				252C2DB7218633E40091A1D4 /* DropDown+Appearance.swift in Sources */,
-				252C2DDE218782380091A1D4 /* FutureFIFO.swift in Sources */,
 				25DCD7432199F798000437A5 /* RuleRequired.swift in Sources */,
 				25DCD7242199F798000437A5 /* SelectorRow.swift in Sources */,
 				25DCD7062199F798000437A5 /* HeaderFooterView.swift in Sources */,
 				25DCD7142199F798000437A5 /* Validation.swift in Sources */,
 				25DCD7422199F798000437A5 /* RuleRegExp.swift in Sources */,
 				25DCD70C2199F798000437A5 /* Row.swift in Sources */,
+				25C9410F21AF7CB800C9424B /* FutureExtensions.swift in Sources */,
 				25DCD72D2199F798000437A5 /* FieldsRow.swift in Sources */,
 				25DCD7202199F798000437A5 /* FieldRow.swift in Sources */,
 				252C2D5A218298110091A1D4 /* MatchingEngine.java.swift in Sources */,
@@ -1219,37 +1141,33 @@
 				252C2E1D218B6A6E0091A1D4 /* SKToastView.swift in Sources */,
 				25DCD7052199F798000437A5 /* Form.swift in Sources */,
 				25DCD7232199F798000437A5 /* Protocols.swift in Sources */,
-				252C2DDD218782380091A1D4 /* FutureBatch.swift in Sources */,
 				25DCD7322199F798000437A5 /* PickerRow.swift in Sources */,
 				25DCD70E2199F798000437A5 /* RowProtocols.swift in Sources */,
 				25DCD7042199F798000437A5 /* Core.swift in Sources */,
 				25DCD7332199F798000437A5 /* PopoverSelectorRow.swift in Sources */,
 				25DCD6242197AC1D000437A5 /* HeadingRequest.swift in Sources */,
 				25DCD7392199F798000437A5 /* SwitchRow.swift in Sources */,
-				252C2DE8218782380091A1D4 /* Tuples.swift in Sources */,
 				25DCD7092199F798000437A5 /* NavigationAccessoryView.swift in Sources */,
-				252C2DE0218782380091A1D4 /* Promise.swift in Sources */,
 				25DCD7182199F798000437A5 /* AlertRow.swift in Sources */,
-				252C2DDB218782380091A1D4 /* NSOperation+FutureKit.swift in Sources */,
 				25DCD7292199F798000437A5 /* DatePickerRow.swift in Sources */,
 				25DCD7362199F798000437A5 /* ListCheckRow.swift in Sources */,
 				25DCD65A2199F128000437A5 /* FaceDectectionSettingsViewController.swift in Sources */,
 				25DCD7112199F798000437A5 /* SelectableRowType.swift in Sources */,
+				25C9410E21AF7CB800C9424B /* FutureCompatible.swift in Sources */,
 				252C2DF62187D1E80091A1D4 /* FileKit.swift in Sources */,
 				25DCD7022199F798000437A5 /* Cell.swift in Sources */,
 				25DCD65B2199F128000437A5 /* GeneralSettingsViewController.swift in Sources */,
+				25C9410C21AF7CB800C9424B /* CancellationToken.swift in Sources */,
 				258BEF2E21A24C020055227D /* Mex.utitities.swift in Sources */,
 				252C2DB3218633E40091A1D4 /* DPDKeyboardListener.swift in Sources */,
 				25DCD7312199F798000437A5 /* PickerInputRow.swift in Sources */,
 				25DCD6592199F128000437A5 /* EnhancedNetworkLocationServicesViewController.swift in Sources */,
-				252C2DE6218782380091A1D4 /* OSAtomicInt.swift in Sources */,
 				25DCD6332198A5BF000437A5 /* Sample_client.swift in Sources */,
 				25DCD5C82191FCD2000437A5 /* LocationRequest.swift in Sources */,
 				25DCD7372199F798000437A5 /* SliderRow.swift in Sources */,
 				25DCD72A2199F798000437A5 /* DateRow.swift in Sources */,
 				252C2E1E218B98940091A1D4 /* Cloudlet.jav.swift in Sources */,
 				25DCD7402199F798000437A5 /* RuleLength.swift in Sources */,
-				252C2DD8218782380091A1D4 /* FutureThread.swift in Sources */,
 				25DCD73E2199F798000437A5 /* RuleEmail.swift in Sources */,
 				252C2E1F218B997A0091A1D4 /* SpeedTestResultsListener.java.swift in Sources */,
 				25DCD7122199F798000437A5 /* SelectableSection.swift in Sources */,
@@ -1263,14 +1181,12 @@
 				252C2DB4218633E40091A1D4 /* DPDUIView+Extension.swift in Sources */,
 				25DCD7072199F798000437A5 /* Helpers.swift in Sources */,
 				25DCD73B2199F798000437A5 /* TriplePickerInputRow.swift in Sources */,
-				252C2DDC218782380091A1D4 /* Future.swift in Sources */,
 				252C2D9821857E420091A1D4 /* AddUserToGroup.java.swift in Sources */,
 				25DCD7082199F798000437A5 /* InlineRowType.swift in Sources */,
 				25DCD7442199F798000437A5 /* RuleURL.swift in Sources */,
 				258BEF0E219F5E230055227D /* CircularSpinner.swift in Sources */,
 				25DCD70A2199F798000437A5 /* Operators.swift in Sources */,
 				25C9410221AB9DBE00C9424B /* Log.swift in Sources */,
-				252C2DE3218782380091A1D4 /* ExtensionVars.swift in Sources */,
 				25DCD7222199F798000437A5 /* OptionsRow.swift in Sources */,
 				252C2D5B218298110091A1D4 /* RegisterClient.java.swift in Sources */,
 				25DCD7012199F798000437A5 /* BaseRow.swift in Sources */,

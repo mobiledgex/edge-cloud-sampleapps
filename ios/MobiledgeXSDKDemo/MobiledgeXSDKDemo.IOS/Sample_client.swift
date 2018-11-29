@@ -11,6 +11,7 @@ import Alamofire
 import Foundation
 import GoogleMaps
 import Security
+//import Future   // JT 18.11.28
 
 // ----------------------------------------
 
@@ -18,7 +19,7 @@ private var locationRequest: LocationRequest? // so we can stop updates
 
 var userMarker: GMSMarker?   // set by RegisterClient , was: mUserLocationMarker. todo code review. who should own this?
 
-var startTime1:DispatchTime?    // JT 18.11.28
+private var faceDetectionStartTime:DispatchTime?    // JT 18.11.28
 
 // This file Handles:
 //  Menu:
@@ -113,7 +114,10 @@ private class MexUtil
 private func postRequest(_ uri: String,
                  _ request: [String: Any],  // Dictionary/json
                  _ postName: String) // this is posted after results
+    -> Future<[String: AnyObject], Error> // JT 18.11.28
 {
+    let promise = Promise<[String: AnyObject], Error>()   // JT 18.11.28
+
     Swift.print("URI to post to:\n \(uri)\n")
     if postName != "FaceDetection"
     {
@@ -169,6 +173,8 @@ private func postRequest(_ uri: String,
         case let .failure(error):
             Swift.print("\(error)")
             // Do whatever here
+            // If error
+            promise.fail(error: error)  // JT 18.11.28
             return
 
         case let .success(data):
@@ -184,6 +190,9 @@ private func postRequest(_ uri: String,
                                             object: json)
             
             logw("postName:\(postName)\nresult:\n\(json)") // JT 18.11.26  log to file
+            
+            // If success
+            promise.succeed(value: json)  // JT 18.11.28
         }
 
         Swift.print("\(response)")
@@ -194,12 +203,12 @@ private func postRequest(_ uri: String,
         //           print(response.timeline)
     }
 
-    if postName != "FaceDetection"  // JT 18.11.27
+    if postName != "FaceDetection"  // JT 18.11.27 too big
     {
         debugPrint(requestObj) // dump curl
-
     }
-
+    
+    return promise.future   // JT 18.11.28
 }
 
 private  func dealWithTrustPolicy(
@@ -258,6 +267,8 @@ class MexRegisterClient
 {
     static let shared = MexRegisterClient()     // JT 18.11.25
 
+    var future:Future<[String: AnyObject], Error>? // JT 18.11.28
+    
     var tokenserveruri = "" // set by RegisterClient    // JT 18.11.25
     var sessioncookie = ""  // set by RegisterClient    // JT 18.11.25 used by getApp and verifyLoc
 
@@ -378,7 +389,11 @@ Swift.print("")
 
             let uri = baseuri + verifylocationAPI
 
-            postRequest(uri, tokenizedRequest, "VeriyLocation1")
+            self.future = postRequest(uri, tokenizedRequest, "VeriyLocation1")  // JT 18.11.28
+            
+            self.future!.on(success: { print("VeriyLocation1 received value: \($0)") },
+                           failure: { print("failed with error: \($0)") },
+                           completion: { print("completed with result: \($0)") })   // JT 18.11.28
         }
 
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "VeriyLocation1"), object: nil, queue: nil)
@@ -691,7 +706,6 @@ func doUserMarker(_ loc: CLLocationCoordinate2D)
 
 func registerClientNow() // called by top right menu
 {
-   // mexRegisterClient1 = MexRegisterClient()
 
     Swift.print("registerClientNow")
     Swift.print("Register MEX client.")
@@ -703,8 +717,34 @@ func registerClientNow() // called by top right menu
     let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
     
     let urlStr = baseuri + MexUtil.shared.registerAPI   // JT 18.11.27
-    postRequest(urlStr, registerClientRequest, "RegisterClient1")
+    MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1")  // JT 18.11.28 todo persist future
     
+    MexRegisterClient.shared.future!.on(success: { print("RegisterClient1 received value: \($0)") },
+              failure: { print("failed with error: \($0)") },
+    completion: { print("completed with result: \($0)" )})   // JT 18.11.28
+}
+
+func registerClientThenGetInstApps() // called on launch
+{
+    Swift.print("registerClient then getInstApps")
+    Swift.print("Register MEX client.")
+    Swift.print("====================\n")
+
+    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
+    Swift.print("\(baseuri)")
+
+    let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
+
+    let urlStr = baseuri + MexUtil.shared.registerAPI // JT 18.11.27
+    MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1") // JT 18.11.28 todo persist future
+
+    MexRegisterClient.shared.future!.on(
+        success: { print("RegisterClient1 received value: \($0)")
+            getAppInstNow() // JT 18.11.28
+        },
+        failure: { print("failed with error: \($0)") },
+        completion: { print("completed with result: \($0)") }
+    ) // JT 18.11.28
 }
 
 
@@ -726,7 +766,11 @@ func getAppInstNow()    // called by top right menu
     
     let getAppInstListRequest = MexGetAppInst.shared.createGetAppInstListRequest(MexUtil.shared.carrierNameDefault3, loc)
     
-    postRequest(baseuri + MexUtil.shared.appinstlistAPI, getAppInstListRequest, "GetAppInstlist1")  // JT 18.11.27
+   MexRegisterClient.shared.future =    postRequest(baseuri + MexUtil.shared.appinstlistAPI, getAppInstListRequest, "GetAppInstlist1")  // JT 18.11.27
+    
+    MexRegisterClient.shared.future!.on(success: { print("GetAppInstlist1 received value: \($0)") },
+              failure: { print("failed with error: \($0)") },
+    completion: { print("completed with result: \($0)" )})   // JT 18.11.28
     
 }
 
@@ -898,7 +942,12 @@ private func getToken(_ uri: String)  // async
     
     Swift.print("\(uri)")
     
-    postRequest(uri, [String: Any](), "GetToken")   // async
+       MexRegisterClient.shared.future =  postRequest(uri, [String: Any](), "GetToken")   // async
+    
+    
+    MexRegisterClient.shared.future!.on(success: { print("GetToken received value: \($0)") },
+              failure: { print("failed with error: \($0)") },
+    completion: { print("completed with result: \($0)") })   // JT 18.11.28
 }
 
 
@@ -916,8 +965,12 @@ func findNearestCloudlet() //   called by top right menu
     
     let findCloudletRequest = MexRegisterClient.shared.createFindCloudletRequest(MexUtil.shared.carrierNameDefault3, loc)
     
-    postRequest(baseuri + MexUtil.shared.findcloudletAPI, findCloudletRequest,  "FindCloudlet1")
+    MexRegisterClient.shared.future =  postRequest(baseuri + MexUtil.shared.findcloudletAPI, findCloudletRequest,  "FindCloudlet1")
     
+    MexRegisterClient.shared.future!.on(success: { print("GetToken received value: \($0)") },
+              failure: { print("failed with error: \($0)") },
+    completion: { print("completed with result: \($0)") })   // JT 18.11.28
+
 }
 
 // MARK: -
@@ -1029,7 +1082,7 @@ Swift.print("Need to Find closest cloudlet first")
         ]
 //    postRequest(urlStr, params, "FaceDetection")
 
-        startTime1 = DispatchTime.now() // <<<<<<<<<< Start time
+        faceDetectionStartTime = DispatchTime.now() // <<<<<<<<<< Start time
         
         let requestObj = Alamofire.request(urlStr,
                                            method: HTTPMethod.post,
@@ -1054,11 +1107,11 @@ Swift.print("Need to Find closest cloudlet first")
                    // Swift.print("data: \(data)") // JT 18.11.27
 
                     let end = DispatchTime.now()   // <<<<<<<<<<   end time
-                    let nanoTime = end.uptimeNanoseconds -  startTime1!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+                    let nanoTime = end.uptimeNanoseconds -  faceDetectionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
                     let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
                     
                     Swift.print("FaceDetection time: \(timeInterval)")  // JT 18.11.28
-                    SKToast.show(withMessage: "UpdateLocSimLocation result: \(data)")
+                    SKToast.show(withMessage: "FaceDetection  time: \(timeInterval) result: \(data)")   // JT 18.11.28
 
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceDetection"), object: d["rects"]) // JT 18.11.27
                 }

@@ -61,6 +61,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 //        }
 //
 //        manager?.startListening()
+        
+        registerClientThenGetInstApps() // JT 18.11.28
     }
 
     fileprivate func setSideBarDefaults()

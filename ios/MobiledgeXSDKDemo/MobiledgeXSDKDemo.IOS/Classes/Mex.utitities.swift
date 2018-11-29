@@ -134,3 +134,18 @@ extension UIImage {
         return newImage
     }
 }
+
+
+extension String
+{
+    func doesStringStartWithCap() -> Bool
+    {
+        let firstChar = self[0] // s.characters[0]
+        return firstChar >= "A" && firstChar <= "Z"  
+    }
+    
+    subscript (i: Int) -> Character {
+        return self[index(startIndex, offsetBy: i)]
+    }
+}
+

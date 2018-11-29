@@ -11,12 +11,13 @@ import UIKit
 import Vision
 
 var doAFaceDetection = true // JT 18.11.26
-var sentImageSize = CGSize(width:0, height:0)  // JT 18.11.28
 
 class FaceDetectionViewController: UIViewController
 {
     // VNRequest: Either Retangles or Landmarks
     var faceDetectionRequest: VNRequest!
+
+    var sentImageSize = CGSize(width:0, height:0)  // JT 18.11.28
 
  //   @IBOutlet weak var tmpImageView: UIImageView!   // JT 18.11.27
     
@@ -380,7 +381,7 @@ extension FaceDetectionViewController
 
                 let d = notification.object as! [[Int]]
 
-                SKToast.show(withMessage: "FaceDetection result\(d)")
+                //SKToast.show(withMessage: "FaceDetection raw result\(d)")
 
                // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
                 doAFaceDetection = true // JT 18.11.26
@@ -388,11 +389,13 @@ extension FaceDetectionViewController
 
                 let a = d[0]    // get face rect
                 
-                let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3]-a[1]))
-                self.previewView.drawFaceboundingBox2(rect: r )     // JT 18.11.28
+                let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3]-a[1]))  // face rect
+                
+                self.previewView.drawFaceboundingBox2(rect: r, hint: self.sentImageSize )     // JT 18.11.28
                 
                 Swift.print("face r= \(r)")  // JT 18.11.28
-            }
+                SKToast.show(withMessage: "FaceDetection result: \(r)")
+           }
         }
     }
 

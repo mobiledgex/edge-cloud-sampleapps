@@ -92,7 +92,7 @@ class PreviewView: UIView
 
     }
     
-    func drawFaceboundingBox2( rect:CGRect)    // JT 18.11.27
+    func drawFaceboundingBox2( rect:CGRect, hint sentImageSize: CGSize)    // JT 18.11.27
     {
      //       Swift.print("rect: \(rect)")  // JT 18.11.28
 
