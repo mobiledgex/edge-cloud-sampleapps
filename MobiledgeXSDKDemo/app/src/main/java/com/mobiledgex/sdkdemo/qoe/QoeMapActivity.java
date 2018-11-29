@@ -1,14 +1,29 @@
 package com.mobiledgex.sdkdemo.qoe;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
+import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -40,8 +55,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import dt.qos.predictive.PositionKpiRequest;
@@ -51,7 +70,9 @@ import static com.mobiledgex.sdkdemo.qoe.PredictiveQosClient.SERVER_PORT;
 import static com.mobiledgex.sdkdemo.qoe.PredictiveQosClient.SERVER_URI;
 
 public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallback,
-        GoogleMap.OnMapLongClickListener, GoogleMap.OnMarkerDragListener, GoogleMap.OnCameraIdleListener {
+        GoogleMap.OnMapLongClickListener, GoogleMap.OnMarkerDragListener,
+        GoogleMap.OnCameraIdleListener, DatePickerDialog.OnDateSetListener,
+        TimePickerDialog.OnTimeSetListener {
 
     private static final String TAG = "QoeMapActivity";
     private GoogleMap mMap;
@@ -65,12 +86,70 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private int requestNum = 0;
     private MenuItem modeGroupPrevItem;
     private MenuItem mapTypeGroupPrevItem;
+    private Button buttonTime;
+    private Button buttonDate;
+    private SimpleDateFormat dateFormat;
+    private SimpleDateFormat timeFormat;
+    private SimpleDateFormat dateTimeFormat;
+    private Calendar mCalendar;
+    private BroadcastReceiver mBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_qoe_map);
         Toolbar toolbar = findViewById(R.id.toolbar_qoe);
+
+        // Build Legend Table View programmatically, based on colors and speed description
+        // values from the PredictiveQosClient.
+        TableLayout tl = findViewById(R.id.table_layout_legend);
+        tl.removeAllViews();
+        for(int i = 0; i < PredictiveQosClient.COLORS.length; i++) {
+            String color = PredictiveQosClient.COLORS[i];
+            TableRow tr = new TableRow(this);
+            tr.setLayoutParams(new TableRow.LayoutParams());
+            TextView colorBlockTv = new TextView(this);
+            colorBlockTv.setText("      "); //This many spaces is nearly square with default font.
+            colorBlockTv.setBackgroundColor(Color.parseColor(color));
+            TextView descriptionTv = new TextView(this);
+            descriptionTv.setText(" "+PredictiveQosClient.SPEEDS[i]);
+            descriptionTv.setBackgroundColor(Color.WHITE);
+            tr.addView(colorBlockTv);
+            tr.addView(descriptionTv);
+            tl.addView(tr, new TableLayout.LayoutParams());
+        }
+
+        buttonDate = findViewById(R.id.buttonDate);
+        buttonTime = findViewById(R.id.buttonTime);
+        //Set Date and Time buttons to current
+        if(DateFormat.is24HourFormat(this)) {
+            timeFormat = new SimpleDateFormat("HH:mm:00");
+            dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:00");
+        } else {
+            timeFormat = new SimpleDateFormat("hh:mm:00 a");
+            dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:00 a");
+        }
+        dateFormat = new SimpleDateFormat("E, yyyy-MM-dd");
+
+        mCalendar = Calendar.getInstance(TimeZone.getDefault());
+        buttonDate.setText(dateFormat.format(mCalendar.getTime()));
+        buttonTime.setText(timeFormat.format(mCalendar.getTime()));
+
+        //If we haven't set a future date/time, update our Calendar instance every minute.
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context ctx, Intent intent) {
+                if (intent.getAction().compareTo(Intent.ACTION_TIME_TICK) == 0) {
+                    if(mCalendar.getTimeInMillis() < System.currentTimeMillis()) {
+                        mCalendar = Calendar.getInstance(TimeZone.getDefault());
+                        buttonTime.setText(timeFormat.format(mCalendar.getTime()));
+                    }
+                }
+            }
+        };
+
+        registerReceiver(mBroadcastReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
+
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -86,6 +165,56 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
+
+    public void selectDate(View view) {
+        // Create a new instance of DatePickerDialog and show it
+        DatePickerDialog dialog = new DatePickerDialog(this, this,
+                mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH),
+                mCalendar.get(Calendar.DAY_OF_MONTH));
+        dialog.getDatePicker().setMinDate(System.currentTimeMillis());
+        dialog.show();
+    }
+
+    public void selectTime(View view) {
+        // Create a new instance of TimePickerDialog and show it
+        TimePickerDialog dialog = new TimePickerDialog(this, this,
+                mCalendar.get(Calendar.HOUR_OF_DAY), mCalendar.get(Calendar.MINUTE),
+                DateFormat.is24HourFormat(this));
+        dialog.show();
+    }
+
+    @Override
+    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+        //Make sure date/time is not in the past.
+        Calendar newCal = (Calendar) mCalendar.clone();
+        newCal.set(year, month, dayOfMonth);
+        if(newCal.getTimeInMillis() < System.currentTimeMillis()) {
+            String message = "Error: "+dateTimeFormat.format(newCal.getTime())+" is in the past";
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        mCalendar.set(year, month, dayOfMonth);
+        buttonDate.setText(dateFormat.format(mCalendar.getTime()));
+        routeBetweenPoints(startLatLng, endLatLng);
+    }
+
+    @Override
+    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+        //Make sure date/time is not in the past.
+        Calendar newCal = (Calendar) mCalendar.clone();
+        newCal.set(mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH),
+                mCalendar.get(Calendar.DAY_OF_MONTH), hourOfDay, minute);
+        if(newCal.getTimeInMillis() < System.currentTimeMillis()) {
+            String message = "Error: "+dateTimeFormat.format(newCal.getTime())+" is in the past";
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            return;
+        }
+        mCalendar.set(mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH),
+                mCalendar.get(Calendar.DAY_OF_MONTH), hourOfDay, minute);
+        buttonTime.setText(timeFormat.format(mCalendar.getTime()));
+        routeBetweenPoints(startLatLng, endLatLng);
     }
 
     @Override
@@ -190,8 +319,6 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         startLatLng = new LatLng(48.1,11.39);
         endLatLng = new LatLng(48.2,11.57);
-//        LatLng startLatLng = new LatLng(48.100948333740234,11.39490032196045);
-//        LatLng endLatLng = new LatLng(48.101009368896484,11.394619941711426);
 
         routeBetweenPoints(startLatLng, endLatLng);
 
@@ -233,7 +360,14 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         endMarker = mMap.addMarker(new MarkerOptions().position(endLatLng).title("End of route"));
         endMarker.setDraggable(true);
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
-        final long timeStamp = System.currentTimeMillis()/1000+10;
+        long timeStamp = System.currentTimeMillis()/1000+60; // Request data for 1 minute from now.
+        //If we have picked a date or time in the future, use that instead.
+        if(mCalendar.getTimeInMillis()/1000 > timeStamp) {
+            timeStamp = mCalendar.getTimeInMillis()/1000;
+            Log.i(TAG, "Using future timestamp: "+(mCalendar.getTimeInMillis()/1000)+" "+mCalendar);
+        } else {
+            Log.i(TAG, "Using current timestamp: "+timeStamp);
+        }
 
         //Execute Directions API request
         GeoApiContext context = new GeoApiContext.Builder()
@@ -327,8 +461,6 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
         mMap.animateCamera(cu);
-
-
     }
 
     private void getQoeData(QoSKPIRequest request, GoogleMap map, int routeNum, int requestNum) {
@@ -379,8 +511,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     @Override
     public void onMarkerDrag(Marker marker) {
-//        Log.i(TAG, "onMarkerDrag()");
-
+        //do nothing
     }
 
     @Override
@@ -404,6 +535,5 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
         super.onStop();
     }
-
 
 }
