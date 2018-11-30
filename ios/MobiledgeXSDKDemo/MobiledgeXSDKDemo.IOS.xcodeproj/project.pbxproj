@@ -68,8 +68,6 @@
 		258BEF2C21A0E9A30055227D /* Acknowledgements.plist in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF2B21A0E9A20055227D /* Acknowledgements.plist */; };
 		258BEF2E21A24C020055227D /* Mex.utitities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2D21A24C020055227D /* Mex.utitities.swift */; };
 		25C9410221AB9DBE00C9424B /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410121AB9DBE00C9424B /* Log.swift */; };
-		25C9410421ACE68900C9424B /* RegExReplace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410321ACE68900C9424B /* RegExReplace.swift */; };
-		25C9410621ADA18800C9424B /* face_20181018-204419.f.png in Resources */ = {isa = PBXBuildFile; fileRef = 25C9410521ADA18800C9424B /* face_20181018-204419.f.png */; };
 		25C9410C21AF7CB800C9424B /* CancellationToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410821AF7CB700C9424B /* CancellationToken.swift */; };
 		25C9410D21AF7CB800C9424B /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410921AF7CB700C9424B /* Future.swift */; };
 		25C9410E21AF7CB800C9424B /* FutureCompatible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410A21AF7CB700C9424B /* FutureCompatible.swift */; };
@@ -267,7 +265,6 @@
 		258BEF2D21A24C020055227D /* Mex.utitities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mex.utitities.swift; sourceTree = "<group>"; };
 		25C9410121AB9DBE00C9424B /* Log.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Log.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/SwiftLog-master/Log.swift"; sourceTree = SOURCE_ROOT; };
 		25C9410321ACE68900C9424B /* RegExReplace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RegExReplace.swift; path = ../../../../../../../venuetise/ios_lca_suite/Venuetize2/Venuetize2/ThirdParty/RegExReplace.swift; sourceTree = "<group>"; };
-		25C9410521ADA18800C9424B /* face_20181018-204419.f.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "face_20181018-204419.f.png"; sourceTree = "<group>"; };
 		25C9410821AF7CB700C9424B /* CancellationToken.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CancellationToken.swift; sourceTree = "<group>"; };
 		25C9410921AF7CB700C9424B /* Future.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Future.swift; sourceTree = "<group>"; };
 		25C9410A21AF7CB700C9424B /* FutureCompatible.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FutureCompatible.swift; sourceTree = "<group>"; };
@@ -447,7 +444,6 @@
 		252C2DEB2187A8F80091A1D4 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				25C9410521ADA18800C9424B /* face_20181018-204419.f.png */,
 				258BEF2B21A0E9A20055227D /* Acknowledgements.plist */,
 				252C2E21218BA1210091A1D4 /* Images */,
 				252C2DEC2187A8F80091A1D4 /* certs */,
@@ -966,7 +962,6 @@
 				258BEF2621A0E0AB0055227D /* RFAboutViewCloseX@3x.png in Resources */,
 				258BEEFE219CBF770055227D /* ic_menu_compass.png in Resources */,
 				25D5DCBD2180FB500097941C /* Podfile in Resources */,
-				25C9410621ADA18800C9424B /* face_20181018-204419.f.png in Resources */,
 				25DCD6602199F128000437A5 /* ios11-control-center-camera-icon.png in Resources */,
 				252C2E28218BA1210091A1D4 /* dot-menu@3x.png in Resources */,
 				258BEF2C21A0E9A30055227D /* Acknowledgements.plist in Resources */,
@@ -1117,7 +1112,6 @@
 				25623EC4217F79D30092956D /* ViewController.swift in Sources */,
 				25DCD7302199F798000437A5 /* PickerInlineRow.swift in Sources */,
 				25DCD6612199F128000437A5 /* SettingsViewController.swift in Sources */,
-				25C9410421ACE68900C9424B /* RegExReplace.swift in Sources */,
 				25DCD71C2199F798000437A5 /* AlertOptionsRow.swift in Sources */,
 				25DCD72F2199F798000437A5 /* MultipleSelectorRow.swift in Sources */,
 				25DCD7102199F798000437A5 /* Section.swift in Sources */,
