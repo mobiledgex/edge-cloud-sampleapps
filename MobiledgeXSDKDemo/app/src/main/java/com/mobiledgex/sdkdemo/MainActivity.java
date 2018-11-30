@@ -64,7 +64,6 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.maps.android.SphericalUtil;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.sdkdemo.camera.Camera2BasicFragment;
@@ -78,7 +77,6 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
@@ -89,8 +87,8 @@ import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGIST
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
 import static com.mobiledgex.sdkdemo.camera.VolleyRequestHandler.DEF_FACE_HOST_CLOUD;
 import static com.mobiledgex.sdkdemo.camera.VolleyRequestHandler.DEF_FACE_HOST_EDGE;
-import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_VERIFIED;
 import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
+import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_VERIFIED;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -102,6 +100,13 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_VERIFIED = 0xff009933;
     public static final int COLOR_FAILURE = 0xffff3300;
     public static final int COLOR_CAUTION = 0xff00b33c; //Amber: ffbf00;
+
+    // For TDG verifyLocation
+    public static final int COLOR_GREEN = 0xff009933;
+    public static final int COLOR_AMBER = 0xffffbf00;
+    public static final int COLOR_DARK_AMBER = 0xffcfbf00;
+    public static final int COLOR_RED = 0xffff3300;
+
     private static final int RC_SIGN_IN = 1;
     private String mHostname;
 
@@ -110,6 +115,7 @@ public class MainActivity extends AppCompatActivity
     private Marker mUserLocationMarker;
     private Location mLastKnownLocation;
     private Location mLocationForMatching;
+    private Location mLocationInSimulator;
 
     private RequestPermissions mRpUtil;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -457,7 +463,7 @@ public class MainActivity extends AppCompatActivity
      * @param lat
      * @param lng
      */
-    public void updateLocSimLocation(double lat, double lng) {
+    public void updateLocSimLocation(final double lat, final double lng) {
         JSONObject jsonBody = new JSONObject();
         try {
             jsonBody.put("latitude", lat);
@@ -481,6 +487,11 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onResponse(String response) {
                         Log.i(TAG, "updateLocSimLocation response="+response);
+                        if(response.startsWith("Location DB Updated OK")) {
+                            mLocationInSimulator = new Location("MEX_Loc_Sim");
+                            mLocationInSimulator.setLatitude(lat);
+                            mLocationInSimulator.setLongitude(lng);
+                        }
                         Snackbar.make(findViewById(android.R.id.content), response, Snackbar.LENGTH_SHORT).show();
                     }
                 }, new Response.ErrorListener() {
@@ -583,6 +594,7 @@ public class MainActivity extends AppCompatActivity
         String spoofText = "Spoof GPS at this location";
         String updateSimText = "Update location in GPS database";
         final CharSequence[] charSequence;
+        //Only allow updating location simulator on the demo environment
         if(mHostname.equals("mexdemo.dme.mobiledgex.net")) {
             charSequence = new CharSequence[] {spoofText, updateSimText};
         } else {
@@ -597,12 +609,21 @@ public class MainActivity extends AppCompatActivity
                 Location location = new Location("MEX");
                 location.setLatitude(spoofLatLng.latitude);
                 location.setLongitude(spoofLatLng.longitude);
-                LatLng oldLatLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
+                // If the simulator location has been updated, use that as the starting location for
+                // measuring distance, otherwise use actual GPS location.
+                LatLng oldLatLng;
+                if(mLocationInSimulator == null) {
+                    oldLatLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+                } else {
+                    oldLatLng = new LatLng(mLocationInSimulator.getLatitude(), mLocationInSimulator.getLongitude());
+                }
                 switch (which) {
                     case 0:
                         Log.i(TAG, "Spoof GPS at "+location);
                         Toast.makeText(MainActivity.this, "GPS spoof enabled.", Toast.LENGTH_LONG).show();
-                        double distance = SphericalUtil.computeDistanceBetween(oldLatLng, spoofLatLng)/1000;
+                        float[] results = new float[1];
+                        Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
+                        double distance = results[0]/1000;
                         mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
                         mMatchingEngineHelper.setSpoofedLocation(location);
                         locationVerificationAttempted = locationVerified = false;
@@ -659,6 +680,7 @@ public class MainActivity extends AppCompatActivity
     public void onVerifyLocation(final AppClient.VerifyLocationReply.GPS_Location_Status status,
                                  final double gpsLocationAccuracyKM) {
         locationVerificationAttempted = true;
+        mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -668,22 +690,52 @@ public class MainActivity extends AppCompatActivity
                     Log.w(TAG, "No marker for user location");
                     return;
                 }
+
                 mUserLocationMarker.hideInfoWindow();
-                if(status == LOC_VERIFIED) {
-                    fabFindCloudlets.setEnabled(true);
-                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
-                    message = "User Location - Verified";
-                    mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
-                    message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
-                } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
-                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
-                    //message = ""+status;
-                    message = "User Location - Verified";
-                    mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
+                // We handle this differently for the demo environment, than in real life.
+                if(mHostname.equals("mexdemo.dme.mobiledgex.net")) {
+                    if(status == LOC_VERIFIED) {
+                        fabFindCloudlets.setEnabled(true);
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
+                        message = "User Location - Verified";
+                        message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
+                    } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
+                        message = "User Location - Verified";
+                    } else {
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
+                        message = "User Location - Failed Verify";
+                    }
+
                 } else {
-                    mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
-                    //message = ""+status;
-                    message = "User Location - Failed Verify";
+                    switch (status) {
+                        case LOC_VERIFIED:
+                            message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
+                            if(mGpsLocationAccuracyKM <= 2) {
+                                //Cat 1
+                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
+                            } else if (mGpsLocationAccuracyKM <= 10) {
+                                //Cat 2
+                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_AMBER, ""));
+                            } else {
+                                //Cat 3
+                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_DARK_AMBER, ""));
+                            }
+                            break;
+                        case LOC_MISMATCH_SAME_COUNTRY:
+                            //Cat 4
+                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
+                            break;
+                        case LOC_ROAMING_COUNTRY_MATCH:
+                            //Cat 6
+                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
+                            break;
+                        default:
+                            //Cat 5, 7, other
+                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
+                            break;
+                    }
+                    message = "User Location - "+status;
                 }
                 mUserLocationMarker.setTitle(message);
                 Toast.makeText(MainActivity.this, message+message2, Toast.LENGTH_LONG).show();
@@ -964,6 +1016,7 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "onSharedPreferenceChanged("+key+")");
         String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
         String prefKeyAllowNetSwitch = getResources().getString(R.string.preference_net_switching_allowed);
+        String prefKeyDownloadType = getResources().getString(R.string.download_type);
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
@@ -1000,6 +1053,11 @@ public class MainActivity extends AppCompatActivity
             //Clear list so we don't show old cloudlets as transparent
             CloudletListHolder.getSingleton().getCloudletList().clear();
             getCloudlets();
+        }
+
+        if (key.equals(prefKeyDownloadType)) {
+            String downloadType = sharedPreferences.getString(getResources().getString(R.string.download_type), "dynamic");
+            CloudletListHolder.getSingleton().setDownloadTestType(downloadType);
         }
 
         //TODO: Add variables in CloudletListHolder.getSingleton() instead of setting these for every cloudlet.
