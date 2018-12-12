@@ -58,24 +58,10 @@ class RequestClient(object):
         elapsed = "%.3f" %((time.time() - now)*1000)
         print("%s ms - %s" %(elapsed, content))
 
-    def face_detect(self, host, image_file_name):
-        API_ENDPOINT = '/detector/detect/'
-        try:
-            image = ""
-            with open(image_file_name, "rb") as f:
-                image = base64.b64encode(f.read())
-        except e:
-            print(e)
-            exit()
-
-        now = time.time()
-        content = self.send_image_param(self.BASE_URL %host + API_ENDPOINT, image).content
-        elapsed = "%.3f" %((time.time() - now)*1000)
-        print("%s ms - %s" %(elapsed, content))
-
     def run_multi(self, host, image_file_name, thread_name):
         print("run_multi(%s, %s)\n" %(host, image_file_name))
-        for x in xrange(50):
+        #for x in xrange(50):
+        for x in xrange(5):
             print("x=%d" %x)
             self.face_recognize(host, image_file_name)
             # self.face_detect(host, image_file_name)
@@ -93,6 +79,10 @@ if __name__ == "__main__":
     num_threads = int(sys.argv[1])
     file_name = sys.argv[2]
     host = sys.argv[3]
+
+    # rc = RequestClient()
+    # rc.face_detect(host, file_name)
+    # sys.exit()
 
     for i in xrange(num_threads):
         print("i=%d" %i)
