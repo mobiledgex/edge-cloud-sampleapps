@@ -7,10 +7,10 @@
 //
 
 import GoogleMaps   // JT 18.10.23
-import SideMenu     // JT 18.11.12  todo
 import UIKit
 
 var theMap: GMSMapView? // JT 18.11.15 used by sample.client
+var userMarker: GMSMarker?   // set by RegisterClient , was: mUserLocationMarker.
 
 class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentationControllerDelegate // JT 18.10.25
 {
@@ -39,10 +39,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         let leftBarButtonItem: UIBarButtonItem = UIBarButtonItem(customView: leftButton)
 
         navigationItem.leftBarButtonItem = leftBarButtonItem
-        // -----
-        //    setSideBarDefaults()    // JT 18.09.22
-
-        // -----
+          // -----
 
         theMap = viewMap // JT 18.11.11 publish
         theMap!.delegate = self // JT 18.11.12 for taps
@@ -62,27 +59,44 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 //
 //        manager?.startListening()
         
-        registerClientThenGetInstApps() // JT 18.11.28
-    }
+        MexRegisterClient.shared.registerClientThenGetInstApps()    // JT 18.12.06
+        
+        // latency
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "latencyCloud"), object: nil, queue: nil) // updateNetworkLatencies
+        { [weak self] notification in
+            guard let _ = self else { return }
+            
+            let v = notification.object as! String
+            UserDefaults.standard.set( v, forKey: "latencyCloud")    // JT 18.12.13
+        }
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "latencyEdge"), object: nil, queue: nil) // updateNetworkLatencies
+        { [weak self] notification in
+            guard let _ = self else { return }
+            
+            let v = notification.object as! String
+            UserDefaults.standard.set( v, forKey: "latencyEdge")    // JT 18.12.13
+        }
+        
+        
+      //  getNetworkLatencyCloud()    // JT 18.12.13  "latencyCloud"
 
-    fileprivate func setSideBarDefaults()
-    {
-        let modes: [SideMenuManager.MenuPresentMode] = [.menuSlideIn, .viewSlideOut, .menuDissolveIn]
-        //       presentModeSegmentedControl.selectedSegmentIndex = modes.index(of: SideMenuManager.default.menuPresentMode)!
-        SideMenuManager.default.menuPresentMode = modes[1] // JT 18.06.06
-        let styles: [UIBlurEffect.Style] = [.dark, .light, .extraLight]
+        DispatchQueue.main.async {
+            getNetworkLatencyEdge() // JT 18.12.13  "latencyEdge"
+        }
     }
 
     func setupRightBarDropDown()
     {
         let image = UIImage(named: "dot-menu@3x copy")?.withRenderingMode(.alwaysOriginal)
-        let barButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(ViewController.openMenu(sender:)))
+        let barButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(ViewController.openMenu(sender:))) // JT 18.12.03 todo rename image
 
         navigationItem.rightBarButtonItem = barButtonItem
 
         rightBarDropDown.anchorView = barButtonItem
 
-        rightBarDropDown.dataSource = [
+        rightBarDropDown.dataSource = [ // these first two are automatically done on launch
             "Register Client",
             "Get App Instances",
             "Verify Location",
@@ -93,7 +107,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
  
 
-    //     // MARK: - GMUMapViewDelegate
+    // MARK: - GMUMapViewDelegate
 
     // show more place info when info marker is tapped
     func mapView(_: GMSMapView, didTapInfoWindowOf marker: GMSMarker)
@@ -171,19 +185,19 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             switch index
             {
             case 0:
-                registerClientNow() // JT 18.11.11
+                MexRegisterClient.shared.registerClientNow()    // JT 18.12.06
 
             case 1:
-                getAppInstNow() // JT 18.11.12
+                MexGetAppInst.shared.getAppInstNow()    // JT 18.12.06
 
             case 2:
                 Swift.print("Verify Location")
 
-                doVerifyLocation() // JT 18.11.14
+                MexVerifyLocation.shared.doVerifyLocation()     // JT 18.12.07
                 
             case 3:
                 Swift.print("Find Closest Cloudlet")
-                findNearestCloudlet() // JT 18.11.14
+                MexFindNearestCloudlet.shared.findNearestCloudlet()     // JT 18.12.06
                 
             case 4:
                 Swift.print("Reset Location")

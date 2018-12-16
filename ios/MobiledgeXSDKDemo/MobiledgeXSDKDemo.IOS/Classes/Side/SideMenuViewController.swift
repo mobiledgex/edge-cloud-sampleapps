@@ -56,9 +56,8 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
 
             //               $0.presentationMode = .segueName(segueName:
             //                    "Face Recognition", onDismiss: nil)   // JT 18.11.03
-            Swift.print("todo! Face Recognition") // JT 18.11.12
 
-            $0.onCellSelection(self.buttonTapped)
+            $0.onCellSelection(self.doFaceRecognitionTapped)  // JT 18.12.13
         }
         .cellSetup
         { cell, _ in
@@ -73,7 +72,7 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
             //             "Face Detection", onDismiss: nil)   // JT 18.11.03
             Swift.print("todo! Face Detection") // JT 18.11.12
 
-            $0.onCellSelection(self.buttonTapped2)
+            $0.onCellSelection(self.doFaceDetectionTapped)
         }
         .cellSetup
         { cell, _ in
@@ -194,18 +193,35 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
         print("tapped! \(row)") // JT 18.11.13
     }
 
-    func buttonTapped2(cell _: ButtonCellOf<String>, row: ButtonRow)
+    func doFaceDetectionTapped(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
         print("buttonTapped2! \(row)") // JT 18.11.13
 
         doFaceDetectionViewController() // JT 18.11.17
     }
+  
+    func doFaceRecognitionTapped(cell _: ButtonCellOf<String>, row: ButtonRow)        // JT 18.12.13
+    {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        
+        let vc = storyboard.instantiateViewController(withIdentifier: "FaceDetectionViewController") // same controller. todo clone
+        
+ doAFaceRecognition = true
+        UserDefaults.standard.set(true, forKey: "doFaceRecognition")    // JT 18.12.13
+        
+        navigationController!.pushViewController(vc, animated: true) // JT 18.11.16
+    }
+    
 
     func doFaceDetectionViewController() // JT 18.11.17
     {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
 
         let vc = storyboard.instantiateViewController(withIdentifier: "FaceDetectionViewController")
+
+        doAFaceRecognition = false
+
+        UserDefaults.standard.set(false, forKey: "doFaceRecognition")    // JT 18.12.13
 
         navigationController!.pushViewController(vc, animated: true) // JT 18.11.16
     }
