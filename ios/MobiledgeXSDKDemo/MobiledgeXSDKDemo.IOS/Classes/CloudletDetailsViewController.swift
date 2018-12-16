@@ -200,7 +200,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
         { [weak self] _ in
             guard let _ = self else { return }
 
-            Swift.print("reload")
+            Swift.print("updateLatencies")
             DispatchQueue.main.async
             {   //
                 (self!.form.rowBy(tag: "Latency Min:") as? LabelRow)!.reload()

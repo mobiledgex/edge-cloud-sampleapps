@@ -3,28 +3,28 @@
 //  Sample_client.swift
 //  MobiledgeXSDKDemo.IOS
 //
-//  Port from cpp SDK demo to swift by meta30
+//  Port from cpp SDK demo to swift by Jean Tantra, Metatheory
 //  Copyright © 2018 MobiledgeX. All rights reserved.
 //
 
 import Alamofire
 import Foundation
+import UIKit
 import GoogleMaps
 import Security
-//import Future   // JT 18.11.28
+import PlainPing
 
 // ----------------------------------------
 
 private var locationRequest: LocationRequest? // so we can stop updates
 
-var userMarker: GMSMarker?   // set by RegisterClient , was: mUserLocationMarker. todo code review. who should own this?
 
-private var faceDetectionStartTime:DispatchTime?    // JT 18.11.28
+
 
 // This file Handles:
 //  Menu:
-//  "Register Client",
-//  "Get App Instances",
+//  "Register Client",  // these first two are done actomicaly at launch
+//  "Get App Instances",    // displays POIs
 //  "Verify Location",
 //  "Find Closest Cloudlet",
 //  "Reset Location",
@@ -33,29 +33,33 @@ private var faceDetectionStartTime:DispatchTime?    // JT 18.11.28
 // common
 //
 
-private var closestCloudlet = ""    // JT 18.11.27
 
-private class MexUtil
+private class MexUtil   // common to Mex... below
 {
-    static let shared = MexUtil()   // JT 18.11.18
+    static let shared = MexUtil()   // singleton
 
-    var sessionManager: SessionManager?  // JT 18.11.25
+    var sessionManager: SessionManager?  // persist
 
     // url
     let baseDmeHost: String = "dme.mobiledgex.net"
-    let carrierNameDefault3: String = "TDG"
-    let carrierNameDefault4: String = "mexdemo"
     let dmePort: UInt = 38001
 
+    let carrierNameDefault_TDG: String = "TDG"
+    let carrierNameDefault_mexdemo: String = "mexdemo"
+
     var baseDmeHostInUse: String = ""
-    var carrierNameDefaultInUse: String = "" // carrierNameDefault4
+    var carrierNameInUse: String = ""
 
-    // API Paths:
+    // API Paths:   See Readme.txt for curl usage examples
     let registerAPI: String = "/v1/registerclient"
-    let findcloudletAPI: String = "/v1/findcloudlet"
     let appinstlistAPI: String = "/v1/getappinstlist"
+    let findcloudletAPI: String = "/v1/findcloudlet"
+    
+    let DEF_FACE_HOST_CLOUD = "mobiledgexsdkdemomobiledgexsdkdemo10.azcentraluscloudlet.azure.mobiledgex.net"
+    let DEF_FACE_HOST_EDGE = "mobiledgexsdkdemomobiledgexsdkdemo10.bonndemocloudlet.tdg.mobiledgex.net"
 
-    let timeoutSec: UInt64 = 5000
+
+    let timeoutSec: UInt64 = 5000   // JT 18.12.03 unused todo
 
     var appName = "" // Your application name. was "EmptyMatchEngineApp"
     var devName = "" // Your developer name
@@ -64,34 +68,35 @@ private class MexUtil
 
     let headers: HTTPHeaders = [
         "Accept": "application/json",
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", // This is the default
         "Charsets": "utf-8",
     ]
 
-     init()  // JT 18.11.26  singleton
+     var closestCloudlet = ""       // JT 18.12.12
+
+    
+    private init()  //   singleton called as of first access to shared
     {
         baseDmeHostInUse = baseDmeHost
 
-        carrierNameDefaultInUse = carrierNameDefault4
+        carrierNameInUse = carrierNameDefault_mexdemo
 
         appName = "MobiledgeX SDK Demo" // "EmptyMatchEngineApp"; // Your application name
         devName = "MobiledgeX SDK Demo" // "EmptyMatchEngineApp"; // Your developer name
-
-//        let delegate = Alamofire.SessionManager.default.delegate
-//        delegate.taskWillPerformHTTPRedirection = nil   // NOP
     }
+    
 
     // Retrieve the carrier name of the cellular network interface.
     func getCarrierName() -> String
     {
-        return carrierNameDefaultInUse
+        return carrierNameInUse
     }
 
     func generateDmeHostPath(_ carrierName: String) -> String
     {
         if carrierName == ""
         {
-            return carrierNameDefaultInUse + "." + baseDmeHostInUse
+            return carrierNameInUse + "." + baseDmeHostInUse
         }
         return carrierName + "." + baseDmeHostInUse
     }
@@ -101,10 +106,7 @@ private class MexUtil
         return "https://\(generateDmeHostPath(carrierName)):\(dmePort)"
     }
     
-    func generateBaseUri2(_ carrierName: String,_ portN: UInt) -> String
-    {
-        return "https://\(generateDmeHostPath(carrierName)):\(portN)"
-    }
+
 }
 
 
@@ -122,9 +124,8 @@ private func postRequest(_ uri: String,
     if postName != "FaceDetection"
     {
         Swift.print("\(request)")
-
+        logw("•uri:\n\(uri)\n") // JT 18.11.26 log to file
     }
-      logw("•uri:\n\(uri)\n") // JT 18.11.26 log to file
 
   //  logw("•request:\n\(request)\n") // JT 18.11.26 log to file
 
@@ -141,8 +142,7 @@ private func postRequest(_ uri: String,
     { response in
         if postName != "FaceDetection"  // JT 18.11.27
         {
-            debugPrint("\n••\n\(response.request! )\n")
-
+            debugPrint("\n••\n\(response.request! )\n") // curl
         }
 
         guard response.result.isSuccess else
@@ -159,7 +159,9 @@ private func postRequest(_ uri: String,
                 let token = s1[0]
                 Swift.print("\(token)")
                 
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName),  object: token)
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName),  object: token)  // "GetToken"
+                
+                promise.succeed(value: ["token": token as AnyObject])    // JT 18.12.06
             }
             else
             {
@@ -186,13 +188,22 @@ private func postRequest(_ uri: String,
             }
             Swift.print("=\(postName)=\n \(json)")
 
+            // If success
+            promise.succeed(value: json)  // JT 18.11.28
+
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName),
                                             object: json)
             
-            logw("postName:\(postName)\nresult:\n\(json)") // JT 18.11.26  log to file
+      //      Log.logger.name = "curl"  // JT 18.12.05 todo
             
-            // If success
-            promise.succeed(value: json)  // JT 18.11.28
+            
+            let curl = response.request.debugDescription    // JT 18.12.05
+         //   Log.logger.name = "curl"
+            logw("\n \(curl)\n")      // JT 18.12.05
+
+            logw("postName:\(postName)\nresult:\n\(json)") // JT 18.11.26  log to file
+
+            
         }
 
         Swift.print("\(response)")
@@ -206,11 +217,15 @@ private func postRequest(_ uri: String,
     if postName != "FaceDetection"  // JT 18.11.27 too big
     {
         debugPrint(requestObj) // dump curl
+        
+
     }
     
     return promise.future   // JT 18.11.28
 }
 
+// in general
+//
 private  func dealWithTrustPolicy(
     _ url: URLConvertible  // a string
 )
@@ -227,22 +242,9 @@ private  func dealWithTrustPolicy(
 
     do
     {
-        var whoToTrust = try url.asURL().host
+        let whoToTrust = try url.asURL().host
         //     Swift.print("\(whoToTrust)")
 
-//        if whoToTrust == nil    // JT 18.11.27
-//        {
-//            let host = (url as! String).components(separatedBy: ":") // JT 18.11.27
-//            var ss = host[0]
-//          //  ss.remove(at: ss.startIndex)
-//
-//          //  ss.remove(at: ss.startIndex)
-//
-//            whoToTrust = ss
-//            Swift.print("\(ss)")
-//            Swift.print("")
-//        }
-//
         let trustPolicies = [whoToTrust!: trustPolicy]
 
         let policyManager = ServerTrustPolicyManager(policies: trustPolicies)
@@ -265,15 +267,17 @@ private  func dealWithTrustPolicy(
 
 class MexRegisterClient
 {
-    static let shared = MexRegisterClient()     // JT 18.11.25
+    static let shared = MexRegisterClient()     // singleton
 
-    var future:Future<[String: AnyObject], Error>? // JT 18.11.28
-    
+    var future:Future<[String: AnyObject], Error>? // async result (captured by async?)
+ 
+    var futureEdge:Future<[String: AnyObject], Error>? // async result (captured by async?)
+    var futureCloud:Future<[String: AnyObject], Error>? // async result (captured by async?)
+
     var tokenserveruri = "" // set by RegisterClient    // JT 18.11.25
     var sessioncookie = ""  // set by RegisterClient    // JT 18.11.25 used by getApp and verifyLoc
-
-   // var theRequest: DataRequest?  // JT 18.11.25
     
+    // Color of what?
     public static let COLOR_NEUTRAL: UInt32 = 0xFF67_6798
     public static let COLOR_VERIFIED: UInt32 = 0xFF00_9933
     public static let COLOR_FAILURE: UInt32 = 0xFFFF_3300
@@ -281,136 +285,67 @@ class MexRegisterClient
 
     private init() // singleton
     {
-        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "RegisterClient1"), object: nil, queue: nil)
-        { notification in
-            // Swift.print("RegisterClient \(notification)")
+//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "RegisterClient1"), object: nil, queue: nil)
+//        { notification in
+//            // Swift.print("RegisterClient \(notification)")
+//
+////            let d = notification.object as! [String: Any]   // Dictionary/json
+////            self.registerClientResult(d)
+////
+////            self.getLocaltionUpdates()
+////
+////            SKToast.show(withMessage: "Client registered")
+//        }
 
-            let d = notification.object as! [String: Any]   // Dictionary/json
-            self.registerClientResult(d)
+//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FindCloudlet1"), object: nil, queue: nil)
+//        { notification in
+//
+//            let d = notification.object as! [String: Any]   // Dictionary/json
+//
+//            Swift.print("FindCloudlet1 \(d)")
+//
+//            //   useCloudlets(d)
+//
+//            //    var cloudlets = [String:Cloudlet]()
+//            Swift.print("~~~~~")
+//
+//         ///   var uri = ""
+//            //  var boundsBuilder = GMSCoordinateBounds()
+//
+//            //  var marker:GMSMarker?
+//
+//         //   processFindCloudletResult(d)    // JT 18.12.04
+//        }
+        
+        
 
-            self.getLocaltionUpdates()
+//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "GetToken"), object: nil, queue: nil)
+//        { notification in
+//            Swift.print("GetToken \(notification)")
+//
+//            let tokenReply = notification.object as! String
+//
+//            verifyLocation(tokenReply)
+//        }
+//
+//
 
-            SKToast.show(withMessage: "Client registered")
-        }
-
-        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FindCloudlet1"), object: nil, queue: nil)
-        { notification in
-            // Swift.print("RegisterClient \(notification)")
-
-            let d = notification.object as! [String: Any]   // Dictionary/json
-
-            Swift.print("FindCloudlet1 \(d)")
-
-            //   useCloudlets(d)
-
-            //    var cloudlets = [String:Cloudlet]()
-            Swift.print("~~~~~")
-
-         ///   var uri = ""
-            //  var boundsBuilder = GMSCoordinateBounds()
-
-            //  var marker:GMSMarker?
-
-            for (index, cld) in d.enumerated()
-            {
-                Swift.print("\n•\n \(index):\(cld)")
-
-//                init(_ cloudletName: String,
-//                _ appName: String,
-//                _ carrierName: String,
-//                _ gpsLocation: CLLocationCoordinate2D ,
-//                _ distance: Double,
-//                _ uri: String,
-//                _ marker: GMSMarker,
-//                _ numBytes: Int,
-//                _ numPackets: Int) // LatLng
-
-//                 if index == 0
-//                 {
-//                    uri = cld.value as! String
-//                }
-                Swift.print("\(index): \(cld.key)")
-                
-                if cld.key == "FQDN"
-                {
-                    let v = cld.value
-                    Swift.print("•FQDN• \(v)")
-                    
-                    closestCloudlet = v as! String // JT 18.11.27
-Swift.print("")
-                }
-                
-                if cld.key == "cloudlet_location"
-                {
-                    let dd = cld.value as! [String: Any]    // Dictionary/json
-
-                    Swift.print("••• \(dd)")
-
-                    let loc = CLLocationCoordinate2D(
-                        latitude: Double((dd["lat"] as! NSNumber).stringValue)!,
-                        longitude: Double((dd["long"] as! NSNumber).stringValue)!
-                    )
-
-                    theMap!.animate(toLocation: loc)
-                    SKToast.show(withMessage: "Found cloest cloudlet")
-
-                    //break
-                }
-            }
-        }
-
-        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "GetToken"), object: nil, queue: nil)
-        { notification in
-            Swift.print("GetToken \(notification)")
-
-            let tokenReply = notification.object as! String
-
-            Swift.print("VerifyLocation: Retrieved token: [ \(tokenReply) ]")
-
-            let loc = retrieveLocation()
-
-            var verifyLocationRequest = createVerifyLocationRequest(MexUtil.shared.carrierNameDefaultInUse, loc, "")    // JT 18.11.27
-
-            // Update request with the new token:
-            // json tokenizedRequest;
-            var tokenizedRequest = [String: Any]()  // Dictionary/json
-
-            tokenizedRequest["ver"] = verifyLocationRequest["ver"]
-            tokenizedRequest["SessionCookie"] = verifyLocationRequest["SessionCookie"]
-            tokenizedRequest["CarrierName"] = verifyLocationRequest["CarrierName"]
-            tokenizedRequest["GpsLocation"] = verifyLocationRequest["GpsLocation"]
-            tokenizedRequest["VerifyLocToken"] = tokenReply
-            
-
-            Swift.print("VeriyLocation actual call...")
-           // let reply = ""
-            let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.carrierNameDefaultInUse, MexUtil.shared.dmePort)  // JT 18.11.27
-            let verifylocationAPI: String = "/v1/verifylocation"
-
-            let uri = baseuri + verifylocationAPI
-
-            self.future = postRequest(uri, tokenizedRequest, "VeriyLocation1")  // JT 18.11.28
-            
-            self.future!.on(success: { print("VeriyLocation1 received value: \($0)") },
-                           failure: { print("failed with error: \($0)") },
-                           completion: { print("completed with result: \($0)") })   // JT 18.11.28
-        }
-
-        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "VeriyLocation1"), object: nil, queue: nil)
-        { notification in
-            // Swift.print("RegisterClient \(notification)")
-
-            let d = notification.object
-            Swift.print("VeriyLocation1 result \(d!)")
-
-            SKToast.show(withMessage: "VeriyLocation result: \(d!)")
-        }
+//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "Verifylocation1"), object: nil, queue: nil)
+//        { notification in
+//
+//            let d = notification.object
+//            Swift.print("Verifylocation1 result \(d!)")
+//
+//            SKToast.show(withMessage: "Verifylocation result: \(d!)")
+//        }
     } // init
 
     deinit
     {
         NotificationCenter.default.removeObserver(self)
     }
+    
+    
 
     func getLocaltionUpdates()
     {
@@ -449,39 +384,8 @@ Swift.print("")
 //        }
     }
 
-    // MARK: create requests
-    
-    func createRegisterClientRequest()
-        -> [String: Any] // Dictionary/json
-    {
-        let u = MexUtil.shared  // JT 18.11.25
-        // Dictionary/json regClientRequest;
-        var regClientRequest = [String: String]()
+    // MARK:
 
-        regClientRequest["ver"] = "1"
-        regClientRequest["AppName"] = u.appName
-        regClientRequest["DevName"] = u.devName
-        regClientRequest["AppVers"] = u.appVersionStr
-
-        return regClientRequest
-    }
-
-
-
-    // Carrier name can change depending on cell tower.
-    func createFindCloudletRequest(_ carrierName: String, _ gpslocation: [String: Any]) -> [String: Any]
-    {
-        //    findCloudletRequest;
-        var findCloudletRequest = [String: Any]()   // Dictionary/json
-
-        findCloudletRequest["vers"] = 1
-        findCloudletRequest["SessionCookie"] = sessioncookie
-        findCloudletRequest["CarrierName"] = carrierName
-        findCloudletRequest["GpsLocation"] = gpslocation
-
-        return findCloudletRequest
-    }
-    
     
     // Sets: sessioncookie, tokenserveruri
     
@@ -501,12 +405,115 @@ Swift.print("")
             
             Swift.print(line1 + line2 + line3 + line4 + "\n\n")
             
-            sessioncookie = (registerClientReply["SessionCookie"] as! String)
+          //  let sessioncookie = (registerClientReply["SessionCookie"] as! String)   // JT 18.12.07
             
             Swift.print("Token Server URI: " + (registerClientReply["TokenServerURI"] as! String) + "\n")
-            tokenserveruri = (registerClientReply["TokenServerURI"] as! String)
+          //  let tokenserveruri = (registerClientReply["TokenServerURI"] as! String)
             Swift.print("")
         }
+    }
+    
+    
+    func createRegisterClientRequest()
+        -> [String: Any] // Dictionary/json
+    {
+        let u = MexUtil.shared  // JT 18.11.25
+        // Dictionary/json regClientRequest;
+        var regClientRequest = [String: String]()
+        
+        regClientRequest["ver"] = "1"
+        regClientRequest["AppName"] = u.appName
+        regClientRequest["DevName"] = u.devName
+        regClientRequest["AppVers"] = u.appVersionStr
+        
+        return regClientRequest
+    }
+
+    
+    
+    // MARK: registerClientNow
+    
+    func registerClientNow() // called by top right menu
+    {
+        Swift.print("registerClientNow")
+        Swift.print("Register MEX client.")
+        Swift.print("====================\n")
+        
+        let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
+        Swift.print("\(baseuri)")
+        
+        // 🔵
+        let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
+        
+        let urlStr = baseuri + MexUtil.shared.registerAPI // JT 18.11.27
+        MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1") // JT 18.11.28 todo persist future
+        
+        MexRegisterClient.shared.future!.on(
+            success:
+            {
+                print("RegisterClient1 received value: \($0)")
+                
+                let registerClientReply = $0 as [String: Any]    // JT 18.12.03
+                
+                self.sessioncookie = (registerClientReply["SessionCookie"] as! String)   // JT 18.12.07
+                
+                 self.tokenserveruri = (registerClientReply["TokenServerURI"] as! String)
+
+                MexRegisterClient.shared.registerClientResult(registerClientReply)
+                
+                MexRegisterClient.shared.getLocaltionUpdates()
+                
+                SKToast.show(withMessage: "Client registered")
+                
+                Log.logger.name = "RegisterClient"
+                logw("\nRegisterClient result: \(registerClientReply)")    // JT 18.12.04
+        },
+            failure: { print("failed with error: \($0)")
+                
+        },
+            completion: { let _ = $0 //print("completed with result: \($0)")  // JT 18.12.04
+                
+        }
+        ) // JT 18.11.28
+    }
+    
+    func registerClientThenGetInstApps() // called on launch
+    {
+        Swift.print("registerClient then getInstApps")
+        Swift.print("Register MEX client.")
+        Swift.print("====================\n")
+        
+        let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
+        Swift.print("\(baseuri)")
+        
+        let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
+        
+        let urlStr = baseuri + MexUtil.shared.registerAPI // JT 18.11.27
+        MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1") // JT 18.11.28 todo persist future
+        
+        MexRegisterClient.shared.future!.on(
+            success:
+            {
+                print("RegisterClient1 received value: \($0)")
+                
+                let registerClientReply = $0 as [String: Any]    // JT 18.12.03
+                
+                self.sessioncookie = (registerClientReply["SessionCookie"] as! String)   // JT 18.12.07
+                
+                self.tokenserveruri = (registerClientReply["TokenServerURI"] as! String)
+                MexRegisterClient.shared.registerClientResult(registerClientReply)
+                
+                MexRegisterClient.shared.getLocaltionUpdates()
+                
+                SKToast.show(withMessage: "Client registered")
+                
+                MexGetAppInst.shared.getAppInstNow() //   chain // JT 18.12.06
+        },
+            failure: { print("failed with error: \($0)") },
+            completion: { let _ = $0    //print("completed with result: \($0)")
+                
+        }
+        )
     }
     
 
@@ -516,7 +523,7 @@ Swift.print("")
 // MARK: -
 // MARK: MexGetAppInst
 
-private class MexGetAppInst
+class MexGetAppInst
 {
     static let shared = MexGetAppInst()
     
@@ -524,143 +531,187 @@ private class MexGetAppInst
     
     private init()  // singleton
     {
-        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "GetAppInstlist1"), object: nil, queue: nil)
-        { notification in
-            // Swift.print("RegisterClient \(notification)")
-            
-            let d = notification.object as! [String: Any]   // Dictionary/json
-            
-            
-            Swift.print("GetAppInstlist1 \(d)")
-            
-            // useCloudlets(d)
-            
-            //  theMap!.clear()       // JT 18.11.12 todo main thread, where
-            
-            var cloudlets = [String: Cloudlet]()
-            Swift.print("~~~~~")
-            
-            //var uri = ""
-            var boundsBuilder = GMSCoordinateBounds()
-            
-            var marker: GMSMarker?
-            
-            for (index, cld) in d.enumerated()
-            {
-                Swift.print("\n•\n \(index):\(cld)")
-                
-                Swift.print("\(index): \(cld.key)")
-                
-                if cld.key == "Cloudlets" // "cloudlet_location"
-                {
-                    //       let ddd = cld.value
-                    let a = cld.value as! [[String: Any]]   // Dictionary/json
-                    
-                    Swift.print("••• \(a)")
-                    
-                    for d in a
-                    {
-                        // ["CarrierName", "CloudletName", "GpsLocation", "Distance", "Appinstances"]
-                        
-                        Swift.print("\(Array(d.keys))")
-                        let gps = d["GpsLocation"] as! [String: Any] // "cloudlet_location"
-                        
-                        // let gps = cld.value as! [String:Any]
-                        Swift.print("\(gps)")
-                        
-                        let loc = CLLocationCoordinate2D(
-                            latitude: Double((gps["lat"] as! NSNumber).stringValue)!,
-                            longitude: Double((gps["long"] as! NSNumber).stringValue)!
-                        )
-                        Swift.print("\(loc)")
-                        
-                        Swift.print("\(Array(d.keys))\n")
-                        Swift.print("d ••••• \(d)")
-                        
-                        let dd = d["Appinstances"] as! [[String: Any]]  // Dictionary/json
-                        let uri = dd[0]["FQDN"] as! String // todo, now just use first
-                        let appName = dd[0]["AppName"] as! String
-                        
-                        Swift.print("cloudlet uri: \(uri)")
-                        Swift.print("dd \(dd)")
-                        //    let loc2 = CLLocationCoordinate2D() //
-                        
-                        let carrierName = d["CarrierName"] as! String
-                        let cloudletName = d["CloudletName"] as! String
-                        let distance = d["Distance"] as! Double
-                        
-                        boundsBuilder = boundsBuilder.includingCoordinate(loc)
-                        
-                        marker = GMSMarker(position: loc)
-                        marker!.userData = cloudletName
-                        marker!.title = cloudletName
-                        marker!.snippet = "Tap for details"
-                        
-                        let iconTemplate = UIImage(named: "ic_marker_cloudlet-web")
-                        
-                        // todo refactor - make func
-                        let tint = getColorByHex(MexRegisterClient.COLOR_NEUTRAL)
-                        let tinted = iconTemplate!.imageWithColor(tint)
-                        let resized = tinted.imageResize(sizeChange: CGSize(width: 40, height: 30))
-                        
-                        let i2 = textToImage(drawText: "M", inImage: resized, atPoint: CGPoint(x: 11, y: 4))
-                        
-                        marker?.icon = cloudletName.contains("microsoft") ? i2 : resized
-                        
-                        //                        init(_ cloudletName: String,
-                        //                        _ appName: String,
-                        //                        _ carrierName: String,
-                        //                        _ gpsLocation: CLLocationCoordinate2D ,
-                        //                        _ distance: Double,
-                        //                        _ uri: String,
-                        //                        _ marker: GMSMarker,
-                        //                        _ numBytes: Int,
-                        //                        _ numPackets: Int) // LatLng
-                        
-                        Swift.print("Cloudlet: \(cloudletName), \(appName), \(carrierName), \(loc),\n \(uri)")
-                        let cloudlet = Cloudlet(cloudletName, appName, carrierName,
-                                                loc,
-                                                distance,
-                                                uri,
-                                                marker!,
-                                                1_048_576,  // actually uses setting alue at run time
-                            0)
-                        
-                        marker?.map = theMap
-                        cloudlets[cloudletName] = cloudlet
-                    }
-                }
-            }
-            Swift.print("~~~~~]\n\(cloudlets)")
-            
-            CloudletListHolder.getSingleton().setCloudlets(mCloudlets: cloudlets)
-            
-            if !(boundsBuilder.southWest == boundsBuilder.northEast)
-            {
-                Swift.print("Using cloudlet boundaries")
-                let padding: CGFloat  = 125.0 // offset from edges of the map in pixels
-                
-                //                let update = GMSCameraUpdate.fit(boundsBuilder, withPadding: 64)
-                //                theMap!.moveCamera(update)
-                
-                theMap!.animate(with: .fit(boundsBuilder, withPadding: 64.0))
-                // BUG padding is being ignored todo
-            }
-            else
-            {
-                Swift.print("No cloudlets. Don't zoom in")
-                
-                //  cu = CameraUpdateFactory.newLatLng(mUserLocationMarker.getPosition());
-                
-                //      theMap!.animate(toLocation: marker!.position)   //  user position
-            }
-        }
+//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "GetAppInstlist1"), object: nil, queue: nil)
+//        { notification in
+//            // Swift.print("GetAppInstlist1 \(notification)")
+//
+//            let d = notification.object as! [String: Any]   // Dictionary/json
+//
+//            GetAppInstlist1(d)
+//        }
+        
+        
         
     }
     
     deinit
     {
-        NotificationCenter.default.removeObserver(self)
+//        NotificationCenter.default.removeObserver(self)
+    }
+    
+    
+    
+    func getAppInstNow()    // called by top right menu
+    {
+        Swift.print("GetAppInstList")
+        Swift.print(" MEX client.")
+        Swift.print("====================\n")
+        
+        let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
+        Swift.print("\(baseuri)")
+        
+        let loc = retrieveLocation()
+        
+        let getAppInstListRequest = MexGetAppInst.shared.createGetAppInstListRequest(MexUtil.shared.carrierNameDefault_TDG, loc)
+        
+        Log.logger.name = "GetAppInstlist"
+        logw("\n getAppInstListRequest:\n \(getAppInstListRequest)")    // JT 18.12.04
+      
+        // 🔵
+        let urlStr = baseuri + MexUtil.shared.appinstlistAPI
+        MexRegisterClient.shared.future =    postRequest(urlStr, getAppInstListRequest, "GetAppInstlist1")  // JT 18.11.27
+        
+        MexRegisterClient.shared.future!.on(success:
+            {
+                print("GetAppInstlist1 received value: \($0)")
+                
+                let d = $0 as [String: Any]    // JT 18.12.03
+                
+                MexGetAppInst.shared.processAppInstList(d)  // JT 18.12.03
+                
+                Log.logger.name = "GetAppInstlist"
+                logw("\n GetAppInstlist result: \(d)")    // JT 18.12.04
+                
+        },
+            failure: { print("failed with error: \($0)") },
+            completion: { let _ = $0    //print("completed with result: \($0)" )
+                
+        })   // JT 18.11.28
+        
+    }
+    
+    func processAppInstList(_ d: [String: Any] )   // JT 18.12.03
+    {
+        Swift.print("GetAppInstlist1 \(d)")
+        
+        //  theMap!.clear()       // JT 18.11.12 todo main thread, where
+        
+        var cloudlets = [String: Cloudlet]()
+        Swift.print("~~~~~")
+        
+        var boundsBuilder = GMSCoordinateBounds()
+        
+        var marker: GMSMarker?
+        
+        for (index, cld) in d.enumerated()
+        {
+            Swift.print("\n•\n \(index):\(cld)")
+            
+            Swift.print("\(index): \(cld.key)")
+            
+            if cld.key == "Cloudlets" // "cloudlet_location"
+            {
+                //       let ddd = cld.value
+                let a = cld.value as! [[String: Any]]   // Dictionary/json
+                
+                Swift.print("••• \(a)")
+                
+                for d in a
+                {
+                    // ["CarrierName", "CloudletName", "GpsLocation", "Distance", "Appinstances"]
+                    
+                    Swift.print("\(Array(d.keys))")
+                    let gps = d["GpsLocation"] as! [String: Any] // "cloudlet_location"
+                    
+                    // let gps = cld.value as! [String:Any]
+                    Swift.print("\(gps)")
+                    
+                    let loc = CLLocationCoordinate2D(
+                        latitude: Double((gps["lat"] as! NSNumber).stringValue)!,
+                        longitude: Double((gps["long"] as! NSNumber).stringValue)!
+                    )
+                    Swift.print("\(loc)")
+                    
+                    Swift.print("\(Array(d.keys))\n")
+                    Swift.print("d ••••• \(d)")
+                    
+                    let dd = d["Appinstances"] as! [[String: Any]]  // Dictionary/json
+                    let uri = dd[0]["FQDN"] as! String // todo, now just use first
+                    let appName = dd[0]["AppName"] as! String
+                    
+                    Swift.print("cloudlet uri: \(uri)")
+                    Swift.print("dd \(dd)")
+                    //    let loc2 = CLLocationCoordinate2D() //
+                    
+                    let carrierName = d["CarrierName"] as! String
+                    let cloudletName = d["CloudletName"] as! String
+                    let distance = d["Distance"] as! Double
+                    
+                    boundsBuilder = boundsBuilder.includingCoordinate(loc)
+                    
+                    marker = GMSMarker(position: loc)
+                    marker!.userData = cloudletName
+                    marker!.title = cloudletName
+                    marker!.snippet = "Tap for details"
+                    
+                    let iconTemplate = UIImage(named: "ic_marker_cloudlet-web")
+                    
+                    // todo refactor - make func
+                    let tint = getColorByHex(MexRegisterClient.COLOR_NEUTRAL)
+                    let tinted = iconTemplate!.imageWithColor(tint)
+                    let resized = tinted.imageResize(sizeChange: CGSize(width: 40, height: 30))
+                    
+                    let i2 = textToImage(drawText: "M", inImage: resized, atPoint: CGPoint(x: 11, y: 4))
+                    
+                    marker?.icon = cloudletName.contains("microsoft") ? i2 : resized
+                    
+                    //                        init(_ cloudletName: String,
+                    //                        _ appName: String,
+                    //                        _ carrierName: String,
+                    //                        _ gpsLocation: CLLocationCoordinate2D ,
+                    //                        _ distance: Double,
+                    //                        _ uri: String,
+                    //                        _ marker: GMSMarker,
+                    //                        _ numBytes: Int,
+                    //                        _ numPackets: Int) // LatLng
+                    
+                    Swift.print("Cloudlet: \(cloudletName), \(appName), \(carrierName), \(loc),\n \(uri)")
+                    let cloudlet = Cloudlet(cloudletName, appName, carrierName,
+                                            loc,
+                                            distance,
+                                            uri,
+                                            marker!,
+                                            1_048_576,  // actually uses setting alue at run time
+                        0)
+                    
+                    marker?.map = theMap
+                    cloudlets[cloudletName] = cloudlet
+                }
+            }
+        }
+        Swift.print("~~~~~]\n\(cloudlets)")
+        
+        CloudletListHolder.getSingleton().setCloudlets(mCloudlets: cloudlets)
+        
+        if !(boundsBuilder.southWest == boundsBuilder.northEast)
+        {
+            Swift.print("Using cloudlet boundaries")
+            let padding: CGFloat  = 125.0 // offset from edges of the map in pixels
+            
+            //                let update = GMSCameraUpdate.fit(boundsBuilder, withPadding: 64)
+            //                theMap!.moveCamera(update)
+            
+            theMap!.animate(with: .fit(boundsBuilder, withPadding: 64.0))
+            // BUG padding is being ignored todo
+        }
+        else
+        {
+            Swift.print("No cloudlets. Don't zoom in")
+            
+            //  cu = CameraUpdateFactory.newLatLng(mUserLocationMarker.getPosition());
+            
+            //      theMap!.animate(toLocation: marker!.position)   //  user position
+        }
     }
     
     // Carrier name can change depending on cell tower.
@@ -681,98 +732,8 @@ private class MexGetAppInst
 }
 
 
-func doUserMarker(_ loc: CLLocationCoordinate2D)
-{
-    // requestWhenInUseAuthorization()
-
-    userMarker = GMSMarker(position: loc)
-    userMarker!.title = "You are here"
-    userMarker!.snippet = "Drag to spoof" //   marker!.snippet = "Tap for details"
-
-    //  marker.map = self.mGoogleMap
-    let iconTemplate = UIImage(named: "ic_marker_mobile-web")
-
-    let tint = getColorByHex(MexRegisterClient.COLOR_NEUTRAL)
-    let tinted = iconTemplate!.imageWithColor(tint)
-
-    let resized = tinted.imageResize(sizeChange: CGSize(width: 60, height: 60))
-    userMarker!.icon = resized
-    userMarker!.map = theMap
-
-    userMarker!.isDraggable = true // drag to test spoofing
-}
-
-// MARK: registerClientNow
-
-func registerClientNow() // called by top right menu
-{
-
-    Swift.print("registerClientNow")
-    Swift.print("Register MEX client.")
-    Swift.print("====================\n")
-
-    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
-    Swift.print("\(baseuri)")
-
-    let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
-    
-    let urlStr = baseuri + MexUtil.shared.registerAPI   // JT 18.11.27
-    MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1")  // JT 18.11.28 todo persist future
-    
-    MexRegisterClient.shared.future!.on(success: { print("RegisterClient1 received value: \($0)") },
-              failure: { print("failed with error: \($0)") },
-    completion: { print("completed with result: \($0)" )})   // JT 18.11.28
-}
-
-func registerClientThenGetInstApps() // called on launch
-{
-    Swift.print("registerClient then getInstApps")
-    Swift.print("Register MEX client.")
-    Swift.print("====================\n")
-
-    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
-    Swift.print("\(baseuri)")
-
-    let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
-
-    let urlStr = baseuri + MexUtil.shared.registerAPI // JT 18.11.27
-    MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1") // JT 18.11.28 todo persist future
-
-    MexRegisterClient.shared.future!.on(
-        success: { print("RegisterClient1 received value: \($0)")
-            getAppInstNow() // JT 18.11.28
-        },
-        failure: { print("failed with error: \($0)") },
-        completion: { print("completed with result: \($0)") }
-    ) // JT 18.11.28
-}
 
 
-// MARK: -
-
-
-func getAppInstNow()    // called by top right menu
-{
-    //mexGetAppInst = MexGetAppInst()
-    
-    Swift.print("GetAppInstList")
-    Swift.print(" MEX client.")
-    Swift.print("====================\n")
-    
-    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
-    Swift.print("\(baseuri)")
-    
-    let loc = retrieveLocation()
-    
-    let getAppInstListRequest = MexGetAppInst.shared.createGetAppInstListRequest(MexUtil.shared.carrierNameDefault3, loc)
-    
-   MexRegisterClient.shared.future =    postRequest(baseuri + MexUtil.shared.appinstlistAPI, getAppInstListRequest, "GetAppInstlist1")  // JT 18.11.27
-    
-    MexRegisterClient.shared.future!.on(success: { print("GetAppInstlist1 received value: \($0)") },
-              failure: { print("failed with error: \($0)") },
-    completion: { print("completed with result: \($0)" )})   // JT 18.11.28
-    
-}
 
 private func useCloudlets(_ findCloudletReply: [String: Any]) // unused
 {
@@ -878,100 +839,264 @@ public func updateLocSimLocation(_ lat: Double, _ lng: Double)
 
 
 // MARK: -
-// MARK: doVerifyLocation
+// MARK: MexVerifyLocation
 
-func doVerifyLocation() // call by top right menu
+class MexVerifyLocation
 {
-    // Produces a new request. Now with sessioncooke and token initialized.
-    
-    Swift.print("Verify Location of this Mex client.")
-    Swift.print("===================================\n\n")
-    
-    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.carrierNameDefaultInUse, MexUtil.shared.dmePort)
-    let loc = retrieveLocation()
-    
-    let verifyLocationRequest = createVerifyLocationRequest(MexUtil.shared.carrierNameDefaultInUse, loc, "")
-    
-    VerifyLocation(baseuri, verifyLocationRequest)
-}
+    static let shared = MexVerifyLocation()
+    var future:Future<[String: AnyObject], Error>? // async result (captured by async?)
 
-
-private func createVerifyLocationRequest(_ carrierName: String,
-                                         _ gpslocation: [String: Any],
-                                         _ verifyloctoken: String)
-    -> [String: Any]
-{
-    
-    var verifyLocationRequest = [String: Any]() // Dictionary/json verifyLocationRequest;
-    
-    verifyLocationRequest["ver"] = 1
-    verifyLocationRequest["SessionCookie"] = MexRegisterClient.shared.sessioncookie
-    verifyLocationRequest["CarrierName"] = carrierName
-    verifyLocationRequest["GpsLocation"] = gpslocation
-    verifyLocationRequest["VerifyLocToken"] = verifyloctoken
-    
-    return verifyLocationRequest
-}
-
-
-// string formatted json args and reply.
-private func VerifyLocation(_: String, _: [String: Any])
-{
-    if MexRegisterClient.shared.tokenserveruri.count == 0
+    private init()  // singleton
     {
-        Swift.print("TokenURI is empty!")
-        //     let empty = [String: Any]()
-        return
-    }
-    else
-    {
-        Swift.print("VerifyLocation getToken \(MexRegisterClient.shared.tokenserveruri)") // todo
-        getToken(MexRegisterClient.shared.tokenserveruri) // async
-    }
-}
-
-
-private func getToken(_ uri: String)  // async
-{
-    Swift.print("In Get Token")
-    if uri.count == 0
-    {
-        Swift.print("No URI to get token!")
-        return // nil;
+        
     }
     
-    Swift.print("\(uri)")
+    func doVerifyLocation() // call by top right menu
+    {
+        // Produces a new request. Now with sessioncooke and token initialized.
+        
+        Swift.print("Verify Location of this Mex client.")
+        Swift.print("===================================\n\n")
+        
+        let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.carrierNameInUse, MexUtil.shared.dmePort)
+        let loc = retrieveLocation()
+        
+        let verifyLocationRequest = createVerifyLocationRequest(MexUtil.shared.carrierNameInUse, loc, "")
+        
+        VerifyLocation(baseuri, verifyLocationRequest)
+    }
     
-       MexRegisterClient.shared.future =  postRequest(uri, [String: Any](), "GetToken")   // async
+    
+    private func createVerifyLocationRequest(_ carrierName: String,
+                                             _ gpslocation: [String: Any],
+                                             _ verifyloctoken: String)
+        -> [String: Any]
+    {
+        
+        var verifyLocationRequest = [String: Any]() // Dictionary/json verifyLocationRequest;
+        
+        verifyLocationRequest["ver"] = 1
+        verifyLocationRequest["SessionCookie"] = MexRegisterClient.shared.sessioncookie
+        verifyLocationRequest["CarrierName"] = carrierName
+        verifyLocationRequest["GpsLocation"] = gpslocation
+        verifyLocationRequest["VerifyLocToken"] = verifyloctoken
+        
+        return verifyLocationRequest
+    }
     
     
-    MexRegisterClient.shared.future!.on(success: { print("GetToken received value: \($0)") },
-              failure: { print("failed with error: \($0)") },
-    completion: { print("completed with result: \($0)") })   // JT 18.11.28
+    // string formatted json args and reply.
+    private func VerifyLocation(_: String, _: [String: Any])
+    {
+        if MexRegisterClient.shared.tokenserveruri.count == 0
+        {
+            Swift.print("TokenURI is empty!")
+            //     let empty = [String: Any]()
+            return
+        }
+        else
+        {
+            Swift.print("VerifyLocation getToken \(MexRegisterClient.shared.tokenserveruri)") // todo
+            getToken(MexRegisterClient.shared.tokenserveruri) // async
+        }
+    }
+    
+    
+    private func getToken(_ uri: String)  // async
+    {
+        Swift.print("In Get Token")
+        if uri.count == 0
+        {
+            Swift.print("No URI to get token!")
+            return // nil;
+        }
+
+        Swift.print("\(uri)")
+
+        future = postRequest(uri, [String: Any](), "GetToken") // async
+        // NOTE special case: "GetToken" fails and its error result is parsed
+
+        future!.on(
+            success:
+            {
+                print("GetToken received value: \($0)")
+
+                let d = $0 as [String: Any] // JT 18.12.06
+                let tokenReply = d["token"] as! String // JT 18.12.06
+                self.verifyLocation(tokenReply)
+
+            },
+            failure: { print("failed with error: \($0)") },
+            completion: { _ = $0 // print("completed with result: \($0)") // JT 18.12.04
+            }
+        ) // JT 18.11.28
+    }
+    
+    func verifyLocation(_ tokenReply: String)   // JT 18.12.06
+    {
+        
+        Swift.print("VerifyLocation: Retrieved token: [ \(tokenReply) ]")
+        
+        let loc = retrieveLocation()
+        
+        var verifyLocationRequest = createVerifyLocationRequest(MexUtil.shared.carrierNameInUse, loc, "")    // JT 18.11.27
+        
+        // Update request with the new token:
+        // json tokenizedRequest;
+        var tokenizedRequest = [String: Any]()  // Dictionary/json
+        
+        tokenizedRequest["ver"] = verifyLocationRequest["ver"]
+        tokenizedRequest["SessionCookie"] = verifyLocationRequest["SessionCookie"]
+        tokenizedRequest["CarrierName"] = verifyLocationRequest["CarrierName"]
+        tokenizedRequest["GpsLocation"] = verifyLocationRequest["GpsLocation"]
+        tokenizedRequest["VerifyLocToken"] = tokenReply
+        
+        
+        Swift.print("Verifylocation actual call...")
+        
+        let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.carrierNameInUse, MexUtil.shared.dmePort)  // JT 18.11.27
+        let verifylocationAPI: String = "/v1/verifylocation"
+        
+        let uri = baseuri + verifylocationAPI
+        
+        Log.logger.name = "Verifylocation"
+        logw("\n VerifylocationRequest url:\n \(uri)")    // JT 18.12.04
+        logw("\n VerifylocationRequest:\n \(tokenizedRequest)")    // JT 18.12.04
+        
+        // 🔵
+        self.future = postRequest(uri, tokenizedRequest, "Verifylocation1")  // JT 18.11.28
+        
+        self.future!.on(success: { print("Verifylocation1 received value: \($0)")
+            let d = $0 as [String: Any]     // JT 18.12.04
+            Log.logger.name = "Verifylocation"
+            logw("\n VerifylocationResult:\n \(d)")    // JT 18.12.04 to file and console
+            
+            // Swift.print("Verifylocation1 result \(d)")
+            
+            SKToast.show(withMessage: "Verifylocation result: \(d)")    // JT 18.12.06
+        },
+                        failure: { print("failed with error: \($0)") },
+                        completion: {    let _ = $0 //print("completed with result: \($0)")  // JT 18.12.04
+        })   // JT 18.11.28
+    }
 }
+
 
 
 
 // MARK: -
 // MARK: findNearestCloudlet
 
-func findNearestCloudlet() //   called by top right menu
+class MexFindNearestCloudlet
 {
-    Swift.print("Finding nearest Cloudlet appInsts matching this Mex client.")
-    Swift.print("===========================================================")
+    static let shared = MexFindNearestCloudlet()
     
-    let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
-    let loc = retrieveLocation()
-    
-    let findCloudletRequest = MexRegisterClient.shared.createFindCloudletRequest(MexUtil.shared.carrierNameDefault3, loc)
-    
-    MexRegisterClient.shared.future =  postRequest(baseuri + MexUtil.shared.findcloudletAPI, findCloudletRequest,  "FindCloudlet1")
-    
-    MexRegisterClient.shared.future!.on(success: { print("GetToken received value: \($0)") },
-              failure: { print("failed with error: \($0)") },
-    completion: { print("completed with result: \($0)") })   // JT 18.11.28
+    private init()  //   singleton called as of first access to shared
+    {
+     }
 
+    func findNearestCloudlet() //   called by top right menu
+    {
+        Swift.print("Finding nearest Cloudlet appInsts matching this Mex client.")
+        Swift.print("===========================================================")
+
+        let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.getCarrierName(), MexUtil.shared.dmePort)
+        let loc = retrieveLocation()
+
+        let findCloudletRequest = createFindCloudletRequest(MexUtil.shared.carrierNameDefault_TDG, loc)
+
+        Log.logger.name = "FindCloudlet"
+        let urlStr = baseuri + MexUtil.shared.findcloudletAPI
+        logw("\n findCloudlet url\n \(urlStr)") // JT 18.12.04
+        logw("\n findCloudletRequest:\n \(findCloudletRequest)") // JT 18.12.04
+
+        // 🔵 API
+        MexRegisterClient.shared.future = postRequest(urlStr, findCloudletRequest, "FindCloudlet1")
+
+        MexRegisterClient.shared.future!.on(
+            success:
+            {
+                print("GetToken received value: \($0)")
+
+                let d = $0 as [String: Any] // JT 18.12.04
+
+                Log.logger.name = "FindCloudlet"
+                logw("\n FindCloudlet result:\n \(d)") // JT 18.12.04
+
+                self.processFindCloudletResult(d) // JT 18.12.06
+
+            },
+            failure: { print("failed with error: \($0)") },
+            completion: { _ = $0 // print("completed with result: \($0)")  // JT 18.12.04
+            }
+        ) // JT 18.11.28
+    }
+
+    // Carrier name can change depending on cell tower.
+    func createFindCloudletRequest(_ carrierName: String, _ gpslocation: [String: Any]) -> [String: Any]
+    {
+        //    findCloudletRequest;
+        var findCloudletRequest = [String: Any]() // Dictionary/json
+
+        findCloudletRequest["vers"] = 1
+        findCloudletRequest["SessionCookie"] = MexRegisterClient.shared.sessioncookie
+        findCloudletRequest["CarrierName"] = carrierName
+        findCloudletRequest["GpsLocation"] = gpslocation
+
+        return findCloudletRequest
+    }
+
+    func processFindCloudletResult(_ d: [String: Any]) // JT 18.12.04
+    {
+        for (index, cld) in d.enumerated()
+        {
+            Swift.print("\n•\n \(index):\(cld)")
+
+            //                init(_ cloudletName: String,
+            //                _ appName: String,
+            //                _ carrierName: String,
+            //                _ gpsLocation: CLLocationCoordinate2D ,
+            //                _ distance: Double,
+            //                _ uri: String,
+            //                _ marker: GMSMarker,
+            //                _ numBytes: Int,
+            //                _ numPackets: Int) // LatLng
+
+            //                 if index == 0
+            //                 {
+            //                    uri = cld.value as! String
+            //                }
+            Swift.print("\(index): \(cld.key)")
+
+            if cld.key == "FQDN"
+            {
+                let v = cld.value
+                Swift.print("•FQDN• \(v)")
+
+                MexUtil.shared.closestCloudlet = v as! String // JT 18.11.27    // JT 18.12.12
+                Swift.print("")
+            }
+
+            if cld.key == "cloudlet_location"
+            {
+                let dd = cld.value as! [String: Any] // Dictionary/json
+
+                Swift.print("••• \(dd)")
+
+                let loc = CLLocationCoordinate2D(
+                    latitude: Double((dd["lat"] as! NSNumber).stringValue)!,
+                    longitude: Double((dd["long"] as! NSNumber).stringValue)!
+                )
+
+                theMap!.animate(toLocation: loc)
+                SKToast.show(withMessage: "Found cloest cloudlet")
+
+                // break
+            }
+        }
+    }
 }
+
 
 // MARK: -
 // MARK: resetUserLocation
@@ -1007,6 +1132,28 @@ private func stopGPS()
     Locator.stopRequest(locationRequest!)
 }
 
+
+func doUserMarker(_ loc: CLLocationCoordinate2D)
+{
+    // requestWhenInUseAuthorization()
+    
+    userMarker = GMSMarker(position: loc)
+    userMarker!.title = "You are here"
+    userMarker!.snippet = "Drag to spoof" //   marker!.snippet = "Tap for details"
+    
+    //  marker.map = self.mGoogleMap
+    let iconTemplate = UIImage(named: "ic_marker_mobile-web")
+    
+    let tint = getColorByHex(MexRegisterClient.COLOR_NEUTRAL)
+    let tinted = iconTemplate!.imageWithColor(tint)
+    
+    let resized = tinted.imageResize(sizeChange: CGSize(width: 60, height: 60))
+    userMarker!.icon = resized
+    userMarker!.map = theMap
+    
+    userMarker!.isDraggable = true // drag to test spoofing
+}
+
 // MARK: -
 
 // used by: GetToken, getAppInstNow, verify  loc
@@ -1022,111 +1169,408 @@ private func retrieveLocation() -> [String: Any]
     }
     else
     {
-        location["lat"] = -122.149349
+        location["lat"] = -122.149349   //
         location["long"] = 37.459609
     }
 
     return location
 }
 
-// Mark: -
+// MARK: -
 
-func FaceDetection(_ image: UIImage?) // JT 18.11.26
+class MexFaceRecognition
 {
-    if closestCloudlet == ""
+     var faceDetectionStartTime:DispatchTime?    // JT 18.11.28 one at a time
+     var faceRecognitionStartTime:DispatchTime?      // JT 18.12.10 one at a time
+     var faceRecognitionImages =  [UIImage]()  // JT 18.12.10
+     var faceRecognitionCurrentImage: UIImage?   // JT 18.12.10 todo refactor
+
+    
+    // Mark: -
+    // Mark: FaceDetection
+    //var toggle: Int = 0  // JT 18.12.11 todo refactor
+    
+    func FaceDetection(_ image: UIImage?, _ service: String)    // _ kind:Int )   // JT 18.12.13 // JT 18.12.16 pass in  latencyMsg and detectedMsg and recognizedMsg
     {
-        SKToast.show(withMessage: "Need to Find closest cloudlet first")
-Swift.print("Need to Find closest cloudlet first")
-        return
-    }
-    // detector/detect
-    // Used to send a face image to the server and get back a set of coordinates for any detected faces.
-    // POST http://<hostname>:8000/detector/detect/
-
-    let faceDetectionAPI: String = "/detector/detect/"
-
-//    Swift.print("FaceDetection")
-//    Swift.print("FaceDetection MEX .")
-//    Swift.print("====================\n")
-//
-//    let DEF_FACE_HOST_CLOUD = "mobiledgexsdkdemomobiledgexsdkdemo10.azcentraluscloudlet.azure.mobiledgex.net"
-//    let DEF_FACE_HOST_EDGE = "mobiledgexsdkdemomobiledgexsdkdemo10.bonndemocloudlet.tdg.mobiledgex.net"
-
-    //  let baseuri = MexUtil.shared.generateBaseUri2(MexUtil.shared.getCarrierName(), 8000) // JT 18.11.26
-
-    //   let baseuri = DEF_FACE_HOST_CLOUD + ":" + "8000"
-    let baseuri = closestCloudlet + ":" + "8000" // JT 18.11.27
-    var urlStr = "http://" + baseuri + faceDetectionAPI // JT 18.11.27 URLConvertible
-
-    // Swift.print("\(urlStr)")
-
-    var params: [String: String] = [:] // JT 18.11.27
-
-    //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/detector/detect/"
-
-    if let image = image
-    {
-        let imageData = (image.pngData()! as NSData).base64EncodedString(
-            options: NSData.Base64EncodingOptions.lineLength64Characters
-        )
-
-        params["image"] = imageData // JT 18.11.26
-
-        //   let imageData2 = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"  // JT 18.11.27 tmp
-        //   params["image"] = imageData2 // JT 18.11.26 tmp
-
-        let headers: HTTPHeaders = [
-            "Accept": "application/json",
-            // "Content-Type": "application/json",    // JT 18.11.27 fails
-            "Charsets": "utf-8",
-        ]
-//    postRequest(urlStr, params, "FaceDetection")
-
-        faceDetectionStartTime = DispatchTime.now() // <<<<<<<<<< Start time
+        var broadcast =  "FaceDetectionLatency" + service   // JT 18.12.16
         
-        let requestObj = Alamofire.request(urlStr,
-                                           method: HTTPMethod.post,
-                                           parameters: params
-                                           // , encoding: JSONEncoding.default // of -d
-                                           , headers: headers) // JT 18.11.27
-
-            .responseJSON
-        { response in
-            //    Swift.print("----\n")
-            //    Swift.print("\(response)")
-            //    debugPrint(response)
-
-            switch response.result {
-            case let .success(data):
-
-                // Swift.print("")
-                let d = data as! [String: Any]
-                let success = d["success"] as! String
-                if success == "true"
+        let faceDetectionFuture = FaceDetectionCore(image, service, post: broadcast)    // JT 18.12.16
+        
+        faceDetectionFuture.on(
+            success:
+            {
+                print("FaceDetection received value: \($0)")
+                
+                let reply = $0 as [String: Any] // JT 18.12.03
+                
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue:  "faceDetected" + service) , object: reply) // JT 18.12.08 draw blue rect around
+                
+                SKToast.show(withMessage: "FaceDetection ")
+                
+                let tv = UserDefaults.standard.bool(forKey: "doFaceRecognition") //
+                
+                if tv && doAFaceRecognition
                 {
-                   // Swift.print("data: \(data)") // JT 18.11.27
-
-                    let end = DispatchTime.now()   // <<<<<<<<<<   end time
-                    let nanoTime = end.uptimeNanoseconds -  faceDetectionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
-                    let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
+                    doAFaceRecognition = false // wait for que to empty
                     
-                    Swift.print("FaceDetection time: \(timeInterval)")  // JT 18.11.28
-                    SKToast.show(withMessage: "FaceDetection  time: \(timeInterval) result: \(data)")   // JT 18.11.28
+                    self.faceRecognitionImages.removeAll() // JT 18.12.10
+                    
+                    if false   // JT 18.12.15 use whole image
+                    {
+                        let rects = reply["rects"] as! [[Int]] // JT 18.12.10
 
-                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceDetection"), object: d["rects"]) // JT 18.11.27
-                }
-                else
-                {
-                    doAFaceDetection = true // JT 18.11.26
-                }
+                        for a in rects
+                        {
+                           // let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
+                            let r = convertPointsToRect(a)  // JT 18.12.13
 
-            case let .failure(error):
-                print(error)
-                SKToast.show(withMessage: "UpdateLocSimLocation Failed: \(error)")
-            }
+                            Swift.print("r = \(r)") // JT 18.12.10
+                            let face = image!.cropped(to: r)
+                            self.faceRecognitionImages.append(face) // JT 18.12.10
+                        }
+                    }
+                    else
+                    {
+                        self.faceRecognitionImages.append(image!)    // JT 18.12.15 use whole image
+                    }
+                    
+                    Swift.print("")
+                    self.doNextFaceRecognition(service) // JT 18.12.10
+                }
+                
+                // Log.logger.name = "FaceDetection"
+                // logw("\FaceDetection result: \(registerClientReply)")    // JT 18.12.04
+        },
+            failure: { print("FaceDetection failed with error: \($0)")
+                
+        },
+            completion: { _ = $0 // print("completed with result: \($0)")  // JT 18.12.04
         }
-
-        // debugPrint(requestObj) // dump curl
-        // Swift.print("")
+        ) // JT 18.11.28
     }
+    
+    // JT 18.12.12 todo pass in host
+    
+    func FaceDetectionCore(_ image: UIImage?,  _ service: String, post broardcastMsg: String?)     -> Future<[String: AnyObject], Error> // JT 18.11.28
+    {
+        let promise = Promise<[String: AnyObject], Error>() // JT 18.11.28
+        
+        // detector/detect
+        // Used to send a face image to the server and get back a set of coordinates for any detected faces.
+        // POST http://<hostname>:8000/detector/detect/
+        
+        let faceDetectionAPI: String = "/detector/detect/"
+        
+        //    Swift.print("FaceDetection")
+        //    Swift.print("FaceDetection MEX .")
+        //    Swift.print("====================\n")
+        //
+        
+        getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_EDGE, post: "updateNetworkLatenciesEdge") // JT 18.12.12
+        getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud") // JT 18.12.12
+        
+        var baseuri = service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_EDGE : MexUtil.shared.DEF_FACE_HOST_CLOUD + ":" + "8000" // JT 18.12.11
+        
+        var urlStr = "http://" + baseuri + faceDetectionAPI // JT 18.11.27 URLConvertible
+        
+        // Swift.print("\(urlStr)")
+        
+        var params: [String: String] = [:] // JT 18.11.27
+        
+        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/detector/detect/"
+        
+        if let image = image
+        {
+            let imageData = (image.pngData()! as NSData).base64EncodedString(
+                options: NSData.Base64EncodingOptions.lineLength64Characters
+            )
+            
+            params["image"] = imageData // JT 18.11.26
+            
+            //   let imageData2 = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"  // JT 18.11.27 tmp smallest working example
+            //   params["image"] = imageData2 // JT 18.11.26 tmp
+            
+            let headers: HTTPHeaders = [
+                "Accept": "application/json",
+                // "Content-Type": "application/json",    // JT 18.11.27 fails. we are doing url encoding no json
+                "Charsets": "utf-8",
+                ]
+            //    postRequest(urlStr, params, "FaceDetection")
+            
+            faceDetectionStartTime = DispatchTime.now() // <<<<<<<<<< Start time
+            
+            let requestObj = Alamofire.request(urlStr,
+                                               method: HTTPMethod.post,
+                                               parameters: params
+                // , encoding: JSONEncoding.default // of -d
+                , headers: headers) // JT 18.11.27
+                
+                .responseJSON
+                { response in
+                    //    Swift.print("----\n")
+                    //    Swift.print("\(response)")
+                    //    debugPrint(response)
+                    
+                    switch response.result {
+                    case let .success(data):
+                        
+                        // Swift.print("")---
+                        let d = data as! [String: Any]
+                        let success = d["success"] as! String
+                        if success == "true"
+                        {
+                            // Swift.print("data: \(data)") // JT 18.11.27
+                            
+                            let end = DispatchTime.now() // <<<<<<<<<<   end time
+                            let nanoTime = end.uptimeNanoseconds - self.faceDetectionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+                            let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
+                            
+                            Swift.print("FaceDetection time: \(timeInterval)") // JT 18.11.28
+                            SKToast.show(withMessage: "FaceDetection  time: \(timeInterval) result: \(data)") // JT 18.11.28
+                            
+                            let aa = d["rects"]
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceDetection"), object: aa) // JT 18.12.08 draw blue rect around face  [[Int]]
+                            
+                            promise.succeed(value: ["rects": aa as AnyObject]) // JT 18.11.28 [[Int]]
+                            
+                            let latency = String(format: " %4.3f", timeInterval * 1000) // JT 18.12.11
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: broardcastMsg!), object: latency) // JT 18.12.11
+                        }
+                        else
+                        {
+                            let tv =  UserDefaults.standard.bool(forKey: "doFaceRecognition") //
+                            if tv == false
+                            {
+                                doAFaceDetection = true // JT 18.11.26 atomic, one at a time
+                            }
+                        }
+                        
+                    case let .failure(error):
+                        print(error)
+                        //  SKToast.show(withMessage: "FaceDetection Failed: \(error)") // JT 18.12.10
+                        promise.fail(error: error) // JT 18.12.10
+                    }
+            }
+            
+            // debugPrint(requestObj) // dump curl
+            // Swift.print("")
+        }
+        
+        return promise.future // JT 18.11.28
+    }
+
+    // Mark: -
+    // Mark: FaceRecognition
+    
+    
+    
+    func doNextFaceRecognition( _ service: String)      // JT 18.12.16
+    {
+        if faceRecognitionImages.count == 0
+        {
+            doAFaceDetection = true // JT 18.11.26 todo tmp
+            doAFaceRecognition = true
+            return
+        }
+        let imageOfFace = faceRecognitionImages.removeFirst()
+        faceRecognitionCurrentImage = imageOfFace
+        
+        var faceRecognitionFuture:Future<[String: AnyObject], Error>? // async result (captured by async?)
+        
+        faceRecognitionFuture = FaceRecognition(imageOfFace, service) // JT 18.12.10    // JT 18.12.16
+        
+        faceRecognitionFuture!.on(
+            success:
+            {
+                print("FaceRecognition received value: \($0)")
+                
+                let reply = $0 as [String: Any]    // JT 18.12.03 json/dictionary
+                print("FaceRecognition received value: \(reply)")
+                
+                let rects = reply["rect"]
+                let rectData =   rects as! [Int] // JT 18.12.10
+                
+                SKToast.show(withMessage: "FaceRec \(reply["subject"]) confidence: \(reply["confidence"]) ")
+                Swift.print("FaceRecognition \(reply)")
+                
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "faceRecognized" + service), object: reply )  // JT 18.12.16
+                
+                //     doAFaceRecognition = true
+                
+                //            DispatchQueue.main.async(execute: {
+                //                doNextFaceRecognition()     // JT 18.12.10
+                //
+                //            })
+                DispatchQueue.main.async {
+                    self.doNextFaceRecognition(service)     // JT 18.12.10 next
+                    
+                }
+                //Log.logger.name = "FaceDetection"
+                //logw("\FaceDetection result: \(registerClientReply)")    // JT 18.12.04
+        },
+            failure: { print("FaceRecognition failed with error: \($0)")
+                
+        },
+            completion: { let _ = $0 //print("completed with result: \($0)")  // JT 18.12.04
+                
+        }
+        ) // JT 18.11.28
+    }
+    
+    
+    
+    func FaceRecognition(_ image: UIImage?, _ service: String) // JT 18.11.26
+        -> Future<[String: AnyObject], Error> // JT 18.11.28
+    {
+        let promise = Promise<[String: AnyObject], Error>()   // JT 18.11.28
+        
+        // detector/detect
+        // Used to send a face image to the server and get back a set of coordinates for any detected faces.
+        // POST http://<hostname>:8000/detector/detect/
+        
+        let faceRecognitonAPI: String = "/recognizer/predict/"  // JT 18.12.11
+        
+        //    Swift.print("FaceRecogniton")
+        //    Swift.print("FaceRecogniton MEX .")
+        //    Swift.print("====================\n")
+        
+        
+        var postMsg =  "faceRecognitionLatency" + service   // JT 18.12.13
+        var baseuri = service ==  "Cloud" ? MexUtil.shared.DEF_FACE_HOST_CLOUD : MexUtil.shared.DEF_FACE_HOST_EDGE  // JT 18.12.16
+            + ":" + "8000"
+        
+        var urlStr = "http://" + baseuri + faceRecognitonAPI // JT 18.11.27 URLConvertible
+        
+        // Swift.print("\(urlStr)")
+        
+        var params: [String: String] = [:] // JT 18.11.27
+        
+        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/recognizer/predict/"
+        
+        if let image = image
+        {
+            let imageData = (image.pngData()! as NSData).base64EncodedString(
+                options: NSData.Base64EncodingOptions.lineLength64Characters
+            )
+            
+            params["image"] = imageData // JT 18.11.26
+            
+            //   let imageData2 = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"  // JT 18.11.27 tmp smallest working example
+            //   params["image"] = imageData2 // JT 18.11.26 tmp
+            
+            let headers: HTTPHeaders = [
+                "Accept": "application/json",
+                // "Content-Type": "application/json",    // JT 18.11.27 fails. we are doing url encoding no json
+                "Charsets": "utf-8",
+                ]
+            
+            faceRecognitionStartTime = DispatchTime.now() // <<<<<<<<<< Start time
+            
+            let requestObj = Alamofire.request(urlStr,
+                                               method: HTTPMethod.post,
+                                               parameters: params
+                // , encoding: JSONEncoding.default // of -d
+                , headers: headers) // JT 18.11.27
+                
+                .responseJSON
+                { response in
+                    //    Swift.print("----\n")
+                    //    Swift.print("\(response)")
+                    //    debugPrint(response)
+                    
+                    switch response.result {
+                    case let .success(data):
+                        
+                        // Swift.print("")
+                        let d = data as! [String: Any]
+                        let success = d["success"] as! String
+                        if success == "true"
+                        {
+                            // Swift.print("data: \(data)") // JT 18.11.27
+                            
+                            let end = DispatchTime.now()   // <<<<<<<<<<   end time
+                            let nanoTime = end.uptimeNanoseconds -  self.faceRecognitionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+                            let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
+                            
+                            promise.succeed(value: d as [String : AnyObject])  //
+                            
+                            Swift.print("FaceRecognition time: \(timeInterval)")  // JT 18.11.28
+                            SKToast.show(withMessage: "FaceRecognition  time: \(timeInterval) result: \(data)")   // JT 18.11.28
+                            
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceRecognized"), object: d)   // JT 18.12.13
+                            
+                            
+                            let latency = String( format: " %4.3f", timeInterval * 1000 ) // JT 18.12.11 ms
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: postMsg), object: latency)     // JT 18.12.11 post latency
+                        }
+                        else
+                        {
+                            Swift.print("FaceRecognition failed")   // JT 18.12.14
+                        }
+                        
+                    case let .failure(error):
+                        print(error)
+                        SKToast.show(withMessage: "FaceRecognition Failed: \(error)")
+                        promise.fail(error: error)      // JT 18.12.10
+                        
+                    }
+            }
+            
+            // debugPrint(requestObj) // dump curl
+            // Swift.print("")
+        }
+        
+        return promise.future   // JT 18.11.28
+        
+    }
+
 }
+
+
+
+func convertPointsToRect(_ a:[Int])  ->CGRect    // JT 18.12.13
+{
+    let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
+    
+    return r
+}
+
+// MARK:-
+
+func getNetworkLatencyEdge()
+{
+    getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_EDGE, post: "latencyEdge")    // JT 18.12.12
+    
+}
+
+func getNetworkLatencyCloud()
+{
+    getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "latencyCloud")    // JT 18.12.12
+    
+}
+
+
+
+func getNetworkLatency(_ hostName:String, post name: String)    // JT 18.12.12
+{
+    Swift.print("\(hostName)")  // JT 18.12.12
+    
+    
+    PlainPing.ping(hostName, withTimeout: 1.0, completionBlock: { (timeElapsed: Double?, error: Error?) in
+        
+        if let latency = timeElapsed
+        {
+            // print("\(ping) latency (ms): \(latency)") // JT 18.11.27
+            
+            let latencyMsg = String(format: " %4.3f", latency) // JT 18.12.11
+            
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: name), object: latencyMsg) // JT 18.12.12
+        }
+        if let error = error
+        {
+            print("error: \(error.localizedDescription)")
+        }
+        
+    })
+}
+

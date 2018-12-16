@@ -111,7 +111,6 @@
 		25DCD70D2199F798000437A5 /* RowControllerType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C12199F797000437A5 /* RowControllerType.swift */; };
 		25DCD70E2199F798000437A5 /* RowProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C22199F797000437A5 /* RowProtocols.swift */; };
 		25DCD70F2199F798000437A5 /* RowType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C32199F797000437A5 /* RowType.swift */; };
-		25DCD7102199F798000437A5 /* Section.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C42199F797000437A5 /* Section.swift */; };
 		25DCD7112199F798000437A5 /* SelectableRowType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C52199F797000437A5 /* SelectableRowType.swift */; };
 		25DCD7122199F798000437A5 /* SelectableSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C62199F797000437A5 /* SelectableSection.swift */; };
 		25DCD7132199F798000437A5 /* SwipeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C72199F797000437A5 /* SwipeActions.swift */; };
@@ -164,6 +163,7 @@
 		25DCD7432199F798000437A5 /* RuleRequired.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FE2199F798000437A5 /* RuleRequired.swift */; };
 		25DCD7442199F798000437A5 /* RuleURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6FF2199F798000437A5 /* RuleURL.swift */; };
 		25DCD7462199FE01000437A5 /* menu-512.png in Resources */ = {isa = PBXBuildFile; fileRef = 25DCD7452199FE01000437A5 /* menu-512.png */; };
+		25F4CC7921B8BF7B0087061F /* Section.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25DCD6C42199F797000437A5 /* Section.swift */; };
 		A0980B5C360648B8C9A89293 /* Pods_MobiledgeXSDKDemo_IOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B3BA5BBEA83B2DFE5816F072 /* Pods_MobiledgeXSDKDemo_IOS.framework */; };
 /* End PBXBuildFile section */
 
@@ -363,6 +363,8 @@
 		25DCD6FE2199F798000437A5 /* RuleRequired.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleRequired.swift; sourceTree = "<group>"; };
 		25DCD6FF2199F798000437A5 /* RuleURL.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RuleURL.swift; sourceTree = "<group>"; };
 		25DCD7452199FE01000437A5 /* menu-512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menu-512.png"; sourceTree = "<group>"; };
+		25F4CC2221B5E8E40087061F /* ReadMe.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = ReadMe.rtf; sourceTree = SOURCE_ROOT; };
+		25F4CC7B21B8C7260087061F /* Wormholy.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Wormholy.framework; path = "MobiledgeXSDKDemo.IOS/ThirdParty/Wormholy-master-2/DerivedData/Wormholy/Build/Products/Debug-iphoneos/Wormholy.framework"; sourceTree = "<group>"; };
 		5DBF0F28B31E36202240C4D0 /* Pods-MobiledgeXSDKDemo.IOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MobiledgeXSDKDemo.IOS.release.xcconfig"; path = "Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS.release.xcconfig"; sourceTree = "<group>"; };
 		B3BA5BBEA83B2DFE5816F072 /* Pods_MobiledgeXSDKDemo_IOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MobiledgeXSDKDemo_IOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B88B2C9D512A5BAA0BA2DCFF /* Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig"; path = "Pods/Target Support Files/Pods-MobiledgeXSDKDemo.IOS/Pods-MobiledgeXSDKDemo.IOS.debug.xcconfig"; sourceTree = "<group>"; };
@@ -507,6 +509,7 @@
 				25D5DCBC2180FB500097941C /* Podfile */,
 				25D5DC8121801C6B0097941C /* ThirdParty2 */,
 				25623EE1217F7BD60092956D /* Classes */,
+				25F4CC2221B5E8E40087061F /* ReadMe.rtf */,
 				25623EC1217F79D30092956D /* AppDelegate.swift */,
 				25623EC3217F79D30092956D /* ViewController.swift */,
 				25DCD6322198A5BF000437A5 /* Sample_client.swift */,
@@ -840,6 +843,7 @@
 		B6D538BC6126FB1585120F7F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				25F4CC7B21B8C7260087061F /* Wormholy.framework */,
 				252C2D332182561C0091A1D4 /* SwiftProtobuf.framework */,
 				B3BA5BBEA83B2DFE5816F072 /* Pods_MobiledgeXSDKDemo_IOS.framework */,
 			);
@@ -1104,6 +1108,7 @@
 				25DCD7132199F798000437A5 /* SwipeActions.swift in Sources */,
 				25DCD70F2199F798000437A5 /* RowType.swift in Sources */,
 				25DCD6262197AC91000437A5 /* IPLocationRequest.swift in Sources */,
+				25F4CC7921B8BF7B0087061F /* Section.swift in Sources */,
 				258BEF15219F9E880055227D /* PreviewView.swift in Sources */,
 				252C2D9A21857E4E0091A1D4 /* GetAppInstList.java.swift in Sources */,
 				25DCD6282197ACB3000437A5 /* FindPlaceRequest.swift in Sources */,
@@ -1114,7 +1119,6 @@
 				25DCD6612199F128000437A5 /* SettingsViewController.swift in Sources */,
 				25DCD71C2199F798000437A5 /* AlertOptionsRow.swift in Sources */,
 				25DCD72F2199F798000437A5 /* MultipleSelectorRow.swift in Sources */,
-				25DCD7102199F798000437A5 /* Section.swift in Sources */,
 				252C2E1B218AA5A30091A1D4 /* MainActivity.java.swift in Sources */,
 				252C2E3F218CB19C0091A1D4 /* MatchingEngineResultsListener.java.swift in Sources */,
 				258BEF2821A0E0AB0055227D /* RFAboutViewDetailViewController.swift in Sources */,
@@ -1362,6 +1366,7 @@
 					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator",
 					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products\"/**",
 					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator\"",
+					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/ThirdParty/Wormholy-master-2/DerivedData/Wormholy/Build/Products/Debug-iphoneos",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1416,6 +1421,7 @@
 					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator",
 					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products\"/**",
 					"\"$(SRCROOT)/MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphonesimulator\"",
+					"$(PROJECT_DIR)/MobiledgeXSDKDemo.IOS/ThirdParty/Wormholy-master-2/DerivedData/Wormholy/Build/Products/Debug-iphoneos",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",

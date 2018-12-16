@@ -30,7 +30,6 @@ public class Cloudlet // implements Serializable
     var latencyMax: Double = 0
     var latencyStddev: Double = 0
     var latencyTotal: Double = 0
-   // var mNumPings: Int = 3 // JT 18.11.13
 
     var pings: [String] = [String]() // JT 18.11.13 // JT 18.11.22
     var latencies = [Double]() // JT 18.11.13
@@ -93,7 +92,8 @@ public class Cloudlet // implements Serializable
                        _ uri: String,
                        _ marker: GMSMarker,
                        _ numBytes: Int,
-                       _ numPackets: Int)
+                       _ numPackets: Int    // # packets to ping
+        )
     {
         Swift.print("Cloudlet update. cloudletName= \(cloudletName)")
 
@@ -174,6 +174,12 @@ public class Cloudlet // implements Serializable
                 self.latencyAvg = sumArray / Double(self.latencies.count)
 
                 self.latencyStddev = self.standardDeviation(arr: self.latencies) // JT 18.11.13
+
+                
+                let latencyMsg = String( format: " %4.3f", self.latencyAvg ) // JT 18.12.11
+                
+               NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)       // JT 18.12.12
+                
             }
             if let error = error
             {

@@ -9,18 +9,44 @@
 import AVFoundation
 import UIKit
 import Vision
+// import PlainPing
 
-var doAFaceDetection = true // JT 18.11.26
+var doAFaceDetection = true // JT 18.11.26 todo refactor patterned
+var doAFaceRecognition = false // JT 18.12.10 one at a time
+
+enum MexKind: Int // JT 18.12.14
+{
+    case mexCloud
+    case mexEdge
+}
 
 class FaceDetectionViewController: UIViewController
 {
     // VNRequest: Either Retangles or Landmarks
     var faceDetectionRequest: VNRequest!
 
-    var sentImageSize = CGSize(width:0, height:0)  // JT 18.11.28
+    var sentImageSize = CGSize(width: 0, height: 0) // JT 18.11.28
+    @IBOutlet var latencyCloudLabel: UILabel! // JT 18.12.11
+    @IBOutlet var latencyEdgeLabel: UILabel! //
 
- //   @IBOutlet weak var tmpImageView: UIImageView!   // JT 18.11.27
-    
+    @IBOutlet var faceRecognitionLatencyCloudLabel: UILabel! // JT 18.12.13
+    @IBOutlet var faceRecognitionLatencyEdgeLabel: UILabel! // JT 18.12.13
+
+    @IBOutlet var networkLatencyCloudLabel: UILabel! //
+    @IBOutlet var networkLatencyEdgeLabel: UILabel! //
+
+    // @IBOutlet weak var faceRecognitonNameLabel: UILabel! // todo remove
+    @IBOutlet var faceRecognitonNameCloudLabel: UILabel! //
+    @IBOutlet var faceRecognitonNameEdgeLabel: UILabel! //
+
+    //   @IBOutlet weak var tmpImageView: UIImageView!   // JT 18.11.27
+    var futureEdge: Future<[String: AnyObject], Error>? // async result (captured by async?) // JT 18.12.13
+    var futureCloud: Future<[String: AnyObject], Error>? // async result (captured by async?)    // JT 18.12.13
+
+
+    let faceDetectionEdge   = MexFaceRecognition()   // JT 18.12.15
+    let faceDetectionCloud  = MexFaceRecognition()  // JT 18.12.15
+
     override func viewDidLoad()
     {
         super.viewDidLoad()
@@ -77,21 +103,35 @@ class FaceDetectionViewController: UIViewController
         { [unowned self] in
             self.configureSession()
         }
-        
+
         /// --- tmp
-        
-        let barButtonItem = UIBarButtonItem(title: "StopTmp", style: .plain, target: self, action: #selector(FaceDetectionViewController.stopIt(sender:)))
 
-        navigationItem.rightBarButtonItem = barButtonItem   // JT 18.11.28 tmp
+        let barButtonItem = UIBarButtonItem(title: "StopTmp", style: .plain, target: self, action: #selector(FaceDetectionViewController.stopIt(sender:))) // JT 18.12.14 todo toggle?
 
+        navigationItem.rightBarButtonItem = barButtonItem // JT 18.11.28 tmp
+
+        // ---
+
+        let tv = UserDefaults.standard.bool(forKey: "doFaceRecognition") //
+
+        title = tv ? "Face Recognition" : "Face Dectection" // JT 18.12.13
+
+        // ---
+
+        let latencyCloud = UserDefaults.standard.string(forKey: "latencyCloud") // JT 18.12.14
+        networkLatencyCloudLabel.text = "Cloud: \(latencyCloud!) ms" // JT 18.12.11
+
+        let latencyEdge = UserDefaults.standard.string(forKey: "latencyEdge") // JT 18.12.14
+        networkLatencyEdgeLabel.text = "Edge: \(latencyEdge!) ms" // JT 18.12.11
         
+        doAFaceDetection = true // JT 18.12.14
+
     }
-    
+
     @objc public func stopIt(sender _: UIBarButtonItem) // JT 18.11.28
     {
         Swift.print("stop") // JT 18.11.28
-        self.session.stopRunning()  // JT 18.11.28
-
+        session.stopRunning() // JT 18.11.28
     }
 
     override func viewWillAppear(_ animated: Bool)
@@ -100,7 +140,8 @@ class FaceDetectionViewController: UIViewController
 
         sessionQueue.async
         { [unowned self] in
-            switch self.setupResult {
+            switch self.setupResult
+            {
             case .success:
                 // Only setup observers and start the session running if setup succeeded.
                 self.addObservers()
@@ -110,7 +151,8 @@ class FaceDetectionViewController: UIViewController
             case .notAuthorized:
                 DispatchQueue.main.async
                 { [unowned self] in
-                    let message = NSLocalizedString("AVCamBarcode doesn't have permission to use the camera, please change privacy settings", comment: "Alert message when the user has denied access to the camera")
+                    let message = NSLocalizedString("AVCamBarcode doesn't have permission to use the camera, please change privacy settings",
+                                                    comment: "Alert message when the user has denied access to the camera")
                     let alertController = UIAlertController(title: "AppleFaceDetection", message: message, preferredStyle: .alert)
                     alertController.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"), style: .cancel, handler: nil))
                     alertController.addAction(UIAlertAction(title: NSLocalizedString("Settings", comment: "Alert button to open Settings"), style: .default, handler: { _ in
@@ -381,23 +423,224 @@ extension FaceDetectionViewController
 
                 let d = notification.object as! [[Int]]
 
-                //SKToast.show(withMessage: "FaceDetection raw result\(d)")
+                // SKToast.show(withMessage: "FaceDetection raw result\(d)")
 
-               // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
-                doAFaceDetection = true // JT 18.11.26
-                // JT 18.11.26 todo timing
+                // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
 
-                let a = d[0]    // get face rect
-                
-                let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3]-a[1]))  // face rect
-                
-                self.previewView.drawFaceboundingBox2(rect: r, hint: self.sentImageSize )     // JT 18.11.28
-                
-                Swift.print("face r= \(r)")  // JT 18.11.28
+                let a = d[0] // get face rect
+
+                // let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
+                let r = convertPointsToRect(a) // JT 18.12.13
+
+                self.previewView.drawFaceboundingBox2(rect: r, hint: self.sentImageSize) // JT 18.11.28 blue
+
+                Swift.print("face r= \(r)") // JT 18.11.28
                 SKToast.show(withMessage: "FaceDetection result: \(r)")
-           }
+
+
+                Swift.print("---------") // JT 18.12.14
+                doAFaceDetection = true // JT 18.11.26
+            }
+        }
+
+        NotificationCenter.default.addObserver(self, selector: #selector(FaceDetectionLatencyCloud), name: Notification.Name("FaceDetectionLatencyCloud"), object: nil)
+
+        NotificationCenter.default.addObserver(self, selector: #selector(FaceDetectionLatencyEdge), name: Notification.Name("FaceDetectionLatencyEdge"), object: nil)
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceRecognitionLatencyEdge"), object: nil, queue: nil) // updateNetworkLatencies
+        { [weak self] notification in
+            guard let _ = self else { return }
+
+            let v = notification.object as! String
+
+            Swift.print("updateNetworkLatenciesEdge: \(v)")
+
+            DispatchQueue.main.async
+            {
+                self!.faceRecognitionLatencyEdgeLabel.text = "Edge: \(v) ms" // JT 18.12.11
+            }
+        } // JT 18.12.13
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceRecognitionLatencyCloud"), object: nil, queue: nil) // updateNetworkLatencies
+        { [weak self] notification in
+            guard let _ = self else { return }
+
+            let v = notification.object as! String
+
+            Swift.print("faceRecognitionLatencyCloud: \(v)")
+
+            DispatchQueue.main.async
+            {
+                self!.faceRecognitionLatencyCloudLabel.text = "cloud: \(v) ms" // JT 18.12.11
+            }
+        } // JT 18.12.13
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "updateNetworkLatenciesCloud"), object: nil, queue: nil) // updateNetworkLatencies
+        { [weak self] notification in
+            guard let _ = self else { return } // canceled
+
+            let v = notification.object as! String // JT 18.11.09
+
+            Swift.print("updateNetworkLatenciesCloud")
+            Swift.print("cloud: \(v)")
+
+            DispatchQueue.main.async
+            {
+                self!.networkLatencyCloudLabel.text = "Cloud: \(v) ms" // JT 18.12.11
+            }
+        }
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "updateNetworkLatenciesEdge"), object: nil, queue: nil) // updateNetworkLatencies
+        { [weak self] notification in
+            guard let _ = self else { return }
+
+            let v = notification.object as! String
+
+            Swift.print("updateNetworkLatenciesEdge")
+            Swift.print("edge: \(v)")
+
+            DispatchQueue.main.async
+            {
+                self!.networkLatencyEdgeLabel.text = "Edge: \(v) ms" // JT 18.12.11
+            }
+        }
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceRecognizedCloud"), object: nil, queue: nil)
+        { [weak self] notification in
+            guard let _ = self else { return }
+
+            let d = notification.object as! [String: Any] // JT 18.12.13
+
+            Swift.print("faceRecognizedCloud: \(d)")
+
+            let name = d["subject"] as! String // JT 18.12.13
+            let a = d["rect"] as! [Int] // JT 18.12.13
+
+            // let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
+            let r = convertPointsToRect(a) // JT 18.12.13
+
+            let r2 = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize) // JT 18.11.28
+
+            DispatchQueue.main.async
+            {
+                self!.faceRecognitonNameCloudLabel.text = name
+                self!.faceRecognitonNameCloudLabel.isHidden = false
+                
+                self!.faceRecognitonNameCloudLabel.center = CGPoint(x: r.midX, y: r.origin.y - 20) // above
+                
+            }
+        }
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceRecognizedEdge"), object: nil, queue: nil)
+        { [weak self] notification in
+            guard let _ = self else { return }
+
+            let d = notification.object as! [String: Any] // Dictionary/json
+
+            if d["success"] as! String == "true"
+            {
+                let subject = d["subject"] as! String
+                
+                Swift.print("\(notification.name): \(d)")
+                
+                // SKToast.show(withMessage: "FaceDetection raw result\(d)")
+                
+                // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
+                
+                //   let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
+                // let r = convertPointsToRect(a)  // JT 18.12.13
+                
+                self!.previewView.removeMaskLayerMex()    // JT 18.12.14 erase old
+                
+                let a = d["rect"] as! [Int] // JT 18.12.15
+                let r = convertPointsToRect(a)  // JT 18.12.15
+
+                let r2 = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize) // JT 18.11.28 green
+                
+                DispatchQueue.main.async
+                    {
+                       // Swift.print("subject \(subject)")   // JT 18.12.14
+                        self!.faceRecognitonNameEdgeLabel.text = subject
+                        self!.faceRecognitonNameEdgeLabel.isHidden = false
+                        
+                        self!.faceRecognitonNameEdgeLabel.center   = CGPoint(x: r2.midX, y: r2.origin.y + r2.size.height + 20) // below
+                       // Swift.print("\(r)") // JT 18.12.14
+                }
+            }
+            else
+            {
+                self!.faceRecognitonNameEdgeLabel.text = ""    // JT 18.12.14
+                self!.previewView.removeMaskLayerMex()    // JT 18.12.14 erase old
+            }
+            
+        }
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceDetectedCloud"), object: nil, queue: nil)
+        { [weak self] notification in
+            guard let _ = self else { return }
+
+            let d = notification.object as! [String: Any] // Dictionary/json
+            
+            if d["success"] as! Bool == true
+            {
+                let aa = d["rects"] as! [[Int]] // JT 18.12.10
+                let a = aa[0] // JT 18.12.15
+                //   CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
+                 let r = convertPointsToRect(a)  // JT 18.12.13
+                
+                  self!.previewView.removeMaskLayerMex()    // JT 18.12.14 erase old
+
+                self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize) // JT 18.11.28
+                
+                DispatchQueue.main.async
+                    {
+                        
+
+                }
+                
+            }
+            else
+            {
+
+            }
         }
     }
+
+    @objc func FaceDetectionLatencyEdge(_ notification: Notification) // JT 18.12.11
+    {
+        let v = notification.object
+        Swift.print("edge: \(v!)")
+
+        DispatchQueue.main.async
+        {
+            self.latencyEdgeLabel.text = "Edge: \(v!) ms" // JT 18.12.11
+        }
+    }
+
+    @objc func FaceDetectionLatencyCloud(_ notification: Notification) // JT 18.12.11
+    {
+        let v = notification.object
+        Swift.print("Cloud: \(v!)")
+
+        DispatchQueue.main.async
+        {
+            self.latencyCloudLabel.text = "Cloud: \(v!) ms" // JT 18.12.11
+        }
+    }
+
+    @objc func networkLatencyEdge(_ notification: Notification) // JT 18.12.11
+    {
+        let v = notification.object
+        Swift.print("networkLatency edge: \(v!)")
+    }
+
+    @objc func networkLatencyCloud(_ notification: Notification) // JT 18.12.11
+    {
+        let v = notification.object
+        Swift.print("networkLatency Cloud: \(v!)")
+    }
+
+    // MARK: -
 
     private func removeObservers()
     {
@@ -514,18 +757,18 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
             let fudge: CGFloat = 8.0 // JT 18.11.27
             let newSize = CGSize(width: size.width / fudge, height: size.height / fudge) // JT 18.11.27
             let smaller: UIImage? = image?.imageResize(sizeChange: newSize) // JT 18.11.27
-            
-            let rotateImage = smaller!.rotate( radians: .pi/2.0) // JT 18.11.27
-         //   Swift.print("\(rotateImage!.size)") // JT 18.11.27
 
-            sentImageSize = rotateImage!.size   // JT 18.11.28
-            
+            let rotateImage = smaller!.rotate(radians: .pi / 2.0) // JT 18.11.27
+            //   Swift.print("\(rotateImage!.size)") // JT 18.11.27
+
+            sentImageSize = rotateImage!.size // JT 18.11.28
+
 //            DispatchQueue.main.async
 //                { [unowned self] in
 //                 //   self.tmpImageView.image = rotateImage    // JT 18.11.27
 //
 //            }
-            
+
 //            // Create path.
 //            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
 //            if let filePath = paths.first?.appendingPathComponent("MyImageName.png") {
@@ -538,9 +781,9 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 //                }
 //            }
 
-            FaceDetection(rotateImage) // JT 18.11.26
+            faceDetectionEdge.FaceDetection(rotateImage, "Edge") // JT 18.11.26 edge    // JT 18.12.16
+            //         FaceDetection(rotateImage, "Cloud") // JT 18.11.26    cloud // JT 18.12.14 fails
         }
-        // JT 18.10.18 todo send to server
 
         do
         {
