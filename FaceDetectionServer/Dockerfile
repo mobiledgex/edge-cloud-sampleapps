@@ -3,8 +3,8 @@ COPY requirements.txt /tmp
 WORKDIR /tmp
 RUN pip install -r requirements.txt
 WORKDIR /usr/src/app/moedx
-EXPOSE 8000/tcp
+EXPOSE 8008/tcp
 ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-EXPOSE 8000/tcp
+EXPOSE 8008/tcp
 
-CMD ["gunicorn","moedx.wsgi:application","--preload","--bind","0.0.0.0:8000","--workers=10"]
+CMD ["gunicorn","moedx.wsgi:application","--preload","--bind","0.0.0.0:8008","--workers=10"]
