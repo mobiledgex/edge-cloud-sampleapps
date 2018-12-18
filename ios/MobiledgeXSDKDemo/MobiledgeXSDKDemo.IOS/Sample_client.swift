@@ -1257,7 +1257,7 @@ class MexFaceRecognition
         
         // detector/detect
         // Used to send a face image to the server and get back a set of coordinates for any detected faces.
-        // POST http://<hostname>:8000/detector/detect/
+        // POST http://<hostname>:8008/detector/detect/
         
         let faceDetectionAPI: String = "/detector/detect/"
         
@@ -1269,7 +1269,7 @@ class MexFaceRecognition
         getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_EDGE, post: "updateNetworkLatenciesEdge") // JT 18.12.12
         getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud") // JT 18.12.12
         
-        var baseuri = service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_EDGE : MexUtil.shared.DEF_FACE_HOST_CLOUD + ":" + "8000" // JT 18.12.11
+        var baseuri = service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_EDGE : MexUtil.shared.DEF_FACE_HOST_CLOUD + ":" + "8008" // JT 18.12.11
         
         var urlStr = "http://" + baseuri + faceDetectionAPI // JT 18.11.27 URLConvertible
         
@@ -1277,7 +1277,7 @@ class MexFaceRecognition
         
         var params: [String: String] = [:] // JT 18.11.27
         
-        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/detector/detect/"
+        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8008/detector/detect/"
         
         if let image = image
         {
@@ -1426,7 +1426,7 @@ class MexFaceRecognition
         
         // detector/detect
         // Used to send a face image to the server and get back a set of coordinates for any detected faces.
-        // POST http://<hostname>:8000/detector/detect/
+        // POST http://<hostname>:8008/detector/detect/
         
         let faceRecognitonAPI: String = "/recognizer/predict/"  // JT 18.12.11
         
@@ -1437,7 +1437,7 @@ class MexFaceRecognition
         
         var postMsg =  "faceRecognitionLatency" + service   // JT 18.12.13
         var baseuri = service ==  "Cloud" ? MexUtil.shared.DEF_FACE_HOST_CLOUD : MexUtil.shared.DEF_FACE_HOST_EDGE  // JT 18.12.16
-            + ":" + "8000"
+            + ":" + "8008"
         
         var urlStr = "http://" + baseuri + faceRecognitonAPI // JT 18.11.27 URLConvertible
         
@@ -1445,7 +1445,7 @@ class MexFaceRecognition
         
         var params: [String: String] = [:] // JT 18.11.27
         
-        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/recognizer/predict/"
+        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8008/recognizer/predict/"
         
         if let image = image
         {
