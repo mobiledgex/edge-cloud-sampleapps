@@ -8,7 +8,7 @@ import cv2
 
 class RequestClient(object):
     """ """
-    BASE_URL = 'http://127.0.0.1:8000'
+    BASE_URL = 'http://127.0.0.1:8008'
     API_ENDPOINT = '/detect/'
     
     def __init__(self):
