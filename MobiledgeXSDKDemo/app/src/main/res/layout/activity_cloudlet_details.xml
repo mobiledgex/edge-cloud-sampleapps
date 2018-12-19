@@ -60,6 +60,23 @@
                 </TableRow>
 
                 <TableRow
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="5dip">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="IP Address:"
+                        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                    <TextView
+                        android:id="@+id/ipAddress"
+                        android:text="none"
+                        android:textAppearance="?android:attr/textAppearanceMedium" />
+                </TableRow>
+
+                <TableRow
                     android:id="@+id/tableRow2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
