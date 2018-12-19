@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -62,10 +63,12 @@ public class Cloudlet implements Serializable {
     private boolean latencyTestTaskRunning = false;
     private boolean speedTestTaskRunning = false;
     private String uri;
+    private String mFqdnPrefix;
+    private String mIpAddress;
 
-    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPackets) {
+    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, String fqdnPrefix, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
-        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPackets);
+        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, fqdnPrefix, port);
 
         if(CloudletListHolder.getSingleton().getLatencyTestAutoStart()) {
             //All AsyncTask instances are run on the same thread, so this queues up the tasks.
@@ -75,7 +78,7 @@ public class Cloudlet implements Serializable {
         }
     }
 
-    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, int numBytes, int numPackets) {
+    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, String fqdnPrefix, int port) {
         Log.d(TAG, "Cloudlet update. cloudletName="+cloudletName);
         mCloudletName = cloudletName;
         mAppName = appName;
@@ -84,19 +87,18 @@ public class Cloudlet implements Serializable {
         mLongitude = gpsLocation.longitude;
         mDistance = distance;
         mMarker = marker;
-        mNumBytes = numBytes;
-        mNumPackets = numPackets;
-        setUri(uri);
+        setUri(fqdnPrefix, uri, port);
     }
 
     /**
      * From the given string, create the hostname that will be pinged.
      * @param uri
      */
-    public void setUri(String uri) {
-        Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+uri+")");
-        this.openPort = 7777;
-        this.hostName = uri;
+    public void setUri(String fqdnPrefix, String uri, int port) {
+        Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+fqdnPrefix+","+uri+","+port+")");
+        openPort = port;
+        mFqdnPrefix = fqdnPrefix;
+        hostName = fqdnPrefix+uri;
         this.uri = uri;
     }
 
@@ -109,6 +111,7 @@ public class Cloudlet implements Serializable {
      * @return
      */
     private String getDownloadUri() {
+        mNumBytes = CloudletListHolder.getSingleton().getNumBytes();
         String downloadUri;
         if(CloudletListHolder.getSingleton().getDownloadTestType() == staticFile) {
             String size;
@@ -138,11 +141,14 @@ public class Cloudlet implements Serializable {
 
     public String toString() {
         return "mCarrierName="+mCarrierName+" mCloudletName="+mCloudletName+" mLatitude="+mLatitude
-                +" mLongitude="+mLongitude+" mDistance="+mDistance+" uri="+uri;
+                +" mLongitude="+mLongitude+" mDistance="+mDistance+" hostName="+hostName;
     }
 
     public void setSpeedTestResultsListener(SpeedTestResultsListener speedTestResultsListener) {
         this.mSpeedTestResultsListener = speedTestResultsListener;
+
+        // Now that we have a listener, start this task.
+        new ResolveHostNameTask().execute();
     }
 
     public void startLatencyTest() {
@@ -151,6 +157,8 @@ public class Cloudlet implements Serializable {
             Log.d(TAG, "LatencyTest already running");
             return;
         }
+
+        mNumPackets = CloudletListHolder.getSingleton().getNumPackets();
 
         latencyMin=9999;
         latencyAvg=0;
@@ -429,6 +437,24 @@ public class Cloudlet implements Serializable {
         }
     }
 
+    private class ResolveHostNameTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                InetAddress address = InetAddress.getByName(hostName);
+                mIpAddress = address.getHostAddress();
+                return null;
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+            mIpAddress = "Could not resolve";
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Void result) {
+            mSpeedTestResultsListener.onIpAddressResolved();
+        }
+    }
 
     public String getCloudletName() {
         return mCloudletName;
@@ -530,12 +556,14 @@ public class Cloudlet implements Serializable {
         this.mAppName = mAppName;
     }
 
-    public int getNumPackets() { return mNumPackets; }
+    public String getIpAddress() {
+        return mIpAddress;
+    }
 
-    public void setNumPackets(int mNumPings) { this.mNumPackets = mNumPings; }
+    public String getFqdnPrefix() {
+        return mFqdnPrefix;
+    }
 
-    public int getNumBytes() { return mNumBytes; }
 
-    public void setNumBytes(int mNumBytes) { this.mNumBytes = mNumBytes; }
 
 }

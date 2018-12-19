@@ -52,15 +52,13 @@ public class VolleyRequestHandler {
     private boolean doNetLatency = true;
     private final int rollingAvgSize = 100;
 
-    public static final String DEF_FACE_HOST_CLOUD = "mobiledgexsdkdemomobiledgexsdkdemo10.azcentraluscloudlet.azure.mobiledgex.net";
-    public static final String DEF_FACE_HOST_EDGE = "mobiledgexsdkdemomobiledgexsdkdemo10.bonndemocloudlet.tdg.mobiledgex.net";
+    public static final String DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net";
+    public static final String DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net";
 
     //Bruce's private test environment
 //    public static String DEF_FACE_HOST_CLOUD = "acrotopia.com";
 //    public static String DEF_FACE_HOST_EDGE = "192.168.1.86";
 //    public static String DEF_FACE_HOST_EDGE = "10.157.107.83";
-
-    private static int port = 8000;
 
     private String cloudHost;
     private String edgeHost;
@@ -79,6 +77,13 @@ public class VolleyRequestHandler {
         FACE_RECOGNITION,
         FACE_TRAINING,
         FACE_UPDATING_SERVER
+    }
+
+    public static int getFaceServerPort(String hostName) {
+        int port;
+        port = 8008;
+        Log.i(TAG, "getFaceServerPort("+hostName+")="+port);
+        return port;
     }
 
     public VolleyRequestHandler(Camera2BasicFragment camera2BasicFragment) {
@@ -119,74 +124,9 @@ public class VolleyRequestHandler {
         mSubject = subjectName;
     }
 
-    /**
-     * Depending on Latency Testing method preference, perform either a single "ping"
-     * or a single socket open test.
-     *
-     * @param host
-     * @param cloudletType
-     */
-    private void doSinglePing(String host, RollingAverage rollingAverage, Camera2BasicFragment.CloudLetType cloudletType) {
-        long latency = 0;
-        if(latencyTestMethod.equals(CloudletListHolder.LatencyTestMethod.ping)) {
-            try {
-                String pingCommand = "/system/bin/ping -c 1 " + host;
-                String inputLine = "";
-
-                String regex = "(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+) ms";
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher;
-
-                // execute the command on the environment interface
-                Log.d(TAG, "ping command: "+pingCommand);
-                Process process = Runtime.getRuntime().exec(pingCommand);
-                // gets the input stream to get the output of the executed command
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-                inputLine = bufferedReader.readLine();
-                while ((inputLine != null)) {
-                    Log.d(TAG, "ping inputLine=" + inputLine);
-                    if (inputLine.contains("rtt min")) {
-                        // Extract the average round trip time from the inputLine string
-                        matcher = pattern.matcher(inputLine);
-                        if (matcher.find()) {
-                            Log.d(TAG, "ping output=" + matcher.group(0));
-                            latency = (long) (Double.parseDouble(matcher.group(1)) * 1000000.0);
-                            rollingAverage.add(latency);
-                        }
-                        break;
-
-                    } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
-                        latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
-                        mCamera2BasicFragment.showToast("Ping failed. Switching to socket latency test mode.");
-                        break;
-                    }
-                    inputLine = bufferedReader.readLine();
-                }
-            }
-            catch (IOException e){
-                Log.e(TAG, "doSinglePing: EXCEPTION");
-                e.printStackTrace();
-            }
-
-        } else {
-            long startTime = System.nanoTime();
-            boolean reachable = isReachable(host, port, socketTimeout);
-            if (reachable) {
-                long endTime = System.nanoTime();
-                latency = endTime - startTime;
-                rollingAverage.add(latency);
-                Log.d(TAG, host + " reachable=" + reachable + " Latency=" + (latency / 1000000.0) + " ms.");
-            } else {
-                Log.d(TAG, host + " reachable=" + reachable);
-            }
-        }
-
-        mCamera2BasicFragment.updatePing(cloudletType, latency, rollingAverage.getStdDev());
-    }
-
     public class ImageSender {
         public String host;
+        private int port;
         private RollingAverage latencyRollingAvg = new RollingAverage(rollingAvgSize);
         private RollingAverage latencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
         public int trainingCount;
@@ -203,6 +143,7 @@ public class VolleyRequestHandler {
         public ImageSender(String host, Camera2BasicFragment.CloudLetType cloudLetType) {
             this.host = host;
             this.cloudLetType = cloudLetType;
+            port = getFaceServerPort(host);
             HandlerThread handlerThread = new HandlerThread("BackgroundPinger"+cloudLetType);
             handlerThread.start();
             mHandler = new Handler(handlerThread.getLooper());
@@ -380,6 +321,73 @@ public class VolleyRequestHandler {
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
             queue.add(stringRequest);
         }
+
+        /**
+         * Depending on Latency Testing method preference, perform either a single "ping"
+         * or a single socket open test.
+         *
+         * @param host
+         * @param cloudletType
+         */
+        private void doSinglePing(String host, RollingAverage rollingAverage, Camera2BasicFragment.CloudLetType cloudletType) {
+            long latency = 0;
+            if(latencyTestMethod.equals(CloudletListHolder.LatencyTestMethod.ping)) {
+                try {
+                    String pingCommand = "/system/bin/ping -c 1 " + host;
+                    String inputLine = "";
+
+                    String regex = "(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+)\\/(\\d+\\.\\d+) ms";
+                    Pattern pattern = Pattern.compile(regex);
+                    Matcher matcher;
+
+                    // execute the command on the environment interface
+                    Log.d(TAG, "ping command: "+pingCommand);
+                    Process process = Runtime.getRuntime().exec(pingCommand);
+                    // gets the input stream to get the output of the executed command
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                    inputLine = bufferedReader.readLine();
+                    while ((inputLine != null)) {
+                        Log.d(TAG, "ping inputLine=" + inputLine);
+                        if (inputLine.contains("rtt min")) {
+                            // Extract the average round trip time from the inputLine string
+                            matcher = pattern.matcher(inputLine);
+                            if (matcher.find()) {
+                                Log.d(TAG, "ping output=" + matcher.group(0));
+                                latency = (long) (Double.parseDouble(matcher.group(1)) * 1000000.0);
+                                rollingAverage.add(latency);
+                            }
+                            break;
+
+                        } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
+                            latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+                            mCamera2BasicFragment.showToast("Ping failed. Switching to socket latency test mode.");
+                            break;
+                        }
+                        inputLine = bufferedReader.readLine();
+                    }
+                }
+                catch (IOException e){
+                    Log.e(TAG, "doSinglePing: EXCEPTION");
+                    e.printStackTrace();
+                }
+
+            } else {
+                long startTime = System.nanoTime();
+                boolean reachable = isReachable(host, port, socketTimeout);
+                if (reachable) {
+                    long endTime = System.nanoTime();
+                    latency = endTime - startTime;
+                    rollingAverage.add(latency);
+                    Log.d(TAG, host + " reachable=" + reachable + " Latency=" + (latency / 1000000.0) + " ms.");
+                } else {
+                    Log.d(TAG, host + " reachable=" + reachable);
+                }
+            }
+
+            mCamera2BasicFragment.updatePing(cloudletType, latency, rollingAverage.getStdDev());
+        }
+
     }
 
     public static boolean isReachable(String addr, int openPort, int timeOutMillis) {
