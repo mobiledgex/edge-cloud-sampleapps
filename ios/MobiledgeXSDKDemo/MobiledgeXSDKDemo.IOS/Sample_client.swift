@@ -1192,7 +1192,7 @@ class MexFaceRecognition
         
         // detector/detect
         // Used to send a face image to the server and get back a set of coordinates for any detected faces.
-        // POST http://<hostname>:8000/detector/detect/
+        // POST http://<hostname>:8008/detector/detect/
         
         let faceDetectionAPI: String = "/detector/detect/"
         
@@ -1212,7 +1212,7 @@ class MexFaceRecognition
         
         var params: [String: String] = [:] // JT 18.11.27
         
-        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/detector/detect/"
+        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8008/detector/detect/"
         
         if let image = image
         {
@@ -1361,7 +1361,7 @@ class MexFaceRecognition
         
         // detector/detect
         // Used to send a face image to the server and get back a set of coordinates for any detected faces.
-        // POST http://<hostname>:8000/detector/detect/
+        // POST http://<hostname>:8008/detector/detect/
         
         let faceRecognitonAPI: String = "/recognizer/predict/"  // JT 18.12.11
         
@@ -1379,7 +1379,7 @@ class MexFaceRecognition
         
         var params: [String: String] = [:] // JT 18.11.27
         
-        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8000/recognizer/predict/"
+        //   urlStr = "http://mobiledgexsdkdemomobiledgexsdkdemo10.microsoftwestus2cloudlet.azure.mobiledgex.net:8008/recognizer/predict/"
         
         if let image = image
         {

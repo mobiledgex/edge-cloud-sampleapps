@@ -243,13 +243,18 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
         }
 
-        String latencyTestMethod = prefs.getString(getResources().getString(R.string.latency_method), defaultLatencyMethod);
-        boolean latencyTestAutoStart = prefs.getBoolean(getResources().getString(R.string.pref_latency_autostart), true);
-        Log.i(TAG, "latencyTestMethod from prefs: "+latencyTestMethod);
-        Log.i(TAG, "latencyAutoStart from prefs: "+latencyTestAutoStart);
-        CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
-        CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
+        // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
+        String prefKeyDownloadType = getResources().getString(R.string.download_type);
+        String prefKeyDownloadSize = getResources().getString(R.string.download_size);
+        String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
+        String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
+        String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
 
+        onSharedPreferenceChanged(prefs, prefKeyDownloadType);
+        onSharedPreferenceChanged(prefs, prefKeyDownloadSize);
+        onSharedPreferenceChanged(prefs, prefKeyNumPackets);
+        onSharedPreferenceChanged(prefs, prefKeyLatencyMethod);
+        onSharedPreferenceChanged(prefs, prefKeyLatencyAutoStart);
     }
 
     /**
@@ -830,12 +835,16 @@ public class MainActivity extends AppCompatActivity
                     //request. There should only be a single match.
                     String uri = appInstances.get(0).getFQDN();
                     String appName = appInstances.get(0).getAppName();
+                    String FQDNPrefix = "";
+                    int publicPort = 7777;
                     List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
-                    //TODO: Use these ports instead of the hard-coded values in Cloudlet.java.
-                    String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Public Path: '%s'}";
+                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
                     for (Appcommon.AppPort aPort : ports) {
+                        FQDNPrefix = aPort.getFQDNPrefix();
+                        publicPort = aPort.getPublicPort();
                         Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                                     aPort.getProto().getNumber(),
+                                    aPort.getFQDNPrefix(),
                                     aPort.getInternalPort(),
                                     aPort.getPublicPort(),
                                     aPort.getPublicPath()));
@@ -849,10 +858,10 @@ public class MainActivity extends AppCompatActivity
                     if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
                         cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
                     } else {
-                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, uri, marker, speedTestBytes, speedTestPackets);
+                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, uri, marker, FQDNPrefix, publicPort);
                     }
                     marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL, getBadgeText(cloudlet)));
-                    cloudlet.update(cloudletName, appName, carrierName, latLng, distance, uri, marker, speedTestBytes, speedTestPackets);
+                    cloudlet.update(cloudletName, appName, carrierName, latLng, distance, uri, marker, FQDNPrefix, publicPort);
                     tempCloudlets.put(cloudletName, cloudlet);
                     builder.include(marker.getPosition());
 
@@ -1013,7 +1022,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.i(TAG, "onSharedPreferenceChanged("+key+")");
+        Log.d(TAG, "onSharedPreferenceChanged("+key+")");
         String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
         String prefKeyAllowNetSwitch = getResources().getString(R.string.preference_net_switching_allowed);
         String prefKeyDownloadType = getResources().getString(R.string.download_type);
@@ -1028,70 +1037,78 @@ public class MainActivity extends AppCompatActivity
 
         if (key.equals(prefKeyAllowMEX)) {
             boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mexLocationAllowed);
             MatchingEngine.setMexLocationAllowed(mexLocationAllowed);
         }
 
         if (key.equals(prefKeyAllowNetSwitch)) {
             boolean netSwitchingAllowed = sharedPreferences.getBoolean(prefKeyAllowNetSwitch, false);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+netSwitchingAllowed);
             mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(netSwitchingAllowed);
         }
 
         if (key.equals(prefKeyLatencyMethod)) {
-            String latencyTestMethod = sharedPreferences.getString(getResources().getString(R.string.latency_method), defaultLatencyMethod);
+            String latencyTestMethod = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestMethod);
             CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
         }
 
         if (key.equals(prefKeyLatencyAutoStart)) {
-            boolean latencyTestAutoStart = sharedPreferences.getBoolean(getResources().getString(R.string.pref_latency_autostart), true);
+            boolean latencyTestAutoStart = sharedPreferences.getBoolean(prefKeyLatencyAutoStart, true);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestAutoStart);
             CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
         }
 
         if (key.equals(prefKeyDmeHostname)) {
-            mHostname = sharedPreferences.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
+            mHostname = sharedPreferences.getString(prefKeyDmeHostname, "mexdemo.dme.mobiledgex.net");
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mHostname);
             mMatchingEngineHelper.setHostname(mHostname);
-            Log.i(TAG, "Updated mHostname="+mHostname);
             //Clear list so we don't show old cloudlets as transparent
             CloudletListHolder.getSingleton().getCloudletList().clear();
             getCloudlets();
         }
 
         if (key.equals(prefKeyDownloadType)) {
-            String downloadType = sharedPreferences.getString(getResources().getString(R.string.download_type), "dynamic");
+            String downloadType = sharedPreferences.getString(prefKeyDownloadType, "dynamic");
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+downloadType);
             CloudletListHolder.getSingleton().setDownloadTestType(downloadType);
         }
 
-        //TODO: Add variables in CloudletListHolder.getSingleton() instead of setting these for every cloudlet.
-        if(key.equals(prefKeyDownloadSize) || key.equals(prefKeyNumPackets)) {
-            int numBytes = Integer.parseInt(sharedPreferences.getString(getResources().getString(R.string.download_size), "1048576"));
-            int numPackets = Integer.parseInt(sharedPreferences.getString(getResources().getString(R.string.latency_packets), "5"));
-            for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-                Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
-                cloudlet.setNumBytes(numBytes);
-                cloudlet.setNumPackets(numPackets);
-            }
+        if (key.equals(prefKeyDownloadSize)) {
+            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyDownloadSize, "1048576"));
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
+            CloudletListHolder.getSingleton().setNumBytes(numBytes);
+        }
+
+        if (key.equals(prefKeyNumPackets)) {
+            int numPackets = Integer.parseInt(sharedPreferences.getString(prefKeyNumPackets, "5"));
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numPackets);
+            CloudletListHolder.getSingleton().setNumPackets(numPackets);
         }
 
         if(key.equals(prefKeyHostCloud)) {
-            String defValueCloud = DEF_FACE_HOST_CLOUD;
-            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, defValueCloud, key);
+            // This call will attempt to connect to the server at prefKeyHostCloud.
+            // If it fails, the default will be restored.
+            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DEF_FACE_HOST_CLOUD, key);
         }
         if(key.equals(prefKeyHostEdge)) {
-            String defValueEdge = DEF_FACE_HOST_EDGE;
-            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, defValueEdge, key);
+            // This call will attempt to connect to the server at prefKeyHostEdge.
+            // If it fails, the default will be restored.
+            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DEF_FACE_HOST_EDGE, key);
         }
 
         if(key.equals(prefKeyResetFdHosts)) {
             String value = sharedPreferences.getString(prefKeyResetFdHosts, "No");
             Log.i(TAG, prefKeyResetFdHosts+" "+value);
             if(value.startsWith("Yes")) {
-                Log.i(TAG, "Resetting.");
+                Log.i(TAG, "Resetting Face server hosts.");
                 sharedPreferences.edit().putString(prefKeyHostCloud, DEF_FACE_HOST_CLOUD).apply();
                 sharedPreferences.edit().putString(prefKeyHostEdge, DEF_FACE_HOST_EDGE).apply();
                 Toast.makeText(this, "Face detection hosts reset to default.", Toast.LENGTH_SHORT).show();
             }
             //Always set the value back to something so that either clicking Yes or No in the dialog
             //will activate this "changed" call.
-            sharedPreferences.edit().putString(prefKeyResetFdHosts, "invalid").apply();
+            sharedPreferences.edit().putString(prefKeyResetFdHosts, "XXX_garbage_value").apply();
         }
 
     }
@@ -1105,7 +1122,8 @@ public class MainActivity extends AppCompatActivity
             String keyName = params[1];
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
             newHost = prefs.getString(keyName, defaultHost);
-            boolean reachable = VolleyRequestHandler.isReachable(newHost, 8000, 3000);
+            boolean reachable = VolleyRequestHandler.isReachable(newHost,
+                    VolleyRequestHandler.getFaceServerPort(newHost), 3000);
             if(!reachable) {
                 Log.i(TAG, newHost+" not reachable. Resetting "+keyName+" to default.");
                 prefs.edit().putString(keyName, defaultHost).apply();

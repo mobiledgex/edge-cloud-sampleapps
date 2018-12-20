@@ -4,6 +4,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/action_speedtest_settings"
+        android:icon="@drawable/ic_menu_settings"
+        android:title="Settings"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_copy_cloud_host"
         android:title="Use as Face Recognition Cloud Host"
         app:showAsAction="never" />

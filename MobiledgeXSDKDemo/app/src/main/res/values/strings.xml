@@ -161,10 +161,12 @@
     <string-array name="pref_dme_hostname_titles">
         <item>Demo (mexdemo)</item>
         <item>DME API Reorg (tdg2)</item>
+        <item>Automation Testing (automationbonn)</item>
     </string-array>
     <string-array name="pref_dme_hostname_values">
         <item>mexdemo.dme.mobiledgex.net</item>
         <item>tdg2.dme.mobiledgex.net</item>
+        <item>automationbonn.dme.mobiledgex.net</item>
     </string-array>
     <string name="title_activity_qoe_map">Predictive QoE</string>
     <string name="map_type">Map Type</string>

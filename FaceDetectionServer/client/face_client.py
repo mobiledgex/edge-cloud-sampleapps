@@ -10,7 +10,7 @@ import time
 
 class RequestClient(object):
     """ """
-    BASE_URL = 'http://%s:8000'
+    BASE_URL = 'http://%s:8008'
     # API_ENDPOINT = '/detect3/'
     API_ENDPOINT = '/detector/detect/'
 

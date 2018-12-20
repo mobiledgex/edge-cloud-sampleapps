@@ -3,6 +3,7 @@ package com.mobiledgex.sdkdemo;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -31,6 +32,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
     private TextView latencyStddevTv;
     private TextView latencyMessageTv;
     private TextView carrierNameTv;
+    private TextView ipAddressTv;
     private TextView distanceTv;
     private TextView latitudeTv;
     private TextView longitudeTv;
@@ -56,6 +58,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         cloudletNameTv = findViewById(R.id.cloudletName);
         appNameTv = findViewById(R.id.appName);
         carrierNameTv = findViewById(R.id.carrierName);
+        ipAddressTv = findViewById(R.id.ipAddress);
         distanceTv = findViewById(R.id.distance);
         latitudeTv = findViewById(R.id.latitude);
         longitudeTv = findViewById(R.id.longitude);
@@ -119,6 +122,13 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
             prefs.edit().putString(prefKeyHostEdge, cloudlet.getUri()).apply();
             return true;
         }
+        if (id == R.id.action_speedtest_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.SpeedTestSettingsFragment.class.getName() );
+            intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
+            startActivity(intent);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
 
     }
@@ -131,6 +141,11 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
 
     @Override
     public void onBandwidthProgress() {
+        updateUi();
+    }
+
+    @Override
+    public void onIpAddressResolved() {
         updateUi();
     }
 
@@ -159,8 +174,8 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
                 progressBarLatency.setProgress(cloudlet.getLatencyTestProgress());
                 progressBarDownload.setProgress(cloudlet.getSpeedTestProgress());
                 speedtestResultsTv.setText(String.format("%.2f", cloudlet.getMbps())+" Mbits/sec");
-
                 distanceTv.setText(String.format("%.4f", cloudlet.getDistance()));
+                ipAddressTv.setText(cloudlet.getIpAddress());
             }
         });
     }

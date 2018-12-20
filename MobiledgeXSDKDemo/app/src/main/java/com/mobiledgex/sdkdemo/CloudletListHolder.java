@@ -12,9 +12,27 @@ public class CloudletListHolder {
     private LatencyTestMethod latencyTestMethod = LatencyTestMethod.ping;
     private DownloadTestType downloadTestType = DownloadTestType.dynamic;
     private boolean latencyTestAutoStart;
+    private int numBytes;
+    private int numPackets;
 
     public static CloudletListHolder getSingleton() {
         return ourInstance;
+    }
+
+    public int getNumBytes() {
+        return numBytes;
+    }
+
+    public void setNumBytes(int numBytes) {
+        this.numBytes = numBytes;
+    }
+
+    public int getNumPackets() {
+        return numPackets;
+    }
+
+    public void setNumPackets(int numPackets) {
+        this.numPackets = numPackets;
     }
 
     public enum LatencyTestMethod {
