@@ -119,7 +119,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             $0.title = "Latency Stddev:"
             $0.tag = "Latency Stddev:" // JT 18.11.13
 
-            $0.value = UserDefaults.standard.string(forKey: "Latency Stddev:") ?? "6.064" + " ms"
+            $0.value = UserDefaults.standard.string(forKey: "Latency Stddev:") ?? "0.0" + " ms"
         }
         .cellUpdate
         { _, row in // JT 18.11.13

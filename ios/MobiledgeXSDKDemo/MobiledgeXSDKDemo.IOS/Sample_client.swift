@@ -55,8 +55,11 @@ private class MexUtil   // common to Mex... below
     let appinstlistAPI: String = "/v1/getappinstlist"
     let findcloudletAPI: String = "/v1/findcloudlet"
     
-    let DEF_FACE_HOST_CLOUD = "mobiledgexsdkdemomobiledgexsdkdemo10.azcentraluscloudlet.azure.mobiledgex.net"
-    let DEF_FACE_HOST_EDGE = "mobiledgexsdkdemomobiledgexsdkdemo10.bonndemocloudlet.tdg.mobiledgex.net"
+    let faceServerPort: String = "8008" // JT 18.12.20 was "8000"
+
+    let DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net"   // JT 18.12.20
+ 
+    let DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net" // JT 18.12.20
 
 
     let timeoutSec: UInt64 = 5000   // JT 18.12.03 unused todo
@@ -115,7 +118,7 @@ private class MexUtil   // common to Mex... below
 
 private func postRequest(_ uri: String,
                  _ request: [String: Any],  // Dictionary/json
-                 _ postName: String) // this is posted after results
+                 _ postName: String = "postRequestReplyLogger") // this is posted after results
     -> Future<[String: AnyObject], Error> // JT 18.11.28
 {
     let promise = Promise<[String: AnyObject], Error>()   // JT 18.11.28
@@ -146,14 +149,14 @@ private func postRequest(_ uri: String,
         }
 
         guard response.result.isSuccess else
-        {
-            print("\nError while fetching remote -: \(String(describing: response.result.error))")
+        {   // failed
+          //  print("\nError while fetching remote -: \(String(describing: response.result.error))")
 
             let msg = String(describing: response.result.error)
 
             // hack parse error
             if msg.contains("dt-id=") // special case // && postName == "GetToken"
-            {
+            { // not really an error
                 let dtId = msg.components(separatedBy: "dt-id=")
                 let s1 = dtId[1].components(separatedBy: ",")
                 let token = s1[0]
@@ -165,7 +168,7 @@ private func postRequest(_ uri: String,
             }
             else
             {
-                Swift.print("post error")
+                Swift.print("post error \(response.result.error!)")  // JT 18.12.16
             }
             return
         }
@@ -196,14 +199,10 @@ private func postRequest(_ uri: String,
             
       //      Log.logger.name = "curl"  // JT 18.12.05 todo
             
-            
             let curl = response.request.debugDescription    // JT 18.12.05
-         //   Log.logger.name = "curl"
             logw("\n \(curl)\n")      // JT 18.12.05
 
             logw("postName:\(postName)\nresult:\n\(json)") // JT 18.11.26  log to file
-
-            
         }
 
         Swift.print("\(response)")
@@ -217,8 +216,6 @@ private func postRequest(_ uri: String,
     if postName != "FaceDetection"  // JT 18.11.27 too big
     {
         debugPrint(requestObj) // dump curl
-        
-
     }
     
     return promise.future   // JT 18.11.28
@@ -277,67 +274,15 @@ class MexRegisterClient
     var tokenserveruri = "" // set by RegisterClient    // JT 18.11.25
     var sessioncookie = ""  // set by RegisterClient    // JT 18.11.25 used by getApp and verifyLoc
     
-    // Color of what?
-    public static let COLOR_NEUTRAL: UInt32 = 0xFF67_6798
+    // Color of user todo
+    public static let COLOR_NEUTRAL: UInt32 = 0xFF67_6798   // default
     public static let COLOR_VERIFIED: UInt32 = 0xFF00_9933
     public static let COLOR_FAILURE: UInt32 = 0xFFFF_3300
     public static let COLOR_CAUTION: UInt32 = 0xFF00_B33C // Amber: ffbf00;
 
     private init() // singleton
     {
-//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "RegisterClient1"), object: nil, queue: nil)
-//        { notification in
-//            // Swift.print("RegisterClient \(notification)")
-//
-////            let d = notification.object as! [String: Any]   // Dictionary/json
-////            self.registerClientResult(d)
-////
-////            self.getLocaltionUpdates()
-////
-////            SKToast.show(withMessage: "Client registered")
-//        }
 
-//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FindCloudlet1"), object: nil, queue: nil)
-//        { notification in
-//
-//            let d = notification.object as! [String: Any]   // Dictionary/json
-//
-//            Swift.print("FindCloudlet1 \(d)")
-//
-//            //   useCloudlets(d)
-//
-//            //    var cloudlets = [String:Cloudlet]()
-//            Swift.print("~~~~~")
-//
-//         ///   var uri = ""
-//            //  var boundsBuilder = GMSCoordinateBounds()
-//
-//            //  var marker:GMSMarker?
-//
-//         //   processFindCloudletResult(d)    // JT 18.12.04
-//        }
-        
-        
-
-//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "GetToken"), object: nil, queue: nil)
-//        { notification in
-//            Swift.print("GetToken \(notification)")
-//
-//            let tokenReply = notification.object as! String
-//
-//            verifyLocation(tokenReply)
-//        }
-//
-//
-
-//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "Verifylocation1"), object: nil, queue: nil)
-//        { notification in
-//
-//            let d = notification.object
-//            Swift.print("Verifylocation1 result \(d!)")
-//
-//            SKToast.show(withMessage: "Verifylocation result: \(d!)")
-//        }
     } // init
 
     deinit
@@ -349,39 +294,10 @@ class MexRegisterClient
 
     func getLocaltionUpdates()
     {
-        Swift.print("getLocaltionUpdates")
-
-//        Locator.currentPosition(usingIP: .smartIP, onSuccess:   // not working
-//            { loc in
-//            print("Found location: \(loc)")
-//
-//            if userMarker == nil
-//            {
-//                doUserMarker(loc.coordinate)
-//            }
-//             userMarker!.position = loc.coordinate
-//
-//        }) { err, _ in
-//            print("\(err)")
-//        }
+        Swift.print("\(#function)") // JT 18.12.16
 
         resetUserLocation(true)
 
-        //     gpsInitialized = true;
-
-//      let locator = Locator.subscribeSignificantLocations(onUpdate: { newLocation in
-//            print("New location \(newLocation)")
-//
-//        if userMarker == nil
-//        {
-//            self.doUserMarker(newLocation.coordinate)
-//        }
-//        userMarker!.position = newLocation.coordinate
-//
-//
-//        }) { (err, lastLocation) -> (Void) in
-//            print("Failed with err: \(err)")
-//        }
     }
 
     // MARK:
@@ -417,9 +333,24 @@ class MexRegisterClient
     func createRegisterClientRequest()
         -> [String: Any] // Dictionary/json
     {
-        let u = MexUtil.shared  // JT 18.11.25
-        // Dictionary/json regClientRequest;
-        var regClientRequest = [String: String]()
+        let u = MexUtil.shared
+        
+        var regClientRequest = [String: String]()     // Dictionary/json regClientRequest
+        
+        regClientRequest["ver"] = "1"
+        regClientRequest["AppName"] = u.appName
+        regClientRequest["DevName"] = u.devName
+        regClientRequest["AppVers"] = u.appVersionStr
+        
+        return regClientRequest
+    }
+    
+    func createRegisterClientRequest( ver: String = "1", appName: String, devName: String, appVers: String) // JT 18.12.19
+        -> [String: Any] // Dictionary/json
+    {
+        let u = MexUtil.shared
+        
+        var regClientRequest = [String: String]()     // Dictionary/json regClientRequest
         
         regClientRequest["ver"] = "1"
         regClientRequest["AppName"] = u.appName
@@ -489,7 +420,7 @@ class MexRegisterClient
         let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest()
         
         let urlStr = baseuri + MexUtil.shared.registerAPI // JT 18.11.27
-        MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1") // JT 18.11.28 todo persist future
+        MexRegisterClient.shared.future = postRequest(urlStr, registerClientRequest, "RegisterClient1")
         
         MexRegisterClient.shared.future!.on(
             success:
@@ -531,16 +462,6 @@ class MexGetAppInst
     
     private init()  // singleton
     {
-//        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "GetAppInstlist1"), object: nil, queue: nil)
-//        { notification in
-//            // Swift.print("GetAppInstlist1 \(notification)")
-//
-//            let d = notification.object as! [String: Any]   // Dictionary/json
-//
-//            GetAppInstlist1(d)
-//        }
-        
-        
         
     }
     
@@ -660,7 +581,7 @@ class MexGetAppInst
                     let tint = getColorByHex(MexRegisterClient.COLOR_NEUTRAL)
                     let tinted = iconTemplate!.imageWithColor(tint)
                     let resized = tinted.imageResize(sizeChange: CGSize(width: 40, height: 30))
-                    
+
                     let i2 = textToImage(drawText: "M", inImage: resized, atPoint: CGPoint(x: 11, y: 4))
                     
                     marker?.icon = cloudletName.contains("microsoft") ? i2 : resized
@@ -696,13 +617,12 @@ class MexGetAppInst
         if !(boundsBuilder.southWest == boundsBuilder.northEast)
         {
             Swift.print("Using cloudlet boundaries")
-            let padding: CGFloat  = 125.0 // offset from edges of the map in pixels
+           // let padding: CGFloat  = 125.0 // offset from edges of the map in pixels
             
             //                let update = GMSCameraUpdate.fit(boundsBuilder, withPadding: 64)
             //                theMap!.moveCamera(update)
             
             theMap!.animate(with: .fit(boundsBuilder, withPadding: 64.0))
-            // BUG padding is being ignored todo
         }
         else
         {
@@ -731,7 +651,15 @@ class MexGetAppInst
     
 }
 
+func makeUserMakerImage(_ color: UInt32) -> UIImage    // JT 18.12.16
+{
+    let iconTemplate = UIImage(named: "ic_marker_mobile-web")
+    let tint = getColorByHex(color)
+    let tinted = iconTemplate!.imageWithColor(tint)
+    let resized = tinted.imageResize(sizeChange: CGSize(width: 60, height: 60))
 
+    return resized
+}
 
 
 
@@ -762,7 +690,7 @@ private func useCloudlets(_ findCloudletReply: [String: Any]) // unused
         let line3 = ", Location Found Status: " + (findCloudletReply["status"] as! String) + "\n"
         let line4 = ", Location of cloudlet. Latitude: " + lat + "\n"
         let line5 = ", Longitude: " + long + "\n"
-        Swift.print("\(findCloudletReply["FQDN"])")
+        Swift.print("\(findCloudletReply["FQDN"]!)")    // JT 18.12.16
         let line6 = ", Cloudlet FQDN: " + (findCloudletReply["FQDN"] as! String ) + "\n"
 
         Swift.print(line1 + line2 + line3 + line4 + line5 + line6)
@@ -867,16 +795,16 @@ class MexVerifyLocation
     }
     
     
-    private func createVerifyLocationRequest(_ carrierName: String,
+    func createVerifyLocationRequest(_ carrierName: String,
                                              _ gpslocation: [String: Any],
-                                             _ verifyloctoken: String)
+                                             _ verifyloctoken: String,
+                                             _ sessioncookie: String = MexRegisterClient.shared.sessioncookie)  // JT 18.12.19
         -> [String: Any]
     {
-        
-        var verifyLocationRequest = [String: Any]() // Dictionary/json verifyLocationRequest;
+        var verifyLocationRequest = [String: Any]() // Dictionary/json
         
         verifyLocationRequest["ver"] = 1
-        verifyLocationRequest["SessionCookie"] = MexRegisterClient.shared.sessioncookie
+        verifyLocationRequest["SessionCookie"] = sessioncookie
         verifyLocationRequest["CarrierName"] = carrierName
         verifyLocationRequest["GpsLocation"] = gpslocation
         verifyLocationRequest["VerifyLocToken"] = verifyloctoken
@@ -943,12 +871,13 @@ class MexVerifyLocation
         
         // Update request with the new token:
         // json tokenizedRequest;
-        var tokenizedRequest = [String: Any]()  // Dictionary/json
-        
-        tokenizedRequest["ver"] = verifyLocationRequest["ver"]
-        tokenizedRequest["SessionCookie"] = verifyLocationRequest["SessionCookie"]
-        tokenizedRequest["CarrierName"] = verifyLocationRequest["CarrierName"]
-        tokenizedRequest["GpsLocation"] = verifyLocationRequest["GpsLocation"]
+       var tokenizedRequest = [String: Any]()  // Dictionary/json
+         tokenizedRequest += verifyLocationRequest  // Dictionary/json
+
+//        tokenizedRequest["ver"] = verifyLocationRequest["ver"]
+//        tokenizedRequest["SessionCookie"] = verifyLocationRequest["SessionCookie"]
+//        tokenizedRequest["CarrierName"] = verifyLocationRequest["CarrierName"]
+//        tokenizedRequest["GpsLocation"] = verifyLocationRequest["GpsLocation"]
         tokenizedRequest["VerifyLocToken"] = tokenReply
         
         
@@ -974,9 +903,20 @@ class MexVerifyLocation
             // Swift.print("Verifylocation1 result \(d)")
             
             SKToast.show(withMessage: "Verifylocation result: \(d)")    // JT 18.12.06
+            
+            
+            let resized =  makeUserMakerImage(MexRegisterClient.COLOR_VERIFIED)  // JT 18.12.16
+            userMarker!.icon = resized
         },
-                        failure: { print("failed with error: \($0)") },
-                        completion: {    let _ = $0 //print("completed with result: \($0)")  // JT 18.12.04
+        failure: { print("Verifylocation failed with error: \($0)")
+            
+            let resized =  makeUserMakerImage(MexRegisterClient.COLOR_FAILURE)  // JT 18.12.16
+            
+            userMarker!.icon = resized
+        },
+        completion: {    let _ = $0 //print("completed with result: \($0)")  // JT 18.12.04
+            
+
         })   // JT 18.11.28
     }
 }
@@ -1033,13 +973,13 @@ class MexFindNearestCloudlet
     }
 
     // Carrier name can change depending on cell tower.
-    func createFindCloudletRequest(_ carrierName: String, _ gpslocation: [String: Any]) -> [String: Any]
+    func createFindCloudletRequest(_ carrierName: String, _ gpslocation: [String: Any], sessioncookie: String = MexRegisterClient.shared.sessioncookie) -> [String: Any]
     {
         //    findCloudletRequest;
         var findCloudletRequest = [String: Any]() // Dictionary/json
 
         findCloudletRequest["vers"] = 1
-        findCloudletRequest["SessionCookie"] = MexRegisterClient.shared.sessioncookie
+        findCloudletRequest["SessionCookie"] = sessioncookie    // JT 18.12.19
         findCloudletRequest["CarrierName"] = carrierName
         findCloudletRequest["GpsLocation"] = gpslocation
 
@@ -1141,13 +1081,8 @@ func doUserMarker(_ loc: CLLocationCoordinate2D)
     userMarker!.title = "You are here"
     userMarker!.snippet = "Drag to spoof" //   marker!.snippet = "Tap for details"
     
-    //  marker.map = self.mGoogleMap
-    let iconTemplate = UIImage(named: "ic_marker_mobile-web")
+    let resized =  makeUserMakerImage(MexRegisterClient.COLOR_NEUTRAL)  // JT 18.12.16
     
-    let tint = getColorByHex(MexRegisterClient.COLOR_NEUTRAL)
-    let tinted = iconTemplate!.imageWithColor(tint)
-    
-    let resized = tinted.imageResize(sizeChange: CGSize(width: 60, height: 60))
     userMarker!.icon = resized
     userMarker!.map = theMap
     
@@ -1181,6 +1116,7 @@ private func retrieveLocation() -> [String: Any]
 class MexFaceRecognition
 {
      var faceDetectionStartTime:DispatchTime?    // JT 18.11.28 one at a time
+    
      var faceRecognitionStartTime:DispatchTime?      // JT 18.12.10 one at a time
      var faceRecognitionImages =  [UIImage]()  // JT 18.12.10
      var faceRecognitionCurrentImage: UIImage?   // JT 18.12.10 todo refactor
@@ -1188,22 +1124,22 @@ class MexFaceRecognition
     
     // Mark: -
     // Mark: FaceDetection
-    //var toggle: Int = 0  // JT 18.12.11 todo refactor
     
-    func FaceDetection(_ image: UIImage?, _ service: String)    // _ kind:Int )   // JT 18.12.13 // JT 18.12.16 pass in  latencyMsg and detectedMsg and recognizedMsg
+    func FaceDetection(_ image: UIImage?, _ service: String)     
     {
-        var broadcast =  "FaceDetectionLatency" + service   // JT 18.12.16
+        let broadcast =  "FaceDetectionLatency" + service   // JT 18.12.16
         
         let faceDetectionFuture = FaceDetectionCore(image, service, post: broadcast)    // JT 18.12.16
         
         faceDetectionFuture.on(
             success:
             {
-                print("FaceDetection received value: \($0)")
+               // print("FaceDetection received value: \($0)")
                 
                 let reply = $0 as [String: Any] // JT 18.12.03
                 
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue:  "faceDetected" + service) , object: reply) // JT 18.12.08 draw blue rect around
+                let postName = "faceDetected" + service
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName ) , object: reply) // JT 18.12.08 draw blue rect around
                 
                 SKToast.show(withMessage: "FaceDetection ")
                 
@@ -1221,8 +1157,7 @@ class MexFaceRecognition
 
                         for a in rects
                         {
-                           // let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
-                            let r = convertPointsToRect(a)  // JT 18.12.13
+                             let r = convertPointsToRect(a)  // JT 18.12.13
 
                             Swift.print("r = \(r)") // JT 18.12.10
                             let face = image!.cropped(to: r)
@@ -1267,13 +1202,13 @@ class MexFaceRecognition
         //
         
         getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_EDGE, post: "updateNetworkLatenciesEdge") // JT 18.12.12
-        getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud") // JT 18.12.12
+ //       getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud") // JT 18.12.12 // JT 18.12.20
         
-        var baseuri = service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_EDGE : MexUtil.shared.DEF_FACE_HOST_CLOUD + ":" + "8000" // JT 18.12.11
+        let baseuri = (service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_EDGE : MexUtil.shared.DEF_FACE_HOST_CLOUD) + ":" + MexUtil.shared.faceServerPort
         
-        var urlStr = "http://" + baseuri + faceDetectionAPI // JT 18.11.27 URLConvertible
+        let urlStr = "http://" + baseuri + faceDetectionAPI // JT 18.11.27 URLConvertible
         
-        // Swift.print("\(urlStr)")
+        // Swift.print("urlStr \(urlStr)")  // JT 18.12.20
         
         var params: [String: String] = [:] // JT 18.11.27
         
@@ -1325,15 +1260,15 @@ class MexFaceRecognition
                             let nanoTime = end.uptimeNanoseconds - self.faceDetectionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
                             let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
                             
-                            Swift.print("FaceDetection time: \(timeInterval)") // JT 18.11.28
+                           // Swift.print("FaceDetection time: \(timeInterval)") // JT 18.11.28 // JT 18.12.20
                             SKToast.show(withMessage: "FaceDetection  time: \(timeInterval) result: \(data)") // JT 18.11.28
                             
                             let aa = d["rects"]
                             NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceDetection"), object: aa) // JT 18.12.08 draw blue rect around face  [[Int]]
                             
-                            promise.succeed(value: ["rects": aa as AnyObject]) // JT 18.11.28 [[Int]]
+                            promise.succeed(value: d as [String : AnyObject])   //["rects": aa as AnyObject]) // JT 18.11.28 [[Int]]
                             
-                            let latency = String(format: " %4.3f", timeInterval * 1000) // JT 18.12.11
+                            let latency = String(format: "%4.3f", timeInterval * 1000) // JT 18.12.11   // JT 18.12.20
                             NotificationCenter.default.post(name: NSNotification.Name(rawValue: broardcastMsg!), object: latency) // JT 18.12.11
                         }
                         else
@@ -1387,8 +1322,8 @@ class MexFaceRecognition
                 let reply = $0 as [String: Any]    // JT 18.12.03 json/dictionary
                 print("FaceRecognition received value: \(reply)")
                 
-                let rects = reply["rect"]
-                let rectData =   rects as! [Int] // JT 18.12.10
+               // let rects = reply["rect"]
+               // let rectData =   rects as! [Int] // JT 18.12.10
                 
                 SKToast.show(withMessage: "FaceRec \(reply["subject"]) confidence: \(reply["confidence"]) ")
                 Swift.print("FaceRecognition \(reply)")
@@ -1435,13 +1370,12 @@ class MexFaceRecognition
         //    Swift.print("====================\n")
         
         
-        var postMsg =  "faceRecognitionLatency" + service   // JT 18.12.13
-        var baseuri = service ==  "Cloud" ? MexUtil.shared.DEF_FACE_HOST_CLOUD : MexUtil.shared.DEF_FACE_HOST_EDGE  // JT 18.12.16
-            + ":" + "8000"
+        let postMsg =  "faceRecognitionLatency" + service   // JT 18.12.13
+        let baseuri = (service ==  "Cloud" ? MexUtil.shared.DEF_FACE_HOST_CLOUD : MexUtil.shared.DEF_FACE_HOST_EDGE)   + ":" + MexUtil.shared.faceServerPort  // JT 18.12.20
         
-        var urlStr = "http://" + baseuri + faceRecognitonAPI // JT 18.11.27 URLConvertible
+        let urlStr = "http://" + baseuri + faceRecognitonAPI // JT 18.11.27 URLConvertible
         
-        // Swift.print("\(urlStr)")
+       //  Swift.print("urlStr \(urlStr)") // JT 18.12.20
         
         var params: [String: String] = [:] // JT 18.11.27
         
@@ -1497,10 +1431,10 @@ class MexFaceRecognition
                             Swift.print("FaceRecognition time: \(timeInterval)")  // JT 18.11.28
                             SKToast.show(withMessage: "FaceRecognition  time: \(timeInterval) result: \(data)")   // JT 18.11.28
                             
-                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceRecognized"), object: d)   // JT 18.12.13
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceRecognized"), object: d)   // JT 18.12.13 doNextFaceRecognition
                             
                             
-                            let latency = String( format: " %4.3f", timeInterval * 1000 ) // JT 18.12.11 ms
+                            let latency = String( format: "%4.3f", timeInterval * 1000 ) // JT 18.12.11 ms
                             NotificationCenter.default.post(name: NSNotification.Name(rawValue: postMsg), object: latency)     // JT 18.12.11 post latency
                         }
                         else
@@ -1512,7 +1446,6 @@ class MexFaceRecognition
                         print(error)
                         SKToast.show(withMessage: "FaceRecognition Failed: \(error)")
                         promise.fail(error: error)      // JT 18.12.10
-                        
                     }
             }
             
@@ -1521,14 +1454,12 @@ class MexFaceRecognition
         }
         
         return promise.future   // JT 18.11.28
-        
     }
-
 }
 
 
 
-func convertPointsToRect(_ a:[Int])  ->CGRect    // JT 18.12.13
+func convertPointsToRect(_ a:[Int])  ->CGRect    // JT 18.12.13 Mex data
 {
     let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
     
@@ -1545,7 +1476,7 @@ func getNetworkLatencyEdge()
 
 func getNetworkLatencyCloud()
 {
-    getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "latencyCloud")    // JT 18.12.12
+  //  getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "latencyCloud")    // JT 18.12.12    // JT ping facedetection.defaultcloud.mobiledgex.net
     
 }
 
@@ -1553,24 +1484,25 @@ func getNetworkLatencyCloud()
 
 func getNetworkLatency(_ hostName:String, post name: String)    // JT 18.12.12
 {
-    Swift.print("\(hostName)")  // JT 18.12.12
+    //Swift.print("\(#function) \(hostName)")     // JT 18.12.16    // JT 18.12.20
     
     
-    PlainPing.ping(hostName, withTimeout: 1.0, completionBlock: { (timeElapsed: Double?, error: Error?) in
+    PlainPing.ping(hostName, withTimeout: 1.0, completionBlock:
+        { (timeElapsed: Double?, error: Error?) in
         
         if let latency = timeElapsed
         {
-            // print("\(ping) latency (ms): \(latency)") // JT 18.11.27
-            
-            let latencyMsg = String(format: " %4.3f", latency) // JT 18.12.11
+            let latencyMsg = String(format: "%4.3f", latency) // JT 18.12.11    // JT 18.12.20
             
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: name), object: latencyMsg) // JT 18.12.12
         }
         if let error = error
         {
-            print("error: \(error.localizedDescription)")
+            Swift.print("ping failed: \(hostName)")
+            print("ping error: \(error.localizedDescription)")  // JT 18.12.16
         }
         
     })
 }
+
 

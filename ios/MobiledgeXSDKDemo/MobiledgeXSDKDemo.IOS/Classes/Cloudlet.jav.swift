@@ -173,10 +173,10 @@ public class Cloudlet // implements Serializable
 
                 self.latencyAvg = sumArray / Double(self.latencies.count)
 
-                self.latencyStddev = self.standardDeviation(arr: self.latencies) // JT 18.11.13
+                self.latencyStddev = standardDeviation(arr: self.latencies) // JT 18.11.13
 
                 
-                let latencyMsg = String( format: " %4.3f", self.latencyAvg ) // JT 18.12.11
+                let latencyMsg = String( format: "%4.3f", self.latencyAvg ) // JT 18.12.11  // JT 18.12.20
                 
                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)       // JT 18.12.12
                 
@@ -189,13 +189,7 @@ public class Cloudlet // implements Serializable
         })
     }
 
-    func standardDeviation(arr: [Double]) -> Double // JT 18.11.13
-    {
-        let length = Double(arr.count)
-        let avg = arr.reduce(0, { $0 + $1 }) / length
-        let sumOfSquaredAvgDiff = arr.map { pow($0 - avg, 2.0) }.reduce(0, { $0 + $1 })
-        return sqrt(sumOfSquaredAvgDiff / length)
-    }
+
 
     /**
      * From the given string, create the hostname that will be pinged,
@@ -514,4 +508,13 @@ extension UIDevice
             return false
         #endif
     }
+}
+
+func standardDeviation(arr: [Double]) -> Double // JT 18.11.13
+{
+    let length = Double(arr.count)
+    let avg = arr.reduce(0, { $0 + $1 }) / length
+    let sumOfSquaredAvgDiff = arr.map { pow($0 - avg, 2.0) }.reduce(0, { $0 + $1 })
+    
+    return sqrt(sumOfSquaredAvgDiff / length)
 }
