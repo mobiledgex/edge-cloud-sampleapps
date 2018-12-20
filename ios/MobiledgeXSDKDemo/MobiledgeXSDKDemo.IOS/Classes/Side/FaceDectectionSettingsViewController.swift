@@ -27,13 +27,11 @@ class FaceDectectionSettingsViewController: FormViewController
 
             <<< SwitchRow
         {
-            $0.title = "Multi-face"
+            $0.title = "Multi-face (todo: I dont see API for setting this)" // JT 18.12.17
             $0.value = UserDefaults.standard.bool(forKey: "Multi-face") // initially selected
 
         }.onChange
         { /* [weak self] */ row in
-            Swift.print("Multi-face \(row)")
-
             Swift.print("Multi-face \(row) \(row.value!)")
 
             UserDefaults.standard.set(row.value, forKey: "Multi-face") // JT 18.11.03
@@ -58,13 +56,13 @@ class FaceDectectionSettingsViewController: FormViewController
         }
             <<< SwitchRow
         {
-            $0.title = "Show full process latancy"
-            $0.value = UserDefaults.standard.bool(forKey: "Show full process latancy") // initially selected
+            $0.title = "Show full process latency"
+            $0.value = UserDefaults.standard.bool(forKey: "Show full process latency") // initially selected
         }.onChange
         { /* [weak self] */ row in
-            Swift.print("Show full process latancy" + " \(row) \(row.value!)")
+            Swift.print("Show full process latency" + " \(row) \(row.value!)")
 
-            UserDefaults.standard.set(row.value, forKey: "Show full process latancy") // JT 18.11.03
+            UserDefaults.standard.set(row.value, forKey: "Show full process latency") // JT 18.11.03
         }
         .cellSetup
         { _, row in
@@ -72,13 +70,13 @@ class FaceDectectionSettingsViewController: FormViewController
         }
             <<< SwitchRow
         {
-            $0.title = "Show network latancy"
-            $0.value = UserDefaults.standard.bool(forKey: "Show network latancy") // initially selected
+            $0.title = "Show network latency"
+            $0.value = UserDefaults.standard.bool(forKey: "Show network latency") // initially selected
         }.onChange
         { /* [weak self] */ row in
-            Swift.print("Show network latancy" + " \(row) \(row.value!)")
+            Swift.print("Show network latency" + " \(row) \(row.value!)")
 
-            UserDefaults.standard.set(row.value, forKey: "Show network latancy") // JT 18.11.03
+            UserDefaults.standard.set(row.value, forKey: "Show network latency") // JT 18.11.03
         }
         .cellSetup
         { _, row in

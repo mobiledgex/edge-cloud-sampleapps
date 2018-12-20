@@ -39,13 +39,20 @@ class FaceDetectionViewController: UIViewController
     @IBOutlet var faceRecognitonNameCloudLabel: UILabel! //
     @IBOutlet var faceRecognitonNameEdgeLabel: UILabel! //
 
-    //   @IBOutlet weak var tmpImageView: UIImageView!   // JT 18.11.27
+    @IBOutlet var stddevCloudLabel: UILabel! // // JT 18.12.18
+    @IBOutlet var stddevEdgeLabel: UILabel! //  // JT 18.12.18
+
     var futureEdge: Future<[String: AnyObject], Error>? // async result (captured by async?) // JT 18.12.13
     var futureCloud: Future<[String: AnyObject], Error>? // async result (captured by async?)    // JT 18.12.13
 
+    let faceDetectionEdge = MexFaceRecognition() // JT 18.12.15
+    let faceDetectionCloud = MexFaceRecognition() // JT 18.12.15
+    
+    var calcRollingAverageCloud = MovingAverage()    // JT 18.12.17
+    var rollingAverageCloud = 0.0    // JT 18.12.17
 
-    let faceDetectionEdge   = MexFaceRecognition()   // JT 18.12.15
-    let faceDetectionCloud  = MexFaceRecognition()  // JT 18.12.15
+    var calcRollingAverageEdge = MovingAverage()    // JT 18.12.17
+    var rollingAverageEdge = 0.0    // JT 18.12.17
 
     override func viewDidLoad()
     {
@@ -123,9 +130,48 @@ class FaceDetectionViewController: UIViewController
 
         let latencyEdge = UserDefaults.standard.string(forKey: "latencyEdge") // JT 18.12.14
         networkLatencyEdgeLabel.text = "Edge: \(latencyEdge!) ms" // JT 18.12.11
-        
+        // ---
+
         doAFaceDetection = true // JT 18.12.14
 
+        let localProcessing = UserDefaults.standard.bool(forKey: "Show full process latency") // JT 18.12.17
+        if localProcessing == true // JT 18.12.17
+        {
+            latencyCloudLabel.isHidden = false
+            latencyEdgeLabel.isHidden = false
+        }
+
+        if true // JT 18.12.17 todo
+        {
+            faceRecognitionLatencyCloudLabel.isHidden = false
+            faceRecognitionLatencyCloudLabel.isHidden = false
+        }
+
+        let showNetworkLantency = UserDefaults.standard.bool(forKey: "Show network latency") // JT 18.12.17
+
+        if showNetworkLantency // JT 18.12.17 todo
+        {
+            networkLatencyCloudLabel.isHidden = false
+            networkLatencyEdgeLabel.isHidden = false
+        }
+        else
+        {
+            networkLatencyCloudLabel.isHidden = true
+            networkLatencyEdgeLabel.isHidden = true
+        }
+        
+        let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev") // JT 18.12.17
+
+        if showStddev   // JT 18.12.18
+        {
+            stddevCloudLabel.isHidden = false
+            stddevEdgeLabel.isHidden = false
+        }
+        else
+        {
+            stddevCloudLabel.isHidden = true
+            stddevEdgeLabel.isHidden = true
+        }
     }
 
     @objc public func stopIt(sender _: UIBarButtonItem) // JT 18.11.28
@@ -437,7 +483,6 @@ extension FaceDetectionViewController
                 Swift.print("face r= \(r)") // JT 18.11.28
                 SKToast.show(withMessage: "FaceDetection result: \(r)")
 
-
                 Swift.print("---------") // JT 18.12.14
                 doAFaceDetection = true // JT 18.11.26
             }
@@ -467,11 +512,12 @@ extension FaceDetectionViewController
 
             let v = notification.object as! String
 
-            Swift.print("faceRecognitionLatencyCloud: \(v)")
+    //        Swift.print("faceRecognitionLatencyCloud: \(v)")  // JT 18.12.20
 
             DispatchQueue.main.async
             {
                 self!.faceRecognitionLatencyCloudLabel.text = "cloud: \(v) ms" // JT 18.12.11
+
             }
         } // JT 18.12.13
 
@@ -481,8 +527,8 @@ extension FaceDetectionViewController
 
             let v = notification.object as! String // JT 18.11.09
 
-            Swift.print("updateNetworkLatenciesCloud")
-            Swift.print("cloud: \(v)")
+          //  Swift.print("updateNetworkLatenciesCloud")
+            //Swift.print("cloud: \(v)")    // JT 18.12.20
 
             DispatchQueue.main.async
             {
@@ -525,9 +571,8 @@ extension FaceDetectionViewController
             {
                 self!.faceRecognitonNameCloudLabel.text = name
                 self!.faceRecognitonNameCloudLabel.isHidden = false
-                
+
                 self!.faceRecognitonNameCloudLabel.center = CGPoint(x: r.midX, y: r.origin.y - 20) // above
-                
             }
         }
 
@@ -540,39 +585,38 @@ extension FaceDetectionViewController
             if d["success"] as! String == "true"
             {
                 let subject = d["subject"] as! String
-                
+
                 Swift.print("\(notification.name): \(d)")
-                
+
                 // SKToast.show(withMessage: "FaceDetection raw result\(d)")
-                
+
                 // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
-                
+
                 //   let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
                 // let r = convertPointsToRect(a)  // JT 18.12.13
-                
-                self!.previewView.removeMaskLayerMex()    // JT 18.12.14 erase old
-                
+
+                self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
+
                 let a = d["rect"] as! [Int] // JT 18.12.15
-                let r = convertPointsToRect(a)  // JT 18.12.15
+                let r = convertPointsToRect(a) // JT 18.12.15
 
                 let r2 = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize) // JT 18.11.28 green
-                
+
                 DispatchQueue.main.async
-                    {
-                       // Swift.print("subject \(subject)")   // JT 18.12.14
-                        self!.faceRecognitonNameEdgeLabel.text = subject
-                        self!.faceRecognitonNameEdgeLabel.isHidden = false
-                        
-                        self!.faceRecognitonNameEdgeLabel.center   = CGPoint(x: r2.midX, y: r2.origin.y + r2.size.height + 20) // below
-                       // Swift.print("\(r)") // JT 18.12.14
+                {
+                    // Swift.print("subject \(subject)")   // JT 18.12.14
+                    self!.faceRecognitonNameEdgeLabel.text = subject
+                    self!.faceRecognitonNameEdgeLabel.isHidden = false
+
+                    self!.faceRecognitonNameEdgeLabel.center = CGPoint(x: r2.midX, y: r2.origin.y + r2.size.height + 20) // below
+                    // Swift.print("\(r)") // JT 18.12.14
                 }
             }
             else
             {
-                self!.faceRecognitonNameEdgeLabel.text = ""    // JT 18.12.14
-                self!.previewView.removeMaskLayerMex()    // JT 18.12.14 erase old
+                self!.faceRecognitonNameEdgeLabel.text = "" // JT 18.12.14
+                self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
             }
-            
         }
 
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceDetectedCloud"), object: nil, queue: nil)
@@ -580,52 +624,144 @@ extension FaceDetectionViewController
             guard let _ = self else { return }
 
             let d = notification.object as! [String: Any] // Dictionary/json
-            
-            if d["success"] as! Bool == true
+
+         //   if d["success"] as! Bool == true
+            if d["success"] as! String == "true"    // JT 18.12.20
             {
-                let aa = d["rects"] as! [[Int]] // JT 18.12.10
-                let a = aa[0] // JT 18.12.15
-                //   CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
-                 let r = convertPointsToRect(a)  // JT 18.12.13
-                
-                  self!.previewView.removeMaskLayerMex()    // JT 18.12.14 erase old
-
-                self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize) // JT 18.11.28
-                
-                DispatchQueue.main.async
+                let aa = d["rects"] as! [[Int]]
+                for a in aa
+                {
+                    let r = convertPointsToRect(a)
+                    
+                    self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize)
+                    
+                    let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
+                    if multiface == false
                     {
-                        
-
+                        break   // JT 18.12.20 just showed first
+                    }
                 }
-                
             }
             else
+            {}
+        }
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceDetectedEdge"), object: nil, queue: nil) // JT 18.12.20
+        { [weak self] notification in
+            guard let _ = self else { return }
+            
+            let d = notification.object as! [String: Any] // Dictionary/json
+            
+      //      if  d["success"] as! Bool == true    // JT 18.12.20 API changed
+            if d["success"] as! String == "true"
             {
-
+                let aa = d["rects"] as! [[Int]]
+                for a in aa
+                {
+                    let r = convertPointsToRect(a)
+                    
+                  //  self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
+                    
+                    self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize)
+                    
+                    let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
+                    if multiface == false
+                    {
+                        break   // JT 18.12.20 just showed first
+                    }
+                }
+            }
+            else
+            {}
+        }
+        
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil, queue: nil) // JT 18.12.20
+        { [weak self] notification in
+            guard let _ = self else { return }
+            
+            DispatchQueue.main.async
+            {
+                self!.previewView.removeMaskLayerMex() //   erase old
             }
         }
+        
+
     }
+    
 
     @objc func FaceDetectionLatencyEdge(_ notification: Notification) // JT 18.12.11
     {
         let v = notification.object
-        Swift.print("edge: \(v!)")
+        Swift.print("edge: [\(v!)]")
+
+        let vv = Double(v as! String)      // JT 18.12.20
 
         DispatchQueue.main.async
         {
             self.latencyEdgeLabel.text = "Edge: \(v!) ms" // JT 18.12.11
+            
+            self.rollingAverageEdge = self.calcRollingAverageEdge.addSample(value: vv!)
+            let useRollingAverage = UserDefaults.standard.bool(forKey: "Use Rolling Average") // JT 18.12.17
+            
+             if useRollingAverage
+            {
+                let a = String( format: "%4.3f", self.rollingAverageEdge)      // JT 18.12.17
+                
+                self.latencyEdgeLabel.text = "Edge: \(a) ms"    // JT 18.12.20
+            }
+            
+            let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev")
+            let stddev = standardDeviation(arr: self.calcRollingAverageEdge.samples)
+            let stdevStr = String( format: "%4.3f", stddev) // JT 18.12.20
+
+            if showStddev
+            {
+                self.stddevEdgeLabel.text = "\(stdevStr)"
+            }
+            else
+            {
+                self.stddevEdgeLabel.isHidden = true    // JT 18.12.20
+            }
+            
         }
     }
 
-    @objc func FaceDetectionLatencyCloud(_ notification: Notification) // JT 18.12.11
+    @objc func FaceDetectionLatencyCloud(_ notification: Notification)
     {
         let v = notification.object
-        Swift.print("Cloud: \(v!)")
+        Swift.print("Cloud: [\(v!)]")   // JT 18.12.20
 
         DispatchQueue.main.async
         {
-            self.latencyCloudLabel.text = "Cloud: \(v!) ms" // JT 18.12.11
-        }
+            self.latencyCloudLabel.text = "Cloud: \(v!) ms"
+
+            let vv = Double(v as! String)      // JT 18.12.20
+            self.rollingAverageCloud = self.calcRollingAverageCloud.addSample(value: vv!)
+            let useRollingAverage = UserDefaults.standard.bool(forKey: "Use Rolling Average") // JT 18.12.17
+            
+            
+            if useRollingAverage
+            {
+                let a = String( format: "%4.3f", self.rollingAverageCloud)      // JT 18.12.17  // JT 18.12.20
+                
+                self.latencyCloudLabel.text = "Cloud: \(a) ms"   // JT 18.12.17
+            }
+
+            let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev") // JT 18.12.17
+            let stddev = standardDeviation(arr: self.calcRollingAverageCloud.samples)   // JT 18.12.18
+            let stdevStr = String( format: "%4.3f", stddev) // JT 18.12.20
+
+            
+            if showStddev
+            {
+                self.stddevCloudLabel.text = "\(stdevStr)"
+            }
+            else
+            {
+                self.stddevCloudLabel.isHidden = true    // JT 18.12.20
+            }
+          }
     }
 
     @objc func networkLatencyEdge(_ notification: Notification) // JT 18.12.11
@@ -781,8 +917,11 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 //                }
 //            }
 
+            
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil) // JT 18.12.20
+            
             faceDetectionEdge.FaceDetection(rotateImage, "Edge") // JT 18.11.26 edge    // JT 18.12.16
-            //         FaceDetection(rotateImage, "Cloud") // JT 18.11.26    cloud // JT 18.12.14 fails
+            faceDetectionCloud.FaceDetection(rotateImage, "Cloud") // JT 18.11.26    cloud // JT 18.12.14 fails    // JT 18.12.20
         }
 
         do
@@ -815,7 +954,8 @@ extension UIInterfaceOrientation
 {
     var videoOrientation: AVCaptureVideoOrientation?
     {
-        switch self {
+        switch self
+        {
         case .portrait: return .portrait
         case .portraitUpsideDown: return .portraitUpsideDown
         case .landscapeLeft: return .landscapeLeft

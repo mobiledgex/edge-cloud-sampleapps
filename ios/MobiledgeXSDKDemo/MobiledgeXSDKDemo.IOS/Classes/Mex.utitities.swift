@@ -165,3 +165,61 @@ extension UIImage
         return UIImage(cgImage: image)
     }
 }
+
+
+class MovingAverage // JT 18.12.17  Rolling average
+{
+    var samples: Array<Double>
+    var sampleCount = 0
+    var period = 5
+    
+    init(period: Int = 5)
+    {
+        self.period = period
+        
+        samples = Array<Double>()
+    }
+    
+    var average: Double
+    {
+        //   let sum: Double = samples.reduce(0, combine: +)
+        let sum: Double = samples.reduce(0,   +)
+        if period > samples.count
+        {
+            return sum / Double(samples.count)
+        }
+        else
+        {
+            return sum / Double(period)
+        }
+    }
+    
+    func addSample(value: Double) -> Double
+    {
+        let pos = Int(fmodf(Float(sampleCount), Float(period)))
+        sampleCount += 1    // JT 18.12.17
+        if pos >= samples.count
+        {
+            samples.append(value)
+        }
+        else
+        {
+            samples[pos] = value
+        }
+        return average
+    }
+}
+
+extension Dictionary
+{
+    static func += (lhs: inout [Key: Value], rhs: [Key: Value])
+    {
+        lhs.merge(rhs) { $1 }
+    }
+
+    static func + (lhs: [Key: Value], rhs: [Key: Value]) -> [Key: Value]
+    {
+        return lhs.merging(rhs) { $1 }
+    }
+}
+

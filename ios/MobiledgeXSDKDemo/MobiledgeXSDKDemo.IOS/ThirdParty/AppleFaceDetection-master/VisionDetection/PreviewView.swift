@@ -14,7 +14,7 @@ import Vision
 
 class PreviewView: UIView
 {
-    private var maskLayerMex = [CAShapeLayer]()    // JT 18.12.14
+    private var maskLayerMex = [CAShapeLayer]()    // JT 18.12.14 face boxes
     private var maskLayer = [CAShapeLayer]()
 
     // MARK: AV capture properties
@@ -58,35 +58,23 @@ class PreviewView: UIView
         return mask
     }
     
-    private func createLayer2(in rect: CGRect) -> CAShapeLayer
+    private func createLayer(in rect: CGRect, color color: CGColor) -> CAShapeLayer // JT 18.12.17
     {
         let mask = CAShapeLayer()
+        
         mask.frame = rect
         mask.cornerRadius = 10
         mask.opacity = 0.75
-        mask.borderColor = UIColor.blue.cgColor // JT 18.11.27
+        mask.borderColor = color
         mask.borderWidth = 2.0
         
-        maskLayer.append(mask)   // JT 18.12.14
+        maskLayer.append(mask)
         layer.insertSublayer(mask, at: 1)
         
         return mask
     }
     
-    private func createLayer3(in rect: CGRect) -> CAShapeLayer  // JT 18.12.13
-    {
-        let mask = CAShapeLayer()
-        mask.frame = rect
-        mask.cornerRadius = 10
-        mask.opacity = 0.75
-        mask.borderColor = UIColor.red.cgColor  // JT 18.12.13
-        mask.borderWidth = 2.0
-        
-        maskLayerMex.append(mask)
-        layer.insertSublayer(mask, at: 1)
-        
-        return mask
-    }
+ 
     
     private func createLayer4(in rect: CGRect) -> CAShapeLayer
     {
@@ -95,7 +83,7 @@ class PreviewView: UIView
         mask.cornerRadius = 10
         mask.opacity = 0.75
         mask.borderColor = UIColor.green.cgColor    // JT 18.12.13
-        mask.borderWidth = 3.0  // JT 18.12.14
+        mask.borderWidth = 3.0  // JT 18.12.14 ???
         
         maskLayerMex.append(mask)
         layer.insertSublayer(mask, at: 1)
@@ -134,7 +122,11 @@ class PreviewView: UIView
     {
         let facebounds = getFaceBounds(face:face)
         
-        _ = createLayer(in: facebounds) // yellow
+        let localProcessing = UserDefaults.standard.bool(forKey: "Local processing")    // JT 18.12.17
+        if localProcessing == true
+        {
+            _ = createLayer(in: facebounds, color: UIColor.yellow.cgColor  )
+        }
      }
     
     func drawFaceboundingBox2( rect:CGRect, hint sentImageSize: CGSize)    // JT 18.11.27
@@ -143,7 +135,7 @@ class PreviewView: UIView
         // The coordinates are normalized to the dimensions of the processed image, with the origin at the image's lower-left corner.
         let facebounds = getFaceBounds( rect: rect, hint: sentImageSize)
 
-        _ = createLayer2(in: facebounds)    // JT 18.11.27 blue
+        _ = createLayer(in: facebounds, color: UIColor.blue.cgColor  )    // JT 18.11.27 blue
     }
     
     
@@ -152,7 +144,7 @@ class PreviewView: UIView
         // The coordinates are normalized to the dimensions of the processed image, with the origin at the image's lower-left corner.
         let facebounds = getFaceBounds( rect: rect, hint: sentImageSize)
         
-        _ = createLayer3(in: facebounds)    // green
+        _ = createLayer(in: facebounds, color: UIColor.green.cgColor  )    // green
         
         return facebounds   // JT 18.12.14
    }
@@ -162,7 +154,8 @@ class PreviewView: UIView
         // The coordinates are normalized to the dimensions of the processed image, with the origin at the image's lower-left corner.
         let facebounds = getFaceBounds( rect: rect, hint: sentImageSize)
 
-        _ = createLayer4(in: facebounds)    // JT 18.12.14 red
+        _ = createLayer(in: facebounds, color: UIColor.orange.cgColor    )       // JT 18.12.17
+
         
         return facebounds   // JT 18.12.14
     }
