@@ -4,10 +4,11 @@ source 'https://github.com/CocoaPods/Specs.git'
 target 'MobiledgeXSDKDemo.IOS' do
     use_frameworks!
 
+    pod 'Alamofire'
+
     pod 'GoogleMaps', '= 2.7.0'
     pod 'GoogleSignIn'
     
-    pod 'Alamofire'
     pod 'PlainPing'
     pod 'SwiftyJSON'
     pod 'SideMenu'

@@ -921,7 +921,7 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil) // JT 18.12.20
             
             faceDetectionEdge.FaceDetection(rotateImage, "Edge") // JT 18.11.26 edge    // JT 18.12.16
-            faceDetectionCloud.FaceDetection(rotateImage, "Cloud") // JT 18.11.26    cloud // JT 18.12.14 fails    // JT 18.12.20
+            faceDetectionCloud.FaceDetection(rotateImage, "Cloud") // JT 18.11.26    cloud  OK
         }
 
         do
