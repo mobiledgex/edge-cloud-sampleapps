@@ -40,6 +40,7 @@
 		252C2E2B218BA1210091A1D4 /* ic_marker_mobile-web.png in Resources */ = {isa = PBXBuildFile; fileRef = 252C2E26218BA1210091A1D4 /* ic_marker_mobile-web.png */; };
 		252C2E3F218CB19C0091A1D4 /* MatchingEngineResultsListener.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EEB217F7BD60092956D /* MatchingEngineResultsListener.java.swift */; };
 		252C2E41218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */; };
+		253A5FEF21D448C4002C39F7 /* MobiledgeX.SDK.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253A5FEE21D448C4002C39F7 /* MobiledgeX.SDK.swift */; };
 		25623EC2217F79D30092956D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EC1217F79D30092956D /* AppDelegate.swift */; };
 		25623EC4217F79D30092956D /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EC3217F79D30092956D /* ViewController.swift */; };
 		25623EC7217F79D30092956D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 25623EC5217F79D30092956D /* Main.storyboard */; };
@@ -221,6 +222,7 @@
 		252C2E25218BA1210091A1D4 /* ic_marker_cloudlet-web.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ic_marker_cloudlet-web.png"; sourceTree = "<group>"; };
 		252C2E26218BA1210091A1D4 /* ic_marker_mobile-web.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ic_marker_mobile-web.png"; sourceTree = "<group>"; };
 		252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineHelper.java2.swift; sourceTree = "<group>"; };
+		253A5FEE21D448C4002C39F7 /* MobiledgeX.SDK.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MobiledgeX.SDK.swift; path = SDK/MobiledgeX.SDK.swift; sourceTree = "<group>"; };
 		25623EBE217F79D30092956D /* MobiledgeXSDKDemo.IOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MobiledgeXSDKDemo.IOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25623EC1217F79D30092956D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		25623EC3217F79D30092956D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -513,6 +515,7 @@
 				25623EC1217F79D30092956D /* AppDelegate.swift */,
 				25623EC3217F79D30092956D /* ViewController.swift */,
 				25DCD6322198A5BF000437A5 /* Sample_client.swift */,
+				253A5FEE21D448C4002C39F7 /* MobiledgeX.SDK.swift */,
 				25623EC5217F79D30092956D /* Main.storyboard */,
 				25623EC8217F79D50092956D /* Assets.xcassets */,
 				25623ECA217F79D50092956D /* LaunchScreen.storyboard */,
@@ -1093,6 +1096,7 @@
 				252C2D59218298110091A1D4 /* FindCloudlet.java.swift in Sources */,
 				25DCD6582199F128000437A5 /* CloudletDetailsViewController.swift in Sources */,
 				258BEF2721A0E0AB0055227D /* RFAboutView.swift in Sources */,
+				253A5FEF21D448C4002C39F7 /* MobiledgeX.SDK.swift in Sources */,
 				252C2DA421857E9B0091A1D4 /* VerifyLocation.java.swift in Sources */,
 				25DCD73D2199F798000437A5 /* RuleClosure.swift in Sources */,
 				252C2D9C21857E590091A1D4 /* GetLocation.java.swift in Sources */,

@@ -6,33 +6,33 @@
 //  Copyright © 2018 MobiledgeX. All rights reserved.
 //
 
-import GoogleMaps   // JT 18.10.23
+import GoogleMaps
 import UIKit
 
-var theMap: GMSMapView? // JT 18.11.15 used by sample.client
+var theMap: GMSMapView? //   used by sample.client
 var userMarker: GMSMarker?   // set by RegisterClient , was: mUserLocationMarker.
 
-class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentationControllerDelegate // JT 18.10.25
+class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentationControllerDelegate
 {
     @IBOutlet var viewMap: GMSMapView!
 
-    let rightBarDropDown = DropDown() // JT 18.10.25   // JT 18.11.12 todotodo
+    let rightBarDropDown = DropDown()
 
-    private var locationVerified: Bool = false // JT 18.11.14 todo
+    private var locationVerified: Bool = false //  todo where to set this true?
     private var locationVerificationAttempted: Bool = false
 
     override func viewDidLoad()
     {
         super.viewDidLoad()
 
-        title = "MobiledgeX SDK Demo" // JT 18.10.25
+        title = "MobiledgeX SDK Demo"
 
         // Do any additional setup after loading the view, typically from a nib.
 
-        // -----    // JT 18.09.22
+        // -----
 
         let leftButton: UIButton = UIButton(type: UIButton.ButtonType.custom) as UIButton
-        leftButton.frame = CGRect(x: 0, y: 0, width: 40, height: 40) // JT 18.05.31
+        leftButton.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
         leftButton.setImage(UIImage(named: "menu-512"), for: UIControl.State.normal)
         leftButton.addTarget(self, action: #selector(menuButtonAction), for: UIControl.Event.touchUpInside)
 
@@ -41,17 +41,17 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         navigationItem.leftBarButtonItem = leftBarButtonItem
           // -----
 
-        theMap = viewMap // JT 18.11.11 publish
-        theMap!.delegate = self // JT 18.11.12 for taps
-        theMap!.isMyLocationEnabled = true // JT 18.11.14 blue dot
+        theMap = viewMap //   publish
+        theMap!.delegate = self //  for taps
+        theMap!.isMyLocationEnabled = true //   blue dot
 
         let camera: GMSCameraPosition = GMSCameraPosition.camera(withLatitude: 48.857165, longitude: 2.354613, zoom: 8.0)
 
         viewMap.camera = camera
 
-        setupRightBarDropDown() // JT 18.10.25   // JT 18.11.12
-        // JT 18.11.10
-//        let manager = NetworkReachabilityManager(host: "www.apple.com") // JT 18.11.08
+        setupRightBarDropDown()
+
+        //        let manager = NetworkReachabilityManager(host: "www.apple.com")
 //
 //        manager?.listener = { status in
 //            print("Network Status Changed: \(status)")
@@ -59,7 +59,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 //
 //        manager?.startListening()
         
-        MexRegisterClient.shared.registerClientThenGetInstApps()    // JT 18.12.06
+        MexRegisterClient.shared.registerClientThenGetInstApps()
         
         // latency
         
@@ -68,7 +68,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             guard let _ = self else { return }
             
             let v = notification.object as! String
-            UserDefaults.standard.set( v, forKey: "latencyCloud")    // JT 18.12.13
+            UserDefaults.standard.set( v, forKey: "latencyCloud")
         }
         
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "latencyEdge"), object: nil, queue: nil) // updateNetworkLatencies
@@ -76,21 +76,21 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             guard let _ = self else { return }
             
             let v = notification.object as! String
-            UserDefaults.standard.set( v, forKey: "latencyEdge")    // JT 18.12.13
+            UserDefaults.standard.set( v, forKey: "latencyEdge")
         }
         
         
-      //  getNetworkLatencyCloud()    // JT 18.12.13  "latencyCloud"
+      //  getNetworkLatencyCloud()    //   "latencyCloud"
 
         DispatchQueue.main.async {
-            getNetworkLatencyEdge() // JT 18.12.13  "latencyEdge"
+            getNetworkLatencyEdge() //   "latencyEdge"
         }
     }
 
     func setupRightBarDropDown()
     {
         let image = UIImage(named: "dot-menu@3x copy")?.withRenderingMode(.alwaysOriginal)
-        let barButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(ViewController.openMenu(sender:))) // JT 18.12.03 todo rename image
+        let barButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(ViewController.openMenu(sender:))) //  todo rename image
 
         navigationItem.rightBarButtonItem = barButtonItem
 
@@ -112,14 +112,14 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
     // show more place info when info marker is tapped
     func mapView(_: GMSMapView, didTapInfoWindowOf marker: GMSMarker)
     {
-        if marker.userData == nil // JT 18.11.14
+        if marker.userData == nil
         {
             return
         }
 
-        let cloudletName = marker.userData as! String // JT 18.11.12
+        let cloudletName = marker.userData as! String
 
-        let lets = CloudletListHolder.getSingleton().getCloudletList() // JT 18.11.12
+        let lets = CloudletListHolder.getSingleton().getCloudletList()
 
         if lets[cloudletName] != nil
         {
@@ -131,9 +131,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
 
-            let vc = storyboard.instantiateViewController(withIdentifier: "CloudletDetailsViewController") as! CloudletDetailsViewController // JT 18.11.13
+            let vc = storyboard.instantiateViewController(withIdentifier: "CloudletDetailsViewController") as! CloudletDetailsViewController
+            
             // pass in data - decoupled
-            UserDefaults.standard.set(cl!.getCloudletName() + " : " + cl!.getUri(), forKey: "Cloudlet Name:") // JT 18.11.13
+            UserDefaults.standard.set(cl!.getCloudletName() + " : " + cl!.getUri(), forKey: "Cloudlet Name:")
             UserDefaults.standard.set(cl!.getAppName(), forKey: "App Name:")
             UserDefaults.standard.set(cl!.getCarrierName(), forKey: "Carrier:")
 
@@ -145,9 +146,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             UserDefaults.standard.set(cl!.getLatencyAvg(), forKey: "Latency Avg:")
             UserDefaults.standard.set(cl!.getLatencyMax(), forKey: "Latency Max:")
             UserDefaults.standard.set(cl!.getLatencyStddev(), forKey: "Latency Stddev:")
-            // UserDefaults.standard.set( cl , forKey: "currentDetailsCloudlet")   // JT 18.11.13
+            // UserDefaults.standard.set( cl , forKey: "currentDetailsCloudlet")
 
-            navigationController!.pushViewController(vc, animated: true) // JT 18.11.12
+            navigationController!.pushViewController(vc, animated: true)
+            
             vc.cloudlet = cl!
         }
     }
@@ -185,24 +187,24 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             switch index
             {
             case 0:
-                MexRegisterClient.shared.registerClientNow()    // JT 18.12.06
+                MexRegisterClient.shared.registerClientNow()    //  "Register Client",
 
             case 1:
-                MexGetAppInst.shared.getAppInstNow()    // JT 18.12.06
+                MexGetAppInst.shared.getAppInstNow()    // "Get App Instances"
 
             case 2:
                 Swift.print("Verify Location")
 
-                MexVerifyLocation.shared.doVerifyLocation()     // JT 18.12.07
+                MexVerifyLocation.shared.doVerifyLocation()     // "Verify Location"
                 
             case 3:
                 Swift.print("Find Closest Cloudlet")
-                MexFindNearestCloudlet.shared.findNearestCloudlet()     // JT 18.12.06
+                MexFindNearestCloudlet.shared.findNearestCloudlet()     //  "Find Closest Cloudlet"
                 
             case 4:
                 Swift.print("Reset Location")
 
-                resetUserLocation(false) // JT 18.11.14 Note: Locator.currentPositionnot working
+                resetUserLocation(false) // "Reset Location" Note: Locator.currentPositionnot working
 
             default:
                 break
@@ -210,19 +212,18 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         }
     }
 
-    @objc func menuButtonAction() // JT 18.11.12
+    @objc func menuButtonAction()
     {
         print("menuButtonAction")
 
         if presentingViewController == nil
         {
-//            present(SideMenuManager.default.menuLeftNavigationController!, animated: true, completion: nil)   // JT 18.11.12 todo
 
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
 
             let vc = storyboard.instantiateViewController(withIdentifier: "SideMenuViewController")
 
-            navigationController!.pushViewController(vc, animated: true) // JT 18.11.12
+            navigationController!.pushViewController(vc, animated: true)
         }
         else
         {
@@ -230,25 +231,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         }
     }
 
+  
     // MARK: -
 
-//    public func onMarkerClick(_ marker: GMSMarker) -> Bool
-//    {
-//        Swift.print("onMarkerClick( \(marker) Draggable= \(marker.isDraggable)")
-//        // marker.showInfoWindow();
-//        Swift.print("todo showInfoWindow") // JT 18.11.01
-//        return true
-//    }
-//
-//    public func onMarkerDragEnd(_ marker: GMSMarker)
-//    {
-//        Swift.print("onMarkerDragEnd( \(marker))")
-//        showSpoofGpsDialog(marker.position)
-//    } // JT 18.11.18
-
-    // MARK: -
-
-    private func showSpoofGpsDialog(_ spoofLatLng: CLLocationCoordinate2D) // LatLng)   // JT 18.11.01
+    private func showSpoofGpsDialog(_ spoofLatLng: CLLocationCoordinate2D) // LatLng)
     {
         if userMarker == nil
         {
@@ -256,7 +242,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         }
         let oldLatLng = userMarker!.position
 
-        userMarker!.position = spoofLatLng // JT 18.11.01 mUserLocationMarker
+        userMarker!.position = spoofLatLng //   mUserLocationMarker
         let choices: [String] = ["Spoof GPS at this location", "Update location in GPS database"]
 
         let alert = UIAlertController(title: " ", message: "Choose", preferredStyle: .alert) // .actionSheet)
@@ -264,7 +250,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         alert.addAction(UIAlertAction(title: choices[0], style: .default, handler: { _ in
             // execute some code when this option is selected
 
-            SKToast.show(withMessage: "GPS spoof enabled.") // JT 18.11.02
+            SKToast.show(withMessage: "GPS spoof enabled.")
 
             self.locationVerificationAttempted = false
             self.locationVerified = false
@@ -273,11 +259,19 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
                 oldLatLng.distance(from: spoofLatLng) / 1000
 
             userMarker!.snippet = "Spoofed \(String(format: "%.2f", distance)) km from actual location"
+            
+            let resized =  makeUserMakerImage(MexRegisterClient.COLOR_NEUTRAL)
+            
+            userMarker!.icon = resized
 
         }))
         alert.addAction(UIAlertAction(title: choices[1], style: .default, handler: { _ in
 
-            updateLocSimLocation(userMarker!.position.latitude, userMarker!.position.longitude) // JT 18.11.15
+            updateLocSimLocation(userMarker!.position.latitude, userMarker!.position.longitude)
+            
+            let resized =  makeUserMakerImage(MexRegisterClient.COLOR_NEUTRAL)
+            
+            userMarker!.icon = resized
 
         }))
 

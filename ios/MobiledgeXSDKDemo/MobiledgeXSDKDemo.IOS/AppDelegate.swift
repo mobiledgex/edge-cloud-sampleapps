@@ -6,19 +6,20 @@
 //  Copyright © 2018 MobiledgeX. All rights reserved.
 //
 
-import GoogleMaps // JT 18.10.23
-import GoogleSignIn // JT 18.10.24 #import <Google/SignIn.h>
-// import ProtoRPC    // JT 18.10.23
-import SideMenu // JT 18.11.12
+import GoogleMaps
+import GoogleSignIn //   #import <Google/SignIn.h>
+
 import UIKit
 
-var services: Any? // JT 18.10.25
+var services: Any? //   = GMSServices.sharedServices()
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate //, GIDSignInDelegate // JT 18.10.24 GIDSignInUIDelegate
+class AppDelegate: UIResponder, UIApplicationDelegate
 {
-    let kAPIKey = "AIzaSyCNWqii1sVJ0NGU12UvRBbvDhqBqpcSyP0" // JT 18.10.20  // JT 18.10.22
-    let kClientID = "406366254062-ci2micbnconnti5hhb7ltku9natmegct.apps.googleusercontent.com" // JT 18.11.17 for google signin, tmp use mine
+    // replace the following two values with your own
+    //
+    let kAPIKey = "AIzaSyCNWqii1sVJ0NGU12UvRBbvDhqBqpcSyP0" // JT my personal APIKey - use your own
+    let kClientID = "406366254062-ci2micbnconnti5hhb7ltku9natmegct.apps.googleusercontent.com" // JT   for google signin, tmp use mine
 
     var window: UIWindow?
 
@@ -26,15 +27,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate //, GIDSignInDelegate // J
     {
         // Override point for customization after application launch.
 
-        #if true // JT 18.10.24   // JT 18.11.17
-            GIDSignIn.sharedInstance().clientID = kClientID // JT 18.11.17
+        #if true
+            GIDSignIn.sharedInstance().clientID = kClientID
             GIDSignIn.sharedInstance().delegate = self
 
         #endif
-        GMSServices.provideAPIKey(kAPIKey) // JT 18.10.25 for maps
+        GMSServices.provideAPIKey(kAPIKey) // for maps
         services = GMSServices.sharedServices()
-
-        // setupSideMenu()     // JT 18.11.12 nogo, would like
 
           // JT 18.11.25 rotate log
          Log.logger.rename(0)  // JT 18.11.25
@@ -51,22 +50,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate //, GIDSignInDelegate // J
                                                  annotation: options[UIApplication.OpenURLOptionsKey.annotation])
     }
 
-    fileprivate func setupSideMenu() // JT 18.11.12
-    {
-        // Define the menus
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let nav1 = storyboard.instantiateViewController(withIdentifier: "Settings") as? UISideMenuNavigationController // LeftMenuNavigationController
 
-        let nav2 = storyboard.instantiateViewController(withIdentifier: "RightMenuNavigationController") as? UISideMenuNavigationController // RightMenuNavigationController
-
-        SideMenuManager.default.menuLeftNavigationController = nav1
-        SideMenuManager.default.menuRightNavigationController = nav2
-
-        // Enable gestures. The left and/or right menus must be set up above for these to work.
-        // Note that these continue to work on the Navigation Controller independent of the View Controller it displays!
-        SideMenuManager.default.menuAddPanGestureToPresent(toView: (nav2?.navigationBar)!)
-        SideMenuManager.default.menuAddScreenEdgePanGesturesToPresent(toView: (nav2?.view)!) // JT 18.09.22
-    }
 
     func applicationWillResignActive(_: UIApplication)
     {
@@ -115,9 +99,9 @@ extension  AppDelegate: GIDSignInDelegate
     {
         if error != nil
         {
-            // Swift.print("Error: GIDSignIn: \(error)")  // JT 18.11.17
+            // Swift.print("Error: GIDSignIn: \(error)")
             // Perform any operations on signed in user here.
-            print("GIDSignIn: \(error.localizedDescription)") // JT 18.11.17 todo ignore Cancel
+            print("GIDSignIn: \(error.localizedDescription)") //   todo ignore Cancel
             // ...
         }
         else
@@ -130,8 +114,8 @@ extension  AppDelegate: GIDSignInDelegate
             let email: String = user.profile.email
           
             Swift.print("\(userId), \(idToken), \(fullName), \(email)")
-            // JT 18.11.17 todo what to save
-            Swift.print("GIDSignIn \(user!), what todo with result?") // JT 18.11.17
+            // todo what to save
+            Swift.print("GIDSignIn \(user!), what todo with result?")
         }
     }
     
