@@ -8,9 +8,9 @@
 
 import Foundation
 
-
 import Alamofire    // dependency
 
+import NSLogger   // JT 19.01.07
 
 class MexSDK
 {
@@ -53,11 +53,14 @@ class MexSDK
             Swift.print("\(request)")
             logw("•uri:\n\(uri)\n") // JT 18.11.26 log to file
         }
-        
+            LogMarker(postName) // JT 19.01.04
+
+        Logger.shared.log(.network, .info, postName + " request\n \(request) \n" )   // JT 19.01.04
+
         //  logw("•request:\n\(request)\n") // JT 18.11.26 log to file
         
         dealWithTrustPolicy(uri) // certs
-        Swift.print("==========\n")
+       // Swift.print("==========\n")
         
         let requestObj = MexSDK.shared.sessionManager!.request(
             uri,
@@ -124,14 +127,16 @@ class MexSDK
                     //      Log.logger.name = "curl"  // JT 18.12.05 todo
                     
                     let curl = response.request.debugDescription    // JT 18.12.05
-                    logw("\n \(curl)\n")      // JT 18.12.05
+                    //logw("\n \(curl)\n")      // JT 18.12.05
+                    //logw("postName:\(postName)\nresult:\n\(json)") //   log to file
                     
-                    logw("postName:\(postName)\nresult:\n\(json)") //   log to file
+                    Logger.shared.log(.network, .info, postName + " reply json\n \(json) \n" )   // JT 19.01.04
+
                 }
                 
-                Swift.print("\(response)")
-                Swift.print("\(response.result)")
-                Swift.print("\(response.data!)")
+              //  Swift.print("\(response)")
+                Swift.print("result \(response.result)")
+                Swift.print("data \(response.data!)")
                 
                 //            print(response.metrics)
                 //           print(response.timeline)
@@ -142,6 +147,10 @@ class MexSDK
             debugPrint(requestObj) // dump curl
         }
         
+        Logger.shared.log(.network, .info, postName + " curl\n \(requestObj.debugDescription) \n" )     // JT 19.01.05
+
+        //Logger.shared.log(.network, .noise, postName + " xxx \n" )     // JT 19.01.05 gray
+
         return promise.future
     }
     
@@ -153,8 +162,10 @@ class MexSDK
     {
         // let certificates = getCertificates()
         let certificates = ServerTrustPolicy.certificates() // alamo extension
-        Swift.print("~~~ \(certificates) ---")
-        
+        Swift.print("~~~certificates: \(certificates) ---")
+      //  Logger.shared.log(.network, .info,  " certificates:\n \(certificates) \n" )    // JT 19.01.05
+      Logger.shared.log(.network, .info,  " add these certificates to your curl below --cacert mex-ca.crt --cert mex-client.crt" )
+
         let trustPolicy = ServerTrustPolicy.pinCertificates(
             certificates: certificates,
             validateCertificateChain: true,

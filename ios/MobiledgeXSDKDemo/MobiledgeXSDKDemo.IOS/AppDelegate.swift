@@ -10,6 +10,7 @@ import GoogleMaps
 import GoogleSignIn //   #import <Google/SignIn.h>
 
 import UIKit
+import NSLogger // JT 19.01.07
 
 var services: Any? //   = GMSServices.sharedServices()
 
@@ -40,6 +41,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate
         // This writes to the log
         logw("•• write to the log")    // JT 18.11.22 and console
 
+        enum loggerOption : UInt32 {
+            case kLoggerOption_LogToConsole                        = 0x01
+            case kLoggerOption_BufferLogsUntilConnection            = 0x02
+            case kLoggerOption_BrowseBonjour                        = 0x04
+            case kLoggerOption_BrowseOnlyLocalDomain                = 0x08
+            case kLoggerOption_UseSSL                            = 0x10
+        };  // JT 19.01.07
+        
+        let lptr :OpaquePointer? = nil
+        let options:UInt32 =
+            loggerOption.kLoggerOption_BufferLogsUntilConnection.rawValue
+                | loggerOption.kLoggerOption_BrowseBonjour.rawValue
+                |  loggerOption.kLoggerOption_BrowseOnlyLocalDomain.rawValue
+       LoggerSetOptions( lptr,  options)   // JT 19.01.04 kLoggerOption_UseSSL
+        
         return true
     }
 

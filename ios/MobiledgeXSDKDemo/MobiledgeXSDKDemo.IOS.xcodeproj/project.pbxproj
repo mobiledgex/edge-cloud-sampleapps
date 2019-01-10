@@ -223,6 +223,7 @@
 		252C2E26218BA1210091A1D4 /* ic_marker_mobile-web.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ic_marker_mobile-web.png"; sourceTree = "<group>"; };
 		252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineHelper.java2.swift; sourceTree = "<group>"; };
 		253A5FEE21D448C4002C39F7 /* MobiledgeX.SDK.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MobiledgeX.SDK.swift; path = SDK/MobiledgeX.SDK.swift; sourceTree = "<group>"; };
+		253A5FFF21E0413D002C39F7 /* NSLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = NSLogger.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/NSLogger-1.9.6/Client/iOS/NSLogger.swift"; sourceTree = SOURCE_ROOT; };
 		25623EBE217F79D30092956D /* MobiledgeXSDKDemo.IOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MobiledgeXSDKDemo.IOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25623EC1217F79D30092956D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		25623EC3217F79D30092956D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -649,6 +650,7 @@
 		25D5DC8121801C6B0097941C /* ThirdParty2 */ = {
 			isa = PBXGroup;
 			children = (
+				253A5FFF21E0413D002C39F7 /* NSLogger.swift */,
 				25C9410721AF7CB700C9424B /* Sources */,
 				25C9410321ACE68900C9424B /* RegExReplace.swift */,
 				25C9410121AB9DBE00C9424B /* Log.swift */,
@@ -1030,6 +1032,7 @@
 				"${BUILT_PRODUCTS_DIR}/GTMOAuth2/GTMOAuth2.framework",
 				"${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleToolboxForMac/GoogleToolboxForMac.framework",
+				"${BUILT_PRODUCTS_DIR}/NSLogger/NSLogger.framework",
 				"${BUILT_PRODUCTS_DIR}/PlainPing/PlainPing.framework",
 				"${BUILT_PRODUCTS_DIR}/SideMenu/SideMenu.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftLog/SwiftLog.framework",
@@ -1041,6 +1044,7 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMOAuth2.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMSessionFetcher.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleToolboxForMac.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NSLogger.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PlainPing.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SideMenu.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftLog.framework",

@@ -25,6 +25,9 @@ PODS:
   - GTMSessionFetcher/Core (1.2.0)
   - GTMSessionFetcher/Full (1.2.0):
     - GTMSessionFetcher/Core (= 1.2.0)
+  - NSLogger/ObjC (1.9.6)
+  - NSLogger/Swift (1.9.6):
+    - NSLogger/ObjC
   - PlainPing (0.5)
   - SideMenu (5.0.3)
   - SwiftLog (1.0.0)
@@ -34,6 +37,7 @@ DEPENDENCIES:
   - Alamofire
   - GoogleMaps (= 2.7.0)
   - GoogleSignIn
+  - NSLogger/Swift
   - PlainPing
   - SideMenu
   - SwiftLog
@@ -47,6 +51,7 @@ SPEC REPOS:
     - GoogleToolboxForMac
     - GTMOAuth2
     - GTMSessionFetcher
+    - NSLogger
     - PlainPing
     - SideMenu
     - SwiftLog
@@ -57,13 +62,14 @@ SPEC CHECKSUMS:
   GoogleMaps: f79af95cb24d869457b1f961c93d3ce8b2f3b848
   GoogleSignIn: 11183592dc63e105475c7305a325045ff95e02b7
   GoogleToolboxForMac: 91c824d21e85b31c2aae9bb011c5027c9b4e738f
-  GTMOAuth2: c77fe325e4acd453837e72d91e3b5f13116857b2
+  GTMOAuth2: e8b6512c896235149df975c41d9a36c868ab7fba
   GTMSessionFetcher: 0c4baf0a73acd0041bf9f71ea018deedab5ea84e
+  NSLogger: 4b879040b469e15269dbfb601206a71eddb85827
   PlainPing: 6b248b94d92be7ec0410952d1b09af43b9a39015
   SideMenu: 1dcaabce84538c53325c287f7fe62999379a641c
   SwiftLog: f6c4f9a4ade06263555ab34b2c0f72025ffcda9e
   SwiftyJSON: c4bcba26dd9ec7a027fc8eade48e2c911f229e96
 
-PODFILE CHECKSUM: 0118c99e01a7731d02383190748c592ae541737f
+PODFILE CHECKSUM: 1ba90acfdc0e53eab93bca10c9576a1603723fd8
 
 COCOAPODS: 1.5.0

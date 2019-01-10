@@ -13,9 +13,9 @@ target 'MobiledgeXSDKDemo.IOS' do
     pod 'SwiftyJSON'
     pod 'SideMenu'
     pod 'SwiftLog'
-    
+    pod 'NSLogger/Swift'
+
     #   pod 'OpenSSL-Universal'
-    #     pod 'gRPC-ProtoRPC'
 
     ##      pod 'RFAboutView-Swift' cant because we fixed compile error
     ##    pod 'Eureka' cant do this as we modified ButtonRow and SwitdhRow for subtitle
