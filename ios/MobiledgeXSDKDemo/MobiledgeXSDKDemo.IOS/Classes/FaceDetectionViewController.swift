@@ -565,7 +565,7 @@ extension FaceDetectionViewController
             // let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
             let r = convertPointsToRect(a) // JT 18.12.13
 
-            let r2 = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize) // JT 18.11.28
+            let _ = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize) // JT 18.11.28
 
             DispatchQueue.main.async
             {
@@ -633,7 +633,7 @@ extension FaceDetectionViewController
                 {
                     let r = convertPointsToRect(a)
                     
-                    self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize)
+                    let _ = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize)
                     
                     let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
                     if multiface == false
@@ -662,7 +662,7 @@ extension FaceDetectionViewController
                     
                   //  self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
                     
-                    self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize)
+                    let _ = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize)   // JT 19.01.04
                     
                     let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
                     if multiface == false
