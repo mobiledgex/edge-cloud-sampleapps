@@ -47,9 +47,9 @@ public class CloudletListHolder
         return latencyTestMethod
     }
 
-    public func setLatencyTestMethod(_ latencyTestMethod: LatencyTestMethod) // JT 18.10.24
+    public func setLatencyTestMethod(_ latencyTestMethod: LatencyTestMethod) //
     {
-        self.latencyTestMethod = latencyTestMethod // JT 18.10.24
+        self.latencyTestMethod = latencyTestMethod //
 
         Swift.print("String latencyTestMethod= \(latencyTestMethod) enum latencyTestMethod= \(self.latencyTestMethod)")
     }

@@ -9,12 +9,11 @@
 import AVFoundation
 import UIKit
 import Vision
-// import PlainPing
 
 var doAFaceDetection = true // JT 18.11.26 todo refactor patterned
 var doAFaceRecognition = false // JT 18.12.10 one at a time
 
-enum MexKind: Int // JT 18.12.14
+enum MexKind: Int
 {
     case mexCloud
     case mexEdge
@@ -25,7 +24,7 @@ class FaceDetectionViewController: UIViewController
     // VNRequest: Either Retangles or Landmarks
     var faceDetectionRequest: VNRequest!
 
-    var sentImageSize = CGSize(width: 0, height: 0) // JT 18.11.28
+    var sentImageSize = CGSize(width: 0, height: 0)
     @IBOutlet var latencyCloudLabel: UILabel! // JT 18.12.11
     @IBOutlet var latencyEdgeLabel: UILabel! //
 
@@ -126,16 +125,18 @@ class FaceDetectionViewController: UIViewController
         // ---
 
         let latencyCloud = UserDefaults.standard.string(forKey: "latencyCloud") // JT 18.12.14
-        networkLatencyCloudLabel.text = "Cloud: \(latencyCloud!) ms" // JT 18.12.11
-
+       networkLatencyCloudLabel.text = latencyCloud != nil ? "Cloud: \(latencyCloud!) ms" : "Cloud: None ms"    // JT 19.01.14
+        
         let latencyEdge = UserDefaults.standard.string(forKey: "latencyEdge") // JT 18.12.14
-        networkLatencyEdgeLabel.text = "Edge: \(latencyEdge!) ms" // JT 18.12.11
+
+        networkLatencyEdgeLabel.text = latencyEdge != nil ? "Edge: \(latencyEdge!) ms" : "Edge: None ms"    // JT 19.01.14
+
         // ---
 
-        doAFaceDetection = true // JT 18.12.14
+        doAFaceDetection = true
 
-        let localProcessing = UserDefaults.standard.bool(forKey: "Show full process latency") // JT 18.12.17
-        if localProcessing == true // JT 18.12.17
+        let localProcessing = UserDefaults.standard.bool(forKey: "Show full process latency")
+        if localProcessing == true 
         {
             latencyCloudLabel.isHidden = false
             latencyEdgeLabel.isHidden = false
@@ -918,10 +919,10 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 //            }
 
             
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil) // JT 18.12.20
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil)  
             
-            faceDetectionEdge.FaceDetection(rotateImage, "Edge") // JT 18.11.26 edge    // JT 18.12.16
-            faceDetectionCloud.FaceDetection(rotateImage, "Cloud") // JT 18.11.26    cloud  OK
+            faceDetectionEdge.FaceDetection(rotateImage, "Edge") // edge
+            faceDetectionCloud.FaceDetection(rotateImage, "Cloud") //     cloud  OK
         }
 
         do
