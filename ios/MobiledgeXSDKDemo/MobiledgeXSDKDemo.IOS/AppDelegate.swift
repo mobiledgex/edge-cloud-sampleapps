@@ -24,6 +24,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate
 
     var window: UIWindow?
 
+    
+    /// Where it all starts
+    ///
+    /// Do Google GIDSignIn and GMSServices
+   /// init loggng options
+    
     func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool
     {
         // Override point for customization after application launch.
@@ -36,30 +42,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate
         GMSServices.provideAPIKey(kAPIKey) // for maps
         services = GMSServices.sharedServices()
 
-          // JT 18.11.25 rotate log
-         Log.logger.rename(0)  // JT 18.11.25
-        // This writes to the log
-        logw("•• write to the log")    // JT 18.11.22 and console
+        // rotate log
+        Log.logger.rename(0)  // usage: logw("•• write to the log")
 
+        // ---
+        // NSLogger options
+        
         enum loggerOption : UInt32 {
             case kLoggerOption_LogToConsole                        = 0x01
             case kLoggerOption_BufferLogsUntilConnection            = 0x02
             case kLoggerOption_BrowseBonjour                        = 0x04
             case kLoggerOption_BrowseOnlyLocalDomain                = 0x08
-            case kLoggerOption_UseSSL                            = 0x10
+            case kLoggerOption_UseSSL                                = 0x10
         };  // JT 19.01.07
         
-        let lptr :OpaquePointer? = nil
         let options:UInt32 =
             loggerOption.kLoggerOption_BufferLogsUntilConnection.rawValue
                 | loggerOption.kLoggerOption_BrowseBonjour.rawValue
                 |  loggerOption.kLoggerOption_BrowseOnlyLocalDomain.rawValue
-       LoggerSetOptions( lptr,  options)   // JT 19.01.04 kLoggerOption_UseSSL
+        let lptr :OpaquePointer? = nil
+        LoggerSetOptions( lptr,  options)   // JT 19.01.04  -Dont capture console
         
         return true
     }
 
-    func application(_: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool // JT 18.11.17
+    func application(_: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool
     {
         return GIDSignIn.sharedInstance().handle(url as URL?,
                                                  sourceApplication: options[UIApplication.OpenURLOptionsKey.sourceApplication] as? String,

@@ -1,19 +1,19 @@
 
-// JT 18.10.23
+
 import Foundation
 
-import GoogleMaps // JT 18.10.23
+import GoogleMaps
 import PlainPing // for latency
-import Alamofire    // JT 18.11.16
+import Alamofire
 
-private var cl: Cloudlet? // JT 18.11.01
+private var cl: Cloudlet?
 
-public class Cloudlet // implements Serializable
+public class Cloudlet // implements Serializable? todo?
 {
     private static let TAG: String = "Cloudlet"
     public static let BYTES_TO_MBYTES: Int = 1024 * 1024
 
-    var mCloudletName: String = ""  // JT 18.11.22 leave lagacy m prefix nameing convention
+    var mCloudletName: String = ""  // note legacy m prefix nameing convention
     private var mAppName: String = ""
     private var mCarrierName: String = ""
     
@@ -23,7 +23,7 @@ public class Cloudlet // implements Serializable
     private var mDistance: Double = 0
     private var bestMatch: Bool = false
     
-    private var mMarker: GMSMarker? // JT 18.10.23
+    private var mMarker: GMSMarker? // map marker, POI
 
     var latencyMin: Double = 9999.0
     var latencyAvg: Double = 0
@@ -31,24 +31,22 @@ public class Cloudlet // implements Serializable
     var latencyStddev: Double = 0
     var latencyTotal: Double = 0
 
-    var pings: [String] = [String]() // JT 18.11.13 // JT 18.11.22
-    var latencies = [Double]() // JT 18.11.13
+    var pings: [String] = [String]()
+    var latencies = [Double]()
 
     private var mbps: Int64 = 0 // BigDecimal.valueOf(0);  // JT 18.10.23 todo?
     //var latencyTestProgress: Double = 0
-    private var speedTestProgress: Double = 0 // 0-1  // JT 18.11.22 updating
-    var startTime: Double = 0 // Int64 // JT 18.10.24
-       var startTime1:DispatchTime? // JT 18.11.16
+    private var speedTestProgress: Double = 0 // 0-1  //  updating
+    var startTime: Double = 0 // Int64
+       var startTime1:DispatchTime?
     var timeDifference: Double = 0
-    var mNumPackets: Int = 4
+    var mNumPackets: Int = 4    // number of pings
     private var mNumBytes: Int = 1_048_576
     private var runningOnEmulator: Bool = false
     var pingFailed: Bool = false
 
-    //    var mSpeedTestResultsListener: SpeedTestResultsListener? // JT 18.11.11
-
-    private var mBaseUri: String = ""    // JT 18.11.17
-     private var downloadUri: String = ""   // JT 18.11.17 rebuilt at runtime
+    private var mBaseUri: String = ""
+     private var downloadUri: String = ""   // rebuilt at runtime
     var hostName: String = ""
     var openPort: Int = 7777
     let socketTimeout: Int = 3000
@@ -67,7 +65,7 @@ public class Cloudlet // implements Serializable
          _ uri: String,
          _ marker: GMSMarker,
          _ numBytes: Int,
-         _ numPackets: Int) // LatLng    // JT 18.11.06
+         _ numPackets: Int) // LatLng
     {
         Swift.print("Cloudlet contructor. cloudletName= \(cloudletName)")
 
@@ -107,13 +105,13 @@ public class Cloudlet // implements Serializable
         mNumBytes = numBytes
         mNumPackets = numPackets
         
-        mBaseUri = uri  // JT 18.11.17
-        setDownloadUri(uri) // JT 18.11.17
+        mBaseUri = uri
+        setDownloadUri(uri)
 
 
-        let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5" )  // JT 18.11.16
+        let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5" )
 
-        runLatencyTest(numPings:numPings!) // JT 18.11.13
+        runLatencyTest(numPings:numPings!)
     }
 
     func runLatencyTest(numPings: Int)
@@ -121,12 +119,12 @@ public class Cloudlet // implements Serializable
         if latencyTestTaskRunning
         {
             Swift.print("LatencyTest already running")
-            SKToast.show(withMessage: "LatencyTest already running")    // JT 18.11.18
+            SKToast.show(withMessage: "LatencyTest already running")
             return
         }
-        latencyTestTaskRunning = true  // JT 18.11.18
+        latencyTestTaskRunning = true
         
-        if uri != "" && uri.range(of: "azure") == nil // JT 18.11.13
+        if uri != "" && uri.range(of: "azure") == nil
         {
             Swift.print("uri: \(uri)")
             // Ping several times
@@ -142,7 +140,7 @@ public class Cloudlet // implements Serializable
             pingNext()
         }
         
-        latencyTestTaskRunning = false  // JT 18.11.18
+        latencyTestTaskRunning = false  //  
         
         // post upateLatencies
         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateLatencies"), object: nil)
@@ -164,21 +162,21 @@ public class Cloudlet // implements Serializable
         PlainPing.ping(ping, withTimeout: 1.0, completionBlock: { (timeElapsed: Double?, error: Error?) in
             if let latency = timeElapsed
             {
-               // print("\(ping) latency (ms): \(latency)") // JT 18.11.27
+               // print("\(ping) latency (ms): \(latency)")
                 self.latencies.append(latency)
-                self.latencyMin = self.latencies.min()! // JT 18.11.13
-                self.latencyMax = self.latencies.max()! // JT 18.11.13
+                self.latencyMin = self.latencies.min()!
+                self.latencyMax = self.latencies.max()!
 
                 let sumArray = self.latencies.reduce(0, +)
 
                 self.latencyAvg = sumArray / Double(self.latencies.count)
 
-                self.latencyStddev = standardDeviation(arr: self.latencies) // JT 18.11.13
+                self.latencyStddev = standardDeviation(arr: self.latencies)
 
                 
-                let latencyMsg = String( format: "%4.3f", self.latencyAvg ) // JT 18.12.11  // JT 18.12.20
+                let latencyMsg = String( format: "%4.3f", self.latencyAvg )
                 
-               NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)       // JT 18.12.12
+               NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
                 
             }
             if let error = error
@@ -196,7 +194,7 @@ public class Cloudlet // implements Serializable
      * and the URI that will be downloaded from.
      * @param uri
      */
-    public func setDownloadUri(_ uri: String)   // JT 18.11.17
+    public func setDownloadUri(_ uri: String)
     {
         if mCarrierName.caseInsensitiveCompare("TDG") == .orderedSame
         {
@@ -208,17 +206,17 @@ public class Cloudlet // implements Serializable
             let downLoadStringSize  = UserDefaults.standard.string(forKey: "Download Size") ?? "1 MB"
             let n = downLoadStringSize.components(separatedBy: " ")
             
-            mNumBytes = Int(n[0])! * 1_048_576  // JT 18.11.18
+            mNumBytes = Int(n[0])! * 1_048_576
             
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
-           Swift.print("downloadUri1: \(downloadUri)")  // JT 18.11.16
+           Swift.print("downloadUri1: \(downloadUri)")  // DEBUG
         }
         else
         {
             openPort = 7777
             hostName = "mobiledgexsdkdemo." + uri
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
-            Swift.print("downloadUri: \(downloadUri)")  // JT 18.11.16
+            Swift.print("downloadUri: \(downloadUri)")  // DEBUG
         }
         self.uri = uri
     }
@@ -243,7 +241,7 @@ public class Cloudlet // implements Serializable
             return
         }
 
-        latencyTestTaskRunning = true   // JT 18.11.18
+        latencyTestTaskRunning = true   //
         
         latencyMin = 9999
         latencyAvg = 0
@@ -266,7 +264,7 @@ public class Cloudlet // implements Serializable
             Swift.print("NO, I am NOT an emulator/simulator.")
         }
 
-        var latencyTestMethod: CloudletListHolder.LatencyTestMethod // CloudletListHolder.  // JT 18.11.01
+        var latencyTestMethod: CloudletListHolder.LatencyTestMethod
             = CloudletListHolder.getSingleton().getLatencyTestMethod()
 
         if mCarrierName.caseInsensitiveCompare("azure") == .orderedSame
@@ -283,12 +281,12 @@ public class Cloudlet // implements Serializable
 
         if latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket
         {
-            Swift.print("LatencyTestTaskSocket todo") // JT 18.10.23
+            Swift.print("LatencyTestTaskSocket todo?") // JT 18.10.23
             //  LatencyTestTaskSocket().execute();
         }
         else if latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping
         {
-            Swift.print("LatencyTestTaskPing todo") // JT 18.10.23
+            Swift.print("LatencyTestTaskPing todo?") // JT 18.10.23
             // LatencyTestTaskPing().execute();
         }
         else
@@ -391,7 +389,7 @@ public class Cloudlet // implements Serializable
 //        return latencyTestProgress
 //    }
 
-    public func getSpeedTestProgress() -> Double    // JT 18.11.22
+    public func getSpeedTestProgress() -> Double
     {
         return speedTestProgress
     }
@@ -451,26 +449,26 @@ public class Cloudlet // implements Serializable
         if speedTestTaskRunning
         {
             Swift.print("SpeedTest already running")
-            SKToast.show(withMessage: "SpeedTest already running")    // JT 18.11.16
+            SKToast.show(withMessage: "SpeedTest already running")    // UI
             
             return
         }
-        speedTestTaskRunning = true // JT 18.11.18
+        speedTestTaskRunning = true //
         
-        setDownloadUri( mBaseUri)    // JT 18.11.17 so we have current B bytes to download appended
-        Swift.print("doSpeedTest\n  \(downloadUri)")
+        setDownloadUri( mBaseUri)    // so we have current B bytes to download appended
+        Swift.print("doSpeedTest\n  \(downloadUri)") // DEBUG
       startTime1 = DispatchTime.now() // <<<<<<<<<< Start time
       //  let todoEndpoint: String = "https://jsonplaceholder.typicode.com/todos/1"
         Alamofire.request(downloadUri)
             .downloadProgress(queue: DispatchQueue.global(qos: .utility)) { progress in
            //     print("Progress: \(progress.fractionCompleted)")
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "speedTestProgress"), object: progress.fractionCompleted)   // JT 18.11.16
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "speedTestProgress"), object: progress.fractionCompleted)   //
 
-                self.speedTestProgress = progress.fractionCompleted    // JT 18.11.22
+                self.speedTestProgress = progress.fractionCompleted    //
             }
             .responseString
             { response in
-                self.speedTestTaskRunning = false    // JT 18.11.18
+                self.speedTestTaskRunning = false    //
                 // check for errors
                 guard response.result.error == nil else {
                     // got an error in getting the data, need to handle it
@@ -483,12 +481,12 @@ public class Cloudlet // implements Serializable
                 let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
                 print("Time: \(timeInterval) seconds")
                 let tranferRateD = Double(self.mNumBytes)/timeInterval
-                let tranferRate = Int(tranferRateD) // JT 18.11.16
+                let tranferRate = Int(tranferRateD)
 
-                Swift.print("[COMPLETED] rate in bit/s   : \(tranferRate * 8)" )   // JT 18.11.16
+                Swift.print("[COMPLETED] rate in bit/s   : \(tranferRate * 8)" )   // Log
 
-                SKToast.show(withMessage: "[COMPLETED] rate in MBs   : \(Double(tranferRate) / (1024*1024.0))")    // JT 18.11.16
-               NotificationCenter.default.post(name: NSNotification.Name(rawValue: "tranferRate"), object: tranferRate) // JT 18.11.09
+                SKToast.show(withMessage: "[COMPLETED] rate in MBs   : \(Double(tranferRate) / (1024*1024.0))")    // UI
+               NotificationCenter.default.post(name: NSNotification.Name(rawValue: "tranferRate"), object: tranferRate) // post
 
 
                 
@@ -510,7 +508,7 @@ extension UIDevice
     }
 }
 
-func standardDeviation(arr: [Double]) -> Double // JT 18.11.13
+func standardDeviation(arr: [Double]) -> Double //
 {
     let length = Double(arr.count)
     let avg = arr.reduce(0, { $0 + $1 }) / length

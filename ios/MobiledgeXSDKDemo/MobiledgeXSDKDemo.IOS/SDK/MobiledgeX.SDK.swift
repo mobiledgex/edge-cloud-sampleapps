@@ -9,25 +9,25 @@
 import Foundation
 
 import Alamofire    // dependency
-
 import NSLogger   // JT 19.01.07
+
+/// MexSDK MobiledeX SDK APIs
 
 class MexSDK
 {
-    static let shared = MexSDK()     // singleton
+    static let shared = MexSDK()     /// singleton access: MexSDK.shared.whatever
 
-    var sessionManager: SessionManager? // JT 18.12.26 creeated based on host trust
+    var sessionManager: SessionManager? // alamofire: creeated based on host trust
     // need different SessionManager for each host
 
     let headers: HTTPHeaders = [
         "Accept": "application/json",
         "Content-Type": "application/json", // This is the default
         "Charsets": "utf-8",
-        ]
-
+        ]   /// headers HTTPHeaders:
     
-    var appName = "" // Your application name. was "EmptyMatchEngineApp"
-    var devName = "" // Your developer name
+    var appName = "" /// Your application name. was "EmptyMatchEngineApp"
+    var devName = "" /// Your developer name
     
     let appVersionStr = "1.0"   // used by createRegisterClientRequest
 
@@ -38,8 +38,17 @@ class MexSDK
     
     // MARK: -
     // MARK: postRequest
-    
-     func postRequest(_ uri: String,
+   
+     /// Async https request
+     ///
+     /// - Parameters:
+     ///   - uri:  url
+     ///   - request: json/Dictionary
+     ///   - postName:  "commandName" posted for observers
+     ///
+     /// - Returns: Future for later success/failure
+  
+    func postRequest(_ uri: String,
                              _ request: [String: Any],  // Dictionary/json
         _ postName: String = "postRequestReplyLogger") // this is posted after results
         -> Future<[String: AnyObject], Error>
@@ -156,6 +165,11 @@ class MexSDK
     
     // in general
     //
+    
+      ///  Deal with certificates, trust
+      ///
+      /// - Parameter url:
+    
       func dealWithTrustPolicy(
         _ url: URLConvertible  // a string
         )
@@ -193,8 +207,17 @@ class MexSDK
         }
     }
     
-    
+    // MARK: -
     // requests
+    
+    /// API createRegisterClientRequest
+    ///
+    /// - Parameters:
+    ///   - ver: "1"
+    ///   - appName: "appName"
+    ///   - devName:  "devName"
+    ///   - appVers: "appVers""
+    /// - Returns: API Dictionary/json
     
     func createRegisterClientRequest( ver: String = "1", appName: String, devName: String, appVers: String)
         -> [String: Any] // Dictionary/json
@@ -209,7 +232,17 @@ class MexSDK
         return regClientRequest
     }
 
-    // Carrier name can change depending on cell tower.
+  
+    
+    /// createGetAppInstListRequest
+    ///
+    /// - Parameters:
+    ///   - carrierName: <#carrierName description#>   // Carrier name can change depending on cell tower.
+    ///   - gpslocation: <#gpslocation description#>
+    ///   - sessioncookie: <#sessioncookie description#>
+    ///
+    /// - Returns: API Dictionary/json
+    
     func createGetAppInstListRequest(_ carrierName: String, _ gpslocation: [String: Any], sessioncookie: String) -> [String: Any]   // JT 18.12.26
     {
         //   json findCloudletRequest;
@@ -223,11 +256,22 @@ class MexSDK
         return appInstListRequest
     }
     
+    
+    /// <#Description#>
+    ///
+    /// - Parameters:
+    ///   - carrierName: <#carrierName description#>
+    ///   - gpslocation: <#gpslocation description#>
+    ///   - verifyloctoken: <#verifyloctoken description#>
+    ///   - sessioncookie: <#sessioncookie description#>
+    ///
+    /// - Returns: API json/Dictionary
+    
     func createVerifyLocationRequest(_ carrierName: String,
                                      _ gpslocation: [String: Any],
                                      _ verifyloctoken: String,
                                       sessioncookie: String)    // JT 18.12.26
-        -> [String: Any]
+        -> [String: Any] // json/Dictionary
     {
         var verifyLocationRequest = [String: Any]() // Dictionary/json
         
@@ -242,6 +286,15 @@ class MexSDK
     
     // Carrier name can change depending on cell tower.
     //
+    
+    /// createFindCloudletRequest
+    ///
+    /// - Parameters:
+    ///   - carrierName: <#carrierName description#>
+    ///   - gpslocation: <#gpslocation description#>
+    ///   - sessioncookie: <#sessioncookie description#>
+    /// - Returns: API  Dictionary/json
+    
     func createFindCloudletRequest(_ carrierName: String, _ gpslocation: [String: Any], sessioncookie: String ) -> [String: Any]
     {
         //    findCloudletRequest;
@@ -258,6 +311,7 @@ class MexSDK
 }
 
 
+// MARK: -
 
 extension Dictionary
 {
