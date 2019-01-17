@@ -9,10 +9,9 @@
 import Foundation
 import UIKit
 
-import GoogleSignIn // JT 18.11.17
-// import RFAboutView_Swift // JT 18.11.17 uses
+import GoogleSignIn
 
-class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.11.17
+class SideMenuViewController: FormViewController, GIDSignInUIDelegate
 {
     // @IBOutlet var signInButton: GIDSignInButton!
 
@@ -22,7 +21,7 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
 
         title = "Menu"
 
-        GIDSignIn.sharedInstance().uiDelegate = self // JT 18.11.17
+        GIDSignIn.sharedInstance().uiDelegate = self
 
         sideMenu() //  eurekaForm
     }
@@ -36,41 +35,35 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
             //                $0.header = HeaderFooterView<LogoView>(.class)
             //            }
 
-            <<< ButtonRow("Sign in with Google") // JT 18.11.03
+            <<< ButtonRow("Sign in with Google")
         {
             $0.title = $0.tag
-            $0.cellStyle = .subtitle // JT 18.11.04
-            Swift.print(" Sign in with Google") // JT 18.11.12
+            $0.cellStyle = .subtitle
+            Swift.print(" Sign in with Google") // Log
 
-            $0.onCellSelection(self.signInWithGoogle) // JT 18.11.17
+            $0.onCellSelection(self.signInWithGoogle)
         }
         .cellSetup
         { cell, _ in
             cell.imageView?.image = UIImage(named: "g-logo")
         }
 
-            <<< ButtonRow("Face Recognition") // JT 18.11.03
+            <<< ButtonRow("Face Recognition")
         {
             $0.title = $0.tag
-            Swift.print("Face Recognition")
+            Swift.print("Face Recognition") // Log
 
-            //               $0.presentationMode = .segueName(segueName:
-            //                    "Face Recognition", onDismiss: nil)   // JT 18.11.03
-
-            $0.onCellSelection(self.doFaceRecognitionTapped)  // JT 18.12.13
+            $0.onCellSelection(self.doFaceRecognitionTapped)
         }
         .cellSetup
         { cell, _ in
             cell.imageView?.image = UIImage(named: "ios11-control-center-camera-icon")
         }
 
-            <<< ButtonRow("Face Detection") // JT 18.11.03
+            <<< ButtonRow("Face Detection")
         {
             $0.title = $0.tag
-            Swift.print("Face Detection")
-            //         $0.presentationMode = .segueName(segueName:
-            //             "Face Detection", onDismiss: nil)   // JT 18.11.03
-            Swift.print("todo! Face Detection") // JT 18.11.12
+            Swift.print("Face Detection") // Log
 
             $0.onCellSelection(self.doFaceDetectionTapped)
         }
@@ -79,7 +72,7 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
             cell.imageView?.image = UIImage(named: "ios11-control-center-camera-icon")
         }
 
-            <<< ButtonRow("Settings") // JT 18.11.03
+            <<< ButtonRow("Settings")
         {
             $0.title = $0.tag
             $0.presentationMode = .segueName(segueName: "Settings", onDismiss: nil)
@@ -89,7 +82,7 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
             cell.imageView?.image = UIImage(named: "Cog_font_awesome.png")
         }
 
-            <<< ButtonRow("About") // JT 18.11.03
+            <<< ButtonRow("About")
         {
             $0.title = $0.tag
             //              $0.presentationMode = .segueName(segueName: "About", onDismiss: nil)
@@ -101,13 +94,13 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
             cell.imageView?.image = UIImage(named: "About")
         }
         form +++ Section("Benchmark")
-            <<< ButtonRow("Edge") // JT 18.11.03
+            <<< ButtonRow("Edge")
         {
             $0.title = $0.tag
 
-            Swift.print("todo! Edge") // JT 18.11.12
+            Swift.print("todo! Edge")
 
-            $0.onCellSelection(self.edgeBenchmarkTapped) // JT 18.11.17
+            $0.onCellSelection(self.edgeBenchmarkTapped)
         }
         .cellSetup
         { cell, _ in
@@ -120,11 +113,11 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
             cell.imageView?.image = ti // UIImage(named: ti)
         }
 
-            <<< ButtonRow("Local") // JT 18.11.03
+            <<< ButtonRow("Local")
         {
             $0.title = $0.tag
 
-            Swift.print("todo! Local") // JT 18.11.12
+            Swift.print("todo! Local")  // Log
         }
         .cellSetup
         { cell, _ in
@@ -166,54 +159,54 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
 
     func signInWithGoogle(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
-        print("signInWithGoogle! \(row)") // JT 18.11.13
+        print("signInWithGoogle! \(row)") // Log
         signInWithGoogle()
     }
 
     func signInWithGoogle()
     {
-        print("signInWithGoogle") // JT 18.11.13
+        print("signInWithGoogle") // Log
 
         GIDSignIn.sharedInstance().signIn()
     }
 
     func faceRecognitionTapped(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
-        print("faceRecognitionTapped! \(row)") // JT 18.11.13
+        print("faceRecognitionTapped! \(row)") // Log
     }
 
     func faceRecognitionTapped()
     {
-        print("faceRecognitionTapped") // JT 18.11.13
-        SKToast.show(withMessage: "faceRecognitionTapped - todo") // JT 18.11.02
+        print("faceRecognitionTapped") // Log
+        SKToast.show(withMessage: "faceRecognitionTapped - todo") //UI
     }
 
-    func buttonTapped(cell _: ButtonCellOf<String>, row: ButtonRow) // JT 18.11.17 template
+    func buttonTapped(cell _: ButtonCellOf<String>, row: ButtonRow) // template
     {
-        print("tapped! \(row)") // JT 18.11.13
+        print("tapped! \(row)") // Log
     }
 
     func doFaceDetectionTapped(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
-        print("buttonTapped2! \(row)") // JT 18.11.13
+        print("buttonTapped2! \(row)") // Log
 
-        doFaceDetectionViewController() // JT 18.11.17
+        doFaceDetectionViewController()
     }
   
-    func doFaceRecognitionTapped(cell _: ButtonCellOf<String>, row: ButtonRow)        // JT 18.12.13
+    func doFaceRecognitionTapped(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         
         let vc = storyboard.instantiateViewController(withIdentifier: "FaceDetectionViewController") // same controller. todo clone
         
- doAFaceRecognition = true
-        UserDefaults.standard.set(true, forKey: "doFaceRecognition")    // JT 18.12.13
+        doAFaceRecognition = true
+        UserDefaults.standard.set(true, forKey: "doFaceRecognition")
         
-        navigationController!.pushViewController(vc, animated: true) // JT 18.11.16
+        navigationController!.pushViewController(vc, animated: true)
     }
     
 
-    func doFaceDetectionViewController() // JT 18.11.17
+    func doFaceDetectionViewController()
     {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
 
@@ -221,18 +214,18 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
 
         doAFaceRecognition = false
 
-        UserDefaults.standard.set(false, forKey: "doFaceRecognition")    // JT 18.12.13
+        UserDefaults.standard.set(false, forKey: "doFaceRecognition")
 
-        navigationController!.pushViewController(vc, animated: true) // JT 18.11.16
+        navigationController!.pushViewController(vc, animated: true)
     }
 
     func aboutTapped(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
-        print("aboutTapped! \(row)") // JT 18.11.13
-        aboutTapped() // JT 18.11.17
+        print("aboutTapped! \(row)") // Log
+        aboutTapped()
     }
 
-    func aboutTapped() // JT 18.11.17
+    func aboutTapped()
     {
         // First create a UINavigationController (or use your existing one).
         // The RFAboutView needs to be wrapped in a UINavigationController.
@@ -250,7 +243,7 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
         aboutView.headerBackgroundColor = .black
         aboutView.headerTextColor = .white
         aboutView.blurStyle = .dark
-        aboutView.headerBackgroundImage = UIImage(named: "ic_launcher-web.png") // JT 18.11.17
+        aboutView.headerBackgroundImage = UIImage(named: "ic_launcher-web.png") //
 
         // Add an additional button:
         //   aboutView.addAdditionalButton("Privacy Policy", content: "Here's the privacy policy")
@@ -269,28 +262,28 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate // JT 18.1
 
     // ====
 
-    func edgeBenchmarkTapped(cell _: ButtonCellOf<String>, row: ButtonRow) // JT 18.11.17 template
+    func edgeBenchmarkTapped(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
-        print("edgeBenchmarkTapped! \(row)") // JT 18.11.13
+        print("edgeBenchmarkTapped! \(row)") // Log
         edgeBenchmarkTapped()
     }
 
     func edgeBenchmarkTapped()
     {
-        print("edgeBenchmarkTapped!") // JT 18.11.13
-        SKToast.show(withMessage: "edgeBenchmarkTapped - todo") // JT 18.11.02
+        print("edgeBenchmarkTapped!") // Log
+        SKToast.show(withMessage: "edgeBenchmarkTapped - todo")  // UI
     }
 
-    func localBenchmarkTapped(cell _: ButtonCellOf<String>, row: ButtonRow) // JT 18.11.17 template
+    func localBenchmarkTapped(cell _: ButtonCellOf<String>, row: ButtonRow)
     {
-        print("localBenchmarkTapped! \(row)") // JT 18.11.13
+        print("localBenchmarkTapped! \(row)") // Log
         localBenchmarkTapped()
     }
 
     func localBenchmarkTapped()
     {
-        print("localBenchmarkTapped!") // JT 18.11.13
-        SKToast.show(withMessage: "localBenchmarkTapped - todo") // JT 18.11.02
+        print("localBenchmarkTapped!") // Log
+        SKToast.show(withMessage: "localBenchmarkTapped - todo") // UI
     }
 
     // ----

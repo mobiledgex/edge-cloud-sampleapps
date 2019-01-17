@@ -9,7 +9,6 @@
 import Foundation
 
 import UIKit
-// import Eureka // JT 18.11.12
 
 class SpeedTestSettingsViewController: FormViewController
 {
@@ -19,42 +18,58 @@ class SpeedTestSettingsViewController: FormViewController
 
         title = "Speed Test Settings"
 
-        form +++ Section("")
+        form +++ Section("")    // Eureka
 
             <<< ActionSheetRow<String>()
         {
             $0.title = "Download Size"
             $0.selectorTitle = "Download Size"
-            $0.options = ["1 MB", "5 MB", "10 MB", "20 MB"] // JT 18.11.03
+            $0.options = ["1 MB", "5 MB", "10 MB", "20 MB"]
             $0.value = UserDefaults.standard.string(forKey: "Download Size") ?? "1 MB" // initially selected
         }.onChange
         { /*[weak self]*/ row in
             Swift.print("Download Size \(row.value!)")
-            UserDefaults.standard.set(row.value, forKey: "Download Size") // JT 18.11.03
+            UserDefaults.standard.set(row.value, forKey: "Download Size")
 
-            //      row.subTitle = "Number of Megabytes to download for speed test" // JT 18.11.04    // JT 18.11.12 todo fix subtitle second line
+            //      row.subTitle = "Number of Megabytes to download for speed test" //    todo? fix subtitle second line
         }
         .cellSetup
         { _, _ in
-            //     row.subTitle = "Number of Megabytes to download for speed test" // JT 18.11.04    // JT 18.11.12 todo fix subtitle second line
+            //     row.subTitle = "Number of Megabytes to download for speed test" //   todo fix subtitle second line
         }
+            <<< ActionSheetRow<String>()    // JT 19.01.16
+        {
+            $0.title = "Latency Test Method"
+            $0.selectorTitle = "Latency Test Method"
+            $0.options = ["Socket", "Ping ICMP"]   // JT 19.01.16
+            $0.value = UserDefaults.standard.string(forKey: "LatencyTestMethod") ?? "Ping"
+        }.onChange
+        { /*[weak self]*/ row in
+            Swift.print("LatencyTestMethod" + " \(row.value)")
+            UserDefaults.standard.set(row.value, forKey: "LatencyTestMethod")
+            
+        }
+        .cellSetup
+        { _, _ in
 
+            }
+        
             <<< ActionSheetRow<String>()
         {
             $0.title = "Latency Test Packets"
             $0.selectorTitle = "Latency Test Packets"
-            $0.options = ["4", "10", "20"] // JT 18.11.03
+            $0.options = ["4", "10", "20"]
             $0.value = UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "4" // initially selected
         }.onChange
         { /*[weak self]*/ row in
             Swift.print("Latency Test Packets" + " \(row)")
-            UserDefaults.standard.set(row.value, forKey: "Latency Test Packets") // JT 18.11.03
+            UserDefaults.standard.set(row.value, forKey: "Latency Test Packets")
 
-            // row.subTitle = "Number ot times to repeat latency test" // JT 18.11.04
+            // row.subTitle = "Number ot times to repeat latency test" //
         }
         .cellSetup
         { _, _ in
-            //   row.subTitle = "Number ot times to repeat latency test" // JT 18.11.04
+            //   row.subTitle = "Number ot times to repeat latency test" //
         }
 
             <<< SwitchRow
@@ -64,35 +79,14 @@ class SpeedTestSettingsViewController: FormViewController
                 }.onChange
                 { /*[weak self]*/ row in
                     Swift.print("Latency Test Auto-Start \(row)")
-                    UserDefaults.standard.set(row.value, forKey: "Latency Test Auto-Start") // JT 18.11.03
+                    UserDefaults.standard.set(row.value, forKey: "Latency Test Auto-Start")
                     
-                    // row.subTitle = "When cloudlet discovered" // JT 18.11.04
+                    // row.subTitle = "When cloudlet discovered" //
                     
                 }.cellSetup
                 { _, _ in
-                    // row.subTitle = "When cloudlet discovered" // JT 18.11.04
+                    // row.subTitle = "When cloudlet discovered" //
         }
-        #if false   // JT 18.11.19 only ping as of now
-        //        <<< ActionSheetRow<String>()
-        //            {
-        //                $0.title = "Latency Test Method"
-        //                $0.selectorTitle = "Latency Test Method"
-        //                $0.options = ["System Ping (ICMP)", "Socket"] // JT 18.11.03
-        //                // $0.value = "System Ping (ICMP)"    // initially selected
-        //                $0.value = UserDefaults.standard.string(forKey: "Latency Test Method") ?? "System Ping (ICMP)" // initially selected
-        //            }
-        //            .onChange
-        //            { [weak self] row in
-        //                Swift.print("Latency Test Method" + " \(row)")
-        //                UserDefaults.standard.set(row.value, forKey: "Latency Test Method") // JT 18.11.03
-        //
-        //                // row.subTitle = "Select socket conection or ICMP ping" // JT 18.11.04
-        //            }
-        //            .cellSetup
-        //            { _, _ in
-        //                // row.subTitle = "Select socket conection or ICMP ping" // JT 18.11.04
-        //            }
-        #endif
-
+   
     }
 }

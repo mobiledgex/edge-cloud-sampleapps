@@ -9,7 +9,6 @@
 import Foundation
 
 import UIKit
-// import Eureka // JT 18.11.12
 
 class SettingsViewController: FormViewController
 {
@@ -32,49 +31,49 @@ class SettingsViewController: FormViewController
             }()
         }
 
-            <<< ButtonRow("Enhanced Network Location Services") // JT 18.11.03
+            <<< ButtonRow("Enhanced Network Location Services")
         {
             $0.title = $0.tag
             $0.presentationMode = .segueName(segueName:
-                "EnhancedNetworkLocationServicesViewControllerSegue", onDismiss: nil) // JT 18.11.03
-            // $0.value = "ZSE"    // JT 18.11.03
+                "EnhancedNetworkLocationServicesViewControllerSegue", onDismiss: nil)
+
         }
         .cellSetup
         { cell, _ in
-            cell.imageView?.image = UIImage(named: "ic_menu_compass") // JT 18.11.14
+            cell.imageView?.image = UIImage(named: "ic_menu_compass")
         }
 
-            <<< ButtonRow("General Settings") // JT 18.11.03
+            <<< ButtonRow("General Settings")
         {
             $0.title = $0.tag
             $0.presentationMode = .segueName(segueName:
-                "GeneralSettingsViewControllerSegue", onDismiss: nil) // JT 18.11.03
+                "GeneralSettingsViewControllerSegue", onDismiss: nil)
         }
         .cellSetup
         { cell, _ in
             cell.imageView?.image = UIImage(named: "ic_menu_preferences")
         }
 
-            <<< ButtonRow("Speed Test Settings") // JT 18.11.03
+            <<< ButtonRow("Speed Test Settings")
         {
             $0.title = $0.tag
             $0.presentationMode = .segueName(segueName:
-                "SpeedTestSettingsViewControllerSegue", onDismiss: nil) // JT 18.11.03
+                "SpeedTestSettingsViewControllerSegue", onDismiss: nil)
         }
         .cellSetup
         { cell, _ in
-            cell.imageView?.image = UIImage(named: "ic_menu_recent_history") // JT 18.11.14
+            cell.imageView?.image = UIImage(named: "ic_menu_recent_history")
         }
 
             <<< ButtonRow("Face Detection Settings") // JT 18.11.03
         {
             $0.title = $0.tag
             $0.presentationMode = .segueName(segueName:
-                "FaceDectectionSettingsViewControllerSegue", onDismiss: nil) // JT 18.11.03
+                "FaceDectectionSettingsViewControllerSegue", onDismiss: nil)
         }
         .cellSetup
         { cell, _ in
-            cell.imageView?.image = UIImage(named: "ic_menu_camera") // JT 18.11.14
+            cell.imageView?.image = UIImage(named: "ic_menu_camera")  
         }
 
         title = "Settings"

@@ -12,3 +12,6 @@
 //
 //FOUNDATION_EXPORT double NSLoggerVersionNumber;
 //FOUNDATION_EXPORT const unsigned char NSLoggerVersionString[];
+
+//#import "SimplePing.h"  // JT 19.01.14
+//#import "SimplePing.h"
