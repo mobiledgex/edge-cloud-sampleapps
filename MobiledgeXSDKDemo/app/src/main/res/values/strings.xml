@@ -82,6 +82,7 @@
     <string name="title_activity_main">MobiledgeX SDK Demo</string>
     <string name="title_activity_face_detection">Face Detection</string>
     <string name="title_activity_face_recognition">Face Recognition</string>
+    <string name="title_activity_pose_detection">Pose Detection</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">MobiledgeX</string>

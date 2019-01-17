@@ -19,16 +19,6 @@ public class MexSample : MonoBehaviour
   static string host = "TDG.dme.mobiledgex.net";
   static UInt32 port = 38001;
 
-  string authToken = ""; // MEX Developer supplied and updated authToken
-
-
-  string dmeHost = "tdg2.dme.mobiledgex.net"; // DME server hostname or ip.
-  int dmePort = 50051; // DME port.
-
-  string developerName = "EmptyMatchEngineApp";
-  string applicationName = "EmptyMatchEngineApp";
-  string appVer = "1.0";
-
   DistributedMatchEngine.MatchingEngine me;
 
   StatusContainer statusContainer;

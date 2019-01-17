@@ -35,6 +35,10 @@
             android:icon="@drawable/ic_menu_camera"
             android:title="Face Detection" />
         <item
+            android:id="@+id/nav_pose_detection"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="Pose Detection" />
+        <item
             android:id="@+id/nav_qoe_map"
             android:icon="@drawable/ic_menu_qoe"
             android:title="Predictive QoE" />

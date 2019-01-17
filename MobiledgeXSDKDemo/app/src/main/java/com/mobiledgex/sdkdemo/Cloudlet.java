@@ -102,8 +102,8 @@ public class Cloudlet implements Serializable {
         this.uri = uri;
     }
 
-    public String getUri() {
-        return uri;
+    public String getHostName() {
+        return hostName;
     }
 
     /**
