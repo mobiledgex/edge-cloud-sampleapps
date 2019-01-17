@@ -9,9 +9,12 @@
 import AVFoundation
 import UIKit
 import Vision
+import NSLogger
 
-var doAFaceDetection = true // JT 18.11.26 todo refactor patterned
+var doAFaceDetection = true // JT 18.11.26 todo refactor patterned.
+// Note: we build array of images with service (image,service)
 var doAFaceRecognition = false // JT 18.12.10 one at a time
+
 
 enum MexKind: Int
 {
@@ -25,11 +28,11 @@ class FaceDetectionViewController: UIViewController
     var faceDetectionRequest: VNRequest!
 
     var sentImageSize = CGSize(width: 0, height: 0)
-    @IBOutlet var latencyCloudLabel: UILabel! // JT 18.12.11
-    @IBOutlet var latencyEdgeLabel: UILabel! //
+    @IBOutlet var latencyCloudLabel: UILabel! // left green
+    @IBOutlet var latencyEdgeLabel: UILabel! // right orange
 
-    @IBOutlet var faceRecognitionLatencyCloudLabel: UILabel! // JT 18.12.13
-    @IBOutlet var faceRecognitionLatencyEdgeLabel: UILabel! // JT 18.12.13
+    @IBOutlet var faceRecognitionLatencyCloudLabel: UILabel!
+    @IBOutlet var faceRecognitionLatencyEdgeLabel: UILabel!
 
     @IBOutlet var networkLatencyCloudLabel: UILabel! //
     @IBOutlet var networkLatencyEdgeLabel: UILabel! //
@@ -38,8 +41,8 @@ class FaceDetectionViewController: UIViewController
     @IBOutlet var faceRecognitonNameCloudLabel: UILabel! //
     @IBOutlet var faceRecognitonNameEdgeLabel: UILabel! //
 
-    @IBOutlet var stddevCloudLabel: UILabel! // // JT 18.12.18
-    @IBOutlet var stddevEdgeLabel: UILabel! //  // JT 18.12.18
+    @IBOutlet var stddevCloudLabel: UILabel!
+    @IBOutlet var stddevEdgeLabel: UILabel!  
 
     var futureEdge: Future<[String: AnyObject], Error>? // async result (captured by async?) // JT 18.12.13
     var futureCloud: Future<[String: AnyObject], Error>? // async result (captured by async?)    // JT 18.12.13
@@ -136,7 +139,7 @@ class FaceDetectionViewController: UIViewController
         doAFaceDetection = true
 
         let localProcessing = UserDefaults.standard.bool(forKey: "Show full process latency")
-        if localProcessing == true 
+        if localProcessing == true
         {
             latencyCloudLabel.isHidden = false
             latencyEdgeLabel.isHidden = false
@@ -161,9 +164,9 @@ class FaceDetectionViewController: UIViewController
             networkLatencyEdgeLabel.isHidden = true
         }
         
-        let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev") // JT 18.12.17
+        let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev")
 
-        if showStddev   // JT 18.12.18
+        if showStddev
         {
             stddevCloudLabel.isHidden = false
             stddevEdgeLabel.isHidden = false
@@ -173,12 +176,16 @@ class FaceDetectionViewController: UIViewController
             stddevCloudLabel.isHidden = true
             stddevEdgeLabel.isHidden = true
         }
-    }
+        
+     }
+    
+    
 
+    
     @objc public func stopIt(sender _: UIBarButtonItem) // JT 18.11.28
     {
-        Swift.print("stop") // JT 18.11.28
-        session.stopRunning() // JT 18.11.28
+        Swift.print("stop")     // Log
+        session.stopRunning()    
     }
 
     override func viewWillAppear(_ animated: Bool)
@@ -235,6 +242,29 @@ class FaceDetectionViewController: UIViewController
         }
 
         super.viewWillDisappear(animated)
+        
+        
+        if true // JT 19.01.16 log latencies on exit
+        {
+            Logger.shared.log(.network, .info, "CLOUD \n" )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "latency: \(latencyCloudLabel.text)) " )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "latency rec:\(faceRecognitionLatencyCloudLabel.text)) " )        // JT 19.01.16
+           Logger.shared.log(.network, .info, "latency network \(networkLatencyCloudLabel.text)) " )        // JT 19.01.16
+            Logger.shared.log(.network, .info, " stddev\(stddevCloudLabel.text)) " )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "name: \(faceRecognitonNameCloudLabel.text)) " )        // JT 19.01.16
+
+        }
+        if true
+        {
+            Logger.shared.log(.network, .info, "EDGE \n" )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "latency detect \(latencyEdgeLabel.text)) " )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "latency rec \(faceRecognitionLatencyEdgeLabel.text)) " )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "network latency \(networkLatencyEdgeLabel.text)) " )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "name \(faceRecognitonNameEdgeLabel.text)) " )        // JT 19.01.16
+            Logger.shared.log(.network, .info, "stddev: \(stddevEdgeLabel.text)) " )        // JT 19.01.16
+            
+        }
+
     }
 
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator)
@@ -499,7 +529,7 @@ extension FaceDetectionViewController
 
             let v = notification.object as! String
 
-            Swift.print("updateNetworkLatenciesEdge: \(v)")
+          //  Swift.print("updateNetworkLatenciesEdge: \(v)")
 
             DispatchQueue.main.async
             {
@@ -543,8 +573,8 @@ extension FaceDetectionViewController
 
             let v = notification.object as! String
 
-            Swift.print("updateNetworkLatenciesEdge")
-            Swift.print("edge: \(v)")
+        //    Swift.print("updateNetworkLatenciesEdge")
+         //   Swift.print("edge: \(v)")
 
             DispatchQueue.main.async
             {
@@ -558,7 +588,7 @@ extension FaceDetectionViewController
 
             let d = notification.object as! [String: Any] // JT 18.12.13
 
-            Swift.print("faceRecognizedCloud: \(d)")
+       //     Swift.print("faceRecognizedCloud: \(d)")
 
             let name = d["subject"] as! String // JT 18.12.13
             let a = d["rect"] as! [Int] // JT 18.12.13
@@ -587,7 +617,7 @@ extension FaceDetectionViewController
             {
                 let subject = d["subject"] as! String
 
-                Swift.print("\(notification.name): \(d)")
+               // Swift.print("\(notification.name): \(d)") // JT 19.01.16
 
                 // SKToast.show(withMessage: "FaceDetection raw result\(d)")
 
@@ -691,30 +721,30 @@ extension FaceDetectionViewController
     }
     
 
-    @objc func FaceDetectionLatencyEdge(_ notification: Notification) // JT 18.12.11
+    @objc func FaceDetectionLatencyEdge(_ notification: Notification)  
     {
         let v = notification.object
-        Swift.print("edge: [\(v!)]")
+       // Swift.print("edge: [\(v!)]")  // JT 19.01.16
 
-        let vv = Double(v as! String)      // JT 18.12.20
+        let vv = Double(v as! String)
 
         DispatchQueue.main.async
         {
-            self.latencyEdgeLabel.text = "Edge: \(v!) ms" // JT 18.12.11
+            self.latencyEdgeLabel.text = "Edge: \(v!) ms"
             
             self.rollingAverageEdge = self.calcRollingAverageEdge.addSample(value: vv!)
             let useRollingAverage = UserDefaults.standard.bool(forKey: "Use Rolling Average") // JT 18.12.17
             
              if useRollingAverage
             {
-                let a = String( format: "%4.3f", self.rollingAverageEdge)      // JT 18.12.17
+                let a = String( format: "avg: %4.3f", self.rollingAverageEdge)
                 
-                self.latencyEdgeLabel.text = "Edge: \(a) ms"    // JT 18.12.20
+                self.latencyEdgeLabel.text = "Edge: \(a) ms"
             }
             
             let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev")
             let stddev = standardDeviation(arr: self.calcRollingAverageEdge.samples)
-            let stdevStr = String( format: "%4.3f", stddev) // JT 18.12.20
+            let stdevStr = "Stddev: " + String( format: "%4.3f", stddev)    //
 
             if showStddev
             {
@@ -722,7 +752,7 @@ extension FaceDetectionViewController
             }
             else
             {
-                self.stddevEdgeLabel.isHidden = true    // JT 18.12.20
+                self.stddevEdgeLabel.isHidden = true
             }
             
         }
@@ -731,27 +761,27 @@ extension FaceDetectionViewController
     @objc func FaceDetectionLatencyCloud(_ notification: Notification)
     {
         let v = notification.object
-        Swift.print("Cloud: [\(v!)]")   // JT 18.12.20
+        Swift.print("Cloud: [\(v!)]")
 
         DispatchQueue.main.async
         {
             self.latencyCloudLabel.text = "Cloud: \(v!) ms"
 
-            let vv = Double(v as! String)      // JT 18.12.20
+            let vv = Double(v as! String)
             self.rollingAverageCloud = self.calcRollingAverageCloud.addSample(value: vv!)
-            let useRollingAverage = UserDefaults.standard.bool(forKey: "Use Rolling Average") // JT 18.12.17
+            let useRollingAverage = UserDefaults.standard.bool(forKey: "Use Rolling Average")
             
             
             if useRollingAverage
             {
-                let a = String( format: "%4.3f", self.rollingAverageCloud)      // JT 18.12.17  // JT 18.12.20
+                let a = String( format: "%4.3f", self.rollingAverageCloud)
                 
-                self.latencyCloudLabel.text = "Cloud: \(a) ms"   // JT 18.12.17
+                self.latencyCloudLabel.text = "Cloud: \(a) ms"
             }
 
-            let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev") // JT 18.12.17
-            let stddev = standardDeviation(arr: self.calcRollingAverageCloud.samples)   // JT 18.12.18
-            let stdevStr = String( format: "%4.3f", stddev) // JT 18.12.20
+            let showStddev = UserDefaults.standard.bool(forKey: "Show Stddev")
+            let stddev = standardDeviation(arr: self.calcRollingAverageCloud.samples)
+            let stdevStr = "Stddev: " + String( format: "%4.3f", stddev)
 
             
             if showStddev
@@ -760,21 +790,21 @@ extension FaceDetectionViewController
             }
             else
             {
-                self.stddevCloudLabel.isHidden = true    // JT 18.12.20
+                self.stddevCloudLabel.isHidden = true    //
             }
           }
     }
 
-    @objc func networkLatencyEdge(_ notification: Notification) // JT 18.12.11
+    @objc func networkLatencyEdge(_ notification: Notification)
     {
         let v = notification.object
-        Swift.print("networkLatency edge: \(v!)")
+      //  Swift.print("networkLatency edge: \(v!)")
     }
 
     @objc func networkLatencyCloud(_ notification: Notification) // JT 18.12.11
     {
         let v = notification.object
-        Swift.print("networkLatency Cloud: \(v!)")
+     //   Swift.print("networkLatency Cloud: \(v!)")
     }
 
     // MARK: -
@@ -888,17 +918,17 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
         if doAFaceDetection
         {
             doAFaceDetection = false
-            let image = sampleBuffer.uiImage // JT 18.11.26
+            let image = sampleBuffer.uiImage
 
-            let size = image!.size // JT 18.11.27
-            let fudge: CGFloat = 8.0 // JT 18.11.27
-            let newSize = CGSize(width: size.width / fudge, height: size.height / fudge) // JT 18.11.27
-            let smaller: UIImage? = image?.imageResize(sizeChange: newSize) // JT 18.11.27
+            let size = image!.size
+            let fudge: CGFloat = 16.0    // JT 19.01.16 was 8
+            let newSize = CGSize(width: size.width / fudge, height: size.height / fudge)
+            let smaller: UIImage? = image?.imageResize(sizeChange: newSize)
 
-            let rotateImage = smaller!.rotate(radians: .pi / 2.0) // JT 18.11.27
-            //   Swift.print("\(rotateImage!.size)") // JT 18.11.27
+            let rotateImage = smaller!.rotate(radians: .pi / 2.0)
+            //   Swift.print("\(rotateImage!.size)")  // Log
 
-            sentImageSize = rotateImage!.size // JT 18.11.28
+            sentImageSize = rotateImage!.size
 
 //            DispatchQueue.main.async
 //                { [unowned self] in

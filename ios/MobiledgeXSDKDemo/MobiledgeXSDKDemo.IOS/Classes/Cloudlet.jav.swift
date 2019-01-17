@@ -2,9 +2,9 @@
 
 import Foundation
 
-import GoogleMaps
-import PlainPing // for latency
 import Alamofire
+import GoogleMaps
+import SwiftSocket // JT 19.01.16 to connection latency
 
 private var cl: Cloudlet?
 
@@ -13,16 +13,16 @@ public class Cloudlet // implements Serializable? todo?
     private static let TAG: String = "Cloudlet"
     public static let BYTES_TO_MBYTES: Int = 1024 * 1024
 
-    var mCloudletName: String = ""  // note legacy m prefix nameing convention
+    var mCloudletName: String = "" // note legacy m prefix nameing convention
     private var mAppName: String = ""
     private var mCarrierName: String = ""
-    
+
     private var mLatitude: Double = 0
     private var mLongitude: Double = 0
-    
+
     private var mDistance: Double = 0
     private var bestMatch: Bool = false
-    
+
     private var mMarker: GMSMarker? // map marker, POI
 
     var latencyMin: Double = 9999.0
@@ -33,20 +33,21 @@ public class Cloudlet // implements Serializable? todo?
 
     var pings: [String] = [String]()
     var latencies = [Double]()
-
+    var future:Future<[String: AnyObject], Error>? // async result (captured by async?) // JT 19.01.16
+    
     private var mbps: Int64 = 0 // BigDecimal.valueOf(0);  // JT 18.10.23 todo?
-    //var latencyTestProgress: Double = 0
+    // var latencyTestProgress: Double = 0
     private var speedTestProgress: Double = 0 // 0-1  //  updating
     var startTime: Double = 0 // Int64
-       var startTime1:DispatchTime?
+    var startTime1: DispatchTime?
     var timeDifference: Double = 0
-    var mNumPackets: Int = 4    // number of pings
+    var mNumPackets: Int = 4 // number of pings
     private var mNumBytes: Int = 1_048_576
     private var runningOnEmulator: Bool = false
     var pingFailed: Bool = false
 
     private var mBaseUri: String = ""
-     private var downloadUri: String = ""   // rebuilt at runtime
+    private var downloadUri: String = "" // rebuilt at runtime
     var hostName: String = ""
     var openPort: Int = 7777
     let socketTimeout: Int = 3000
@@ -90,8 +91,8 @@ public class Cloudlet // implements Serializable? todo?
                        _ uri: String,
                        _ marker: GMSMarker,
                        _ numBytes: Int,
-                       _ numPackets: Int    // # packets to ping
-        )
+                       _ numPackets: Int) // # packets to ping
+
     {
         Swift.print("Cloudlet update. cloudletName= \(cloudletName)")
 
@@ -104,14 +105,13 @@ public class Cloudlet // implements Serializable? todo?
         mMarker = marker
         mNumBytes = numBytes
         mNumPackets = numPackets
-        
+
         mBaseUri = uri
         setDownloadUri(uri)
 
+        let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5")
 
-        let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5" )
-
-        runLatencyTest(numPings:numPings!)
+        runLatencyTest(numPings: numPings!)
     }
 
     func runLatencyTest(numPings: Int)
@@ -123,7 +123,7 @@ public class Cloudlet // implements Serializable? todo?
             return
         }
         latencyTestTaskRunning = true
-        
+
         if uri != "" && uri.range(of: "azure") == nil
         {
             Swift.print("uri: \(uri)")
@@ -131,7 +131,6 @@ public class Cloudlet // implements Serializable? todo?
             latencies.removeAll()
             pings.removeAll()
 
-            
             for _ in 0 ..< numPings
             {
                 pings.append(uri) //  N pings
@@ -139,9 +138,9 @@ public class Cloudlet // implements Serializable? todo?
 
             pingNext()
         }
-        
-        latencyTestTaskRunning = false  //  
-        
+
+        latencyTestTaskRunning = false //
+
         // post upateLatencies
         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateLatencies"), object: nil)
     }
@@ -158,36 +157,70 @@ public class Cloudlet // implements Serializable? todo?
             return
         }
 
-        let ping = pings.removeFirst()
-        PlainPing.ping(ping, withTimeout: 1.0, completionBlock: { (timeElapsed: Double?, error: Error?) in
-            if let latency = timeElapsed
-            {
-               // print("\(ping) latency (ms): \(latency)")
-                self.latencies.append(latency)
+        let host = pings.removeFirst()
+
+        let latencyTestMethod = UserDefaults.standard.string(forKey: "LatencyTestMethod")
+
+        if false &&  latencyTestMethod == "Socket"
+        {
+            future = GetSocketLatency(host, 7000) // JT 19.01.16
+            
+            future!.on(success:
+                {
+                    let d = $0 as [String: Any]
+                    
+                    print("GetSocketLatency: \(d["latency"])")
+                    let duration = Double(d["latency"] as! String  ) // JT 19.01.16
+
+                    // print("\(ping) latency (ms): \(latency)")
+                    self.latencies.append(duration!)  // JT 19.01.16
+                    self.latencyMin = self.latencies.min()!
+                    self.latencyMax = self.latencies.max()!
+                    
+                    let sumArray = self.latencies.reduce(0, +)
+                    
+                    self.latencyAvg = sumArray / Double(self.latencies.count)
+                    
+                    self.latencyStddev = standardDeviation(arr: self.latencies)
+                    
+                    let latencyMsg = String(format: "%4.3f", self.latencyAvg)
+                    
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
+                    
+            },
+                failure: { print("Socket failed with error: \($0)") },
+                completion: { let _ = $0    //print("completed with result: \($0)" )
+                                                    
+            })
+        }
+        else
+        {
+            // Ping once
+            let pingOnce = SwiftyPing(host: host, configuration: PingConfiguration(interval: 0.5, with: 5), queue: DispatchQueue.global())
+            pingOnce?.observer = { _, response in
+                let duration = response.duration
+                print(duration)
+                pingOnce?.stop()
+                
+                // print("\(ping) latency (ms): \(latency)")
+                self.latencies.append(response.duration * 1000) // JT 19.01.14
                 self.latencyMin = self.latencies.min()!
                 self.latencyMax = self.latencies.max()!
-
+                
                 let sumArray = self.latencies.reduce(0, +)
-
+                
                 self.latencyAvg = sumArray / Double(self.latencies.count)
-
+                
                 self.latencyStddev = standardDeviation(arr: self.latencies)
-
                 
-                let latencyMsg = String( format: "%4.3f", self.latencyAvg )
+                let latencyMsg = String(format: "%4.3f", self.latencyAvg)
                 
-               NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
-                
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
             }
-            if let error = error
-            {
-                print("error: \(error.localizedDescription)")
-            }
-            self.pingNext()
-        })
+            pingOnce?.start() // JT 19.01.14
+        }
+     
     }
-
-
 
     /**
      * From the given string, create the hostname that will be pinged,
@@ -198,25 +231,25 @@ public class Cloudlet // implements Serializable? todo?
     {
         if mCarrierName.caseInsensitiveCompare("TDG") == .orderedSame
         {
-            openPort = 443  // JT 18.11.16 unused
+            openPort = 443 // JT 18.11.16 unused
             hostName = uri
-     //       downloadUri = "https://\(hostName)/mobiledgexsdkdemohttp/getdata?numbytes=\(mNumBytes)"
+            //       downloadUri = "https://\(hostName)/mobiledgexsdkdemohttp/getdata?numbytes=\(mNumBytes)"
             openPort = 7777
 
-            let downLoadStringSize  = UserDefaults.standard.string(forKey: "Download Size") ?? "1 MB"
+            let downLoadStringSize = UserDefaults.standard.string(forKey: "Download Size") ?? "1 MB"
             let n = downLoadStringSize.components(separatedBy: " ")
-            
+
             mNumBytes = Int(n[0])! * 1_048_576
-            
+
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
-           Swift.print("downloadUri1: \(downloadUri)")  // DEBUG
+            Swift.print("downloadUri1: \(downloadUri)") // DEBUG
         }
         else
         {
             openPort = 7777
             hostName = "mobiledgexsdkdemo." + uri
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
-            Swift.print("downloadUri: \(downloadUri)")  // DEBUG
+            Swift.print("downloadUri: \(downloadUri)") // DEBUG
         }
         self.uri = uri
     }
@@ -231,7 +264,6 @@ public class Cloudlet // implements Serializable? todo?
         return "mCarrierName=\(mCarrierName) mCloudletName=\(mCloudletName) mLatitude=\(mLatitude) mLongitude=\(mLongitude) mDistance=\(mDistance) uri=\(uri)"
     }
 
-
     public func startLatencyTest()
     {
         Swift.print("startLatencyTest()")
@@ -241,8 +273,8 @@ public class Cloudlet // implements Serializable? todo?
             return
         }
 
-        latencyTestTaskRunning = true   //
-        
+        latencyTestTaskRunning = true //
+
         latencyMin = 9999
         latencyAvg = 0
         latencyMax = 0
@@ -294,11 +326,6 @@ public class Cloudlet // implements Serializable? todo?
             Swift.print("Unknown latencyTestMethod: \(latencyTestMethod) ")
         }
     }
-
-    
-  
-    
-    
 
     public func getCloudletName() -> String
     {
@@ -442,59 +469,55 @@ public class Cloudlet // implements Serializable? todo?
             return false
         #endif
     }
-    
+
     func doSpeedTest()
     {
-        
         if speedTestTaskRunning
         {
             Swift.print("SpeedTest already running")
-            SKToast.show(withMessage: "SpeedTest already running")    // UI
-            
+            SKToast.show(withMessage: "SpeedTest already running") // UI
+
             return
         }
-        speedTestTaskRunning = true //
-        
-        setDownloadUri( mBaseUri)    // so we have current B bytes to download appended
+        speedTestTaskRunning = true //  // JT 19.01.14 todo how to reset this on cancel.
+
+        setDownloadUri(mBaseUri) // so we have current B bytes to download appended
         Swift.print("doSpeedTest\n  \(downloadUri)") // DEBUG
-      startTime1 = DispatchTime.now() // <<<<<<<<<< Start time
-      //  let todoEndpoint: String = "https://jsonplaceholder.typicode.com/todos/1"
+        startTime1 = DispatchTime.now() // <<<<<<<<<< Start time
+        //  let todoEndpoint: String = "https://jsonplaceholder.typicode.com/todos/1"
         Alamofire.request(downloadUri)
-            .downloadProgress(queue: DispatchQueue.global(qos: .utility)) { progress in
-           //     print("Progress: \(progress.fractionCompleted)")
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "speedTestProgress"), object: progress.fractionCompleted)   //
+            .downloadProgress(queue: DispatchQueue.global(qos: .utility))
+        { progress in
+            //     print("Progress: \(progress.fractionCompleted)")
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "speedTestProgress"), object: progress.fractionCompleted) //
 
-                self.speedTestProgress = progress.fractionCompleted    //
+            self.speedTestProgress = progress.fractionCompleted //
+        }
+        .responseString
+        { response in
+            self.speedTestTaskRunning = false //
+            // check for errors
+            guard response.result.error == nil else
+            {
+                // got an error in getting the data, need to handle it
+                print("error doSpeedTest")
+                print(response.result.error!)
+                return
             }
-            .responseString
-            { response in
-                self.speedTestTaskRunning = false    //
-                // check for errors
-                guard response.result.error == nil else {
-                    // got an error in getting the data, need to handle it
-                    print("error doSpeedTest")
-                    print(response.result.error!)
-                    return
-                }
-                let end = DispatchTime.now()   // <<<<<<<<<<   end time
-                let nanoTime = end.uptimeNanoseconds - self.startTime1!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
-                let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
-                print("Time: \(timeInterval) seconds")
-                let tranferRateD = Double(self.mNumBytes)/timeInterval
-                let tranferRate = Int(tranferRateD)
+            let end = DispatchTime.now() // <<<<<<<<<<   end time
+            let nanoTime = end.uptimeNanoseconds - self.startTime1!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+            let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
+            print("Time: \(timeInterval) seconds")
+            let tranferRateD = Double(self.mNumBytes) / timeInterval
+            let tranferRate = Int(tranferRateD)
 
-                Swift.print("[COMPLETED] rate in bit/s   : \(tranferRate * 8)" )   // Log
+            Swift.print("[COMPLETED] rate in bit/s   : \(tranferRate * 8)") // Log
 
-                SKToast.show(withMessage: "[COMPLETED] rate in MBs   : \(Double(tranferRate) / (1024*1024.0))")    // UI
-               NotificationCenter.default.post(name: NSNotification.Name(rawValue: "tranferRate"), object: tranferRate) // post
-
-
-                
+            SKToast.show(withMessage: "[COMPLETED] rate in MBs   : \(Double(tranferRate) / (1024 * 1024.0))") // UI
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "tranferRate"), object: tranferRate) // post
         }
     }
 }
-
-
 
 extension UIDevice
 {
@@ -513,6 +536,65 @@ func standardDeviation(arr: [Double]) -> Double //
     let length = Double(arr.count)
     let avg = arr.reduce(0, { $0 + $1 }) / length
     let sumOfSquaredAvgDiff = arr.map { pow($0 - avg, 2.0) }.reduce(0, { $0 + $1 })
-    
+
     return sqrt(sumOfSquaredAvgDiff / length)
+}
+
+func GetSocketLatency(_ host: String, _ port: Int32, _ postMsg: String? = nil)  -> Future<[String: AnyObject], Error>
+    
+{
+    let promise = Promise<[String: AnyObject], Error>() // completion callback
+    
+    DispatchQueue.global(qos: .background).async
+    {
+        let time = measure1
+        {
+            let client = TCPClient(address: host, port: port) // JT 19.01.16 SwiftSocket
+
+            client.close() // JT 19.01.16
+            
+            //                 promise.failure(value: ["latency": latencyMsg as AnyObject])  // JT 19.01.16
+
+        }
+
+ //       print("host: \(host)\n Latency \(time / 1000.0) ms") // JT 19.01.16
+        if time > 0
+        {
+            let latencyMsg = String(format: "%4.2f", time / 1000.0)
+            
+            if postMsg != nil && postMsg != ""
+            {
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postMsg!), object: latencyMsg)
+            }
+            promise.succeed(value: ["latency": latencyMsg as AnyObject])  // JT 19.01.16
+        }
+        
+        
+    }
+    
+    return promise.future
+}
+
+func measure<T>(task: () -> T) -> Double
+{
+    let startTime = CFAbsoluteTimeGetCurrent()
+    _ = task() // JT 19.01.16
+    let endTime = CFAbsoluteTimeGetCurrent()
+
+    let result = endTime - startTime
+
+    return result
+}
+
+func measure1<T>(task: () -> T) -> Double
+{
+    let startTime = DispatchTime.now() // JT 19.01.16
+    _ = task() // JT 19.01.16
+    let endTime = DispatchTime.now()
+
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+
+    let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
+
+    return timeInterval
 }

@@ -5,17 +5,17 @@ target 'MobiledgeXSDKDemo.IOS' do
     use_frameworks!
 
     pod 'Alamofire'
+    pod 'SwiftyJSON'
 
     pod 'GoogleMaps', '= 2.7.0'
     pod 'GoogleSignIn'
     
-    pod 'PlainPing'
-    pod 'SwiftyJSON'
-    pod 'SideMenu'
     pod 'SwiftLog'
     pod 'NSLogger/Swift'
-
-    #   pod 'OpenSSL-Universal'
+    
+    pod 'SPPermission'
+    pod 'SwiftSocket'
+    ## pod 'BlueSocket'
 
     ##      pod 'RFAboutView-Swift' cant because we fixed compile error
     ##    pod 'Eureka' cant do this as we modified ButtonRow and SwitdhRow for subtitle

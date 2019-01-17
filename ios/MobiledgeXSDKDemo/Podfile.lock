@@ -28,9 +28,9 @@ PODS:
   - NSLogger/ObjC (1.9.6)
   - NSLogger/Swift (1.9.6):
     - NSLogger/ObjC
-  - PlainPing (0.5)
-  - SideMenu (5.0.3)
+  - SPPermission (2.4.8)
   - SwiftLog (1.0.0)
+  - SwiftSocket (2.0.2)
   - SwiftyJSON (4.2.0)
 
 DEPENDENCIES:
@@ -38,9 +38,9 @@ DEPENDENCIES:
   - GoogleMaps (= 2.7.0)
   - GoogleSignIn
   - NSLogger/Swift
-  - PlainPing
-  - SideMenu
+  - SPPermission
   - SwiftLog
+  - SwiftSocket
   - SwiftyJSON
 
 SPEC REPOS:
@@ -52,9 +52,9 @@ SPEC REPOS:
     - GTMOAuth2
     - GTMSessionFetcher
     - NSLogger
-    - PlainPing
-    - SideMenu
+    - SPPermission
     - SwiftLog
+    - SwiftSocket
     - SwiftyJSON
 
 SPEC CHECKSUMS:
@@ -65,11 +65,11 @@ SPEC CHECKSUMS:
   GTMOAuth2: e8b6512c896235149df975c41d9a36c868ab7fba
   GTMSessionFetcher: 0c4baf0a73acd0041bf9f71ea018deedab5ea84e
   NSLogger: 4b879040b469e15269dbfb601206a71eddb85827
-  PlainPing: 6b248b94d92be7ec0410952d1b09af43b9a39015
-  SideMenu: 1dcaabce84538c53325c287f7fe62999379a641c
+  SPPermission: f9f1ef0474fe3830e58afd6f7922718060c95345
   SwiftLog: f6c4f9a4ade06263555ab34b2c0f72025ffcda9e
+  SwiftSocket: 6f4c9c63fbc5c1d61188936bb3c599fd546f40ae
   SwiftyJSON: c4bcba26dd9ec7a027fc8eade48e2c911f229e96
 
-PODFILE CHECKSUM: 1ba90acfdc0e53eab93bca10c9576a1603723fd8
+PODFILE CHECKSUM: 2925a9a2cad9a37e5fb48269c13461e564498901
 
 COCOAPODS: 1.5.0

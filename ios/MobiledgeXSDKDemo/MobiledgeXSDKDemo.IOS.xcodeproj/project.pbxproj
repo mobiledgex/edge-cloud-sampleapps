@@ -41,12 +41,14 @@
 		252C2E3F218CB19C0091A1D4 /* MatchingEngineResultsListener.java.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EEB217F7BD60092956D /* MatchingEngineResultsListener.java.swift */; };
 		252C2E41218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */; };
 		253A5FEF21D448C4002C39F7 /* MobiledgeX.SDK.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253A5FEE21D448C4002C39F7 /* MobiledgeX.SDK.swift */; };
+		253A6E8921ED73EA002C39F7 /* SwiftyPing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253A6E8821ED73EA002C39F7 /* SwiftyPing.swift */; };
 		25623EC2217F79D30092956D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EC1217F79D30092956D /* AppDelegate.swift */; };
 		25623EC4217F79D30092956D /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623EC3217F79D30092956D /* ViewController.swift */; };
 		25623EC7217F79D30092956D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 25623EC5217F79D30092956D /* Main.storyboard */; };
 		25623EC9217F79D50092956D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 25623EC8217F79D50092956D /* Assets.xcassets */; };
 		25623ECC217F79D50092956D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 25623ECA217F79D50092956D /* LaunchScreen.storyboard */; };
 		25623ED7217F79D50092956D /* MobiledgeXSDKDemo_IOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25623ED6217F79D50092956D /* MobiledgeXSDKDemo_IOSTests.swift */; };
+		256331FF21EEC3BE00095EF3 /* PermissionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 256331FE21EEC3BE00095EF3 /* PermissionViewController.swift */; };
 		258BEEFC219CBF770055227D /* ic_menu_camera.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEEF8219CBF770055227D /* ic_menu_camera.png */; };
 		258BEEFD219CBF770055227D /* ic_menu_recent_history.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEEF9219CBF770055227D /* ic_menu_recent_history.png */; };
 		258BEEFE219CBF770055227D /* ic_menu_compass.png in Resources */ = {isa = PBXBuildFile; fileRef = 258BEEFA219CBF770055227D /* ic_menu_compass.png */; };
@@ -68,6 +70,7 @@
 		258BEF2921A0E0AB0055227D /* UIViewController+sizeForPercent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2121A0E0AB0055227D /* UIViewController+sizeForPercent.swift */; };
 		258BEF2C21A0E9A30055227D /* Acknowledgements.plist in Resources */ = {isa = PBXBuildFile; fileRef = 258BEF2B21A0E9A20055227D /* Acknowledgements.plist */; };
 		258BEF2E21A24C020055227D /* Mex.utitities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258BEF2D21A24C020055227D /* Mex.utitities.swift */; };
+		258E3B4721EEB97800C3C5BC /* Permissions.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 258E3B4621EEB97800C3C5BC /* Permissions.storyboard */; };
 		25C9410221AB9DBE00C9424B /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410121AB9DBE00C9424B /* Log.swift */; };
 		25C9410C21AF7CB800C9424B /* CancellationToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410821AF7CB700C9424B /* CancellationToken.swift */; };
 		25C9410D21AF7CB800C9424B /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C9410921AF7CB700C9424B /* Future.swift */; };
@@ -223,7 +226,7 @@
 		252C2E26218BA1210091A1D4 /* ic_marker_mobile-web.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ic_marker_mobile-web.png"; sourceTree = "<group>"; };
 		252C2E40218CF1A40091A1D4 /* MatchingEngineHelper.java2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineHelper.java2.swift; sourceTree = "<group>"; };
 		253A5FEE21D448C4002C39F7 /* MobiledgeX.SDK.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MobiledgeX.SDK.swift; path = SDK/MobiledgeX.SDK.swift; sourceTree = "<group>"; };
-		253A5FFF21E0413D002C39F7 /* NSLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = NSLogger.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/NSLogger-1.9.6/Client/iOS/NSLogger.swift"; sourceTree = SOURCE_ROOT; };
+		253A6E8821ED73EA002C39F7 /* SwiftyPing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyPing.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/SwiftyPing-master/SwiftyPing.swift"; sourceTree = SOURCE_ROOT; };
 		25623EBE217F79D30092956D /* MobiledgeXSDKDemo.IOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MobiledgeXSDKDemo.IOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25623EC1217F79D30092956D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		25623EC3217F79D30092956D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -245,6 +248,7 @@
 		25623EEA217F7BD60092956D /* MatchingEngineHelper.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineHelper.java.swift; sourceTree = "<group>"; };
 		25623EEB217F7BD60092956D /* MatchingEngineResultsListener.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngineResultsListener.java.swift; sourceTree = "<group>"; };
 		25623EEE217F7BD60092956D /* SpeedTestResultsListener.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeedTestResultsListener.java.swift; sourceTree = "<group>"; };
+		256331FE21EEC3BE00095EF3 /* PermissionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PermissionViewController.swift; path = ViewControllers/PermissionViewController.swift; sourceTree = "<group>"; };
 		258BEEF8219CBF770055227D /* ic_menu_camera.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_camera.png; sourceTree = "<group>"; };
 		258BEEF9219CBF770055227D /* ic_menu_recent_history.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_recent_history.png; sourceTree = "<group>"; };
 		258BEEFA219CBF770055227D /* ic_menu_compass.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_compass.png; sourceTree = "<group>"; };
@@ -266,6 +270,7 @@
 		258BEF2121A0E0AB0055227D /* UIViewController+sizeForPercent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIViewController+sizeForPercent.swift"; sourceTree = "<group>"; };
 		258BEF2B21A0E9A20055227D /* Acknowledgements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Acknowledgements.plist; sourceTree = "<group>"; };
 		258BEF2D21A24C020055227D /* Mex.utitities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mex.utitities.swift; sourceTree = "<group>"; };
+		258E3B4621EEB97800C3C5BC /* Permissions.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Permissions.storyboard; path = App/Permissions.storyboard; sourceTree = "<group>"; };
 		25C9410121AB9DBE00C9424B /* Log.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Log.swift; path = "MobiledgeXSDKDemo.IOS/ThirdParty/SwiftLog-master/Log.swift"; sourceTree = SOURCE_ROOT; };
 		25C9410321ACE68900C9424B /* RegExReplace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RegExReplace.swift; path = ../../../../../../../venuetise/ios_lca_suite/Venuetize2/Venuetize2/ThirdParty/RegExReplace.swift; sourceTree = "<group>"; };
 		25C9410821AF7CB700C9424B /* CancellationToken.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CancellationToken.swift; sourceTree = "<group>"; };
@@ -517,6 +522,7 @@
 				25623EC3217F79D30092956D /* ViewController.swift */,
 				25DCD6322198A5BF000437A5 /* Sample_client.swift */,
 				253A5FEE21D448C4002C39F7 /* MobiledgeX.SDK.swift */,
+				258E3B4621EEB97800C3C5BC /* Permissions.storyboard */,
 				25623EC5217F79D30092956D /* Main.storyboard */,
 				25623EC8217F79D50092956D /* Assets.xcassets */,
 				25623ECA217F79D50092956D /* LaunchScreen.storyboard */,
@@ -544,6 +550,7 @@
 				258BEF2D21A24C020055227D /* Mex.utitities.swift */,
 				25623EE4217F7BD60092956D /* Cloudlet.jav.swift */,
 				25623EE6217F7BD60092956D /* CloudletListHolder.jav.swift */,
+				256331FE21EEC3BE00095EF3 /* PermissionViewController.swift */,
 				258BEF2A21A0E5730055227D /* unused */,
 			);
 			path = Classes;
@@ -650,7 +657,7 @@
 		25D5DC8121801C6B0097941C /* ThirdParty2 */ = {
 			isa = PBXGroup;
 			children = (
-				253A5FFF21E0413D002C39F7 /* NSLogger.swift */,
+				253A6E8821ED73EA002C39F7 /* SwiftyPing.swift */,
 				25C9410721AF7CB700C9424B /* Sources */,
 				25C9410321ACE68900C9424B /* RegExReplace.swift */,
 				25C9410121AB9DBE00C9424B /* Log.swift */,
@@ -970,6 +977,7 @@
 				258BEF2521A0E0AB0055227D /* RFAboutViewCloseX@2x.png in Resources */,
 				258BEF2621A0E0AB0055227D /* RFAboutViewCloseX@3x.png in Resources */,
 				258BEEFE219CBF770055227D /* ic_menu_compass.png in Resources */,
+				258E3B4721EEB97800C3C5BC /* Permissions.storyboard in Resources */,
 				25D5DCBD2180FB500097941C /* Podfile in Resources */,
 				25DCD6602199F128000437A5 /* ios11-control-center-camera-icon.png in Resources */,
 				252C2E28218BA1210091A1D4 /* dot-menu@3x.png in Resources */,
@@ -1033,9 +1041,9 @@
 				"${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleToolboxForMac/GoogleToolboxForMac.framework",
 				"${BUILT_PRODUCTS_DIR}/NSLogger/NSLogger.framework",
-				"${BUILT_PRODUCTS_DIR}/PlainPing/PlainPing.framework",
-				"${BUILT_PRODUCTS_DIR}/SideMenu/SideMenu.framework",
+				"${BUILT_PRODUCTS_DIR}/SPPermission/SPPermission.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftLog/SwiftLog.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftSocket/SwiftSocket.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftyJSON/SwiftyJSON.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -1045,9 +1053,9 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMSessionFetcher.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleToolboxForMac.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NSLogger.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PlainPing.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SideMenu.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SPPermission.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftLog.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftSocket.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftyJSON.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1152,6 +1160,7 @@
 				25DCD7042199F798000437A5 /* Core.swift in Sources */,
 				25DCD7332199F798000437A5 /* PopoverSelectorRow.swift in Sources */,
 				25DCD6242197AC1D000437A5 /* HeadingRequest.swift in Sources */,
+				256331FF21EEC3BE00095EF3 /* PermissionViewController.swift in Sources */,
 				25DCD7392199F798000437A5 /* SwitchRow.swift in Sources */,
 				25DCD7092199F798000437A5 /* NavigationAccessoryView.swift in Sources */,
 				25DCD7182199F798000437A5 /* AlertRow.swift in Sources */,
@@ -1167,6 +1176,7 @@
 				258BEF2E21A24C020055227D /* Mex.utitities.swift in Sources */,
 				252C2DB3218633E40091A1D4 /* DPDKeyboardListener.swift in Sources */,
 				25DCD7312199F798000437A5 /* PickerInputRow.swift in Sources */,
+				253A6E8921ED73EA002C39F7 /* SwiftyPing.swift in Sources */,
 				25DCD6592199F128000437A5 /* EnhancedNetworkLocationServicesViewController.swift in Sources */,
 				25DCD6332198A5BF000437A5 /* Sample_client.swift in Sources */,
 				25DCD5C82191FCD2000437A5 /* LocationRequest.swift in Sources */,
@@ -1395,10 +1405,7 @@
 					"\"$(SRCROOT)/Pods/gRPC/src/objective-c/GRPCClient/private\"",
 				);
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOS/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Pods/OpenSSL-Universal/lib-ios",
@@ -1450,10 +1457,7 @@
 					"\"$(SRCROOT)/Pods/gRPC/src/objective-c/GRPCClient/private\"",
 				);
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOS/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Pods/OpenSSL-Universal/lib-ios",
@@ -1475,11 +1479,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = XHQK92K282;
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOSTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
@@ -1496,11 +1496,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = XHQK92K282;
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOSTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;

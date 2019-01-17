@@ -80,13 +80,30 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         }
         
         
-      //  getNetworkLatencyCloud()    //   "latencyCloud"
-
+        DispatchQueue.main.async {
+              getNetworkLatencyCloud()    //   "latencyCloud"   // JT 19.01.16
+        }
         DispatchQueue.main.async {
             getNetworkLatencyEdge() //   "latencyEdge"
         }
+        
+        // ----
+        let firstTimeUsagePermission = UserDefaults.standard.bool(forKey: "firstTimeUsagePermission")    // JT 18.12.17
+        if firstTimeUsagePermission == false
+        {
+            askPermission()   // JT 19.01.16
+        }
     }
 
+    func askPermission()    // JT 19.01.16
+    {
+        let storyboard = UIStoryboard(name: "Permissions", bundle: nil)
+        
+        let vc =  storyboard.instantiateViewController(withIdentifier: "PermissionViewController")
+        
+        navigationController!.pushViewController(vc, animated: true)
+    }
+    
     func setupRightBarDropDown()
     {
         let image = UIImage(named: "dot-menu@3x copy")?.withRenderingMode(.alwaysOriginal)
@@ -170,7 +187,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
     @objc public func openMenu(sender _: UIBarButtonItem)
     {
-        Swift.print("openMenu")
+        Swift.print("openMenu") // Log
 
         rightBarDropDown.show()
 
@@ -195,7 +212,17 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             case 2:
                 Swift.print("Verify Location")
 
-                MexVerifyLocation.shared.doVerifyLocation()     // "Verify Location"
+                let vl = UserDefaults.standard.bool(forKey: "VerifyLocation")   // JT 19.01.15
+                
+                if vl
+                {
+                    MexVerifyLocation.shared.doVerifyLocation()     // "Verify Location"
+                }
+                else
+                {
+                    //alert
+                    self?.askPermissionToVerifyLocation()
+                }
                 
             case 3:
                 Swift.print("Find Closest Cloudlet")
@@ -277,6 +304,24 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
         present(alert, animated: true, completion: nil)
     }
+    
+    func askPermissionToVerifyLocation()    // JT 19.01.15
+    {
+        let alert = UIAlertController(title: "Alert", message: "Choose", preferredStyle: .alert) // .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: "Request permission To Verify Location", style: .default, handler: { _ in
+
+            UserDefaults.standard.set( true, forKey: "VerifyLocation")  // JT 19.01.15 just ask once
+            MexVerifyLocation.shared.doVerifyLocation()     // "Verify Location"
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
+            
+         Swift.print("VerifyLocation Cancel")   // Log
+            
+        }))
+        
+        present(alert, animated: true, completion: nil)
+    }
 }
 
 extension CLLocationCoordinate2D
@@ -287,4 +332,6 @@ extension CLLocationCoordinate2D
         let destination = CLLocation(latitude: from.latitude, longitude: from.longitude)
         return CLLocation(latitude: latitude, longitude: longitude).distance(from: destination)
     }
+    
+
 }

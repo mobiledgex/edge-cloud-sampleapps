@@ -152,8 +152,10 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
         { [weak self] _, _ in
             Swift.print("Speed Test")
             self!.cloudlet!.doSpeedTest() //
-
+            
             CircularSpinner.show(animated: true, showDismissButton: true, delegate: nil)
+            //             self!.cloudlet!.speedTestTaskRunning = false //    // JT
+
             CircularSpinner.setValue(0.01, animated: true)
 
         }.cellUpdate

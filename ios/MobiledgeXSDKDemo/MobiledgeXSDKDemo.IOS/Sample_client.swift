@@ -12,8 +12,9 @@ import Foundation
 import UIKit
 import GoogleMaps
 import Security
-import PlainPing
+//import PlainPing
 import NSLogger // JT 19.01.07
+//import SimplePing   // JT 19.01.14
 
 // ----------------------------------------
 
@@ -205,7 +206,7 @@ class MexRegisterClient
     
     func createRegisterClientRequest( ver: String = "1", appName: String, devName: String, appVers: String)
         -> [String: Any] // Dictionary/json
-    {        
+    {
         var regClientRequest = [String: String]()     // Dictionary/json regClientRequest
         
         regClientRequest["ver"] = "1"
@@ -1011,11 +1012,17 @@ private func retrieveLocation() -> [String: Any]
 
 class MexFaceRecognition
 {
-     var faceDetectionStartTime:DispatchTime?    //  one at a time
+ //    var faceDetectionStartTime:DispatchTime?    //  one at a time    // JT 19.01.16
     
-     var faceRecognitionStartTime:DispatchTime?      //  one at a time
-     var faceRecognitionImages =  [UIImage]()
-     var faceRecognitionCurrentImage: UIImage?
+    var faceDetectionStartTimes:[String:DispatchTime]? // two at a time cloud/edge
+
+//     var faceRecognitionStartTime:DispatchTime?      //  one at a time    // JT 19.01.16
+    var faceRecognitionStartTimes:[String:DispatchTime]? // two at a time cloud/edge
+
+    // var faceRecognitionImages =  [UIImage]()
+    var faceRecognitionImages2 =  [(UIImage,String)]()  // JT 19.01.16 image + service. one at a time
+    
+   var faceRecognitionCurrentImage: UIImage?
 
     
     // Mark: -
@@ -1045,7 +1052,7 @@ class MexFaceRecognition
                 {
                     doAFaceRecognition = false // wait for que to empty
                     
-                    self.faceRecognitionImages.removeAll()
+                    self.faceRecognitionImages2.removeAll()
                     
                     if false   //  use whole image
                     {
@@ -1057,16 +1064,20 @@ class MexFaceRecognition
 
                             Swift.print("r = \(r)")
                             let face = image!.cropped(to: r)
-                            self.faceRecognitionImages.append(face)
+                            self.faceRecognitionImages2.append((face, "Cloud")) // JT 19.01.16
+                            self.faceRecognitionImages2.append((face, "Edge"))  // JT 19.01.16
+
                         }
                     }
                     else
                     {
-                        self.faceRecognitionImages.append(image!)    //   use whole image
+                        self.faceRecognitionImages2.append((image!, "Cloud") )    //   use whole image  // JT 19.01.16
+                        self.faceRecognitionImages2.append((image!, "Edge")) // JT 19.01.16 )    //   use whole image
+
                     }
                     
                     Swift.print("")
-                    self.doNextFaceRecognition(service)
+                    self.doNextFaceRecognition()    // JT 19.01.16
                 }
                 
                 // Log.logger.name = "FaceDetection"
@@ -1098,9 +1109,12 @@ class MexFaceRecognition
         //
         
         getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_EDGE, post: "updateNetworkLatenciesEdge")
- //       getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud")
+        getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud")  // JT 19.01.16
         
-        let baseuri = (service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_EDGE : MexUtil.shared.DEF_FACE_HOST_CLOUD) + ":" + MexUtil.shared.faceServerPort
+        let _ = GetSocketLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, Int32(MexUtil.shared.faceServerPort)!, "latencyCloud")   // JT 19.01.16
+        
+        
+        let baseuri = (service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_CLOUD  : MexUtil.shared.DEF_FACE_HOST_EDGE) + ":" + MexUtil.shared.faceServerPort  // JT 19.01.16
         
         let urlStr = "http://" + baseuri + faceDetectionAPI //   URLConvertible
         
@@ -1126,9 +1140,15 @@ class MexFaceRecognition
                 // "Content-Type": "application/json",    //  fails. we are doing url encoding no json
                 "Charsets": "utf-8",
                 ]
-            //    postRequest(urlStr, params, "FaceDetection")
+
             
-            faceDetectionStartTime = DispatchTime.now() // <<<<<<<<<< Start time
+        //    faceDetectionStartTime = DispatchTime.now() // <<<<<<<<<< Start time  // JT 19.01.16
+            
+            if faceDetectionStartTimes == nil   // JT 19.01.16
+            {
+                faceDetectionStartTimes = [String:DispatchTime]()
+            }
+            faceDetectionStartTimes![service] =  DispatchTime.now() // JT 19.01.16
             
             let requestObj = Alamofire.request(urlStr,
                                                method: HTTPMethod.post,
@@ -1153,7 +1173,11 @@ class MexFaceRecognition
                             // Swift.print("data: \(data)")
                             
                             let end = DispatchTime.now() // <<<<<<<<<<   end time
-                            let nanoTime = end.uptimeNanoseconds - self.faceDetectionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+                            let start =  self.faceDetectionStartTimes![service] // JT 19.01.16
+                            let nanoTime = end.uptimeNanoseconds - start!.uptimeNanoseconds  //self.faceDetectionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+                            
+
+                            
                             let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
                             
                            // Swift.print("FaceDetection time: \(timeInterval)")
@@ -1195,20 +1219,24 @@ class MexFaceRecognition
     
     
     
-    func doNextFaceRecognition( _ service: String)
+    func doNextFaceRecognition()
     {
-        if faceRecognitionImages.count == 0
+        if faceRecognitionImages2.count == 0
         {
             doAFaceDetection = true //  todo tmp
             doAFaceRecognition = true
+            
+
             return
         }
-        let imageOfFace = faceRecognitionImages.removeFirst()
-        faceRecognitionCurrentImage = imageOfFace
+        let tuple = faceRecognitionImages2.removeFirst()
+        let imageOfFace = tuple.0 as UIImage
+        let service = tuple.1 as String
+     faceRecognitionCurrentImage = imageOfFace
         
         var faceRecognitionFuture:Future<[String: AnyObject], Error>? // async result (captured by async?)
         
-        faceRecognitionFuture = FaceRecognition(imageOfFace, service)
+        faceRecognitionFuture = FaceRecognition(imageOfFace, service )
         
         faceRecognitionFuture!.on(
             success:
@@ -1225,13 +1253,18 @@ class MexFaceRecognition
                 NotificationCenter.default.post(name: NSNotification.Name(rawValue: "faceRecognized" + service), object: reply )
                 
                 DispatchQueue.main.async {
-                    self.doNextFaceRecognition(service)     //   next
+                    self.doNextFaceRecognition()     //   next
                     
                 }
                 //Log.logger.name = "FaceDetection"
                 //logw("\FaceDetection result: \(registerClientReply)")
         },
             failure: { print("FaceRecognition failed with error: \($0)")
+                
+                DispatchQueue.main.async {
+                    self.doNextFaceRecognition()     //   next
+                    
+                }
                 
         },
             completion: { let _ = $0 //print("completed with result: \($0)")
@@ -1247,6 +1280,8 @@ class MexFaceRecognition
     {
         let promise = Promise<[String: AnyObject], Error>()
         
+       // Logger.shared.log(.network, .info, image! )      // JT 19.01.16
+
         // detector/detect
         // Used to send a face image to the server and get back a set of coordinates for any detected faces.
         // POST http://<hostname>:8008/detector/detect/
@@ -1263,7 +1298,7 @@ class MexFaceRecognition
         
         let urlStr = "http://" + baseuri + faceRecognitonAPI //  URLConvertible
         
-       //  Swift.print("urlStr \(urlStr)")
+         Swift.print("urlStr \(urlStr)")
         
         var params: [String: String] = [:]
         
@@ -1286,7 +1321,13 @@ class MexFaceRecognition
                 "Charsets": "utf-8",
                 ]
             
-            faceRecognitionStartTime = DispatchTime.now() // <<<<<<<<<< Start time
+       //     faceRecognitionStartTime = DispatchTime.now() // <<<<<<<<<< Start time    // JT 19.01.16
+    
+            if faceRecognitionStartTimes == nil   // JT 19.01.16 LIT hack
+            {
+                faceRecognitionStartTimes = [String:DispatchTime]()
+            }
+            faceRecognitionStartTimes![service] =  DispatchTime.now() // JT 19.01.16
             
             let requestObj = Alamofire.request(urlStr,
                                                method: HTTPMethod.post,
@@ -1311,12 +1352,13 @@ class MexFaceRecognition
                             // Swift.print("data: \(data)")
                             
                             let end = DispatchTime.now()   // <<<<<<<<<<   end time
-                            let nanoTime = end.uptimeNanoseconds -  self.faceRecognitionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
+                            let start =  self.faceRecognitionStartTimes![service] // JT 19.01.16
+                            let nanoTime = end.uptimeNanoseconds - start!.uptimeNanoseconds  //
                             let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
                             
                             promise.succeed(value: d as [String : AnyObject])  //
                             
-                            Swift.print("FaceRecognition time: \(timeInterval)")
+                            Swift.print("••• FaceRecognition time: \(timeInterval)")
                             
                             SKToast.show(withMessage: "FaceRecognition  time: \(timeInterval) result: \(data)")
                             
@@ -1360,38 +1402,57 @@ func convertPointsToRect(_ a:[Int])  ->CGRect    //   Mex data
 func getNetworkLatencyEdge()
 {
     getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_EDGE, post: "latencyEdge")
-    
-    
 }
 
 func getNetworkLatencyCloud()   // JT 18.12.27 ? broken?
 {
-  //  getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "latencyCloud")    //    // JT ping facedetection.defaultcloud.mobiledgex.net
-    
+    getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "latencyCloud")
 }
 
 
 
-func getNetworkLatency(_ hostName:String, post name: String)
+func getNetworkLatency(_ hostName:String, post name: String)    // JT 19.01.14
 {
     //Swift.print("\(#function) \(hostName)")
     
+    // Ping once
+    let  pingOnce = SwiftyPing(host: hostName, configuration: PingConfiguration(interval: 0.5, with: 5), queue: DispatchQueue.global())
+    pingOnce?.observer = { (_, response) in
+        let duration = response.duration
+        print(duration)
+        pingOnce?.stop()
+        
+        let latency = response.duration * 1000    // JT 19.01.14
+ 
+    //     print("\(hostName) latency (ms): \(latency)")
+
+        
+        let latencyMsg = String( format: "%4.2f", latency )
+        
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: name), object: latencyMsg)
+    }
+    pingOnce?.start()   // JT 19.01.14
     
-    PlainPing.ping(hostName, withTimeout: 1.0, completionBlock:
-        { (timeElapsed: Double?, error: Error?) in
-        
-        if let latency = timeElapsed
-        {
-            let latencyMsg = String(format: "%4.3f", latency)
-            
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: name), object: latencyMsg)
-        }
-        if let error = error
-        {
-            Swift.print("ping failed: \(hostName)")
-            print("ping error: \(error.localizedDescription)")
-        }
-        
-    })
+    
+//    PlainPing.ping(hostName, withTimeout: 1.0, completionBlock:
+//        { (timeElapsed: Double?, error: Error?) in
+//
+//        if let latency = timeElapsed
+//        {
+//            let latencyMsg = String(format: "%4.3f", latency)
+//
+//            NotificationCenter.default.post(name: NSNotification.Name(rawValue: name), object: latencyMsg)
+//        }
+//        if let error = error
+//        {
+//            Swift.print("ping failed: \(hostName)")
+//            print("ping error: \(error.localizedDescription)")
+//        }
+//
+//    })
+    
+    
+  
+    
 }
 

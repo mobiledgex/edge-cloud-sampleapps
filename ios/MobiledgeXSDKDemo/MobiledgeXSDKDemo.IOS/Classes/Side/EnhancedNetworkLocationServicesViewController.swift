@@ -9,7 +9,6 @@
 import Foundation
 
 import UIKit
-// import Eureka // JT 18.11.12
 
 class EnhancedNetworkLocationServicesViewController: FormViewController
 {
@@ -33,11 +32,12 @@ class EnhancedNetworkLocationServicesViewController: FormViewController
         { /*[weak self]*/ row in
             Swift.print("Location Verification \(row) \(row.value!)")
 
-            UserDefaults.standard.set(row.value, forKey: "Location Verification") // JT 18.11.03
+         //   UserDefaults.standard.set(row.value, forKey: "Location Verification") // JT 19.01.15
+            UserDefaults.standard.set( row.value, forKey: "VerifyLocation")     // JT 19.01.15
 
         }.cellSetup
         { _, row in
-            row.subTitle = " Enhabced Newtwirk Location Services." // JT 18.11.04   // JT 18.11.12
+            row.subTitle = " Enhanced Network Location Services."
         }
 
         #if false   // JT 18.11.19 Network Switching for IOS?
