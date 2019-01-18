@@ -22,17 +22,17 @@ import android.view.WindowManager;
 
 import com.mobiledgex.sdkdemo.R;
 
-public class CameraActivity extends AppCompatActivity {
+public class PoseCameraActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        System.out.println("BDA9 CameraActivity");
+        System.out.println("BDA9 PoseCameraActivity");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_camera2_basic);
+        setContentView(R.layout.fragment_pose_camera);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (null == savedInstanceState) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, Camera2BasicFragment.newInstance())
+                    .replace(R.id.container, PoseCameraFragment.newInstance())
                     .commit();
         }
     }

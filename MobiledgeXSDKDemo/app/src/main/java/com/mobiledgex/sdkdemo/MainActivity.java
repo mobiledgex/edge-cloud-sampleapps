@@ -68,6 +68,7 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.sdkdemo.camera.Camera2BasicFragment;
 import com.mobiledgex.sdkdemo.camera.CameraActivity;
+import com.mobiledgex.sdkdemo.camera.PoseCameraActivity;
 import com.mobiledgex.sdkdemo.camera.VolleyRequestHandler;
 import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
 
@@ -401,6 +402,12 @@ public class MainActivity extends AppCompatActivity
             // Start the face recognition Activity
             Intent intent = new Intent(this, CameraActivity.class);
             intent.putExtra(Camera2BasicFragment.EXTRA_FACE_RECOGNITION, true);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.nav_pose_detection) {
+            // Start the pose detection Activity
+            Intent intent = new Intent(this, PoseCameraActivity.class);
+            intent.putExtra(Camera2BasicFragment.EXTRA_POSE_DETECTION, true);
             startActivity(intent);
             return true;
         } else if (id == R.id.nav_qoe_map) {
@@ -1125,7 +1132,7 @@ public class MainActivity extends AppCompatActivity
             boolean reachable = VolleyRequestHandler.isReachable(newHost,
                     VolleyRequestHandler.getFaceServerPort(newHost), 3000);
             if(!reachable) {
-                Log.i(TAG, newHost+" not reachable. Resetting "+keyName+" to default.");
+                Log.e(TAG, newHost+" not reachable. Resetting "+keyName+" to default.");
                 prefs.edit().putString(keyName, defaultHost).apply();
                 return false;
             }
@@ -1133,11 +1140,14 @@ public class MainActivity extends AppCompatActivity
         }
         @Override
         protected void onPostExecute(Boolean result) {
+            String message;
             if(result) {
-                Log.i(TAG, "FaceServerConnectivityTask verified new host: "+newHost);
+                message = "Verified new host: "+newHost;
+                Log.i(TAG, message);
             } else {
-                Toast.makeText(MainActivity.this, "Could not reach face server at '"+newHost+"'. Resetting to default.", Toast.LENGTH_LONG).show();
+                message = "Could not reach face server at '"+newHost+"'. Resetting to default.";
             }
+            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
         }
         @Override
         protected void onPreExecute() {}

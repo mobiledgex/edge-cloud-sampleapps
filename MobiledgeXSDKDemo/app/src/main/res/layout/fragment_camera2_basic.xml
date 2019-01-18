@@ -46,6 +46,12 @@
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
+    <com.mobiledgex.sdkdemo.camera.PoseRenderer
+        android:id="@+id/poseSkeleton"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
@@ -72,7 +78,7 @@
         android:layout_height="match_parent">
 
         <TextView
-            android:id="@+id/latency_title"
+            android:id="@+id/network_latency"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Full Process Latency"
@@ -83,7 +89,7 @@
             android:id="@+id/cloud_latency"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/latency_title"
+            android:layout_below="@+id/network_latency"
             android:text="Cloud:"
             android:textColor="@android:color/white"
             android:textSize="24sp" />
@@ -101,7 +107,7 @@
             android:id="@+id/edge_latency"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/latency_title"
+            android:layout_below="@+id/network_latency"
             android:layout_alignParentEnd="true"
             android:text="Edge:"
             android:textColor="@android:color/white"
