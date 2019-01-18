@@ -165,7 +165,7 @@ public class VolleyRequestHandler {
             } else {
                 Log.e(TAG, "Invalid CameraMode: "+mode);
             }
-            Log.i("BDA9", "setCameraMode("+mCameraMode+") djangoUrl="+djangoUrl);
+            Log.i(TAG, "setCameraMode("+mCameraMode+") djangoUrl="+djangoUrl);
         }
 
         /**
@@ -202,7 +202,7 @@ public class VolleyRequestHandler {
 
             final String requestBody = encoded;
             String url = "http://"+host+":"+port + djangoUrl;
-            Log.i("BDA9", "url="+url);
+            Log.i(TAG, "url="+url);
 
             final long startTime = System.nanoTime();
 

@@ -148,13 +148,13 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.i("BDA9", "onCreateView PoseCameraFragment");
+        Log.i(TAG, "onCreateView PoseCameraFragment");
         return inflater.inflate(R.layout.fragment_pose_camera, container, false);
     }
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        Log.i("BDA9", "onViewCreated PoseCameraFragment");
+        Log.i(TAG, "onViewCreated PoseCameraFragment");
         Toolbar cameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(cameraToolbar);
 
@@ -176,7 +176,7 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        Log.i("BDA9", "onCreateOptionsMenu");
+        Log.i(TAG, "onCreateOptionsMenu");
         mOptionsMenu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.camera_menu, menu);

@@ -1056,7 +1056,7 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        Log.i("BDA9", "onCreateOptionsMenu");
+        Log.i(TAG, "onCreateOptionsMenu");
         mOptionsMenu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.camera_menu, menu);
@@ -1138,7 +1138,7 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.i("BDA9", "onCreate");
+        Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
     }
@@ -1146,13 +1146,13 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.i("BDA9", "onCreateView");
+        Log.i(TAG, "onCreateView");
         return inflater.inflate(R.layout.fragment_camera2_basic, container, false);
     }
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        Log.i("BDA9", "onViewCreated");
+        Log.i(TAG, "onViewCreated");
         Toolbar cameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(cameraToolbar);
 
@@ -1234,23 +1234,15 @@ public class Camera2BasicFragment extends Fragment
         onSharedPreferenceChanged(prefs, "ALL");
 
         Intent intent = getActivity().getIntent();
-        boolean poseDetection = intent.getBooleanExtra(EXTRA_POSE_DETECTION, false);
-        if(poseDetection) {
-            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.POSE_DETECTION);
-            mCameraMode = VolleyRequestHandler.CameraMode.POSE_DETECTION;
-            cameraToolbar.setTitle(R.string.title_activity_pose_detection);
+        boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
+        if (faceRecognition) {
+            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_RECOGNITION);
             prefLocalProcessing = false;
+            cameraToolbar.setTitle(R.string.title_activity_face_recognition);
         } else {
-            boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
-            if (faceRecognition) {
-                mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_RECOGNITION);
-                prefLocalProcessing = false;
-                cameraToolbar.setTitle(R.string.title_activity_face_recognition);
-            } else {
-                mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_DETECTION);
-                mCameraMode = VolleyRequestHandler.CameraMode.FACE_DETECTION;
-                cameraToolbar.setTitle(R.string.title_activity_face_detection);
-            }
+            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_DETECTION);
+            mCameraMode = VolleyRequestHandler.CameraMode.FACE_DETECTION;
+            cameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
         boolean benchEdge = intent.getBooleanExtra(EXTRA_BENCH_EDGE, false);
         boolean benchLocal = intent.getBooleanExtra(EXTRA_BENCH_LOCAL, false);
