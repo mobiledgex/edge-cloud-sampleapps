@@ -83,7 +83,7 @@ public class PoseRenderer extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        Log.i("BDA3", "onDraw() "+getWidth()+","+getHeight()+" poses="+(poses!=null));
+        Log.i(TAG, "onDraw() "+getWidth()+","+getHeight()+" poses="+(poses!=null));
         super.onDraw(canvas);
 
         if(poses == null) {
@@ -102,7 +102,7 @@ public class PoseRenderer extends View {
                     int[] pair = pairs[j];
                     int indexStart = pair[0];
                     int indexEnd = pair[1];
-                    Log.i("bda4", "indexStart="+indexStart+" indexEnd="+indexEnd);
+                    Log.i(TAG, "indexStart="+indexStart+" indexEnd="+indexEnd);
 
                     JSONArray keypoint1 = pose.getJSONArray(indexStart);
                     float x1 = (float) keypoint1.getDouble(0) * serverToDisplayRatio + widthOff;
@@ -118,7 +118,7 @@ public class PoseRenderer extends View {
                         continue;
                     }
 
-                    Log.i("bda5", "Drawing indexStart="+indexStart+" indexEnd="+indexEnd+" ("+x1+","+y1+","+x2+","+y2+")");
+                    Log.i(TAG, "Drawing indexStart="+indexStart+" indexEnd="+indexEnd+" ("+x1+","+y1+","+x2+","+y2+")");
                     if(mirrored) {
                         x1 = width - x1;
                         x2 = width - x2;
