@@ -384,7 +384,7 @@ public class Camera2BasicFragment extends Fragment
                 mTextureView.unlockCanvasAndPost(canvas);
             }
 
-//            mAssetImageFileIndex++;
+            mAssetImageFileIndex++;
             if (mAssetImageFileIndex >= mAssetImageFileList.size()) {
                 mAssetImageFileIndex = 0;
             }
