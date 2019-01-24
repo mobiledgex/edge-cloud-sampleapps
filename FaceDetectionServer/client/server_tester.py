@@ -42,10 +42,16 @@ class RequestClient(object):
         millis = (time.time() - now)*1000
         elapsed = "%.3f" %millis
         total_latency = total_latency + millis
+        decoded_json = json.loads(content)
+        base64_size = len(image)
+        if 'server_processing_time' in decoded_json:
+            server_processing_time = decoded_json['server_processing_time']
+        else:
+            server_processing_time = "NA"
         if show_responses:
             print("%s ms - %s" %(elapsed, content))
         else:
-            print("%s ms" %(elapsed))
+            print("%s ms round trip. %s ms server_processing_time base64_size=%d" %(elapsed, server_processing_time, base64_size))
 
     def run_multi(self, num_repeat, host, endpoint, image_file_name, show_responses, thread_name):
         # print("run_multi(%s, %s)\n" %(host, image_file_name))

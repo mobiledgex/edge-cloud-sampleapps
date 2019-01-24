@@ -200,9 +200,9 @@ def openpose_detect(request):
         if request.POST.get("image", "") == "":
             return HttpResponseBadRequest("Missing 'image' parameter")
         image = base64.b64decode(request.POST.get("image"))
+        logger.debug(prepend_ip("Size of received image: %d" %(len(request.POST.get("image"))), request))
         save_debug_image(image, request)
 
-#        image = cv2.imread("/home/mobiledgex/openpose/examples/media/COCO_val2014_000000000192.jpg")
         image = imread(io.BytesIO(image))
 
         logger.debug(prepend_ip("Performing detection process", request))
