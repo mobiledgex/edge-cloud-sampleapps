@@ -26,6 +26,7 @@ public class CameraActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        System.out.println("BDA9 CameraActivity");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_camera2_basic);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

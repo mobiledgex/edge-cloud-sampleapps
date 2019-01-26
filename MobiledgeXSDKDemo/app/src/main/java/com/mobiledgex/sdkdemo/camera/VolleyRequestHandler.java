@@ -1,5 +1,6 @@
 package com.mobiledgex.sdkdemo.camera;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Handler;
@@ -47,7 +48,7 @@ public class VolleyRequestHandler {
     public static final int TRAINING_COUNT_TARGET = 10;
 
     private RequestQueue queue;
-    private final Camera2BasicFragment mCamera2BasicFragment; //Our owner
+    private final ImageServerInterface mImageServerInterface;
 
     private boolean doNetLatency = true;
     private final int rollingAvgSize = 100;
@@ -67,7 +68,7 @@ public class VolleyRequestHandler {
     public ImageSender edgeImageSender;
 
     //Variables for latency test
-    private CloudletListHolder.LatencyTestMethod latencyTestMethod;
+    public CloudletListHolder.LatencyTestMethod latencyTestMethod;
     private final int socketTimeout = 3000;
     private boolean useRollingAverage = false;
     private String mSubject = "";
@@ -76,7 +77,8 @@ public class VolleyRequestHandler {
         FACE_DETECTION,
         FACE_RECOGNITION,
         FACE_TRAINING,
-        FACE_UPDATING_SERVER
+        FACE_UPDATING_SERVER,
+        POSE_DETECTION
     }
 
     public static int getFaceServerPort(String hostName) {
@@ -86,8 +88,8 @@ public class VolleyRequestHandler {
         return port;
     }
 
-    public VolleyRequestHandler(Camera2BasicFragment camera2BasicFragment) {
-        mCamera2BasicFragment = camera2BasicFragment;
+    public VolleyRequestHandler(ImageServerInterface imageServerInterface, Activity activity) {
+        mImageServerInterface = imageServerInterface;
 
         latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
         if(Account.getSingleton().isSignedIn()) {
@@ -95,9 +97,9 @@ public class VolleyRequestHandler {
         }
 
         // Get hosts from preferences.
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(camera2BasicFragment.getContext());
-        cloudHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_cloud), DEF_FACE_HOST_CLOUD);
-        edgeHost = prefs.getString(camera2BasicFragment.getResources().getString(R.string.preference_fd_host_edge), DEF_FACE_HOST_EDGE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        cloudHost = prefs.getString(activity.getResources().getString(R.string.preference_fd_host_cloud), DEF_FACE_HOST_CLOUD);
+        edgeHost = prefs.getString(activity.getResources().getString(R.string.preference_fd_host_edge), DEF_FACE_HOST_EDGE);
 
         Log.i(TAG, "cloudHost="+cloudHost);
         Log.i(TAG, "edgeHost="+edgeHost);
@@ -106,7 +108,7 @@ public class VolleyRequestHandler {
         edgeImageSender = new ImageSender(edgeHost, CLOUDLET_MEX);
 
         // Instantiate the RequestQueue.
-        queue = Volley.newRequestQueue(camera2BasicFragment.getActivity());
+        queue = Volley.newRequestQueue(activity);
     }
 
     public void setCameraMode(CameraMode mode) {
@@ -120,7 +122,7 @@ public class VolleyRequestHandler {
     }
 
     public void setSubjectName(String subjectName) {
-        Log.d("BDA5", "setSubjectName="+subjectName);
+        Log.d(TAG, "setSubjectName="+subjectName);
         mSubject = subjectName;
     }
 
@@ -158,9 +160,12 @@ public class VolleyRequestHandler {
             } else if (mode == CameraMode.FACE_TRAINING){
                 djangoUrl = "/recognizer/add/";
                 trainingCount = 0;
+            } else if (mode == CameraMode.POSE_DETECTION){
+                djangoUrl = "/openpose/detect/";
             } else {
                 Log.e(TAG, "Invalid CameraMode: "+mode);
             }
+            Log.i(TAG, "setCameraMode("+mCameraMode+") djangoUrl="+djangoUrl);
         }
 
         /**
@@ -197,6 +202,7 @@ public class VolleyRequestHandler {
 
             final String requestBody = encoded;
             String url = "http://"+host+":"+port + djangoUrl;
+            Log.i(TAG, "url="+url);
 
             final long startTime = System.nanoTime();
 
@@ -211,23 +217,29 @@ public class VolleyRequestHandler {
                             latency = endTime - startTime;
                             latencyRollingAvg.add(latency);
                             stdDev = latencyRollingAvg.getStdDev();
-                            Log.i("BDA", cloudLetType+" latency="+(latency/1000000.0)+" stdDev="+(stdDev/1000000.0));
+                            mImageServerInterface.updateFullProcessStats(cloudLetType, latency, latencyRollingAvg.getStdDev());
+                            Log.i("BDA", cloudLetType+" mCameraMode="+mCameraMode+" latency="+(latency/1000000.0)+" stdDev="+(stdDev/1000000.0));
                             try {
                                 JSONObject jsonObject = new JSONObject(response);
                                 JSONArray rects;
                                 String subject = null;
                                 if(jsonObject.getBoolean("success")) {
-                                    if(jsonObject.has("subject")) {
-                                        //This means it was from recognition mode
-                                        subject = jsonObject.getString("subject");
-                                        JSONArray rect = jsonObject.getJSONArray("rect");
-                                        rects = new JSONArray();
-                                        rects.put(rect);
-                                    } else {
-                                        //Default is from detection mode
-                                        rects = jsonObject.getJSONArray("rects");
+                                    if(mCameraMode == CameraMode.POSE_DETECTION) {
+                                        JSONArray poses = jsonObject.getJSONArray("poses");
+                                        mImageServerInterface.updateOverlay(cloudLetType, poses);
+                                    }  else {
+                                        if (jsonObject.has("subject")) {
+                                            //This means it was from recognition mode
+                                            subject = jsonObject.getString("subject");
+                                            JSONArray rect = jsonObject.getJSONArray("rect");
+                                            rects = new JSONArray();
+                                            rects.put(rect);
+                                        } else {
+                                            //Default is from detection mode
+                                            rects = jsonObject.getJSONArray("rects");
+                                        }
+                                        mImageServerInterface.updateOverlay(cloudLetType, rects, subject);
                                     }
-                                    mCamera2BasicFragment.updateRectangles(cloudLetType, rects, subject);
 
                                     if(mCameraMode == CameraMode.FACE_TRAINING) {
                                         trainingCount++;
@@ -236,7 +248,7 @@ public class VolleyRequestHandler {
                                         if(trainingCount >= TRAINING_COUNT_TARGET) {
                                             updateTraining();
                                         }
-                                        mCamera2BasicFragment.updateTrainingProgress();
+                                        mImageServerInterface.updateTrainingProgress(cloudImageSender.trainingCount, edgeImageSender.trainingCount);
                                     }
                                 }
                             } catch (JSONException e) {
@@ -296,7 +308,7 @@ public class VolleyRequestHandler {
                             } else {
                                 Log.i("BDA7", cloudLetType+" updateTraining failed!");
                             }
-                            mCamera2BasicFragment.updateTrainingProgress();
+                            mImageServerInterface.updateTrainingProgress(cloudImageSender.trainingCount, edgeImageSender.trainingCount);
                         }
                     }, new Response.ErrorListener() {
                 @Override
@@ -361,7 +373,7 @@ public class VolleyRequestHandler {
 
                         } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
                             latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
-                            mCamera2BasicFragment.showToast("Ping failed. Switching to socket latency test mode.");
+                            mImageServerInterface.showToast("Ping failed. Switching to socket latency test mode.");
                             break;
                         }
                         inputLine = bufferedReader.readLine();
@@ -385,7 +397,7 @@ public class VolleyRequestHandler {
                 }
             }
 
-            mCamera2BasicFragment.updatePing(cloudletType, latency, rollingAverage.getStdDev());
+            mImageServerInterface.updateNetworkStats(cloudletType, latency, rollingAverage.getStdDev());
         }
 
     }

@@ -52,6 +52,10 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
 
         String cloudletName = intent.getStringExtra("CloudletName");
         cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
+        if(cloudlet == null) {
+            Log.e(TAG, "cloudlet "+cloudletName+" not found in list. Aborting.");
+            return;
+        }
         Log.i(TAG, "cloudlet="+cloudlet+" "+cloudlet.getCloudletName());
         cloudlet.setSpeedTestResultsListener(this);
 
@@ -114,12 +118,28 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (id == R.id.action_copy_cloud_host) {
             String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
-            prefs.edit().putString(prefKeyHostCloud, cloudlet.getUri()).apply();
+            // Convert Demo app hostname to Face app hostname. Example:
+            // mobiledgexsdkdemo-tcp.mobiledgexsdkdemomobiledgexsdkdemo10.mexdemo-centralus-cloudlet.azure.mobiledgex.net
+            // becomes
+            // facedetectiondemo-tcp.mobiledgexsdkdemofacedetectiondemo10.mexdemo-centralus-cloudlet.azure.mobiledgex.net
+            // Change appName, but keep devName the same.
+            // TODO: Find the appInst for the face app and pull the FQDN directly from there instead converting here.
+            String hostname = cloudlet.getHostName();
+            Log.i(TAG, "Cloud hostname before conversion: "+hostname);
+            hostname = hostname.replaceAll("mobiledgexsdkdemo-tcp", "facedetectiondemo-tcp");
+            hostname = hostname.replaceAll("mobiledgexsdkdemo10", "facedetectiondemo10");
+            Log.i(TAG, "Cloud hostname after conversion: "+hostname);
+            prefs.edit().putString(prefKeyHostCloud, hostname).apply();
             return true;
         }
         if (id == R.id.action_copy_edge_host) {
             String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
-            prefs.edit().putString(prefKeyHostEdge, cloudlet.getUri()).apply();
+            String hostname = cloudlet.getHostName();
+            Log.i(TAG, "Edge hostname before conversion: "+hostname);
+            hostname = hostname.replaceAll("mobiledgexsdkdemo-tcp", "facedetectiondemo-tcp");
+            hostname = hostname.replaceAll("mobiledgexsdkdemo10", "facedetectiondemo10");
+            Log.i(TAG, "Edge hostname after conversion: "+hostname);
+            prefs.edit().putString(prefKeyHostEdge, hostname).apply();
             return true;
         }
         if (id == R.id.action_speedtest_settings) {
