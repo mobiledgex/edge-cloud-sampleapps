@@ -264,6 +264,11 @@ class FaceDetectionViewController: UIViewController
             Logger.shared.log(.network, .info, "stddev: \(stddevEdgeLabel.text)) " )        // JT 19.01.16
             
         }
+        
+        UserDefaults.standard.set( "", forKey: "latencyCloud")   // JT 19.01.28
+        UserDefaults.standard.set( "", forKey: "latencyEdge")   // JT 19.01.28
+        
+        let latencyEdge = UserDefaults.standard.string(forKey: "latencyEdge") // JT 18.12.14
 
     }
 
@@ -511,10 +516,11 @@ extension FaceDetectionViewController
 
                 self.previewView.drawFaceboundingBox2(rect: r, hint: self.sentImageSize) // JT 18.11.28 blue
 
-                Swift.print("face r= \(r)") // JT 18.11.28
+              //  Swift.print("face r= \(r)") // JT 18.11.28    // JT 19.01.28
                 SKToast.show(withMessage: "FaceDetection result: \(r)")
 
-                Swift.print("---------") // JT 18.12.14
+   //             Swift.print("--------- do next doAFaceDetection") // JT 18.12.14    // JT 19.01.28
+                print(".", terminator:"")   // JT 19.01.28
                 doAFaceDetection = true // JT 18.11.26
             }
         }
