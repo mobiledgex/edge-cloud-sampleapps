@@ -1166,6 +1166,8 @@ class MexFaceRecognition
                     case let .success(data):
                         
                         // Swift.print("")---
+                        print("!", terminator:"")   // JT 19.01.28
+
                         let d = data as! [String: Any]
                         let success = d["success"] as! String
                         if success == "true"
@@ -1204,6 +1206,8 @@ class MexFaceRecognition
                         print(error)
                         //  SKToast.show(withMessage: "FaceDetection Failed: \(error)")
                         promise.fail(error: error)
+                        print("~", terminator:"")   // JT 19.01.28
+
                     }
             }
             
@@ -1226,6 +1230,7 @@ class MexFaceRecognition
             doAFaceDetection = true //  todo tmp
             doAFaceRecognition = true
             
+            print(":", terminator:"")   // JT 19.01.28
 
             return
         }
@@ -1419,7 +1424,7 @@ func getNetworkLatency(_ hostName:String, post name: String)    // JT 19.01.14
     let  pingOnce = SwiftyPing(host: hostName, configuration: PingConfiguration(interval: 0.5, with: 5), queue: DispatchQueue.global())
     pingOnce?.observer = { (_, response) in
         let duration = response.duration
-        print(duration)
+       // print(duration)   // JT 19.01.28
         pingOnce?.stop()
         
         let latency = response.duration * 1000    // JT 19.01.14

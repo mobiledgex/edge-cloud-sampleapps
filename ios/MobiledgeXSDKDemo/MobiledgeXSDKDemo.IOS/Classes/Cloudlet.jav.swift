@@ -199,7 +199,7 @@ public class Cloudlet // implements Serializable? todo?
             let pingOnce = SwiftyPing(host: host, configuration: PingConfiguration(interval: 0.5, with: 5), queue: DispatchQueue.global())
             pingOnce?.observer = { _, response in
                 let duration = response.duration
-                print(duration)
+                print("cloudlet latency: \(duration)")  // JT 19.01.28
                 pingOnce?.stop()
                 
                 // print("\(ping) latency (ms): \(latency)")
