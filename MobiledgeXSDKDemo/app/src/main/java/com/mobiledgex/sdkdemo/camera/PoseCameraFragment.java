@@ -13,7 +13,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -86,7 +85,8 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
         super.showToast(message);
     }
 
-    public void updateFullProcessStats(final Camera2BasicFragment.CloudLetType cloudletType, final long latency, final long stdDev) {
+    public void updateFullProcessStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+        final long stdDev = rollingAverage.getStdDev();
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
@@ -95,8 +95,8 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
             @Override
             public void run() {
                 switch(cloudletType) {
-                    case CLOUDLET_MEX:
-                    case CLOUDLET_PUBLIC:
+                    case EDGE:
+                    case CLOUD:
                         mLatencyFull.setText("Full Process Latency: " + String.valueOf(latency/1000000) + " ms");
                         mStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev/1000000) + " ms");
                         break;
@@ -108,7 +108,8 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
     }
 
     @Override
-    public void updateNetworkStats(final Camera2BasicFragment.CloudLetType cloudletType, final long latency, final long stdDev) {
+    public void updateNetworkStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+        final long stdDev = rollingAverage.getStdDev();
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
@@ -117,8 +118,8 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
             @Override
             public void run() {
                 switch(cloudletType) {
-                    case CLOUDLET_MEX:
-                    case CLOUDLET_PUBLIC:
+                    case EDGE:
+                    case CLOUD:
                         mLatencyNet.setText("Network Only Latency: " + String.valueOf(latency/1000000) + " ms");
                         mStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev/1000000) + " ms");
                         break;
@@ -136,8 +137,8 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
         prefs.registerOnSharedPreferenceChangeListener(this);
         //We can't create the VolleyRequestHandler until we have a context available.
         mVolleyRequestHandler = new VolleyRequestHandler(this, this.getActivity());
-        mVolleyRequestHandler.edgeImageSender.busy = true; //TODO: Revisit this
-        mVolleyRequestHandler.cloudImageSender.host = "openpose.bonn-mexdemo.mobiledgex.net";
+        mVolleyRequestHandler.cloudImageSender.busy = true; //TODO: Revisit this
+        mVolleyRequestHandler.edgeImageSender.host = "openpose.bonn-mexdemo.mobiledgex.net";
 
         //TODO: Revisit when we have GPU support on multiple servers.
         //The only GPU-enabled server we have doesn't support ping.

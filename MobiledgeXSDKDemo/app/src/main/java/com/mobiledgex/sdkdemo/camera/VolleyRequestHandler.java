@@ -31,13 +31,14 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.CLOUDLET_MEX;
-import static com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.CLOUDLET_PUBLIC;
+import static com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.EDGE;
+import static com.mobiledgex.sdkdemo.camera.Camera2BasicFragment.CloudLetType.CLOUD;
 
 public class VolleyRequestHandler {
     private static final String TAG = "VolleyRequestHandler";
@@ -73,6 +74,13 @@ public class VolleyRequestHandler {
     private boolean useRollingAverage = false;
     private String mSubject = "";
 
+    public String getStatsText() {
+        return edgeImageSender.latencyFullProcessRollingAvg.getStatsText() + "\n\n" +
+                edgeImageSender.latencyNetOnlyRollingAvg.getStatsText() + "\n\n" +
+                cloudImageSender.latencyFullProcessRollingAvg.getStatsText() + "\n\n" +
+                cloudImageSender.latencyNetOnlyRollingAvg.getStatsText();
+    }
+
     enum CameraMode {
         FACE_DETECTION,
         FACE_RECOGNITION,
@@ -104,8 +112,8 @@ public class VolleyRequestHandler {
         Log.i(TAG, "cloudHost="+cloudHost);
         Log.i(TAG, "edgeHost="+edgeHost);
 
-        cloudImageSender = new ImageSender(cloudHost, CLOUDLET_PUBLIC);
-        edgeImageSender = new ImageSender(edgeHost, CLOUDLET_MEX);
+        cloudImageSender = new ImageSender(cloudHost, CLOUD);
+        edgeImageSender = new ImageSender(edgeHost, EDGE);
 
         // Instantiate the RequestQueue.
         queue = Volley.newRequestQueue(activity);
@@ -129,8 +137,8 @@ public class VolleyRequestHandler {
     public class ImageSender {
         public String host;
         private int port;
-        private RollingAverage latencyRollingAvg = new RollingAverage(rollingAvgSize);
-        private RollingAverage latencyNetOnlyRollingAvg = new RollingAverage(rollingAvgSize);
+        private RollingAverage latencyFullProcessRollingAvg;
+        private RollingAverage latencyNetOnlyRollingAvg;
         public int trainingCount;
         public boolean busy;
         public double stdDev = 0;
@@ -145,6 +153,8 @@ public class VolleyRequestHandler {
         public ImageSender(String host, Camera2BasicFragment.CloudLetType cloudLetType) {
             this.host = host;
             this.cloudLetType = cloudLetType;
+            latencyFullProcessRollingAvg = new RollingAverage(cloudLetType, "Full Process", rollingAvgSize);
+            latencyNetOnlyRollingAvg = new RollingAverage(cloudLetType, "Network Only", rollingAvgSize);
             port = getFaceServerPort(host);
             HandlerThread handlerThread = new HandlerThread("BackgroundPinger"+cloudLetType);
             handlerThread.start();
@@ -196,13 +206,14 @@ public class VolleyRequestHandler {
             }
 
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 67, byteStream);
+//            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
             byte[] bytes = byteStream.toByteArray();
             String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
 
             final String requestBody = encoded;
             String url = "http://"+host+":"+port + djangoUrl;
-            Log.i(TAG, "url="+url);
+            Log.i(TAG, "url="+url+" length: "+requestBody.length());
 
             final long startTime = System.nanoTime();
 
@@ -215,9 +226,9 @@ public class VolleyRequestHandler {
                             long endTime = System.nanoTime();
                             busy = false;
                             latency = endTime - startTime;
-                            latencyRollingAvg.add(latency);
-                            stdDev = latencyRollingAvg.getStdDev();
-                            mImageServerInterface.updateFullProcessStats(cloudLetType, latency, latencyRollingAvg.getStdDev());
+                            latencyFullProcessRollingAvg.add(latency);
+                            stdDev = latencyFullProcessRollingAvg.getStdDev();
+                            mImageServerInterface.updateFullProcessStats(cloudLetType, latency, latencyFullProcessRollingAvg);
                             Log.i("BDA", cloudLetType+" mCameraMode="+mCameraMode+" latency="+(latency/1000000.0)+" stdDev="+(stdDev/1000000.0));
                             try {
                                 JSONObject jsonObject = new JSONObject(response);
@@ -397,7 +408,7 @@ public class VolleyRequestHandler {
                 }
             }
 
-            mImageServerInterface.updateNetworkStats(cloudletType, latency, rollingAverage.getStdDev());
+            mImageServerInterface.updateNetworkStats(cloudletType, latency, rollingAverage);
         }
 
     }
@@ -419,37 +430,11 @@ public class VolleyRequestHandler {
         }
     }
 
-    public long getCloudLatency()
-    {
-        if(useRollingAverage) {
-            return cloudImageSender.latencyRollingAvg.getAverage();
-        } else {
-            return cloudImageSender.latency;
-        }
-    }
-
-    public long getEdgeLatency()
-    {
-        if(useRollingAverage) {
-            return edgeImageSender.latencyRollingAvg.getAverage();
-        } else {
-            return edgeImageSender.latency;
-        }
-    }
-
     public void setDoNetLatency(boolean doNetLatency) {
         this.doNetLatency = doNetLatency;
     }
     public void setUseRollingAverage(boolean useRollingAverage) {
         this.useRollingAverage = useRollingAverage;
-    }
-
-    public double getCloudStdDev() {
-        return cloudImageSender.stdDev;
-    }
-
-    public double getEdgeStdDev() {
-        return edgeImageSender.stdDev;
     }
 
     public static class RollingAverage {
@@ -458,9 +443,12 @@ public class VolleyRequestHandler {
         private float sum = 0f;
         private int fill;
         private int position;
+        private Camera2BasicFragment.CloudLetType cloudLetType;
+        private String name;
 
-
-        public RollingAverage(int size) {
+        public RollingAverage(Camera2BasicFragment.CloudLetType cloudLetType, String name, int size) {
+            this.cloudLetType = cloudLetType;
+            this.name = name;
             this.window=new long[size];
         }
 
@@ -498,6 +486,33 @@ public class VolleyRequestHandler {
             }
 
             return (long) Math.sqrt(sum/fill);
+        }
+
+        /**
+         * Get a textual summary of the stats.
+         * @return  String to display in network stats window.
+         */
+        public String getStatsText() {
+            if(fill == 0) {
+                return "";
+            }
+            String stats = cloudLetType + " " + name + " Latency:\n";
+            DecimalFormat decFor = new DecimalFormat("#.##");
+            long min = Integer.MAX_VALUE;
+            long max = -1;
+            for(int i = 0; i < fill; i++) {
+                //stats += i + ". time=" + decFor.format(window[i] / 1000000) + " ms\n";
+                if(window[i] / 1000000 < min) {
+                    min = window[i] / 1000000;
+                }
+                if(window[i] / 1000000 > max) {
+                    max = window[i] / 1000000;
+                }
+            }
+            String avg = decFor.format(getAverage() / 1000000);
+            String stdDev = decFor.format(getStdDev() / 1000000);
+            stats += "min/avg/max/stddev = "+decFor.format(min)+"/"+avg+"/"+decFor.format(max)+"/"+stdDev+" ms";
+            return stats;
         }
     }
 }
