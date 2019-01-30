@@ -93,42 +93,42 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate
         { cell, _ in
             cell.imageView?.image = UIImage(named: "About")
         }
-        form +++ Section("Benchmark")
-            <<< ButtonRow("Edge")
-        {
-            $0.title = $0.tag
-
-            Swift.print("todo! Edge")
-
-            $0.onCellSelection(self.edgeBenchmarkTapped)
-        }
-        .cellSetup
-        { cell, _ in
-            let im = UIImage(named: "ic_marker_cloudlet-web")
-
-            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
-
-            let ti = im!.imageWithColor(tintColorGray)
-
-            cell.imageView?.image = ti // UIImage(named: ti)
-        }
-
-            <<< ButtonRow("Local")
-        {
-            $0.title = $0.tag
-
-            Swift.print("todo! Local")  // Log
-        }
-        .cellSetup
-        { cell, _ in
-            let im = UIImage(named: "ic_marker_mobile-web")
-
-            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
-
-            let ti = im!.imageWithColor(tintColorGray)
-
-            cell.imageView?.image = ti
-        }
+//        form +++ Section("Benchmark") // JT 19.01.30 removed
+//            <<< ButtonRow("Edge")
+//        {
+//            $0.title = $0.tag
+//
+//            Swift.print("todo! Edge")
+//
+//            $0.onCellSelection(self.edgeBenchmarkTapped)
+//        }
+//        .cellSetup
+//        { cell, _ in
+//            let im = UIImage(named: "ic_marker_cloudlet-web")
+//
+//            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
+//
+//            let ti = im!.imageWithColor(tintColorGray)
+//
+//            cell.imageView?.image = ti // UIImage(named: ti)
+//        }
+//
+//            <<< ButtonRow("Local")
+//        {
+//            $0.title = $0.tag
+//
+//            Swift.print("todo! Local")  // Log
+//        }
+//        .cellSetup
+//        { cell, _ in
+//            let im = UIImage(named: "ic_marker_mobile-web")
+//
+//            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
+//
+//            let ti = im!.imageWithColor(tintColorGray)
+//
+//            cell.imageView?.image = ti
+//        }
     }
 
     class LogoView: UIView

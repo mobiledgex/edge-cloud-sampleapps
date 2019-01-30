@@ -546,11 +546,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.55872"
+            timestampString = "570584597.527698"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -560,11 +560,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.558797"
+            timestampString = "570584597.528246"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -622,7 +622,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/ThirdParty/AppleFaceDetection-master/VisionDetection/PreviewView.swift"
-            timestampString = "569211392.5688961"
+            timestampString = "570584597.5289429"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "138"
@@ -638,11 +638,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.5592149"
+            timestampString = "570584597.529009"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -716,11 +716,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.559625"
+            timestampString = "570584597.529791"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -730,11 +730,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.559693"
+            timestampString = "570584597.530175"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -744,11 +744,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.559756"
+            timestampString = "570584597.530557"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -758,11 +758,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.5598201"
+            timestampString = "570584597.530938"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -772,11 +772,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.559884"
+            timestampString = "570584597.531319"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1005"
-            endingLineNumber = "1005">
+            startingLineNumber = "1067"
+            endingLineNumber = "1067">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -786,11 +786,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.559947"
+            timestampString = "570584597.5316989"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "748"
-            endingLineNumber = "748"
+            startingLineNumber = "773"
+            endingLineNumber = "773"
             landmarkName = "FaceDetectionLatencyEdge(_:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -802,11 +802,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.5600131"
+            timestampString = "570584597.53211"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1187"
-            endingLineNumber = "1187"
+            startingLineNumber = "1194"
+            endingLineNumber = "1194"
             landmarkName = "FaceDetectionCore(_:_:post:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -818,11 +818,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.560078"
+            timestampString = "570584597.532179"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "695"
-            endingLineNumber = "695"
+            startingLineNumber = "720"
+            endingLineNumber = "720"
             landmarkName = "addObservers()"
             landmarkType = "7">
          </BreakpointContent>
@@ -882,7 +882,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.560415"
+            timestampString = "570584597.532899"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "255"
@@ -898,11 +898,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.560481"
+            timestampString = "570584597.532964"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "722"
-            endingLineNumber = "722"
+            startingLineNumber = "729"
+            endingLineNumber = "729"
             landmarkName = "VerifyLocation(_:_:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -914,11 +914,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.560544"
+            timestampString = "570584597.533026"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "759"
-            endingLineNumber = "759"
+            startingLineNumber = "766"
+            endingLineNumber = "766"
             landmarkName = "getToken(_:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -946,11 +946,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.56071"
+            timestampString = "570584597.533196"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1112"
-            endingLineNumber = "1112"
+            startingLineNumber = "1119"
+            endingLineNumber = "1119"
             landmarkName = "FaceDetectionCore(_:_:post:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -974,11 +974,11 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Pods/SwiftSocket/Sources/TCPClient.swift"
-            timestampString = "569372255.429808"
+            timestampString = "570584597.533368"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "49"
@@ -994,11 +994,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.560968"
+            timestampString = "570584597.53343"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1258"
-            endingLineNumber = "1258"
+            startingLineNumber = "1265"
+            endingLineNumber = "1265"
             landmarkName = "doNextFaceRecognition()"
             landmarkType = "7">
          </BreakpointContent>
@@ -1010,11 +1010,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.561036"
+            timestampString = "570584597.533491"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1364"
-            endingLineNumber = "1364"
+            startingLineNumber = "1371"
+            endingLineNumber = "1371"
             landmarkName = "FaceRecognition(_:_:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -1026,11 +1026,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.561102"
+            timestampString = "570584597.533551"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1033"
-            endingLineNumber = "1033"
+            startingLineNumber = "1040"
+            endingLineNumber = "1040"
             landmarkName = "FaceDetection(_:_:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -1042,11 +1042,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.561165"
+            timestampString = "570584597.5336111"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "131"
-            endingLineNumber = "131"
+            startingLineNumber = "146"
+            endingLineNumber = "146"
             landmarkName = "viewDidLoad()"
             landmarkType = "7">
          </BreakpointContent>
@@ -1058,11 +1058,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.561229"
+            timestampString = "570584597.534026"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1235"
-            endingLineNumber = "1235"
+            startingLineNumber = "1242"
+            endingLineNumber = "1242"
             landmarkName = "doNextFaceRecognition()"
             landmarkType = "7">
          </BreakpointContent>
@@ -1074,11 +1074,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.56129"
+            timestampString = "570584597.534089"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1270"
-            endingLineNumber = "1270"
+            startingLineNumber = "1277"
+            endingLineNumber = "1277"
             landmarkName = "doNextFaceRecognition()"
             landmarkType = "7">
          </BreakpointContent>
@@ -1090,28 +1090,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
-            timestampString = "570417316.561352"
+            timestampString = "570584597.5341491"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "572"
-            endingLineNumber = "572"
+            startingLineNumber = "597"
+            endingLineNumber = "597"
             landmarkName = "addObservers()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
-            timestampString = "570417316.561415"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "188"
-            endingLineNumber = "188"
-            landmarkName = "pingNext()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -1122,11 +1106,187 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
-            timestampString = "570417316.561825"
+            timestampString = "570584597.534547"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "218"
-            endingLineNumber = "218"
+            startingLineNumber = "243"
+            endingLineNumber = "243"
+            landmarkName = "pingNext()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
+            timestampString = "570584597.535817"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1216"
+            endingLineNumber = "1216"
+            landmarkName = "FaceDetectionCore(_:_:post:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
+            timestampString = "570584597.535881"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1208"
+            endingLineNumber = "1208"
+            landmarkName = "FaceDetectionCore(_:_:post:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
+            timestampString = "570584597.535942"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "986"
+            endingLineNumber = "986"
+            landmarkName = "captureOutput(_:didOutput:from:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
+            timestampString = "570584597.536345"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "343"
+            endingLineNumber = "343"
+            landmarkName = "configureSession()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.536769"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "504"
+            endingLineNumber = "504"
+            landmarkName = "doSpeedTest()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
+            timestampString = "570584597.537917"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "424"
+            endingLineNumber = "424"
+            landmarkName = "configureSession()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/FaceDetectionViewController.swift"
+            timestampString = "570584597.538327"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "416"
+            endingLineNumber = "416"
+            landmarkName = "configureSession()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.538735"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "145"
+            endingLineNumber = "145"
+            landmarkName = "runLatencyTest(numPings:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.539734"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "149"
+            endingLineNumber = "149"
+            landmarkName = "runLatencyTest(numPings:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.540735"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "281"
+            endingLineNumber = "281"
+            landmarkName = "setDownloadUri(_:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.541713"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "193"
+            endingLineNumber = "193"
             landmarkName = "pingNext()"
             landmarkType = "7">
          </BreakpointContent>
@@ -1137,13 +1297,13 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.56215"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.5427001"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1209"
-            endingLineNumber = "1209"
-            landmarkName = "FaceDetectionCore(_:_:post:)"
+            startingLineNumber = "215"
+            endingLineNumber = "215"
+            landmarkName = "pingNext()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -1153,13 +1313,29 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "MobiledgeXSDKDemo.IOS/Sample_client.swift"
-            timestampString = "570417316.56221"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.543679"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1201"
-            endingLineNumber = "1201"
-            landmarkName = "FaceDetectionCore(_:_:post:)"
+            startingLineNumber = "610"
+            endingLineNumber = "610"
+            landmarkName = "GetSocketLatency(_:_:_:)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MobiledgeXSDKDemo.IOS/Classes/Cloudlet.jav.swift"
+            timestampString = "570584597.544607"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "199"
+            endingLineNumber = "199"
+            landmarkName = "pingNext()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

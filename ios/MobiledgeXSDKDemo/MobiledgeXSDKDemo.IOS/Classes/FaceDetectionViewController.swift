@@ -5,6 +5,7 @@
 //  Created by Wei Chieh Tseng on 09/06/2017.
 //  Copyright © 2017 Willjay. All rights reserved.
 //
+    // JT 19.01.29 todo deal with above by modifications (C)
 
 import AVFoundation
 import UIKit
@@ -56,6 +57,20 @@ class FaceDetectionViewController: UIViewController
     var calcRollingAverageEdge = MovingAverage()    // JT 18.12.17
     var rollingAverageEdge = 0.0    // JT 18.12.17
 
+    var usingFrontCamera = false    // JT 19.01.29
+
+   // var tempImage: UIImageView?
+    
+    //var captureSession: AVCaptureSession? // JT 19.01.29
+    var stillImageOutput: AVCaptureStillImageOutput? // prefered is: AVCapturePhotoOutput
+    var videoPreviewLayer: AVCaptureVideoPreviewLayer?
+    var currentCaptureDevice: AVCaptureDevice?
+
+//        deinit  // JT 19.01.29
+//    {
+//        session.stopRunning()   // JT 19.01.29
+//    }
+    
     override func viewDidLoad()
     {
         super.viewDidLoad()
@@ -115,15 +130,15 @@ class FaceDetectionViewController: UIViewController
 
         /// --- tmp
 
-        let barButtonItem = UIBarButtonItem(title: "StopTmp", style: .plain, target: self, action: #selector(FaceDetectionViewController.stopIt(sender:))) // JT 18.12.14 todo toggle?
+        let barButtonItem = UIBarButtonItem(title: "X-cameras", style: .plain, target: self, action: #selector(FaceDetectionViewController.switchButtonAction(sender:))) // JT 18.12.14 todo toggle?
 
         navigationItem.rightBarButtonItem = barButtonItem // JT 18.11.28 tmp
 
         // ---
 
-        let tv = UserDefaults.standard.bool(forKey: "doFaceRecognition") //
+        let doFaceRecognition = UserDefaults.standard.bool(forKey: "doFaceRecognition") //
 
-        title = tv ? "Face Recognition" : "Face Dectection" // JT 18.12.13
+        title = doFaceRecognition ? "Face Recognition" : "Face Dectection" // JT 18.12.13
 
         // ---
 
@@ -179,9 +194,7 @@ class FaceDetectionViewController: UIViewController
         
      }
     
-    
 
-    
     @objc public func stopIt(sender _: UIBarButtonItem) // JT 18.11.28
     {
         Swift.print("stop")     // Log
@@ -309,7 +322,7 @@ class FaceDetectionViewController: UIViewController
 
     private var devicePosition: AVCaptureDevice.Position = .back
 
-    private let session = AVCaptureSession()
+    private var session = AVCaptureSession()    // captureSession
     private var isSessionRunning = false
 
     private let sessionQueue = DispatchQueue(label: "session queue", attributes: [], target: nil) // Communicate with the session and other session objects on this queue.
@@ -329,9 +342,14 @@ class FaceDetectionViewController: UIViewController
         {
             return
         }
-
+ 
+        for i : AVCaptureDeviceInput in (session.inputs as! [AVCaptureDeviceInput])
+        {
+            self.session.removeInput(i)
+        }   // JT 19.01.29
+        
         session.beginConfiguration()
-        session.sessionPreset = .high
+        session.sessionPreset = .high   // JT 19.01.29 image quality
 
         // Add video input.
         do
@@ -343,19 +361,26 @@ class FaceDetectionViewController: UIViewController
             {
                 defaultVideoDevice = dualCameraDevice
             }
-
             else if let backCameraDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back)
             {
                 defaultVideoDevice = backCameraDevice
             }
-
             else if let frontCameraDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .front)
             {
                 defaultVideoDevice = frontCameraDevice
             }
 
+            defaultVideoDevice = (usingFrontCamera ? getFrontCamera() : getBackCamera())  // JT 19.01.29
+
             let videoDeviceInput = try AVCaptureDeviceInput(device: defaultVideoDevice!)
 
+            for i : AVCaptureDeviceInput in (session.inputs as! [AVCaptureDeviceInput])
+            {
+                self.session.removeInput(i)
+            }   // JT 19.01.29
+            
+
+            
             if session.canAddInput(videoDeviceInput)
             {
                 session.addInput(videoDeviceInput)
@@ -411,13 +436,13 @@ class FaceDetectionViewController: UIViewController
             videoDataOutput.setSampleBufferDelegate(self, queue: videoDataOutputQueue)
             session.addOutput(videoDataOutput)
         }
-        else
-        {
-            print("Could not add metadata output to the session")
-            setupResult = .configurationFailed
-            session.commitConfiguration()
-            return
-        }
+//        else
+//        {
+//            print("Could not add metadata output to the session")
+//            setupResult = .configurationFailed
+//            session.commitConfiguration()
+//            return
+//        } // JT 19.01.30
 
         session.commitConfiguration()
     }
@@ -902,6 +927,43 @@ extension FaceDetectionViewController
         }
     }
 }
+
+extension FaceDetectionViewController   // JT 19.01.29 choice camera
+{
+    
+    @IBAction func switchButtonAction(sender _: UIBarButtonItem)    //_ sender: Any)    // JT 19.01.29
+    {
+        usingFrontCamera = !usingFrontCamera
+        
+        Swift.print("usingFrontCamera: \(usingFrontCamera)")    // JT 19.01.29
+        sessionQueue.async
+            { [unowned self] in
+                self.configureSession()
+        }
+    }
+    
+    func getFrontCamera() -> AVCaptureDevice?
+    {
+        let videoDevices = AVCaptureDevice.devices(for: AVMediaType.video)  // prefered: AVCaptureDeviceDiscoverySession
+
+        for device in videoDevices
+        {
+            let device = device
+            if device.position == AVCaptureDevice.Position.front
+            {
+                return device
+            }
+        }
+        return nil
+    }
+
+    func getBackCamera() -> AVCaptureDevice
+    {
+        return AVCaptureDevice.default(for: AVMediaType.video)!  // JT 19.01.29
+    }
+
+}
+
 
 extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDelegate // JT 18.11.16
 {
