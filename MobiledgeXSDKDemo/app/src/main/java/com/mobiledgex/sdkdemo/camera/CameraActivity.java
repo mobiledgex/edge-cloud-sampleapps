@@ -16,24 +16,40 @@
 
 package com.mobiledgex.sdkdemo.camera;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.WindowManager;
+import android.widget.TextView;
 
+import com.mobiledgex.sdkdemo.MainActivity;
 import com.mobiledgex.sdkdemo.R;
 
 public class CameraActivity extends AppCompatActivity {
 
+    private Camera2BasicFragment cameraFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        System.out.println("BDA9 CameraActivity");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_camera2_basic);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (null == savedInstanceState) {
+            cameraFragment = Camera2BasicFragment.newInstance();
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, Camera2BasicFragment.newInstance())
+                    .replace(R.id.container, cameraFragment)
                     .commit();
         }
+    }
+
+    @Override
+    public void finish() {
+        Intent resultIntent = new Intent();
+        String stats = cameraFragment.getStatsText();
+        resultIntent.putExtra("STATS", stats);
+        setResult(RESULT_OK, resultIntent);
+        super.finish();
     }
 }

@@ -63,9 +63,9 @@ public class BoundingBox extends View
 
     public void setCloudletType(Camera2BasicFragment.CloudLetType type) {
         cloudLetType = type;
-        if(cloudLetType == Camera2BasicFragment.CloudLetType.CLOUDLET_MEX) {
+        if(cloudLetType == Camera2BasicFragment.CloudLetType.EDGE) {
             textPaint.setTextAlign(Paint.Align.RIGHT);
-        } else if(cloudLetType == Camera2BasicFragment.CloudLetType.CLOUDLET_PUBLIC) {
+        } else if(cloudLetType == Camera2BasicFragment.CloudLetType.CLOUD) {
             textPaint.setTextAlign(Paint.Align.LEFT);
         }
     }
@@ -81,10 +81,10 @@ public class BoundingBox extends View
         if (subject != null) {
             int x = 0;
             int y = 0;
-            if(cloudLetType == Camera2BasicFragment.CloudLetType.CLOUDLET_MEX) {
+            if(cloudLetType == Camera2BasicFragment.CloudLetType.EDGE) {
                 x = rect.right;
                 y = rect.bottom+textSize;
-            } else if(cloudLetType == Camera2BasicFragment.CloudLetType.CLOUDLET_PUBLIC) {
+            } else if(cloudLetType == Camera2BasicFragment.CloudLetType.CLOUD) {
                 x = rect.left;
                 y = rect.top-textSize/2;
             }
