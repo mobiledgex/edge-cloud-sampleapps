@@ -428,6 +428,12 @@ class MexGetAppInst
                     let uri = dd[0]["FQDN"] as! String // todo, now just use first
                     let appName = dd[0]["AppName"] as! String
                     
+                    let ports =  dd[0]["ports"] as! [[String: Any]]
+                    Swift.print("ports \(ports)")   // JT 19.01.30
+                    let portsDic = ports[0]    // JT 19.01.29
+                    
+                    let theFQDN_prefix = portsDic["FQDN_prefix"] as! String    // JT 19.01.30
+
                     Swift.print("cloudlet uri: \(uri)")
                     Swift.print("dd \(dd)")
                     //    let loc2 = CLLocationCoordinate2D() //
@@ -452,8 +458,8 @@ class MexGetAppInst
 
                     let i2 = textToImage(drawText: "M", inImage: resized, atPoint: CGPoint(x: 11, y: 4))
                     
-                    marker?.icon = cloudletName.contains("microsoft") ? i2 : resized
-                    
+                    marker?.icon = (cloudletName.contains("microsoft") || cloudletName.contains("azure")) ? i2 : resized    // JT 19.01.30
+
                     //                        init(_ cloudletName: String,
                     //                        _ appName: String,
                     //                        _ carrierName: String,
@@ -469,9 +475,10 @@ class MexGetAppInst
                                             loc,
                                             distance,
                                             uri,
+                                            theFQDN_prefix, // JT 19.01.30
                                             marker!,
                                             1_048_576,  // actually uses setting alue at run time
-                        0)
+                        0)  // JT 19.01.29 todo FQDN_prefix
                     
                     marker?.map = theMap
                     cloudlets[cloudletName] = cloudlet
@@ -1199,7 +1206,7 @@ class MexFaceRecognition
                             if tv == false
                             {
                                 doAFaceDetection = true // atomic, one at a time
-                            }
+                            }//next
                         }
                         
                     case let .failure(error):

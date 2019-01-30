@@ -195,7 +195,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		252C2D332182561C0091A1D4 /* SwiftProtobuf.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftProtobuf.framework; path = "MobiledgeXSDKDemo.IOS/Frameworks/Products/Debug-iphoneos/SwiftProtobuf.framework"; sourceTree = "<group>"; };
 		252C2D5321826DC10091A1D4 /* dot-menu@3x copy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "dot-menu@3x copy.png"; path = "MobiledgeXSDKDemo.IOS/New Group/dot-menu@3x copy.png"; sourceTree = SOURCE_ROOT; };
 		252C2D56218298110091A1D4 /* FindCloudlet.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FindCloudlet.java.swift; sourceTree = "<group>"; };
 		252C2D57218298110091A1D4 /* MatchingEngine.java.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchingEngine.java.swift; sourceTree = "<group>"; };
@@ -856,7 +855,6 @@
 			isa = PBXGroup;
 			children = (
 				25F4CC7B21B8C7260087061F /* Wormholy.framework */,
-				252C2D332182561C0091A1D4 /* SwiftProtobuf.framework */,
 				B3BA5BBEA83B2DFE5816F072 /* Pods_MobiledgeXSDKDemo_IOS.framework */,
 			);
 			name = Frameworks;
@@ -1405,7 +1403,10 @@
 					"\"$(SRCROOT)/Pods/gRPC/src/objective-c/GRPCClient/private\"",
 				);
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOS/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Pods/OpenSSL-Universal/lib-ios",
@@ -1457,7 +1458,10 @@
 					"\"$(SRCROOT)/Pods/gRPC/src/objective-c/GRPCClient/private\"",
 				);
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOS/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Pods/OpenSSL-Universal/lib-ios",
@@ -1479,7 +1483,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = XHQK92K282;
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOSTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
@@ -1496,7 +1504,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = XHQK92K282;
 				INFOPLIST_FILE = MobiledgeXSDKDemo.IOSTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.metatheory.MobiledgeXSDKDemo.MobiledgeXSDKDemo-IOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;

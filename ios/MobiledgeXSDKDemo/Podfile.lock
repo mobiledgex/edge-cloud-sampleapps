@@ -44,7 +44,7 @@ DEPENDENCIES:
   - SwiftyJSON
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs.git:
+  https://github.com/cocoapods/specs.git:
     - Alamofire
     - GoogleMaps
     - GoogleSignIn
@@ -70,6 +70,6 @@ SPEC CHECKSUMS:
   SwiftSocket: 6f4c9c63fbc5c1d61188936bb3c599fd546f40ae
   SwiftyJSON: c4bcba26dd9ec7a027fc8eade48e2c911f229e96
 
-PODFILE CHECKSUM: 2925a9a2cad9a37e5fb48269c13461e564498901
+PODFILE CHECKSUM: 583e58221375bfb974ecf60325c8417c17cce636
 
-COCOAPODS: 1.5.0
+COCOAPODS: 1.5.3

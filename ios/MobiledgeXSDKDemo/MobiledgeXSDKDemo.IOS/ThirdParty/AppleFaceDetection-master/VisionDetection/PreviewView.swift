@@ -135,7 +135,12 @@ class PreviewView: UIView
         // The coordinates are normalized to the dimensions of the processed image, with the origin at the image's lower-left corner.
         let facebounds = getFaceBounds( rect: rect, hint: sentImageSize)
 
-        _ = createLayer(in: facebounds, color: UIColor.blue.cgColor  )    // JT 18.11.27 blue
+  
+        let localProcessing = UserDefaults.standard.bool(forKey: "Local processing")    // JT 18.12.17
+        if localProcessing == true
+        {
+            _ = createLayer(in: facebounds, color: UIColor.blue.cgColor  )    // JT 18.11.27 blue
+        }
     }
     
     

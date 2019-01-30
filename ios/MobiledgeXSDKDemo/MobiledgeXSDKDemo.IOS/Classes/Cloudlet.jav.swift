@@ -48,12 +48,14 @@ public class Cloudlet // implements Serializable? todo?
 
     private var mBaseUri: String = ""
     private var downloadUri: String = "" // rebuilt at runtime
-    var hostName: String = ""
+    private var socketdUri: String = "" // rebuilt at runtime
+   var hostName: String = ""
     var openPort: Int = 7777
     let socketTimeout: Int = 3000
     var latencyTestTaskRunning: Bool = false
     var speedTestTaskRunning: Bool = false
     private var uri: String = ""
+    private var theFQDN_prefix: String = "" // JT 19.01.30
 
     init()
     {}
@@ -64,13 +66,14 @@ public class Cloudlet // implements Serializable? todo?
          _ gpsLocation: CLLocationCoordinate2D,
          _ distance: Double,
          _ uri: String,
+         _ urlPrefix: String,   // JT 19.01.30
          _ marker: GMSMarker,
          _ numBytes: Int,
          _ numPackets: Int) // LatLng
     {
         Swift.print("Cloudlet contructor. cloudletName= \(cloudletName)")
 
-        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, numBytes, numPackets)
+        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, urlPrefix, marker, numBytes, numPackets) // JT 19.01.30
 
         if CloudletListHolder.getSingleton().getLatencyTestAutoStart()
         {
@@ -89,6 +92,7 @@ public class Cloudlet // implements Serializable? todo?
                        _ gpsLocation: CLLocationCoordinate2D,
                        _ distance: Double,
                        _ uri: String,
+                       _ urlPrefix: String,   // JT 19.01.30
                        _ marker: GMSMarker,
                        _ numBytes: Int,
                        _ numPackets: Int) // # packets to ping
@@ -107,6 +111,8 @@ public class Cloudlet // implements Serializable? todo?
         mNumPackets = numPackets
 
         mBaseUri = uri
+        theFQDN_prefix = urlPrefix  // JT 19.01.30
+
         setDownloadUri(uri)
 
         let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5")
@@ -124,7 +130,8 @@ public class Cloudlet // implements Serializable? todo?
         }
         latencyTestTaskRunning = true
 
-        if uri != "" && uri.range(of: "azure") == nil
+        let azure = uri.range(of: "azure") != nil   // JT 19.01.30
+        if uri != "" //&& // JT 19.01.30
         {
             Swift.print("uri: \(uri)")
             // Ping several times
@@ -133,7 +140,16 @@ public class Cloudlet // implements Serializable? todo?
 
             for _ in 0 ..< numPings
             {
-                pings.append(uri) //  N pings
+                if azure
+                {
+                    pings.append(socketdUri)    // JT 19.01.30
+                }
+                else
+                {
+                    pings.append(uri) //  N pings
+                }
+            
+                
             }
 
             pingNext()
@@ -161,9 +177,16 @@ public class Cloudlet // implements Serializable? todo?
 
         let latencyTestMethod = UserDefaults.standard.string(forKey: "LatencyTestMethod")
 
-        if false &&  latencyTestMethod == "Socket"
+        var useSocket = false
+        Swift.print("uri \(uri)")   // JT 19.01.30
+       if ( uri.contains("azure"))
         {
-            future = GetSocketLatency(host, 7000) // JT 19.01.16
+            useSocket = true    // JT 19.01.30
+        }
+
+        if useSocket    // &&  latencyTestMethod == "Socket"
+        {
+            future = GetSocketLatency(host, 7777)   // JT 19.01.30
             
             future!.on(success:
                 {
@@ -173,7 +196,7 @@ public class Cloudlet // implements Serializable? todo?
                     let duration = Double(d["latency"] as! String  ) // JT 19.01.16
 
                     // print("\(ping) latency (ms): \(latency)")
-                    self.latencies.append(duration!)  // JT 19.01.16
+                    self.latencies.append(duration! * 1000)  // ms JT 19.01.16
                     self.latencyMin = self.latencies.min()!
                     self.latencyMax = self.latencies.max()!
                     
@@ -188,7 +211,9 @@ public class Cloudlet // implements Serializable? todo?
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
                     
             },
-                failure: { print("Socket failed with error: \($0)") },
+                failure: { print("Socket failed with error: \($0)")
+                    Swift.print("XXX")
+            },
                 completion: { let _ = $0    //print("completed with result: \($0)" )
                                                     
             })
@@ -243,13 +268,17 @@ public class Cloudlet // implements Serializable? todo?
 
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
             Swift.print("downloadUri1: \(downloadUri)") // DEBUG
+            
+            socketdUri = hostName   // JT 19.01.30
         }
         else
         {
             openPort = 7777
-            hostName = "mobiledgexsdkdemo." + uri
+            hostName = theFQDN_prefix + uri   // JT 19.01.30
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
             Swift.print("downloadUri: \(downloadUri)") // DEBUG
+            
+            socketdUri = hostName   // JT 19.01.30
         }
         self.uri = uri
     }
@@ -502,6 +531,11 @@ public class Cloudlet // implements Serializable? todo?
                 // got an error in getting the data, need to handle it
                 print("error doSpeedTest")
                 print(response.result.error!)
+                
+                DispatchQueue.main.async
+                    {
+                        CircularSpinner.hide() //   // JT 19.01.30
+                }
                 return
             }
             let end = DispatchTime.now() // <<<<<<<<<<   end time
@@ -550,8 +584,10 @@ func GetSocketLatency(_ host: String, _ port: Int32, _ postMsg: String? = nil)  
         let time = measure1
         {
             let client = TCPClient(address: host, port: port) // JT 19.01.16 SwiftSocket
+           let result = client.connect( timeout: 10 )    // JT
 
             client.close() // JT 19.01.16
+    //        Swift.print("client connect \(result)") // JT 19.01.30
             
             //                 promise.failure(value: ["latency": latencyMsg as AnyObject])  // JT 19.01.16
 
@@ -560,13 +596,18 @@ func GetSocketLatency(_ host: String, _ port: Int32, _ postMsg: String? = nil)  
  //       print("host: \(host)\n Latency \(time / 1000.0) ms") // JT 19.01.16
         if time > 0
         {
-            let latencyMsg = String(format: "%4.2f", time / 1000.0)
+            let latencyMsg = String(format: "%4.2f", time ) //
             
             if postMsg != nil && postMsg != ""
             {
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postMsg!), object: latencyMsg)
+                let latencyMsg2 = String(format: "%4.2f", time * 1000 ) // ms
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postMsg!), object: latencyMsg2)
             }
             promise.succeed(value: ["latency": latencyMsg as AnyObject])  // JT 19.01.16
+        }
+        else
+        {
+            Swift.print("")
         }
         
         
