@@ -165,11 +165,14 @@ public class Camera2BasicFragment extends Fragment
     private int mBenchmarkFrameCount;
     private boolean mBenchmarkMaxCpuFlag = false;
     protected VolleyRequestHandler.CameraMode mCameraMode;
-    protected boolean mCollectStats;
+
+    public String getStatsText() {
+        return mVolleyRequestHandler.getStatsText();
+    }
 
     enum CloudLetType {
-        CLOUDLET_MEX,
-        CLOUDLET_PUBLIC,
+        EDGE,
+        CLOUD,
         LOCAL_PROCESSING
     }
 
@@ -216,7 +219,7 @@ public class Camera2BasicFragment extends Fragment
 
     private CascadeClassifier cascadeClassifier;
     private int absoluteFaceSize;
-    VolleyRequestHandler.RollingAverage localLatencyRollingAvg = new VolleyRequestHandler.RollingAverage(100);
+    VolleyRequestHandler.RollingAverage localLatencyRollingAvg = new VolleyRequestHandler.RollingAverage(CloudLetType.LOCAL_PROCESSING, "On-Device", 100);
 
     public static final String EXTRA_BENCH_EDGE = "extra_bench_edge";
     public static final String EXTRA_BENCH_LOCAL = "extra_bench_local";
@@ -737,9 +740,9 @@ public class Camera2BasicFragment extends Fragment
                         if (textureRect.contains(rect)) {
                             Log.d(TAG, "Adding "+rect);
                             BoundingBox bb;
-                            if (cloudletType == CloudLetType.CLOUDLET_PUBLIC) {
+                            if (cloudletType == CloudLetType.CLOUD) {
                                 bb = mCloudBBList.get(i);
-                            } else if (cloudletType == CloudLetType.CLOUDLET_MEX) {
+                            } else if (cloudletType == CloudLetType.EDGE) {
                                 bb = mEdgeBBList.get(i);
                             } else if (cloudletType == CloudLetType.LOCAL_PROCESSING) {
                                 bb = mLocalBBList.get(i);
@@ -796,7 +799,9 @@ public class Camera2BasicFragment extends Fragment
         }
     }
 
-    public void updateFullProcessStats(final CloudLetType cloudletType, final long latency, final long stdDev) {
+    public void updateFullProcessStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+        final long stdDev = rollingAverage.getStdDev();
+
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
@@ -805,11 +810,11 @@ public class Camera2BasicFragment extends Fragment
             @Override
             public void run() {
                 switch(cloudletType) {
-                    case CLOUDLET_MEX:
+                    case EDGE:
                         mEdgeLatency.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
                         mEdgeStd.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
-                    case CLOUDLET_PUBLIC:
+                    case CLOUD:
                         mCloudLatency.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
                         mCloudStd.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
@@ -820,7 +825,9 @@ public class Camera2BasicFragment extends Fragment
         });
     }
 
-    public void updateNetworkStats(final CloudLetType cloudletType, final long latency, final long stdDev) {
+    public void updateNetworkStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+        final long stdDev = rollingAverage.getStdDev();
+
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
@@ -829,11 +836,11 @@ public class Camera2BasicFragment extends Fragment
             @Override
             public void run() {
                 switch(cloudletType) {
-                    case CLOUDLET_MEX:
+                    case EDGE:
                         mEdgeLatency2.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
                         mEdgeStd2.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
-                    case CLOUDLET_PUBLIC:
+                    case CLOUD:
                         mCloudLatency2.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
                         mCloudStd2.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
@@ -1120,18 +1127,6 @@ public class Camera2BasicFragment extends Fragment
             return true;
         }
 
-        if (id == R.id.action_camera_stats_toggle) {
-            if(item.isChecked()) {
-                // If item already checked then uncheck it
-                item.setChecked(false);
-                mCollectStats = false;
-            } else {
-                item.setChecked(true);
-                mCollectStats = true;
-            }
-            return true;
-        }
-
         return false;
     }
 
@@ -1181,12 +1176,12 @@ public class Camera2BasicFragment extends Fragment
         //Find 1 CLoudBB and create MAX_FACES-1 more, using the same LayoutParams.
         mCloudBB = view.findViewById(R.id.cloudBB);
         mCloudBB.setColor(Color.RED);
-        mCloudBB.setCloudletType(CloudLetType.CLOUDLET_PUBLIC);
+        mCloudBB.setCloudletType(CloudLetType.CLOUD);
         mCloudBBList.add(mCloudBB);
         for(int i = 1; i <= MAX_FACES; i++) {
             BoundingBox bb = new BoundingBox(getContext());
             bb.setColor(Color.RED);
-            bb.setCloudletType(CloudLetType.CLOUDLET_PUBLIC);
+            bb.setCloudletType(CloudLetType.CLOUD);
             bb.setLayoutParams(mCloudBB.getLayoutParams());
             mCloudBBList.add(bb);
             frameLayout.addView(bb);
@@ -1195,12 +1190,12 @@ public class Camera2BasicFragment extends Fragment
         //Find 1 EdgeBB and create MAX_FACES-1 more, using the same LayoutParams.
         mEdgeBB = view.findViewById(R.id.edgeBB);
         mEdgeBB.setColor(Color.GREEN);
-        mEdgeBB.setCloudletType(CloudLetType.CLOUDLET_MEX);
+        mEdgeBB.setCloudletType(CloudLetType.EDGE);
         mEdgeBBList.add(mEdgeBB);
         for(int i = 1; i <= MAX_FACES; i++) {
             BoundingBox bb = new BoundingBox(getContext());
             bb.setColor(Color.GREEN);
-            bb.setCloudletType(CloudLetType.CLOUDLET_MEX);
+            bb.setCloudletType(CloudLetType.EDGE);
             bb.setLayoutParams(mEdgeBB.getLayoutParams());
             mEdgeBBList.add(bb);
             frameLayout.addView(bb);

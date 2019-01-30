@@ -31,6 +31,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -109,6 +110,7 @@ public class MainActivity extends AppCompatActivity
     public static final int COLOR_RED = 0xffff3300;
 
     private static final int RC_SIGN_IN = 1;
+    public static final int RC_STATS = 2;
     private String mHostname;
 
     private GoogleMap mGoogleMap;
@@ -396,19 +398,19 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_camera) {
             // Start the face detection Activity
             Intent intent = new Intent(this, CameraActivity.class);
-            startActivity(intent);
+            startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_face_recognition) {
             // Start the face recognition Activity
             Intent intent = new Intent(this, CameraActivity.class);
             intent.putExtra(Camera2BasicFragment.EXTRA_FACE_RECOGNITION, true);
-            startActivity(intent);
+            startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_pose_detection) {
             // Start the pose detection Activity
             Intent intent = new Intent(this, PoseCameraActivity.class);
             intent.putExtra(Camera2BasicFragment.EXTRA_POSE_DETECTION, true);
-            startActivity(intent);
+            startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_qoe_map) {
             // Start the face detection Activity in Edge benchmark mode
@@ -997,6 +999,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i(TAG, "onActivityResult requestCode="+requestCode+" resultCode="+resultCode+" data="+data);
         super.onActivityResult(requestCode, resultCode, data);
 
         // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
@@ -1004,7 +1007,30 @@ public class MainActivity extends AppCompatActivity
             // The Task returned from this call is always completed, no need to attach a listener.
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleSignInResult(task);
+        } else if (requestCode == RC_STATS && resultCode == RESULT_OK) {
+            //Get preference
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean showDialog = prefs.getBoolean(getResources().getString(R.string.preference_fd_show_latency_stats_dialog), false);
+            if(!showDialog) {
+                Log.d(TAG, "Preference is to not show latency stats dialog");
+                return;
+            }
+
+            String stats = data.getExtras().getString("STATS");
+            // The TextView to show your Text
+            TextView showText = new TextView(MainActivity.this);
+            showText.setText(stats);
+            showText.setTextIsSelectable(true);
+            int horzPadding = (int) (25 * getResources().getDisplayMetrics().density);
+            showText.setPadding(horzPadding, 0,horzPadding,0);
+            new AlertDialog.Builder(MainActivity.this)
+                    .setView(showText)
+                    .setTitle("Stats")
+                    .setCancelable(true)
+                    .setPositiveButton("OK", null)
+                    .show();
         }
+
     }
 
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
