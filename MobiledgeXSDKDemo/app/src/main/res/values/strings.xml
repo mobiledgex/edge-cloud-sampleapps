@@ -59,6 +59,10 @@
     <string name="preference_fd_reset_both_hosts">fd_reset_both_hosts</string>
     <string name="preference_fd_reset_both_hosts_title">Reset hosts to default.</string>
     <string name="preference_fd_reset_both_hosts_message">Are you sure?</string>
+    <string name="preference_fd_show_latency_stats_dialog">fd_show_latency_stats_dialog</string>
+    <string name="preference_fd_show_latency_stats_dialog_title">Show Latency Stats after session</string>
+    <string name="preference_fd_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
+
     <string name="title_activity_settings">Settings</string>
 
     <string-array name="pref_fd_reset_both_hosts_choices">
@@ -92,7 +96,7 @@
     <string name="action_about">About</string>
     <string name="preference_speed_test_settings">Speed Test Settings</string>
     <string name="preference_general_settings">General Settings</string>
-    <string name="preference_fd_settings">Face Detection Settings</string>
+    <string name="preference_fd_settings">Computer Vision Settings</string>
 
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
 
@@ -161,7 +165,7 @@
     <string name="face_detection_title">Face Detection</string>
     <string-array name="pref_dme_hostname_titles">
         <item>Demo (mexdemo)</item>
-        <item>DME API Reorg (tdg2)</item>
+        <item>DT LocAPI Integration (tdg2)</item>
         <item>Automation Testing (automationbonn)</item>
     </string-array>
     <string-array name="pref_dme_hostname_values">
