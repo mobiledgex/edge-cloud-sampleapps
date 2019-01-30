@@ -16,7 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from tracker.views import test_connection
-from tracker.views import detector_detect, recognizer_add, recognizer_train, recognizer_predict, openpose_detect
+from tracker.views import detector_detect, recognizer_add, recognizer_train
+from tracker.views import recognizer_predict, openpose_detect, server_usage
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,5 +26,6 @@ urlpatterns = [
     path('recognizer/train/', recognizer_train),
     path('recognizer/predict/', recognizer_predict),
     path('openpose/detect/', openpose_detect),
+    path('server/usage', server_usage),
     path('test/', test_connection),
 ]
