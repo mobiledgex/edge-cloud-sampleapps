@@ -38,6 +38,10 @@ public class PoseRenderer extends View {
             {19,20},{14,21},{11,22},{22,23},{11,24}
     };
 
+    /**
+     * Colors array corresponding to the "pairs" array above. For example, the first pair of
+     * coordinates {1,8} will be drawn with the first color in this array, "#ff0055".
+     */
     private String[] colors = {
             "#ff0055", "#ff0000", "#ff5500", "#ffaa00", "#ffff00", "#aaff00", "#55ff00", "#00ff00",
             "#ff0000", "#00ff55", "#00ffaa", "#00ffff", "#00aaff", "#0055ff", "#0000ff", "#ff00aa",
