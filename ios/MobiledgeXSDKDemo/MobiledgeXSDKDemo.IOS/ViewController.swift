@@ -93,8 +93,35 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         {
             askPermission()   // JT 19.01.16
         }
+        
+        defaultUninitializedSettings()  // JT 19.01.30
     }
 
+    func defaultUninitializedSettings() // JT 19.01.30
+    {
+        if UserDefaults.standard.string(forKey: "Latency Test Packets") == nil
+        {
+            UserDefaults.standard.set("5", forKey: "Latency Test Packets")
+        }
+        
+        if UserDefaults.standard.string(forKey: "Download Size") == nil
+        {
+            UserDefaults.standard.set("1 MB", forKey: "Download Size")
+        }
+        
+        if UserDefaults.standard.string(forKey: "LatencyTestMethod") == nil
+        {
+            UserDefaults.standard.set("Ping", forKey: "LatencyTestMethod")
+        }
+
+//        if UserDefaults.standard.bool(forKey: "Latency Test Auto-Start") == nil
+//        {
+//            UserDefaults.standard.set("Ping", forKey: "Latency Test Auto-Start")
+//        }
+
+        
+    }
+    
     func askPermission()    // JT 19.01.16
     {
         let storyboard = UIStoryboard(name: "Permissions", bundle: nil)
