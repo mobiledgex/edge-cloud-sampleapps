@@ -119,7 +119,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 //            UserDefaults.standard.set("Ping", forKey: "Latency Test Auto-Start")
 //        }
 
-        
+        UserDefaults.standard.set("0", forKey: "Latency Avg:")  // JT 19.01.31
+   
     }
     
     func askPermission()    // JT 19.01.16
