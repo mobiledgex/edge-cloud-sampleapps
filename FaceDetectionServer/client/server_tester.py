@@ -6,12 +6,18 @@ import json
 import requests
 import base64
 import time
+import socket
 
-total_latency = 0
+# Globals
+total_latency_full_process = 0
+count_latency_full_process = 0
+total_latency_network_only = 0
+count_latency_network_only = 0
 
 class RequestClient(object):
     """ """
     BASE_URL = 'http://%s:8008'
+    STATS_URL = BASE_URL
 
     def __init__(self):
         """ """
@@ -27,8 +33,29 @@ class RequestClient(object):
         """
         return requests.post(url, data={'image':image})
 
+    def get_server_stats(self, host):
+        url = self.BASE_URL %host + "/server/usage"
+        print(requests.get(url).content)
+
+    def time_open_socket(self, host, port):
+        global total_latency_network_only
+        global count_latency_network_only
+        now = time.time()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
+        sock.settimeout(2)
+        result = sock.connect_ex((host,port))
+        if result != 0:
+            print("Could not connect to %s on port %d" %(host, port))
+            return
+        millis = (time.time() - now)*1000
+        elapsed = "%.3f" %millis
+        print("%s ms to open socket" %(elapsed))
+        total_latency_network_only = total_latency_network_only + millis
+        count_latency_network_only += 1
+
     def encode_and_send_image(self, host, endpoint, image_file_name, show_responses):
-        global total_latency
+        global total_latency_full_process
+        global count_latency_full_process
         try:
             image = ""
             with open(image_file_name, "rb") as f:
@@ -41,7 +68,8 @@ class RequestClient(object):
         content = self.send_image_param(self.BASE_URL %host + endpoint, image).content
         millis = (time.time() - now)*1000
         elapsed = "%.3f" %millis
-        total_latency = total_latency + millis
+        total_latency_full_process = total_latency_full_process + millis
+        count_latency_full_process += 1
         decoded_json = json.loads(content)
         base64_size = len(image)
         if 'server_processing_time' in decoded_json:
@@ -57,7 +85,10 @@ class RequestClient(object):
         # print("run_multi(%s, %s)\n" %(host, image_file_name))
         for x in xrange(num_repeat):
             self.encode_and_send_image(host, endpoint, image_file_name, show_responses)
-        print("%s Done" %thread_name)
+            if x % 4 == 0:
+                self.get_server_stats(host)
+                self.time_open_socket(host, 8008)
+        # print("%s Done" %thread_name)
 
 if __name__ == "__main__":
     import sys
@@ -79,5 +110,7 @@ if __name__ == "__main__":
         thread.start()
         thread.join()
 
-    average_latency = total_latency / (args.repeat*args.threads)
-    print("Average Latency=%.3f ms" %average_latency)
+    average_latency_full_process = total_latency_full_process / count_latency_full_process
+    average_latency_network_only = total_latency_network_only / count_latency_network_only
+    print("Average Latency Full Process=%.3f ms" %average_latency_full_process)
+    print("Average Latency Network Only=%.3f ms" %average_latency_network_only)
