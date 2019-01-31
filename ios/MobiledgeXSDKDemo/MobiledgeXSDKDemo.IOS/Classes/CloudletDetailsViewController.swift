@@ -104,7 +104,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             $0.title = "Latency Max:"
             $0.tag = "Latency Max:" //
 
-            $0.value = UserDefaults.standard.string(forKey: "Latency Max:") ?? "96.1" + " ms" // JT 18.11.04
+            $0.value = UserDefaults.standard.string(forKey: "Latency Max:") ?? "0" + " ms" // JT 18.11.04
         }
         .cellUpdate
         { _, row in //
@@ -185,6 +185,14 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             }
         }
 
+        let autoStart = UserDefaults.standard.bool(forKey: "Latency Test AutoStart") ?? false  // JT 19.01.30 Auto-start
+        
+        if autoStart
+        {
+            let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5") //
+            
+            self.cloudlet!.runLatencyTest(numPings: numPings!) //
+        }
     }   /////
 
     // MARK: -

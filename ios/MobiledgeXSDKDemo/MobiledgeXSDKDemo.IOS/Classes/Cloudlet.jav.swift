@@ -75,6 +75,16 @@ public class Cloudlet // implements Serializable? todo?
 
         update(cloudletName, appName, carrierName, gpsLocation, distance, uri, urlPrefix, marker, numBytes, numPackets) // JT 19.01.30
 
+        
+        let autoStart = UserDefaults.standard.bool(forKey: "Latency Test Auto-Start") ?? false  // JT 19.01.30
+        
+        if autoStart
+        {
+            let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "4") //
+            
+             runLatencyTest(numPings: numPings!) //
+        }
+        
         if CloudletListHolder.getSingleton().getLatencyTestAutoStart()
         {
             // All AsyncTask instances are run on the same thread, so this queues up the tasks.
@@ -197,6 +207,8 @@ public class Cloudlet // implements Serializable? todo?
 
                     // print("\(ping) latency (ms): \(latency)")
                     self.latencies.append(duration! * 1000)  // ms JT 19.01.16
+                //    Swift.print("latencies \(self.latencies)")   // JT 19.01.30
+
                     self.latencyMin = self.latencies.min()!
                     self.latencyMax = self.latencies.max()!
                     
@@ -209,6 +221,8 @@ public class Cloudlet // implements Serializable? todo?
                     let latencyMsg = String(format: "%4.3f", self.latencyAvg)
                     
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
+                    
+                    self.pingNext()  // JT 19.01.30
                     
             },
                 failure: { print("Socket failed with error: \($0)")
@@ -238,9 +252,12 @@ public class Cloudlet // implements Serializable? todo?
                 
                 self.latencyStddev = standardDeviation(arr: self.latencies)
                 
-                let latencyMsg = String(format: "%4.3f", self.latencyAvg)
+                let latencyMsg = String(format: "%4.2f", self.latencyAvg)
                 
                 NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
+                
+                self.pingNext()  // JT 19.01.30
+
             }
             pingOnce?.start() // JT 19.01.14
         }
