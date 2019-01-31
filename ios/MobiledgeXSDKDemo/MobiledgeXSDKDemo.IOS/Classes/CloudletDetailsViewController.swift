@@ -67,14 +67,14 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             <<< LabelRow    //TextRow   //
         {
             $0.title = "Distance:"
-            $0.value = UserDefaults.standard.string(forKey: "Distance:") ?? "1237.338"
+            $0.value = UserDefaults.standard.string(forKey: "Distance:") ?? "0"
             // todo String(format: "%.3f", value)
         }
         form +++ Section("Latency") //
             <<< LabelRow    //TextRow   //
         {
             $0.title = "Latency Min:"
-            $0.value = UserDefaults.standard.string(forKey: "Latency Min:") ?? "4.00" + " ms"
+            $0.value = UserDefaults.standard.string(forKey: "Latency Min:") ?? "0.00" + " ms"
             $0.tag = "Latency Min:" //
 
         }.cellUpdate
