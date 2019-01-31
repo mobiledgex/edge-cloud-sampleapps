@@ -27,7 +27,10 @@ class TrackerConfig(AppConfig):
         try:
             from openpose import openpose as op
         except:
-            raise Exception('Error: OpenPose library could not be found. Did you enable `BUILD_PYTHON` in CMake and have this Python script in the right folder?')
+            logger.error('Error: OpenPose library could not be found. Did you enable `BUILD_PYTHON` in CMake and have this Python script in the right folder?')
+            logger.warn('/oenpose/ web services calls will not be allowed.')
+            myOpenPose = None
+            return
 
         params = dict()
         params["logging_level"] = 3

@@ -19,6 +19,7 @@ import os
 import glob
 import json
 import logging
+from subprocess import Popen, PIPE
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ def detector_detect(request):
         if len(rects) == 0:
             ret = {"success": "false"}
         else:
-            ret = {"success": "true", "rects": rects.tolist()}
+            ret = {"success": "true", "server_processing_time": elapsed, "rects": rects.tolist()}
         logger.info(prepend_ip("%s ms to detect rectangles: %s" %(elapsed, ret), request))
         json_ret = json.dumps(ret)
         return HttpResponse(json_ret)
@@ -125,7 +126,7 @@ def recognizer_predict(request):
             rect2 = [int(rect[0]), int(rect[1]), int(rect[0]+rect[2]), int(rect[1]+rect[3])]
             if confidence >= 105:
                 subject = "Unknown"
-            ret = {"success": "true", "subject": subject, "confidence":"%.3f" %confidence, "rect": rect2}
+            ret = {"success": "true", "subject": subject, "confidence":"%.3f" %confidence, "server_processing_time": elapsed, "rect": rect2}
         logger.info(prepend_ip("%s ms to recognize: %s" %(elapsed, ret), request))
         json_ret = json.dumps(ret)
         return HttpResponse(json_ret)
@@ -195,6 +196,11 @@ def openpose_detect(request):
     """
     Use OpenPose to extract human skeleton points from a given image.
     """
+    if myOpenPose is None:
+        error = "OpenPose not supported on this server"
+        logger.error(prepend_ip("%s" %error, request))
+        return HttpResponse(error, status=501)
+
     if request.method == 'POST':
         logger.debug(prepend_ip("Request received: %s" %request, request))
         if request.POST.get("image", "") == "":
@@ -212,16 +218,103 @@ def openpose_detect(request):
         # Return the human pose poses, i.e., a [#people x #poses x 3]-dimensional numpy object with the poses of all the people on that image
         # print(poses.tolist())
         elapsed = "%.3f" %((time.time() - start)*1000)
+        poses2 = np.around(poses, decimals=6)
+        # poses2 = np.rint(poses)
 
         # Create a JSON response to be returned in a consistent manner
         if len(poses) == 0:
             ret = {"success": "false"}
         else:
-            ret = {"success": "true", "server_processing_time": elapsed, "poses": poses.tolist()}
+            ret = {"success": "true", "server_processing_time": elapsed, "poses": poses2.tolist()}
             save_rendered_pose_image(output_image, request)
 
-        logger.info(prepend_ip("%s ms to detect poses: %s" %(elapsed, ret), request))
+        logger.info(prepend_ip("%s ms to detect %d poses: %s" %(elapsed, len(poses), ret), request))
         json_ret = json.dumps(ret)
         return HttpResponse(json_ret)
 
-    return HttpResponse("Must send frame as a POST")
+    return HttpResponse("Must send frame as a POST", status=400)
+
+def usage_gpu(request):
+    """
+    Execute the "nvidia-smi" command and parse the output to get the GPU usage.
+    """
+    nvidia_smi = "nvidia-smi"
+    try:
+        p = Popen([nvidia_smi,"-q", "-d", "UTILIZATION"], stdout=PIPE)
+    except FileNotFoundError:
+        logger.error("%s not found. GPU usage not supported." %nvidia_smi)
+        return {} # Empty dict
+
+    stdout, stderror = p.communicate()
+    output = stdout.decode('UTF-8')
+    # Split on line break
+    lines = output.split(os.linesep)
+    gpu_utilization_snapshot_section = False
+    gpu_utilization_samples_section = False
+    memory_utilization_samples_section = False
+    gpu_utilization_snapshot = -1
+    gpu_utilization_high = -1
+    memory_utilization_high = -1
+
+    for line in lines:
+        # print(line, gpu_utilization_snapshot_section, gpu_utilization_samples_section, memory_utilization_samples_section)
+        if line.strip() == "Utilization":
+            gpu_utilization_snapshot_section = True
+            gpu_utilization_samples_section = False
+            memory_utilization_samples_section = False
+        elif line.strip() == "GPU Utilization Samples":
+            gpu_utilization_snapshot_section = False
+            gpu_utilization_samples_section = True
+            memory_utilization_samples_section = False
+        elif line.strip() == "Memory Utilization Samples":
+            gpu_utilization_snapshot_section = False
+            gpu_utilization_samples_section = False
+            memory_utilization_samples_section = True
+        elif line.strip() == "ENC Utilization Samples":
+            # When we hit this line, we're done
+            break
+        elif line.strip().startswith("Gpu"):
+            if gpu_utilization_snapshot_section:
+                vals = line.split()
+                gpu_utilization_snapshot = vals[2]
+        elif line.strip().startswith("Max"):
+            if gpu_utilization_samples_section:
+                vals = line.split()
+                gpu_utilization_high = vals[2]
+            elif memory_utilization_samples_section:
+                vals = line.split()
+                memory_utilization_high = vals[2]
+
+    ret = {"gpu_utilization_snapshot": gpu_utilization_snapshot,
+            "gpu_utilization_high": gpu_utilization_high,
+            "gpu_memory_utilization_high": memory_utilization_high}
+    logger.info(prepend_ip("GPU Stats: %s" %(ret), request))
+    return ret
+
+def usage_cpu_and_mem(request):
+    """
+    Return the cpu and memory usage in percent.
+    """
+    import psutil
+    cpu = psutil.cpu_percent()
+    mem = dict(psutil.virtual_memory()._asdict())['percent']
+    ret = {"cpu_utilization": cpu,
+            "mem_utilization": mem}
+    logger.info(prepend_ip("CPU Stats: %s" %(ret), request))
+    return ret
+
+@csrf_exempt
+def server_usage(request):
+    """
+    Get CPU and GPU usage summary.
+    """
+    if request.method == 'GET':
+        ret1 = usage_cpu_and_mem(request)
+        ret2 = usage_gpu(request)
+        # Merge the dictionaries together.
+        ret = ret1.copy()
+        ret.update(ret2)
+        json_ret = json.dumps(ret)
+        return HttpResponse(json_ret)
+
+    return HttpResponse("This request must be a GET")
