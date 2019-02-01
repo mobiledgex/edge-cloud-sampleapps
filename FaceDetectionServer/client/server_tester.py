@@ -14,6 +14,8 @@ count_latency_full_process = 0
 total_latency_network_only = 0
 count_latency_network_only = 0
 
+do_server_stats = False
+
 class RequestClient(object):
     """ """
     BASE_URL = 'http://%s:8008'
@@ -82,11 +84,13 @@ class RequestClient(object):
             print("%s ms round trip. %s ms server_processing_time base64_size=%d" %(elapsed, server_processing_time, base64_size))
 
     def run_multi(self, num_repeat, host, endpoint, image_file_name, show_responses, thread_name):
+        global do_server_stats
         # print("run_multi(%s, %s)\n" %(host, image_file_name))
         for x in xrange(num_repeat):
             self.encode_and_send_image(host, endpoint, image_file_name, show_responses)
             if x % 4 == 0:
-                self.get_server_stats(host)
+                if do_server_stats:
+                    self.get_server_stats(host)
                 self.time_open_socket(host, 8008)
         # print("%s Done" %thread_name)
 
@@ -102,7 +106,10 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of concurent execution threads.")
     parser.add_argument("--show-responses", action='store_true', help="Show responses.")
+    parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
     args = parser.parse_args()
+
+    do_server_stats = args.server_stats
 
     for i in xrange(args.threads):
         rc = RequestClient()

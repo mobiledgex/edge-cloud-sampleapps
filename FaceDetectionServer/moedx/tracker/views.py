@@ -145,6 +145,10 @@ def recognizer_train(request):
         myFaceRecognizer.update_training_data()
         elapsed = "%.3f" %((time.time() - start)*1000)
         logger.info(prepend_ip("%s ms to update training data" %elapsed, request))
+        start = time.time()
+        myFaceRecognizer.read_trained_data()
+        elapsed = "%.3f" %((time.time() - start)*1000)
+        logger.info(prepend_ip("%s ms to read trained data" %elapsed, request))
 
         return HttpResponse("OK\n")
 
