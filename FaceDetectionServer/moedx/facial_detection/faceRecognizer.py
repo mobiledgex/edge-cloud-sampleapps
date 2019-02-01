@@ -5,6 +5,9 @@ import numpy as np
 import json
 import sys
 import glob
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FaceRecognizer(object):
     """
@@ -23,12 +26,9 @@ class FaceRecognizer(object):
         self.trainingDataFileName = self.working_dir+'/trainer.yml'
 
     def read_trained_data(self):
-        # Load the trained data
+        # Create a new instance and load the trained data
+        self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
         self.face_recognizer.read(self.trainingDataFileName)
-
-        #load subject names
-        with open(self.working_dir+"/subjects.json", "r") as infile:
-            self.subjects = json.load(infile)
 
         self.trainingDataTimestamp = time.time()
         dataFileTs = os.path.getmtime(self.trainingDataFileName)
@@ -93,12 +93,14 @@ class FaceRecognizer(object):
 
     def update_training_data(self):
         faces, labels, subjects = self.prepare_training_data(self.working_dir+"/training-data")
+        # Save the subjects (directory names) to their corresponding labels.
+        index = 0
+        for subject in subjects:
+            self.face_recognizer.setLabelInfo(index, subject)
+            index += 1
+
         self.face_recognizer.train(faces, np.array(labels))
         self.face_recognizer.save(self.trainingDataFileName)
-
-        #Save subjects array to disk
-        with open(self.working_dir+"/subjects.json", "w") as outfile:
-            json.dump(subjects, outfile)
 
     def save_subject_image(self, subject, image):
         #Save current image with timestamp
@@ -149,12 +151,13 @@ class FaceRecognizer(object):
         # Is training data current?
         dataFileTs = os.path.getmtime(self.trainingDataFileName)
         diff = dataFileTs - self.trainingDataTimestamp
-        print("diff=%d. Do we need to re-read training data?" %diff)
+        logger.debug("Worker=%s. diff=%d. Do we need to re-read training data?" %(os.getpid(), diff))
         if diff > 10:
-            print("diff=%d. Need to re-read training data" %diff)
+            logger.info("Worker=%s. diff=%d. Yes, re-reading training data" %(os.getpid(), diff))
             self.read_trained_data()
+            logger.info("read_trained_data() complete")
 
-        #make a copy of the image as we don't want to chang original image
+        #make a copy of the image as we don't want to change original image
         img = test_img.copy()
         #detect face from the image
         face, rect = self.detect_face(img)
@@ -166,7 +169,8 @@ class FaceRecognizer(object):
         #predict the image using our face recognizer
         label, confidence = self.face_recognizer.predict(face)
         #get name of respective label returned by face recognizer
-        label_text = self.subjects[label]
+        label_text = self.face_recognizer.getLabelInfo(label)
+        logger.info("label=%s label_text=%s" %(label, label_text))
 
         # print(label_text, confidence, rect)
         return img, label_text, confidence, rect
