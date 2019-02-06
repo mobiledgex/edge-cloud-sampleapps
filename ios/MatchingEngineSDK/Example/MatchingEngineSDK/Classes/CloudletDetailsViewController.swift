@@ -184,11 +184,21 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
                 row.value = tr2 //
             }
         }
-
+        handleAutoStart()   // JT 19.02.05
     }   /////
 
     // MARK: -
-
+    func handleAutoStart()
+    {
+        let autoStart = UserDefaults.standard.bool(forKey: "Latency Test AutoStart") ?? false  // JT 19.01.30 Auto-start
+        
+        if autoStart
+        {
+            let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5") //
+            
+            self.cloudlet!.runLatencyTest(numPings: numPings!) //
+        }
+    }
 
     private func formatValue(_ value: Double) -> String
     {

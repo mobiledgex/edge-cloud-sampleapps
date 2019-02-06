@@ -66,10 +66,23 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
         // -----
 
+        defaultUninitializedSettings()  // JT 19.01.30
+
         observers()
 
         // -----
-
+        getInitialLatencies()   // JT 19.02.05
+   
+        getLocaltionUpdates()
+        
+       // use registerClient API
+        MexRegisterClient.shared.registerClientNow( appName: "MobiledgeX SDK Demo",
+                                                   devName:  "MobiledgeX SDK Demo",
+                                                   appVers: "1.0")  // JT 19.02.03 chained below to also load cloudlets
+    }
+    
+    func getInitialLatencies()  // JT 19.02.05
+    {
         DispatchQueue.main.async {
             getNetworkLatencyCloud()    //   "latencyCloud"   // JT 19.01.16
         }
@@ -78,12 +91,6 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         }
         
         
-        getLocaltionUpdates()
-        
-       // use registerClient API
-        MexRegisterClient.shared.registerClientNow( appName: "MobiledgeX SDK Demo",
-                                                   devName:  "MobiledgeX SDK Demo",
-                                                   appVers: "1.0")  // JT 19.02.03 chained below to also load cloudlets
     }
     
     func observers()
@@ -174,6 +181,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             processFindCloudletResult(d)  // JT 19.01.31 todo should be documented, at the least an example
         }
         
+        UserDefaults.standard.set("0", forKey: "Latency Avg:")  // JT 19.01.31
+
     } // end observers()
 
     // MARK: -
@@ -183,7 +192,37 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         Swift.print("\(#function)")
         
         resetUserLocation(true)   // JT 19.01.31 todo
+        
+
     }
+    
+    func defaultUninitializedSettings() // JT 19.01.30
+    {
+        if UserDefaults.standard.string(forKey: "Latency Test Packets") == nil
+        {
+            UserDefaults.standard.set("5", forKey: "Latency Test Packets")
+        }
+        
+        if UserDefaults.standard.string(forKey: "Download Size") == nil
+        {
+            UserDefaults.standard.set("1 MB", forKey: "Download Size")
+        }
+        
+        if UserDefaults.standard.string(forKey: "LatencyTestMethod") == nil
+        {
+            UserDefaults.standard.set("Ping", forKey: "LatencyTestMethod")
+        }
+        
+        //        if UserDefaults.standard.bool(forKey: "Latency Test Auto-Start") == nil
+        //        {
+        //            UserDefaults.standard.set("Ping", forKey: "Latency Test Auto-Start")
+        //        }
+        
+        UserDefaults.standard.set("0", forKey: "Latency Avg:")  // JT 19.01.31
+        
+    }
+    
+    
     
     func askPermission()    // JT 19.01.16
     {

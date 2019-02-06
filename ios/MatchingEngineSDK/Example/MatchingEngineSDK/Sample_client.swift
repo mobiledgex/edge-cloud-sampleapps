@@ -400,13 +400,13 @@ func doUserMarker(_ loc: CLLocationCoordinate2D)
 }
 
 // MARK: -
+public var faceRecognitionImages2 =  [(UIImage,String)]()  // image + service. one at a time   // JT 19.02.05
 
 class MexFaceRecognition
 {
     var faceDetectionStartTimes:[String:DispatchTime]? // two at a time cloud/edge
     var faceRecognitionStartTimes:[String:DispatchTime]? // two at a time cloud/edge
 
-    var faceRecognitionImages2 =  [(UIImage,String)]()  // image + service. one at a time
     
    var faceRecognitionCurrentImage: UIImage?
 
@@ -414,67 +414,13 @@ class MexFaceRecognition
     // Mark: -
     // Mark: FaceDetection
     
-    func FaceDetection(_ image: UIImage?, _ service: String)     
+    func FaceDetection(_ image: UIImage?, _ service: String)         -> Future<[String: AnyObject], Error>
     {
         let broadcast =  "FaceDetectionLatency" + service
         
         let faceDetectionFuture = FaceDetectionCore(image, service, post: broadcast)
         
-        faceDetectionFuture.on(
-            success:
-            {
-               // print("FaceDetection received value: \($0)")
-                
-                let reply = $0 as [String: Any]
-                
-                let postName = "faceDetected" + service
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName ) , object: reply) //  draw blue rect around
-                
-                SKToast.show(withMessage: "FaceDetection ")
-                
-                let tv = UserDefaults.standard.bool(forKey: "doFaceRecognition") //
-                
-                if tv && doAFaceRecognition
-                {
-                    doAFaceRecognition = false // wait for que to empty
-                    
-                    self.faceRecognitionImages2.removeAll()
-                    
-                    if false   //  use whole image
-                    {
-                        let rects = reply["rects"] as! [[Int]]
-
-                        for a in rects
-                        {
-                             let r = convertPointsToRect(a)
-
-                            Swift.print("r = \(r)")
-                            let face = image!.cropped(to: r)
-                            self.faceRecognitionImages2.append((face, "Cloud")) //
-                            self.faceRecognitionImages2.append((face, "Edge"))  //
-
-                        }
-                    }
-                    else
-                    {
-                        self.faceRecognitionImages2.append((image!, "Cloud") )    //   use whole image  //
-                        self.faceRecognitionImages2.append((image!, "Edge")) // )    //   use whole image
-
-                    }
-                    
-                    Swift.print("")
-                    self.doNextFaceRecognition()    //
-                }
-                
-                // Log.logger.name = "FaceDetection"
-                // logw("\FaceDetection result: \(registerClientReply)")
-        },
-            failure: { print("FaceDetection failed with error: \($0)")
-                
-        },
-            completion: { _ = $0 // print("completed with result: \($0)")
-        }
-        )
+        return faceDetectionFuture  // JT 19.02.05
     }
     
     //  todo? pass in host
@@ -536,6 +482,10 @@ class MexFaceRecognition
             }
             faceDetectionStartTimes![service] =  DispatchTime.now() //
             
+
+            pendingCount.increment()    // JT 19.02.05
+            Swift.print("0=-- \(faceDetectCount.add(0)) \(pendingCount.add(0)) ")  // JT  // JT 19.02.05
+
             let requestObj = Alamofire.request(urlStr,
                                                method: HTTPMethod.post,
                                                parameters: params
@@ -547,20 +497,24 @@ class MexFaceRecognition
                     //    Swift.print("----\n")
                     //    Swift.print("\(response)")
                     //    debugPrint(response)
-                    
-                    switch response.result {
+                    pendingCount.decrement()    // JT 19.02.05
+
+                    switch response.result
+                    {
                     case let .success(data):
                         
+                        let end = DispatchTime.now() // <<<<<<<<<<   end time
+
                         // Swift.print("")---
-                        print("!", terminator:"")   // JT 19.01.28
+                        print("•", terminator:"")   // JT 19.01.28
 
                         let d = data as! [String: Any]
                         let success = d["success"] as! String
                         if success == "true"
                         {
-                            // Swift.print("data: \(data)")
+                            print("Y.\(service) ", terminator:"")   // JT 19.01.28
+   // Swift.print("data: \(data)")
                             
-                            let end = DispatchTime.now() // <<<<<<<<<<   end time
                             let start =  self.faceDetectionStartTimes![service] //
                             let nanoTime = end.uptimeNanoseconds - start!.uptimeNanoseconds  //self.faceDetectionStartTime!.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
                             
@@ -572,7 +526,10 @@ class MexFaceRecognition
                             SKToast.show(withMessage: "FaceDetection  time: \(timeInterval) result: \(data)")
                             
                             let aa = d["rects"]
-                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceDetection"), object: aa) //   draw blue rect around face  [[Int]]
+                            
+                            let msg =    "FaceDetection" + service   // JT 19.02.04
+
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: msg), object: aa) //   draw blue rect around face  [[Int]]
                             
                             promise.succeed(value: d as [String : AnyObject])
                             
@@ -581,20 +538,54 @@ class MexFaceRecognition
                         }
                         else
                         {
-                            let tv =  UserDefaults.standard.bool(forKey: "doFaceRecognition") //
-                            if tv == false
+                            //        Logger.shared.log(.network, .info, postName + " request\n \(request) \n") // JT 19.01.04
+                            print("N.\(service) ", terminator:"")   // JT 19.01.28
+
+                        }
+
+                        if service == "Cloud" // JT 19.02.04
+                        {
+                            let doFaceRec =  UserDefaults.standard.bool(forKey: "doFaceRecognition") //
+                            if doFaceRec == false
                             {
                                 doAFaceDetection = true // atomic, one at a time
+                               // print("T", terminator:"")   // JT 19.01.28
+
                             }//next
+                            // else we set this afte faceRec
                         }
                         
+                       
                     case let .failure(error):
                         print(error)
                         //  SKToast.show(withMessage: "FaceDetection Failed: \(error)")
                         promise.fail(error: error)
-                        print("~", terminator:"")   // JT 19.01.28
+                        print("F ", terminator:"")   // JT 19.01.28
 
+//                        if service == "Cloud" // JT 19.02.04
+//                        {
+//                            let doFaceRec =  UserDefaults.standard.bool(forKey: "doFaceRecognition") //
+//                            if doFaceRec == false
+//                            {
+//                                doAFaceDetection = true // atomic, one at a time
+//                            }//next
+//                        }
+                            // JT 19.02.05 if anything fails just start over
+                        doAFaceDetection = true // atomic, one at a time
+
+                        Swift.print("error doAFaceDetection = true")
+
+                    } // end sucess/failure
+                    
+                  //  Swift.print("1=-- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+                    
+                    if faceDetectCount.decrement() == 0
+                    {
+                        faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
                     }
+                    
+                    Swift.print("2=-- \(faceDetectCount.add(0)) \(pendingCount.add(0)) ")  // JT  // JT 19.02.05
+                    
             }
             
             // debugPrint(requestObj) // dump curl
@@ -611,12 +602,14 @@ class MexFaceRecognition
     
     func doNextFaceRecognition()
     {
-        if faceRecognitionImages2.count == 0
+        if faceRecognitionImages2.count == 0    // we put 2 copys of same image and route to cloud/edge
         {
             doAFaceDetection = true //  todo tmp
             doAFaceRecognition = true
             
-            print(":", terminator:"")   // JT 19.01.28
+            faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+
+            print("+", terminator:"")   // JT 19.01.28
 
             return
         }
@@ -667,7 +660,7 @@ class MexFaceRecognition
     
     
     func FaceRecognition(_ image: UIImage?, _ service: String)
-        -> Future<[String: AnyObject], Error>
+        -> Future<[String: AnyObject], Error>   // JT 19.02.05
     {
         let promise = Promise<[String: AnyObject], Error>()
         
@@ -734,7 +727,8 @@ class MexFaceRecognition
                     
                     switch response.result {
                     case let .success(data):
-                        
+                        let end = DispatchTime.now()   // <<<<<<<<<<   end time
+
                         // Swift.print("")
                         let d = data as! [String: Any]
                         let success = d["success"] as! String
@@ -742,7 +736,6 @@ class MexFaceRecognition
                         {
                             // Swift.print("data: \(data)")
                             
-                            let end = DispatchTime.now()   // <<<<<<<<<<   end time
                             let start =  self.faceRecognitionStartTimes![service] //
                             let nanoTime = end.uptimeNanoseconds - start!.uptimeNanoseconds  //
                             let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
@@ -753,7 +746,8 @@ class MexFaceRecognition
                             
                             SKToast.show(withMessage: "FaceRecognition  time: \(timeInterval) result: \(data)")
                             
-                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceRecognized"), object: d)   //  doNextFaceRecognition
+                        //    let msg = "FaceRecognized" + service    // JT 19.02.04
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "FaceRecognized"), object: d)   //  doNextFaceRecognition "FaceRecognized"
                             
                             
                             let latency = String( format: "%4.3f", timeInterval * 1000 ) //  ms

@@ -58,7 +58,7 @@ class SpeedTestSettingsViewController: FormViewController
         {
             $0.title = "Latency Test Packets"
             $0.selectorTitle = "Latency Test Packets"
-            $0.options = ["4", "10", "20"]
+            $0.options = ["5", "10", "20"]  // JT 19.01.31
             $0.value = UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "4" // initially selected
         }.onChange
         { /*[weak self]*/ row in

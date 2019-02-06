@@ -66,11 +66,7 @@ class FaceDetectionViewController: UIViewController
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
     var currentCaptureDevice: AVCaptureDevice?
 
-//        deinit  // JT 19.01.29
-//    {
-//        session.stopRunning()   // JT 19.01.29
-//    }
-    
+
     override func viewDidLoad()
     {
         super.viewDidLoad()
@@ -128,9 +124,9 @@ class FaceDetectionViewController: UIViewController
             self.configureSession()
         }
 
-        /// --- tmp
+        /// ---
 
-        let barButtonItem = UIBarButtonItem(title: "X-cameras", style: .plain, target: self, action: #selector(FaceDetectionViewController.switchButtonAction(sender:))) // JT 18.12.14 todo toggle?
+        let barButtonItem = UIBarButtonItem(title: "X-cameras", style: .plain, target: self, action: #selector(FaceDetectionViewController.switchButtonAction(sender:))) // JT 18.12.14
 
         navigationItem.rightBarButtonItem = barButtonItem // JT 18.11.28 tmp
 
@@ -526,18 +522,18 @@ extension FaceDetectionViewController
         {
             NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FaceDetection"), object: nil, queue: nil) // JT 18.11.26
             { notification in
-                // Swift.print("RegisterClient \(notification)")
+                // Swift.print("FaceDetection \(notification)")
 
                 let d = notification.object as! [[Int]]
 
                 // SKToast.show(withMessage: "FaceDetection raw result\(d)")
-
                 // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
 
                 let a = d[0] // get face rect
 
-                // let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
                 let r = convertPointsToRect(a) // JT 18.12.13
+
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil)     // JT 19.02.03
 
                 self.previewView.drawFaceboundingBox2(rect: r, hint: self.sentImageSize) // JT 18.11.28 blue
 
@@ -721,8 +717,6 @@ extension FaceDetectionViewController
                 for a in aa
                 {
                     let r = convertPointsToRect(a)
-                    
-                  //  self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
                     
                     let _ = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize)   // JT 19.01.04
                     
@@ -1017,7 +1011,6 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 //            }
 
             
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil)  
             
             faceDetectionEdge.FaceDetection(rotateImage, "Edge") // edge
             faceDetectionCloud.FaceDetection(rotateImage, "Cloud") //     cloud  OK
