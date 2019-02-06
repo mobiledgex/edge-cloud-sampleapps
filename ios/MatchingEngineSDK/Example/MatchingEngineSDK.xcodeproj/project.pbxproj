@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		25478330220A327500991177 /* OSAtomicInt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547832F220A327500991177 /* OSAtomicInt.swift */; };
+		25478332220A333F00991177 /* ExtensionVars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25478331220A333F00991177 /* ExtensionVars.swift */; };
 		25A067CD2200EBA300626184 /* Sample_client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A067CC2200EBA300626184 /* Sample_client.swift */; };
 		25A067CF2200F1C200626184 /* CMSampleBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A067CE2200F1C200626184 /* CMSampleBufferExtension.swift */; };
 		25A067D822021CED00626184 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 25A067D622021CED00626184 /* LaunchScreen.storyboard */; };
@@ -169,6 +171,8 @@
 /* Begin PBXFileReference section */
 		0B5C1FDA2F3805D8FF67DC77 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		0ED8B696923D673B04828D51 /* Pods-MatchingEngineSDK_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MatchingEngineSDK_Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-MatchingEngineSDK_Example/Pods-MatchingEngineSDK_Example.debug.xcconfig"; sourceTree = "<group>"; };
+		2547832F220A327500991177 /* OSAtomicInt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = OSAtomicInt.swift; path = ThirdParty/OSAtomicInt.swift; sourceTree = "<group>"; };
+		25478331220A333F00991177 /* ExtensionVars.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ExtensionVars.swift; path = ThirdParty/ExtensionVars.swift; sourceTree = "<group>"; };
 		25A067CC2200EBA300626184 /* Sample_client.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sample_client.swift; sourceTree = "<group>"; };
 		25A067CE2200F1C200626184 /* CMSampleBufferExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CMSampleBufferExtension.swift; path = "ThirdParty/AppleFaceDetection-master/VisionDetection/CMSampleBufferExtension.swift"; sourceTree = "<group>"; };
 		25A067D02200FE6400626184 /* MatchingEngineSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = MatchingEngineSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -451,6 +455,8 @@
 		25DDF662220023E4003AF5E3 /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				25478331220A333F00991177 /* ExtensionVars.swift */,
+				2547832F220A327500991177 /* OSAtomicInt.swift */,
 				25A067CE2200F1C200626184 /* CMSampleBufferExtension.swift */,
 				25DDF74C2200C9C6003AF5E3 /* RFAboutView-Swift */,
 				25DDF74A22002E00003AF5E3 /* PreviewView.swift */,
@@ -1119,6 +1125,7 @@
 				25DDF74B22002E00003AF5E3 /* PreviewView.swift in Sources */,
 				25DDF698220029AD003AF5E3 /* CircularSpinner.swift in Sources */,
 				25DDF702220029E0003AF5E3 /* ButtonRowWithPresent.swift in Sources */,
+				25478330220A327500991177 /* OSAtomicInt.swift in Sources */,
 				25DDF73922002A96003AF5E3 /* IPLocationRequest.swift in Sources */,
 				25DDF71E220029E0003AF5E3 /* ListCheckRow.swift in Sources */,
 				25DDF6F4220029E0003AF5E3 /* Row.swift in Sources */,
@@ -1148,6 +1155,7 @@
 				25DDF75F2200C9C6003AF5E3 /* UIViewController+sizeForPercent.swift in Sources */,
 				25DDF6EF220029E0003AF5E3 /* Helpers.swift in Sources */,
 				25DDF61B22001793003AF5E3 /* FaceDectectionSettingsViewController.swift in Sources */,
+				25478332220A333F00991177 /* ExtensionVars.swift in Sources */,
 				25DDF61922001793003AF5E3 /* FaceDetectionViewController.swift in Sources */,
 				25DDF700220029E0003AF5E3 /* AlertRow.swift in Sources */,
 				25DDF724220029E0003AF5E3 /* TriplePickerRow.swift in Sources */,
@@ -1338,6 +1346,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -1359,6 +1368,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

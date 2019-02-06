@@ -14,7 +14,8 @@ import Vision
 
 class PreviewView: UIView
 {
-    private var maskLayerMex = [CAShapeLayer]()    // JT 18.12.14 face boxes
+    private var maskLayerMexCloud = [CAShapeLayer]()    // face box // JT 19.02.04
+    private var maskLayerMexEdge = [CAShapeLayer]()     // JT 19.02.04
     private var maskLayer = [CAShapeLayer]()
 
     // MARK: AV capture properties
@@ -58,8 +59,9 @@ class PreviewView: UIView
         return mask
     }
     
-    private func createLayer(in rect: CGRect, color color: CGColor) -> CAShapeLayer // JT 18.12.17
+    private func createLayer(in rect: CGRect, color: CGColor) -> CAShapeLayer // JT 18.12.17
     {
+       // Swift.print("createLayer \(color)") // JT 19.02.05
         let mask = CAShapeLayer()
         
         mask.frame = rect
@@ -75,17 +77,36 @@ class PreviewView: UIView
     }
     
  
-    
-    private func createLayer4(in rect: CGRect) -> CAShapeLayer
+    private func createLayerCloud(in rect: CGRect, color: CGColor = UIColor.orange.cgColor) -> CAShapeLayer   // JT 19.02.04
     {
+        Swift.print("createLayerCloud \(color)") // JT 19.02.05
+
+        let mask = CAShapeLayer()
+        
+        mask.frame = rect
+        mask.cornerRadius = 10
+        mask.opacity = 0.75
+        mask.borderColor = color  // JT 19.02.04
+        mask.borderWidth = 3.0
+        
+        maskLayerMexCloud.append(mask)   // JT 19.02.04
+        layer.insertSublayer(mask, at: 1)
+        
+        return mask
+    }
+    
+    private func createLayerEdge(in rect: CGRect, color: CGColor = UIColor.green.cgColor) -> CAShapeLayer   // JT 19.02.04
+    {
+        Swift.print("createLayerEdge \(color)") // JT 19.02.05
+
         let mask = CAShapeLayer()
         mask.frame = rect
         mask.cornerRadius = 10
         mask.opacity = 0.75
-        mask.borderColor = UIColor.green.cgColor    // JT 18.12.13
-        mask.borderWidth = 3.0  // JT 18.12.14 ???
+        mask.borderColor = color    // JT 18.12.13
+        mask.borderWidth = 3.0
         
-        maskLayerMex.append(mask)
+        maskLayerMexEdge.append(mask)   // JT 19.02.04
         layer.insertSublayer(mask, at: 1)
         
         return mask
@@ -125,7 +146,7 @@ class PreviewView: UIView
         let localProcessing = UserDefaults.standard.bool(forKey: "Local processing")    // JT 18.12.17
         if localProcessing == true
         {
-            _ = createLayer(in: facebounds, color: UIColor.yellow.cgColor  )
+            _ = createLayer(in: facebounds, color: UIColor.yellow.cgColor  )    // local yellow
         }
      }
     
@@ -144,7 +165,7 @@ class PreviewView: UIView
         // The coordinates are normalized to the dimensions of the processed image, with the origin at the image's lower-left corner.
         let facebounds = getFaceBounds( rect: rect, hint: sentImageSize)
         
-        _ = createLayer(in: facebounds, color: UIColor.green.cgColor  )    // green
+        _ = createLayerCloud(in: facebounds, color: UIColor.orange.cgColor  )    // green orange
         
         return facebounds   // JT 18.12.14
    }
@@ -154,7 +175,7 @@ class PreviewView: UIView
         // The coordinates are normalized to the dimensions of the processed image, with the origin at the image's lower-left corner.
         let facebounds = getFaceBounds( rect: rect, hint: sentImageSize)
 
-        _ = createLayer(in: facebounds, color: UIColor.orange.cgColor    )       // JT 18.12.17
+        _ = createLayerEdge(in: facebounds, color: UIColor.green.cgColor    )       // JT 18.12.17
 
         
         return facebounds   // JT 18.12.14
@@ -247,12 +268,24 @@ class PreviewView: UIView
         maskLayer.removeAll()
     }
     
-    func removeMaskLayerMex()   // JT 18.12.14
+    func removeMaskLayerMexCloud()      // JT 19.02.04
     {
-        for mask in maskLayerMex
+        for mask in maskLayerMexCloud
         {
             mask.removeFromSuperlayer()
         }
-        maskLayerMex.removeAll()
+        maskLayerMexCloud.removeAll()
     }
+    
+    func removeMaskLayerMexEdge()      // JT 19.02.04
+    {
+        for mask in maskLayerMexEdge
+        {
+            mask.removeFromSuperlayer()
+        }
+        maskLayerMexEdge.removeAll()
+    }
+    
+    
+    
 }

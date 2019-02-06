@@ -49,6 +49,8 @@ public class Cloudlet // implements Serializable? todo?
 
     private var mBaseUri: String = ""
     private var downloadUri: String = "" // rebuilt at runtime
+    private var socketdUri: String = "" // rebuilt at runtime   // JT 19.02.05
+
     var hostName: String = ""
     var openPort: Int = 7777
     let socketTimeout: Int = 3000
@@ -75,6 +77,19 @@ public class Cloudlet // implements Serializable? todo?
 
         update(cloudletName, appName, carrierName, gpsLocation, distance, uri, urlPrefix, marker, numBytes, numPackets) // JT 19.01.30
 
+        let autoStart = UserDefaults.standard.bool(forKey: "Latency Test Auto-Start") ?? false  // JT 19.01.30  // JT 19.02.05
+        
+        if autoStart
+        {
+            let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "4") //
+            
+            runLatencyTest(numPings: numPings!) //runLatencyTest
+        }
+        else
+        {
+                // JT 19.02.06
+        }
+        
         if CloudletListHolder.getSingleton().getLatencyTestAutoStart()
         {
             // All AsyncTask instances are run on the same thread, so this queues up the tasks.
@@ -116,11 +131,13 @@ public class Cloudlet // implements Serializable? todo?
 
         let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5")
 
-        runLatencyTest(numPings: numPings!)
+      //  runLatencyTest(numPings: numPings!)   // JT 19.02.06 fix JT07
     }
 
     func runLatencyTest(numPings: Int)
     {
+        latencyTestTaskRunning = false //   // JT 19.02.05 cheat
+
         if latencyTestTaskRunning
         {
             Swift.print("LatencyTest already running")
@@ -129,25 +146,35 @@ public class Cloudlet // implements Serializable? todo?
         }
         latencyTestTaskRunning = true
 
-        if uri != "" && uri.range(of: "azure") == nil
+        let azure = uri.range(of: "azure") != nil   // JT 19.01.30  // JT 19.02.05
+        if uri != "" //&& // JT 19.01.30
         {
             Swift.print("uri: \(uri)")
             // Ping several times
             latencies.removeAll()
             pings.removeAll()
-
+            
             for _ in 0 ..< numPings
             {
-                pings.append(uri) //  N pings
+                if azure
+                {
+                    pings.append(socketdUri)    // JT 19.01.30
+                }
+                else
+                {
+                    pings.append(uri) //  N pings
+                }
             }
-
+            
             pingNext()
         }
 
-        latencyTestTaskRunning = false //
+
 
         // post upateLatencies
         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateLatencies"), object: nil)
+        
+        dump()  // JT 19.02.05
     }
 
     deinit
@@ -159,16 +186,27 @@ public class Cloudlet // implements Serializable? todo?
     {
         guard pings.count > 0 else
         {
+            latencyTestTaskRunning = false //
+
             return
         }
 
+        Swift.print("0latencies \(self.latencies)")   // JT 19.01.30
+
         let host = pings.removeFirst()
 
-        let latencyTestMethod = UserDefaults.standard.string(forKey: "LatencyTestMethod")
+      //  let latencyTestMethod = UserDefaults.standard.string(forKey: "LatencyTestMethod")
 
-        if false &&  latencyTestMethod == "Socket"
+        var useSocket = false
+        Swift.print("uri \(uri)")   // JT 19.01.30
+        if ( uri.contains("azure"))
         {
-            future = GetSocketLatency(host, 7000) // JT 19.01.16
+            useSocket = true    // JT 19.01.30  // JT 19.02.05
+        }
+        
+        if useSocket    // &&  latencyTestMethod == "Socket"    // JT 19.02.05
+        {
+            future = GetSocketLatency(host, 7777)   // JT 19.01.30
             
             future!.on(success:
                 {
@@ -178,7 +216,10 @@ public class Cloudlet // implements Serializable? todo?
                     let duration = Double(d["latency"] as! String  ) // JT 19.01.16
 
                     // print("\(ping) latency (ms): \(latency)")
-                    self.latencies.append(duration!)  // JT 19.01.16
+                    self.latencies.append(duration! * 1000)  // JT 19.01.16  // JT 19.02.05
+                    
+                       Swift.print("latencies \(self.latencies)")   // JT 19.01.30
+
                     self.latencyMin = self.latencies.min()!
                     self.latencyMax = self.latencies.max()!
                     
@@ -187,13 +228,23 @@ public class Cloudlet // implements Serializable? todo?
                     self.latencyAvg = sumArray / Double(self.latencies.count)
                     
                     self.latencyStddev = standardDeviation(arr: self.latencies)
-                    
+                
+                    Swift.print("•latencyMin \(self.latencyMin)")    // JT 19.02.05
+                    Swift.print("latencyMax \(self.latencyMax)")
+                    Swift.print("latencyAvg \(self.latencyAvg)")
+                    Swift.print("latencyStddev \(self.latencyStddev)")
+
                     let latencyMsg = String(format: "%4.3f", self.latencyAvg)
                     
-                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateLatencies"), object: latencyMsg)
+                    
+                    self.pingNext()  // JT 19.01.30 // JT 19.02.05
+
+            },
+                failure: {
+                    print("Socket failed with error: \($0)")
                     
             },
-                failure: { print("Socket failed with error: \($0)") },
                 completion: { let _ = $0    //print("completed with result: \($0)" )
                                                     
             })
@@ -202,6 +253,7 @@ public class Cloudlet // implements Serializable? todo?
         {
             // Ping once
             let pingOnce = SwiftyPing(host: host, configuration: PingConfiguration(interval: 0.5, with: 5), queue: DispatchQueue.global())
+            
             pingOnce?.observer = { _, response in
                 let duration = response.duration
                 print("cloudlet latency: \(duration)")  // JT 19.01.28
@@ -209,18 +261,27 @@ public class Cloudlet // implements Serializable? todo?
                 
                 // print("\(ping) latency (ms): \(latency)")
                 self.latencies.append(response.duration * 1000) // JT 19.01.14
+                
+                Swift.print("latencies \(self.latencies)")   // JT 19.01.30
+
                 self.latencyMin = self.latencies.min()!
                 self.latencyMax = self.latencies.max()!
                 
                 let sumArray = self.latencies.reduce(0, +)
                 
                 self.latencyAvg = sumArray / Double(self.latencies.count)
-                
+ 
+                Swift.print("••latencyMin \(self.latencyMin)")    // JT 19.02.05
+                Swift.print("latencyMax \(self.latencyMax)")
+                Swift.print("latencyAvg \(self.latencyAvg)")
+                Swift.print("latencyStddev \(self.latencyStddev)")
+
                 self.latencyStddev = standardDeviation(arr: self.latencies)
                 
                 let latencyMsg = String(format: "%4.3f", self.latencyAvg)
                 
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateLatencies"), object: latencyMsg) // JT 19.02.05
+                self.pingNext()  // JT 19.01.30 // JT 19.02.05
             }
             pingOnce?.start() // JT 19.01.14
         }
@@ -250,6 +311,8 @@ public class Cloudlet // implements Serializable? todo?
 
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
             Swift.print("downloadUri1: \(downloadUri)") // DEBUG
+            
+            socketdUri = hostName   // JT 19.01.30
         }
         else
         {
@@ -257,6 +320,8 @@ public class Cloudlet // implements Serializable? todo?
             hostName = theFQDN_prefix + uri   // JT 19.01.30
             downloadUri = "http://\(hostName):\(openPort)/getdata?numbytes=\(mNumBytes)"
             Swift.print("downloadUri: \(downloadUri)") // DEBUG
+            
+            socketdUri = hostName   // JT 19.01.30
         }
         self.uri = uri
     }
@@ -530,7 +595,16 @@ public class Cloudlet // implements Serializable? todo?
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: "tranferRate"), object: tranferRate) // post
         }
     }
+    
+    func dump() // JT 19.02.05
+    {
+        Swift.print("latencyMin \(latencyMin)")     // JT
+        Swift.print("latencyAvg \(latencyAvg)")     // JT
+        Swift.print("latencyMax \(latencyMax)")     // JT
+        Swift.print("latencyStddev \(latencyStddev)")     // JT
+    }
 }
+
 
 extension UIDevice
 {
@@ -564,6 +638,8 @@ func GetSocketLatency(_ host: String, _ port: Int32, _ postMsg: String? = nil)  
         {
             let client = TCPClient(address: host, port: port) // JT 19.01.16 SwiftSocket
 
+            let _ = client.connect( timeout: 10 )      // JT 19.02.05
+
             client.close() // JT 19.01.16
             
             //                 promise.failure(value: ["latency": latencyMsg as AnyObject])  // JT 19.01.16
@@ -573,11 +649,13 @@ func GetSocketLatency(_ host: String, _ port: Int32, _ postMsg: String? = nil)  
  //       print("host: \(host)\n Latency \(time / 1000.0) ms") // JT 19.01.16
         if time > 0
         {
-            let latencyMsg = String(format: "%4.2f", time / 1000.0)
+            let latencyMsg = String(format: "%4.2f", time  )    // JT 19.02.05 19.01.30
             
             if postMsg != nil && postMsg != ""
             {
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postMsg!), object: latencyMsg)
+                let latencyMsg2 = String(format: "%4.2f", time  ) // ms // JT 19.02.05
+
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postMsg!), object: latencyMsg2)
             }
             promise.succeed(value: ["latency": latencyMsg as AnyObject])  // JT 19.01.16
         }

@@ -93,42 +93,42 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate
         { cell, _ in
             cell.imageView?.image = UIImage(named: "About")
         }
-        form +++ Section("Benchmark")
-            <<< ButtonRow("Edge")
-        {
-            $0.title = $0.tag
-
-            Swift.print("todo! Edge")
-
-            $0.onCellSelection(self.edgeBenchmarkTapped)
-        }
-        .cellSetup
-        { cell, _ in
-            let im = UIImage(named: "ic_marker_cloudlet-web")
-
-            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
-
-            let ti = im!.imageWithColor(tintColorGray)
-
-            cell.imageView?.image = ti // UIImage(named: ti)
-        }
-
-            <<< ButtonRow("Local")
-        {
-            $0.title = $0.tag
-
-            Swift.print("todo! Local")  // Log
-        }
-        .cellSetup
-        { cell, _ in
-            let im = UIImage(named: "ic_marker_mobile-web")
-
-            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
-
-            let ti = im!.imageWithColor(tintColorGray)
-
-            cell.imageView?.image = ti
-        }
+//        form +++ Section("Benchmark")
+//            <<< ButtonRow("Edge")
+//        {
+//            $0.title = $0.tag
+//
+//            Swift.print("todo! Edge")
+//
+//            $0.onCellSelection(self.edgeBenchmarkTapped)
+//        }
+//        .cellSetup
+//        { cell, _ in
+//            let im = UIImage(named: "ic_marker_cloudlet-web")
+//
+//            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
+//
+//            let ti = im!.imageWithColor(tintColorGray)
+//
+//            cell.imageView?.image = ti // UIImage(named: ti)
+//        }
+//
+//            <<< ButtonRow("Local")
+//        {
+//            $0.title = $0.tag
+//
+//            Swift.print("todo! Local")  // Log
+//        }
+//        .cellSetup
+//        { cell, _ in
+//            let im = UIImage(named: "ic_marker_mobile-web")
+//
+//            let tintColorGray = UIColor(red: 0.416, green: 0.14, blue: 0.416, alpha: 0.416)
+//
+//            let ti = im!.imageWithColor(tintColorGray)
+//
+//            cell.imageView?.image = ti
+//        } // JT 19.02.05
     }
 
     class LogoView: UIView
@@ -199,9 +199,14 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate
         
         let vc = storyboard.instantiateViewController(withIdentifier: "FaceDetectionViewController") // same controller. todo clone
         
+        doAFaceDetection = true // JT 19.02.05
         doAFaceRecognition = true
-        UserDefaults.standard.set(true, forKey: "doFaceRecognition")
         
+        faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next this is what starts things
+
+        UserDefaults.standard.set(true, forKey: "doFaceRecognition")
+        UserDefaults.standard.synchronize()  // JT 19.02.04
+
         navigationController!.pushViewController(vc, animated: true)
     }
     
@@ -214,8 +219,11 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate
 
         doAFaceRecognition = false
 
-        UserDefaults.standard.set(false, forKey: "doFaceRecognition")
+        faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next this is what starts things
 
+        UserDefaults.standard.set(false, forKey: "doFaceRecognition")
+        UserDefaults.standard.synchronize()  // JT 19.02.04
+        
         navigationController!.pushViewController(vc, animated: true)
     }
 

@@ -458,7 +458,7 @@ class MexGetAppInst
 
                     let i2 = textToImage(drawText: "M", inImage: resized, atPoint: CGPoint(x: 11, y: 4))
                     
-                    marker?.icon = (cloudletName.contains("microsoft") || cloudletName.contains("azure")) ? i2 : resized    // JT 19.01.30
+                    marker?.icon = (cloudletName.contains("microsoft") || cloudletName.contains("azure") || carrierName.contains("azure")) ? i2 : resized    // JT 19.01.30 // JT 19.01.31
 
                     //                        init(_ cloudletName: String,
                     //                        _ appName: String,

@@ -127,7 +127,7 @@ public class Cloudlet // implements Serializable? todo?
 
         let numPings = Int(UserDefaults.standard.string(forKey: "Latency Test Packets") ?? "5")
 
-        runLatencyTest(numPings: numPings!)
+        //  runLatencyTest(numPings: numPings!)   // JT 19.02.06 fix JT07
     }
 
     func runLatencyTest(numPings: Int)
@@ -256,7 +256,7 @@ public class Cloudlet // implements Serializable? todo?
                 
                 NotificationCenter.default.post(name: NSNotification.Name(rawValue: "latencyAvg"), object: latencyMsg)
                 
-                self.pingNext()  // JT 19.01.30
+                self.pingNext()  // JT 19.01.30 
 
             }
             pingOnce?.start() // JT 19.01.14

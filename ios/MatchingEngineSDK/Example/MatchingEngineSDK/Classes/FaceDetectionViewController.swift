@@ -5,6 +5,7 @@
 //  Created by Wei Chieh Tseng on 09/06/2017.
 //  Copyright © 2017 Willjay. All rights reserved.
 //
+// mofidied by Jean Tantra 2018-2019
 
 import AVFoundation
 import UIKit
@@ -14,6 +15,9 @@ import NSLogger
 import MatchingEngineSDK        // JT 19.01.30 for Future
 
 var doAFaceDetection = true // JT 18.11.26 todo refactor patterned.
+var faceDetectCount:OSAtomicInt32 = OSAtomicInt32(0)   // JT 19.02.05
+var pendingCount:OSAtomicInt32 = OSAtomicInt32(0)   // JT 19.02.05
+
 // Note: we build array of images with service (image,service)
 var doAFaceRecognition = false // JT 18.12.10 one at a time
 
@@ -23,6 +27,12 @@ enum MexKind: Int
     case mexCloud
     case mexEdge
 }
+
+//let faceDetectionEdge = MexFaceRecognition() // JT 18.12.15/
+//let faceDetectionCloud = MexFaceRecognition() // JT 18.12.15
+
+let faceDetectionRecognition = MexFaceRecognition() // JT 18.12.15
+
 
 class FaceDetectionViewController: UIViewController
 {
@@ -49,14 +59,16 @@ class FaceDetectionViewController: UIViewController
     var futureEdge: Future<[String: AnyObject], Error>? // async result (captured by async?) // JT 18.12.13
     var futureCloud: Future<[String: AnyObject], Error>? // async result (captured by async?)    // JT 18.12.13
 
-    let faceDetectionEdge = MexFaceRecognition() // JT 18.12.15
-    let faceDetectionCloud = MexFaceRecognition() // JT 18.12.15
-    
-    var calcRollingAverageCloud = MovingAverage()    // JT 18.12.17
+    var faceDetectionFutureEdge: Future<[String: AnyObject], Error>?    // JT 19.02.05
+    var faceDetectionFutureCloud: Future<[String: AnyObject], Error>?   // JT 19.02.05
+
+     var calcRollingAverageCloud = MovingAverage()    // JT 18.12.17
     var rollingAverageCloud = 0.0    // JT 18.12.17
 
     var calcRollingAverageEdge = MovingAverage()    // JT 18.12.17
     var rollingAverageEdge = 0.0    // JT 18.12.17
+
+    var usingFrontCamera = false    // JT 19.01.29  // JT 19.02.05
 
     override func viewDidLoad()
     {
@@ -115,9 +127,10 @@ class FaceDetectionViewController: UIViewController
             self.configureSession()
         }
 
-        /// --- tmp
+        /// --- t
 
-        let barButtonItem = UIBarButtonItem(title: "StopTmp", style: .plain, target: self, action: #selector(FaceDetectionViewController.stopIt(sender:))) // JT 18.12.14 todo toggle?
+        let barButtonItem = UIBarButtonItem(title: "X-cameras", style: .plain, target: self, action: #selector(FaceDetectionViewController.switchButtonAction(sender:)))
+
 
         navigationItem.rightBarButtonItem = barButtonItem // JT 18.11.28 tmp
 
@@ -130,7 +143,7 @@ class FaceDetectionViewController: UIViewController
         // ---
 
         let latencyCloud = UserDefaults.standard.string(forKey: "latencyCloud") // JT 18.12.14
-       networkLatencyCloudLabel.text = latencyCloud != nil ? "Cloud: \(latencyCloud!) ms" : "Cloud: None ms"    // JT 19.01.14
+       networkLatencyCloudLabel.text = latencyCloud != nil ? "latencyCloud: \(latencyCloud!) ms" : "Cloud: None ms"    // JT 19.01.14
         
         let latencyEdge = UserDefaults.standard.string(forKey: "latencyEdge") // JT 18.12.14
 
@@ -332,8 +345,13 @@ class FaceDetectionViewController: UIViewController
             return
         }
 
+        for i : AVCaptureDeviceInput in (session.inputs as! [AVCaptureDeviceInput])
+        {
+            self.session.removeInput(i)
+        }   // JT 19.01.29  // JT 19.02.05
+        
         session.beginConfiguration()
-        session.sessionPreset = .high
+        session.sessionPreset = .high   // JT 19.01.29 image quality
 
         // Add video input.
         do
@@ -356,8 +374,16 @@ class FaceDetectionViewController: UIViewController
                 defaultVideoDevice = frontCameraDevice
             }
 
+            defaultVideoDevice = (usingFrontCamera ? getFrontCamera() : getBackCamera())  // JT 19.01.29    // JT 19.02.05
+
             let videoDeviceInput = try AVCaptureDeviceInput(device: defaultVideoDevice!)
 
+            for i : AVCaptureDeviceInput in (session.inputs as! [AVCaptureDeviceInput])
+            {
+                self.session.removeInput(i)
+            }   // JT 19.01.29
+            
+            
             if session.canAddInput(videoDeviceInput)
             {
                 session.addInput(videoDeviceInput)
@@ -390,7 +416,7 @@ class FaceDetectionViewController: UIViewController
             else
             {
                 print("Could not add video device input to the session")
-                setupResult = .configurationFailed
+                setupResult = .configurationFailed    // JT 19.02.05
                 session.commitConfiguration()
                 return
             }
@@ -416,7 +442,7 @@ class FaceDetectionViewController: UIViewController
         else
         {
             print("Could not add metadata output to the session")
-            setupResult = .configurationFailed
+       //     setupResult = .configurationFailed    // JT 19.02.05
             session.commitConfiguration()
             return
         }
@@ -501,6 +527,35 @@ extension FaceDetectionViewController
 
         if true // JT 18.11.26
         {
+            NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FaceDetectionCloud"), object: nil, queue: nil) // JT 18.11.26
+            { notification in
+                 Swift.print("FaceDetectionCloud \(notification)")
+                
+                let d = notification.object as! [[Int]]
+                
+                // SKToast.show(withMessage: "FaceDetection raw result\(d)")
+                
+                // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
+                
+                let a = d[0] // get face rect
+
+            }
+            
+            NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FaceDetectionEdge"), object: nil, queue: nil) // JT 18.11.26
+            { notification in
+                // Swift.print("FaceDetectionEdge \(notification)")
+                
+                let d = notification.object as! [[Int]]
+                
+                // SKToast.show(withMessage: "FaceDetection raw result\(d)")
+                
+                // Swift.print("FaceDetection\n\(d)") // JT 18.11.27
+                
+                let a = d[0] // get face rect
+                
+            }
+            
+            
             NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "FaceDetection"), object: nil, queue: nil) // JT 18.11.26
             { notification in
                 // Swift.print("RegisterClient \(notification)")
@@ -523,7 +578,6 @@ extension FaceDetectionViewController
 
    //             Swift.print("--------- do next doAFaceDetection") // JT 18.12.14    // JT 19.01.28
                 print(".", terminator:"")   // JT 19.01.28
-                doAFaceDetection = true // JT 18.11.26
             }
         }
 
@@ -604,10 +658,11 @@ extension FaceDetectionViewController
             // let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
             let r = convertPointsToRect(a) // JT 18.12.13
 
-            let _ = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize) // JT 18.11.28
 
             DispatchQueue.main.async
             {
+                let _ = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize) // JT 18.11.28
+
                 self!.faceRecognitonNameCloudLabel.text = name
                 self!.faceRecognitonNameCloudLabel.isHidden = false
 
@@ -620,6 +675,8 @@ extension FaceDetectionViewController
             guard let _ = self else { return }
 
             let d = notification.object as! [String: Any] // Dictionary/json
+
+            self!.previewView.removeMaskLayerMexEdge() // JT 18.12.14 erase old
 
             if d["success"] as! String == "true"
             {
@@ -634,15 +691,15 @@ extension FaceDetectionViewController
                 //   let r = CGRect(CGFloat(a[0]), CGFloat(a[1]), CGFloat(a[2] - a[0]), CGFloat(a[3] - a[1])) // face rect
                 // let r = convertPointsToRect(a)  // JT 18.12.13
 
-                self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
 
                 let a = d["rect"] as! [Int] // JT 18.12.15
                 let r = convertPointsToRect(a) // JT 18.12.15
 
-                let r2 = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize) // JT 18.11.28 green
 
                 DispatchQueue.main.async
                 {
+                    let r2 = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize) // JT 18.11.28 green
+
                     // Swift.print("subject \(subject)")   // JT 18.12.14
                     self!.faceRecognitonNameEdgeLabel.text = subject
                     self!.faceRecognitonNameEdgeLabel.isHidden = false
@@ -654,35 +711,38 @@ extension FaceDetectionViewController
             else
             {
                 self!.faceRecognitonNameEdgeLabel.text = "" // JT 18.12.14
-                self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
             }
         }
 
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceDetectedCloud"), object: nil, queue: nil)
         { [weak self] notification in
             guard let _ = self else { return }
-
+            
             let d = notification.object as! [String: Any] // Dictionary/json
-
-         //   if d["success"] as! Bool == true
-            if d["success"] as! String == "true"    // JT 18.12.20
+            
+            DispatchQueue.main.async
             {
-                let aa = d["rects"] as! [[Int]]
-                for a in aa
-                {
-                    let r = convertPointsToRect(a)
+                    self!.previewView.removeMaskLayerMexCloud() // JT 18.12.14 erase old
                     
-                    let _ = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize)
-                    
-                    let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
-                    if multiface == false
+                    if d["success"] as! String == "true"    // JT 18.12.20
                     {
-                        break   // JT 18.12.20 just showed first
+                        let aa = d["rects"] as! [[Int]]
+                        for a in aa
+                        {
+                            let r = convertPointsToRect(a)
+                            
+                            let _ = self!.previewView.drawFaceboundingBoxCloud(rect: r, hint: self!.sentImageSize)
+                            
+                            let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
+                            if multiface == false
+                            {
+                                break   // JT 18.12.20 just showed first
+                            }
+                        }
                     }
-                }
+                    else
+                    {}
             }
-            else
-            {}
         }
         
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "faceDetectedEdge"), object: nil, queue: nil) // JT 18.12.20
@@ -691,41 +751,53 @@ extension FaceDetectionViewController
             
             let d = notification.object as! [String: Any] // Dictionary/json
             
-      //      if  d["success"] as! Bool == true    // JT 18.12.20 API changed
-            if d["success"] as! String == "true"
-            {
-                let aa = d["rects"] as! [[Int]]
-                for a in aa
+            DispatchQueue.main.async
                 {
-                    let r = convertPointsToRect(a)
+                    self!.previewView.removeMaskLayerMexEdge() // JT 18.12.14 erase old
                     
-                  //  self!.previewView.removeMaskLayerMex() // JT 18.12.14 erase old
-                    
-                    let _ = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize)   // JT 19.01.04
-                    
-                    let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
-                    if multiface == false
+                    //      if  d["success"] as! Bool == true    // JT 18.12.20 API changed
+                    if d["success"] as! String == "true"
                     {
-                        break   // JT 18.12.20 just showed first
+                        let aa = d["rects"] as! [[Int]]
+                        for a in aa
+                        {
+                            let r = convertPointsToRect(a)
+                            
+                            
+                            let _ = self!.previewView.drawFaceboundingBoxEdge(rect: r, hint: self!.sentImageSize)   // JT 19.01.04
+                            
+                            let multiface = UserDefaults.standard.bool(forKey: "Multi-face")
+                            if multiface == false
+                            {
+                                break   // JT 18.12.20 just showed first
+                            }
+                        }
                     }
-                }
+                    else
+                    {}
             }
-            else
-            {}
         }
         
         
-        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil, queue: nil) // JT 18.12.20
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "removeMaskLayerMexEdge"), object: nil, queue: nil) // JT 18.12.20
         { [weak self] notification in
             guard let _ = self else { return }
             
             DispatchQueue.main.async
             {
-                self!.previewView.removeMaskLayerMex() //   erase old
+                self!.previewView.removeMaskLayerMexEdge() //   erase old   // JT 19.02.04
             }
         }
         
-
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "removeMaskLayerMexCloud"), object: nil, queue: nil) // JT 18.12.20
+        { [weak self] notification in
+            guard let _ = self else { return }
+            
+            DispatchQueue.main.async
+                {
+                    self!.previewView.removeMaskLayerMexCloud() //   erase old
+            }
+        }
     }
     
 
@@ -769,7 +841,7 @@ extension FaceDetectionViewController
     @objc func FaceDetectionLatencyCloud(_ notification: Notification)
     {
         let v = notification.object
-        Swift.print("Cloud: [\(v!)]")
+        Swift.print("FaceDetectionLatencyCloud: [\(v!)]")
 
         DispatchQueue.main.async
         {
@@ -905,6 +977,44 @@ extension FaceDetectionViewController
     }
 }
 
+
+extension FaceDetectionViewController   // JT 19.01.29 choice camera
+{
+    
+    @IBAction func switchButtonAction(sender _: UIBarButtonItem)    //_ sender: Any)    // JT 19.01.29
+    {
+        usingFrontCamera = !usingFrontCamera
+        
+        Swift.print("usingFrontCamera: \(usingFrontCamera)")    // JT 19.01.29
+        sessionQueue.async
+            { [unowned self] in
+                self.configureSession()
+        }
+    }
+    
+    func getFrontCamera() -> AVCaptureDevice?
+    {
+        let videoDevices = AVCaptureDevice.devices(for: AVMediaType.video)  // prefered: AVCaptureDeviceDiscoverySession
+        
+        for device in videoDevices
+        {
+            let device = device
+            if device.position == AVCaptureDevice.Position.front
+            {
+                return device
+            }
+        }
+        return nil
+    }
+    
+    func getBackCamera() -> AVCaptureDevice
+    {
+        return AVCaptureDevice.default(for: AVMediaType.video)!  // JT 19.01.29
+    }
+    
+}
+
+
 extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDelegate // JT 18.11.16
 {
     // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
@@ -923,44 +1033,20 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 
         let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: exifOrientation, options: requestOptions)
 
-        if doAFaceDetection
+        let nn = faceDetectCount.add(0)  // JT 19.02.05
+        let p = pendingCount.add(0)  // JT 19.02.05
+       // if         doAFaceDetection //   we get here for every frame
+
+        if  nn == 3  || (nn >= 1 && p == 0)   // JT 19.02.05 bandaid
         {
-            doAFaceDetection = false
+            faceDetectCount = OSAtomicInt32(2)   // JT 19.02.05
+
+           pendingCount = OSAtomicInt32(0)   // JT 19.02.05
+
+            doAFaceDetection = false // not another till finished processing
             let image = sampleBuffer.uiImage
 
-            let size = image!.size
-            let fudge: CGFloat = 16.0    // JT 19.01.16 was 8
-            let newSize = CGSize(width: size.width / fudge, height: size.height / fudge)
-            let smaller: UIImage? = image?.imageResize(sizeChange: newSize)
-
-            let rotateImage = smaller!.rotate(radians: .pi / 2.0)
-            //   Swift.print("\(rotateImage!.size)")  // Log
-
-            sentImageSize = rotateImage!.size
-
-//            DispatchQueue.main.async
-//                { [unowned self] in
-//                 //   self.tmpImageView.image = rotateImage    // JT 18.11.27
-//
-//            }
-
-//            // Create path.
-//            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-//            if let filePath = paths.first?.appendingPathComponent("MyImageName.png") {
-//                // Save image.
-//                do {
-//                    try smaller!.pngData()?.write(to: filePath, options: .atomic)   // JT 18.11.27 tmp
-//                }
-//                catch {
-//                    // Handle the error
-//                }
-//            }
-
-            
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "removeMaskLayerMex"), object: nil)  
-            
-            faceDetectionEdge.FaceDetection(rotateImage, "Edge") // edge
-            faceDetectionCloud.FaceDetection(rotateImage, "Cloud") //     cloud  OK
+            self.doFaceDetections( image: image)   // JT 19.02.05
         }
 
         do
@@ -972,6 +1058,188 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
             print(error)
         }
     }
+    
+    func doFaceDetections( image: UIImage?)  // JT 19.02.05
+    {
+        let size = image!.size
+        let fudge: CGFloat = 16.0    // JT 19.01.16 was 8
+        let newSize = CGSize(width: size.width / fudge, height: size.height / fudge)
+        let smaller: UIImage? = image?.imageResize(sizeChange: newSize)
+        
+        let rotateImage = smaller!.rotate(radians: .pi / 2.0)
+        //   Swift.print("\(rotateImage!.size)")  // Log
+        
+        sentImageSize = rotateImage!.size
+
+        faceDetectionFutureEdge = faceDetectionRecognition.FaceDetection(rotateImage, "Edge") // edge async
+        faceDetectionFutureCloud = faceDetectionRecognition.FaceDetection(rotateImage, "Cloud") //     cloud
+        
+        faceDetectionFutureEdge!.on(   // JT 19.02.05
+            success:
+            {
+                let service = "Edge"   // JT 19.02.05
+                // print("FaceDetection received value: \($0)")
+                
+                let reply = $0 as [String: Any]
+                
+                let postName = "faceDetected" + service
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName ) , object: reply) //  draw blue rect around
+                
+                SKToast.show(withMessage: "FaceDetection \(service)")
+                
+                let doFaceRec = UserDefaults.standard.bool(forKey: "doFaceRecognition") // false means just detect
+                
+                if doFaceRec && faceRecognitionImages2.count == 0 //doAFaceRecognition    // JT 19.02.04
+                {
+                    //   doAFaceRecognition = false // wait for que to empty
+                    
+                    if service == "Cloud"
+                    {
+                        faceRecognitionImages2.removeAll()
+                        
+                        faceRecognitionImages2.append((image!, "Edge")) // )    // tupple   use whole image
+                        faceRecognitionImages2.append((image!, "Cloud") )    //   use whole image  //
+                        
+                        Swift.print("")
+                        //          faceDetectionCloud.doNextFaceRecognition()    // process q
+                        faceDetectionRecognition.doNextFaceRecognition()    // JT 19.02.05
+                        
+                        // NotificationCenter.default.post(name: NSNotification.Name(rawValue: "doNextFaceRecognition" ) , object: nil)    // JT 19.02.05
+                        
+                    }
+                }
+                else if doFaceRec == false // just detection
+                {
+                    if service == "Cloud"   // JT 19.02.04  // JT 19.02.04 could use atomic counter
+                    {
+                        doAFaceDetection = true // JT 19.02.04
+                        Swift.print("doAFaceDetection = true")
+                    }
+                    else
+                    {
+                        // Swift.print("EDGE D")
+                    }
+                    
+                    
+                }
+                
+                
+                
+                Swift.print("-- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+                
+                // Log.logger.name = "FaceDetection"
+                // logw("\FaceDetection result: \(registerClientReply)")
+        },
+            failure: { print("FaceDetection failed with error: \($0)")
+                // self.doNextFaceRecognition()
+                
+                //NotificationCenter.default.post(name: NSNotification.Name(rawValue: "doNextFaceRecognition" ) , object: nil)    // JT 19.02.05
+                // process q
+                doAFaceDetection = true // JT 19.02.04
+                Swift.print("doAFaceDetection = true")  // JT 19.02.05
+                
+                //   faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+                
+        },
+            completion: { _ = $0 // print("completed with result: \($0)")
+                
+                Swift.print("completion edge")
+
+                if faceDetectCount.decrement() == 0
+                {
+                    //faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+                    setFlagToProcessNextFrame() // JT 19.02.05
+                    Swift.print("-E- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+                }
+        }
+        )
+        
+        faceDetectionFutureCloud!.on(   // JT 19.02.05
+            success:
+            {
+                let service = "Cloud"   // JT 19.02.05
+                // print("FaceDetection received value: \($0)")
+                
+                let reply = $0 as [String: Any]
+                
+                let postName = "faceDetected" + service
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName ) , object: reply) //  draw blue rect around
+                
+                SKToast.show(withMessage: "FaceDetection \(service)")
+                
+                let doFaceRec = UserDefaults.standard.bool(forKey: "doFaceRecognition") // false means just detect
+                
+                if doFaceRec && faceRecognitionImages2.count == 0 //doAFaceRecognition    // JT 19.02.04
+                {
+                    //   doAFaceRecognition = false // wait for que to empty
+                    
+                    if service == "Cloud"
+                    {
+                        faceRecognitionImages2.removeAll()
+                        
+                        faceRecognitionImages2.append((image!, "Edge")) // )    // tupple   use whole image
+                        faceRecognitionImages2.append((image!, "Cloud") )    //   use whole image  //
+                        
+                        Swift.print("")
+            //          faceDetectionCloud.doNextFaceRecognition()    // process q
+                        faceDetectionRecognition.doNextFaceRecognition()    // JT 19.02.05
+
+                       // NotificationCenter.default.post(name: NSNotification.Name(rawValue: "doNextFaceRecognition" ) , object: nil)    // JT 19.02.05
+
+                    }
+                }
+                else if doFaceRec == false // just detection
+                {
+                    if service == "Cloud"   // JT 19.02.04  // JT 19.02.04 could use atomic counter
+                    {
+                        Swift.print("doAFaceDetection = true")
+                    }
+                    else
+                    {
+                        // Swift.print("EDGE D")
+                    }
+                    
+                    
+                }
+                
+
+                
+                Swift.print("-X- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+                
+                // Log.logger.name = "FaceDetection"
+                // logw("\FaceDetection result: \(registerClientReply)")
+        },
+            failure: { print("FaceDetection failed with error: \($0)")
+               // self.doNextFaceRecognition()
+                
+                //NotificationCenter.default.post(name: NSNotification.Name(rawValue: "doNextFaceRecognition" ) , object: nil)    // JT 19.02.05
+// process q
+                doAFaceDetection = true // JT 19.02.04
+                Swift.print("doAFaceDetection = true")  // JT 19.02.05
+                
+             //   faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+                
+        },
+            completion: { _ = $0 // print("completed with result: \($0)")
+                Swift.print("completion 1") // JT 19.02.05
+                let n = faceDetectCount.decrement()  // JT 19.02.05
+                if n == 0
+                {
+                 //   faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+                    setFlagToProcessNextFrame() // JT 19.02.05
+                    Swift.print("-C- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+
+                }
+                
+        }
+        )
+    }
+}
+
+func setFlagToProcessNextFrame()
+{
+    faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+
 }
 
 extension UIDeviceOrientation
