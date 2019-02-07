@@ -67,14 +67,14 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             <<< LabelRow    //TextRow   //
         {
             $0.title = "Distance:"
-            $0.value = UserDefaults.standard.string(forKey: "Distance:") ?? "1237.338"
+            $0.value = UserDefaults.standard.string(forKey: "Distance:") ?? "0"
             // todo String(format: "%.3f", value)
         }
         form +++ Section("Latency") //
             <<< LabelRow    //TextRow   //
         {
             $0.title = "Latency Min:"
-            $0.value = UserDefaults.standard.string(forKey: "Latency Min:") ?? "4.00" + " ms"
+            $0.value = (UserDefaults.standard.string(forKey: "Latency Min:") ?? "9999") + " ms" // JT 19.02.06
             $0.tag = "Latency Min:" //
 
         }.cellUpdate
@@ -89,7 +89,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             $0.title = "Latency Avg:"
             $0.tag = "Latency Avg:" //
 
-            $0.value = (UserDefaults.standard.string(forKey: "Latency Avg:") ?? "5") + " ms"
+            $0.value = (UserDefaults.standard.string(forKey: "Latency Avg:") ?? "0") + " ms"    // JT 19.02.06
         }
         .cellUpdate
         { _, row in //
@@ -104,7 +104,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             $0.title = "Latency Max:"
             $0.tag = "Latency Max:" //
 
-            $0.value = UserDefaults.standard.string(forKey: "Latency Max:") ?? "96.1" + " ms" // JT 18.11.04
+            $0.value = (UserDefaults.standard.string(forKey: "Latency Max:") ?? "0") + " ms" // JT 18.11.04
         }
         .cellUpdate
         { _, row in //
@@ -118,7 +118,7 @@ class CloudletDetailsViewController: FormViewController, CircularSpinnerDelegate
             $0.title = "Latency Stddev:"
             $0.tag = "Latency Stddev:" //
 
-            $0.value = UserDefaults.standard.string(forKey: "Latency Stddev:") ?? "0.0" + " ms"
+            $0.value = (UserDefaults.standard.string(forKey: "Latency Stddev:") ?? "0.0") + " ms"   // JT 19.02.06
         }
         .cellUpdate
         { _, row in //

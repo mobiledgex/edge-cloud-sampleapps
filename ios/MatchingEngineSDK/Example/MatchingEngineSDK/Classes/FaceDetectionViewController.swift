@@ -14,7 +14,7 @@ import Vision
 import NSLogger
 import MatchingEngineSDK        // JT 19.01.30 for Future
 
-var doAFaceDetection = true // JT 18.11.26 todo refactor patterned.
+//var doAFaceDetection = true // JT 18.11.26 todo refactor patterned.
 var faceDetectCount:OSAtomicInt32 = OSAtomicInt32(0)   // JT 19.02.05
 var pendingCount:OSAtomicInt32 = OSAtomicInt32(0)   // JT 19.02.05
 
@@ -150,8 +150,6 @@ class FaceDetectionViewController: UIViewController
         networkLatencyEdgeLabel.text = latencyEdge != nil ? "Edge: \(latencyEdge!) ms" : "Edge: None ms"    // JT 19.01.14
 
         // ---
-
-        doAFaceDetection = true
 
         let localProcessing = UserDefaults.standard.bool(forKey: "Show full process latency")
         if localProcessing == true
@@ -1043,7 +1041,6 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 
            pendingCount = OSAtomicInt32(0)   // JT 19.02.05
 
-            doAFaceDetection = false // not another till finished processing
             let image = sampleBuffer.uiImage
 
             self.doFaceDetections( image: image)   // JT 19.02.05
@@ -1108,48 +1105,24 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
                         
                     }
                 }
-                else if doFaceRec == false // just detection
-                {
-                    if service == "Cloud"   // JT 19.02.04  // JT 19.02.04 could use atomic counter
-                    {
-                        doAFaceDetection = true // JT 19.02.04
-                        Swift.print("doAFaceDetection = true")
-                    }
-                    else
-                    {
-                        // Swift.print("EDGE D")
-                    }
-                    
-                    
-                }
-                
-                
-                
-                Swift.print("-- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+               
+                //Swift.print("-- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
                 
                 // Log.logger.name = "FaceDetection"
                 // logw("\FaceDetection result: \(registerClientReply)")
         },
             failure: { print("FaceDetection failed with error: \($0)")
-                // self.doNextFaceRecognition()
-                
-                //NotificationCenter.default.post(name: NSNotification.Name(rawValue: "doNextFaceRecognition" ) , object: nil)    // JT 19.02.05
-                // process q
-                doAFaceDetection = true // JT 19.02.04
-                Swift.print("doAFaceDetection = true")  // JT 19.02.05
-                
-                //   faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+           
                 
         },
             completion: { _ = $0 // print("completed with result: \($0)")
-                
+                // we come here after sucess/failure
                 Swift.print("completion edge")
 
                 if faceDetectCount.decrement() == 0
                 {
-                    //faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
                     setFlagToProcessNextFrame() // JT 19.02.05
-                    Swift.print("-E- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+                   // Swift.print("-E- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
                 }
         }
         )
@@ -1188,50 +1161,27 @@ extension FaceDetectionViewController: AVCaptureVideoDataOutputSampleBufferDeleg
 
                     }
                 }
-                else if doFaceRec == false // just detection
-                {
-                    if service == "Cloud"   // JT 19.02.04  // JT 19.02.04 could use atomic counter
-                    {
-                        Swift.print("doAFaceDetection = true")
-                    }
-                    else
-                    {
-                        // Swift.print("EDGE D")
-                    }
-                    
-                    
-                }
                 
-
-                
-                Swift.print("-X- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
+               // Swift.print("-X- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
                 
                 // Log.logger.name = "FaceDetection"
                 // logw("\FaceDetection result: \(registerClientReply)")
         },
             failure: { print("FaceDetection failed with error: \($0)")
-               // self.doNextFaceRecognition()
-                
-                //NotificationCenter.default.post(name: NSNotification.Name(rawValue: "doNextFaceRecognition" ) , object: nil)    // JT 19.02.05
-// process q
-                doAFaceDetection = true // JT 19.02.04
-                Swift.print("doAFaceDetection = true")  // JT 19.02.05
-                
-             //   faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
+
                 
         },
             completion: { _ = $0 // print("completed with result: \($0)")
-                Swift.print("completion 1") // JT 19.02.05
+                Swift.print("completion Cloud") // JT 19.02.05
                 let n = faceDetectCount.decrement()  // JT 19.02.05
                 if n == 0
                 {
-                 //   faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
                     setFlagToProcessNextFrame() // JT 19.02.05
                     Swift.print("-C- \(faceDetectCount.add(0))")  // JT  // JT 19.02.05
 
                 }
                 
-        }
+            }
         )
     }
 }
