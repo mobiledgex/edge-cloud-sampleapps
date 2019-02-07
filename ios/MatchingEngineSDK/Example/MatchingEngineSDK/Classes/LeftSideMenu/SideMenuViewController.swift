@@ -199,7 +199,6 @@ class SideMenuViewController: FormViewController, GIDSignInUIDelegate
         
         let vc = storyboard.instantiateViewController(withIdentifier: "FaceDetectionViewController") // same controller. todo clone
         
-        doAFaceDetection = true // JT 19.02.05
         doAFaceRecognition = true
         
         faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next this is what starts things

@@ -484,7 +484,7 @@ class MexFaceRecognition
             
 
             pendingCount.increment()    // JT 19.02.05
-            Swift.print("0=-- \(faceDetectCount.add(0)) \(pendingCount.add(0)) ")  // JT  // JT 19.02.05
+            //Swift.print("0=-- \(faceDetectCount.add(0)) \(pendingCount.add(0)) ")  // JT  // JT 19.02.05  // JT 19.02.06
 
             let requestObj = Alamofire.request(urlStr,
                                                method: HTTPMethod.post,
@@ -543,37 +543,15 @@ class MexFaceRecognition
 
                         }
 
-                        if service == "Cloud" // JT 19.02.04
-                        {
-                            let doFaceRec =  UserDefaults.standard.bool(forKey: "doFaceRecognition") //
-                            if doFaceRec == false
-                            {
-                                doAFaceDetection = true // atomic, one at a time
-                               // print("T", terminator:"")   // JT 19.01.28
-
-                            }//next
-                            // else we set this afte faceRec
-                        }
+                  
                         
                        
                     case let .failure(error):
                         print(error)
-                        //  SKToast.show(withMessage: "FaceDetection Failed: \(error)")
+
                         promise.fail(error: error)
-                        print("F ", terminator:"")   // JT 19.01.28
 
-//                        if service == "Cloud" // JT 19.02.04
-//                        {
-//                            let doFaceRec =  UserDefaults.standard.bool(forKey: "doFaceRecognition") //
-//                            if doFaceRec == false
-//                            {
-//                                doAFaceDetection = true // atomic, one at a time
-//                            }//next
-//                        }
-                            // JT 19.02.05 if anything fails just start over
-                        doAFaceDetection = true // atomic, one at a time
-
-                        Swift.print("error doAFaceDetection = true")
+                        Swift.print("error doAFaceDetection")
 
                     } // end sucess/failure
                     
@@ -584,7 +562,7 @@ class MexFaceRecognition
                         faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
                     }
                     
-                    Swift.print("2=-- \(faceDetectCount.add(0)) \(pendingCount.add(0)) ")  // JT  // JT 19.02.05
+                    //Swift.print("2=-- \(faceDetectCount.add(0)) \(pendingCount.add(0)) ")  // JT  // JT 19.02.05  // JT 19.02.06
                     
             }
             
@@ -604,9 +582,6 @@ class MexFaceRecognition
     {
         if faceRecognitionImages2.count == 0    // we put 2 copys of same image and route to cloud/edge
         {
-            doAFaceDetection = true //  todo tmp
-            doAFaceRecognition = true
-            
             faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
 
             print("+", terminator:"")   // JT 19.01.28
