@@ -35,7 +35,7 @@ class PermissionViewController: UIViewController
 
     func showWhy1()
     {
-        let alert = UIAlertController(title: "Alert", message: "Why app needs permission", preferredStyle: .alert) // .actionSheet)
+        let alert = UIAlertController(title: "Alert", message: "App needs your loation to verify it.", preferredStyle: .alert) // .actionSheet) // JT 19.02.10
 
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
             // execute some code when this option is selected
@@ -46,7 +46,7 @@ class PermissionViewController: UIViewController
 
     func showWhy2()
     {
-        let alert = UIAlertController(title: "Alert", message: "Why app needs permission to verify location- Because", preferredStyle: .alert) // .actionSheet)
+        let alert = UIAlertController(title: "Alert", message: "Why app needs permission is to verify location.", preferredStyle: .alert) // .actionSheet)
 
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
             // execute some code when this option is selected
@@ -77,7 +77,7 @@ class PermissionViewController: UIViewController
 }
 
 extension PermissionViewController: SPPermissionDialogDelegate
-{
+{ 
     func didHide()
     {
         print("SPPermissionDialogDelegate - didHide")
@@ -91,6 +91,10 @@ extension PermissionViewController: SPPermissionDialogDelegate
         UserDefaults.standard.set( true, forKey: "firstTimeUsagePermission")    // JT 18.12.17
 
         let _ = navigationController?.popViewController(animated: true)   // JT 19.01.16
+        
+
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "permissionGrantedGetLocaltionUpdates"), object: nil)   // JT 19.02.10
+
     }
 
     func didDenied(permission _: SPPermissionType)
