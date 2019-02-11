@@ -44,7 +44,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
         theMap = viewMap //   publish
         theMap!.delegate = self //  for taps
-        theMap!.isMyLocationEnabled = true //   blue dot
+     //   theMap!.isMyLocationEnabled = true //   blue dot  // JT 19.02.10
 
         let camera: GMSCameraPosition = GMSCameraPosition.camera(withLatitude: 48.857165, longitude: 2.354613, zoom: 8.0)
 
@@ -73,11 +73,17 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         // -----
         getInitialLatencies()   // JT 19.02.05
    
-        getLocaltionUpdates()
+        let firstTimeUsagePermission = UserDefaults.standard.bool(forKey: "firstTimeUsagePermission")    // JT 18.12.17
+        if firstTimeUsagePermission == true
+        {
+             getLocaltionUpdates()
+            theMap!.isMyLocationEnabled = true //   blue dot  // JT 19.02.10
+
+        }
         
        // use registerClient API
-        MexRegisterClient.shared.registerClientNow( appName: "MobiledgeX SDK Demo",
-                                                   devName:  "MobiledgeX SDK Demo",
+        MexRegisterClient.shared.registerClientNow( appName: appName,
+                                                   devName:  devName,
                                                    appVers: "1.0")  // JT 19.02.03 chained below to also load cloudlets
     }
     
@@ -183,6 +189,21 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         
         UserDefaults.standard.set("0", forKey: "Latency Avg:")  // JT 19.01.31
 
+        
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "permissionGrantedGetLocaltionUpdates"), object: nil, queue: nil)
+        { [weak self] notification in
+            guard let _ = self else { return }
+            
+          //  let d = notification.object as! [String:Any]
+                // JT 19.02.10
+            
+            self!.getLocaltionUpdates()   // JT 19.02.10
+            theMap!.isMyLocationEnabled = true //   blue dot  // JT 19.02.10
+
+        }
+        
+        
     } // end observers()
 
     // MARK: -
