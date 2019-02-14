@@ -1,28 +1,44 @@
 //
 //  AppDelegate.swift
-//  MobiledgeXSDKDemo.IOS
+//  MatchingEngineSDK Example
 //
-//  Created by meta30 on 10/23/18.
-//  Copyright © 2018 MobiledgeX. All rights reserved.
-// 
+//  Created by Jean Tantra, Metatheory.com
+//
+// Copyright 2019 MobiledgeX
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 // Note: this demo app is meant to demonstrate mobiledgex apis
 
 import UIKit
 
 import GoogleMaps
-import GoogleSignIn //   #import <Google/SignIn.h>
+import GoogleSignIn
 
-import NSLogger // JT 19.01.07
+import NSLogger // JT 19.01.07 instramentation
 
-var services: Any? //   = GMSServices.sharedServices()
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate
 {
+    var services: Any? //   = GMSServices.sharedServices()
+
+    #warning ("Action item: you need to replace  the values assigned: kAPIKey/kClientID ")      // JT 19.02.11
+    //    #error ("Action item: you need to replace  the values assigned: kAPIKey/kClientID ")      // JT 19.02.11
+
     // replace the following two values with your own
     //
-    let kAPIKey = "AIzaSyCNWqii1sVJ0NGU12UvRBbvDhqBqpcSyP0" // JT my personal APIKey - use your own
+    let kAPIKey = "AIzaSyCNWqii1sVJ0NGU12UvRBbvDhqBqpcSyP0" // JT my personal APIKey - todo: use your own
     let kClientID = "406366254062-ci2micbnconnti5hhb7ltku9natmegct.apps.googleusercontent.com" // JT   for google signin, tmp use mine
 
     var window: UIWindow?
@@ -35,13 +51,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate
     
     func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool
     {
-        // Override point for customization after application launch.
+        // Swift.print("\(#function)")
 
-        #if true
+        #if true    // GIDSignIn
             GIDSignIn.sharedInstance().clientID = kClientID
             GIDSignIn.sharedInstance().delegate = self
-
         #endif
+        
         GMSServices.provideAPIKey(kAPIKey) // for maps
         services = GMSServices.sharedServices()
 
@@ -71,6 +87,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate
 
     func application(_: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool
     {
+        // Swift.print("\(#function)")
         return GIDSignIn.sharedInstance().handle(url as URL?,
                                                  sourceApplication: options[UIApplication.OpenURLOptionsKey.sourceApplication] as? String,
                                                  annotation: options[UIApplication.OpenURLOptionsKey.annotation])
@@ -80,28 +97,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate
 
     func applicationWillResignActive(_: UIApplication)
     {
+        // Swift.print("\(#function)")
+
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
     }
 
     func applicationDidEnterBackground(_: UIApplication)
     {
+        // Swift.print("\(#function)")
+
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     }
 
     func applicationWillEnterForeground(_: UIApplication)
     {
+        // Swift.print("\(#function)")
+
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
     }
 
     func applicationDidBecomeActive(_: UIApplication)
     {
+        // Swift.print("\(#function)")
+
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
 
     func applicationWillTerminate(_: UIApplication)
     {
+        // Swift.print("\(#function)")
+
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
@@ -123,6 +150,8 @@ extension  AppDelegate: GIDSignInDelegate
               didSignInFor user: GIDGoogleUser!,
               withError error: Error!)
     {
+        // Swift.print("\(#function)")
+
         if error != nil
         {
             // Swift.print("Error: GIDSignIn: \(error)")

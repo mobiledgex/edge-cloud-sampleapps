@@ -1,9 +1,22 @@
 //
 //  MatchingEngineSDK.swift
-//  MobiledgeXSDKDemo.IOS
+//  MatchingEngineSDK
 //
-//  Created by Jean Tantra, Metatheory.com on 12/26/18.
-//  Copyright © 2018 MobiledgeX. All rights reserved.
+//  Created by Jean Tantra, Metatheory.com
+//
+// Copyright 2019 MobiledgeX
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 //
 
 import Foundation
@@ -53,7 +66,7 @@ public class MexSDK // JT 19.01.29
 
         Swift.print("URI to post to:\n \(uri)\n")
 
-        if false
+        if ((false))
         {
             Swift.print("\(request)")
             /// logw("•uri:\n\(uri)\n") // JT 18.11.26 log to file
@@ -75,7 +88,7 @@ public class MexSDK // JT 19.01.29
             headers: MexSDK.shared.headers
         ).responseJSON
         { response in
-            if false
+            if (false)
             {
                 debugPrint("\n••\n\(response.request!)\n") // curl
             }
@@ -131,7 +144,7 @@ public class MexSDK // JT 19.01.29
 
                 //      Log.logger.name = "curl"  // JT 18.12.05 todo
 
-                let curl = response.request.debugDescription // JT 18.12.05
+                // let curl = response.request.debugDescription // JT 18.12.05  // JT 19.02.07
                 // logw("\n \(curl)\n")      // JT 18.12.05
                 // logw("postName:\(postName)\nresult:\n\(json)") //   log to file
 
@@ -146,7 +159,7 @@ public class MexSDK // JT 19.01.29
             //           print(response.timeline)
         }
 
-        if false // JT 18.12.28
+        if (false) // JT 18.12.28
         {
             debugPrint(requestObj) // dump curl
         }

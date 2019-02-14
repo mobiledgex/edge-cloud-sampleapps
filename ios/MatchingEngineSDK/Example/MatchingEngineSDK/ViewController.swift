@@ -1,10 +1,22 @@
 //
 //  ViewController.swift
-//  MobiledgeXSDKDemo.IOS
+//  MatchingEngineSDK Example
 //
-//  Created by meta30 on 10/23/18.
-//  Copyright © 2018 MobiledgeX. All rights reserved.
+//  Created by Jean Tantra, Metatheory.com
 //
+// Copyright 2019 MobiledgeX
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 import UIKit
 
@@ -37,6 +49,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
     {
         super.viewDidLoad()
 
+        // Swift.print("\(#function)")
+
         title = "MatchingEngineSDK Demo"    // JT 19.02.03
 
         // -----
@@ -44,7 +58,7 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
         theMap = viewMap //   publish
         theMap!.delegate = self //  for taps
-     //   theMap!.isMyLocationEnabled = true //   blue dot  // JT 19.02.10
+     //   theMap!.isMyLocationEnabled = true //   blue dot  // JT 19.02.10 first ask permission
 
         let camera: GMSCameraPosition = GMSCameraPosition.camera(withLatitude: 48.857165, longitude: 2.354613, zoom: 8.0)
 
@@ -78,10 +92,11 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         {
              getLocaltionUpdates()
             theMap!.isMyLocationEnabled = true //   blue dot  // JT 19.02.10
-
         }
         
+        //////////////////
        // use registerClient API
+        //
         MexRegisterClient.shared.registerClientNow( appName: appName,
                                                    devName:  devName,
                                                    appVers: "1.0")  // JT 19.02.03 chained below to also load cloudlets
@@ -89,18 +104,20 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
     
     func getInitialLatencies()  // JT 19.02.05
     {
+        // Swift.print("\(#function)")
+
         DispatchQueue.main.async {
             getNetworkLatencyCloud()    //   "latencyCloud"   // JT 19.01.16
         }
         DispatchQueue.main.async {
             getNetworkLatencyEdge() //   "latencyEdge"
         }
-        
-        
     }
     
     func observers()
     {
+        // Swift.print("\(#function)")
+
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "Client registered"), object: nil, queue: nil)
         { [weak self] notification in
             guard let _ = self else { return }
@@ -187,8 +204,6 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             processFindCloudletResult(d)  // JT 19.01.31 todo should be documented, at the least an example
         }
         
-        UserDefaults.standard.set("0", forKey: "Latency Avg:")  // JT 19.01.31
-
         
         
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "permissionGrantedGetLocaltionUpdates"), object: nil, queue: nil)
@@ -196,13 +211,10 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
             guard let _ = self else { return }
             
           //  let d = notification.object as! [String:Any]
-                // JT 19.02.10
             
             self!.getLocaltionUpdates()   // JT 19.02.10
             theMap!.isMyLocationEnabled = true //   blue dot  // JT 19.02.10
-
         }
-        
         
     } // end observers()
 
@@ -213,12 +225,14 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
         Swift.print("\(#function)")
         
         resetUserLocation(true)   // JT 19.01.31 todo
-        
-
     }
     
     func defaultUninitializedSettings() // JT 19.01.30
     {
+        // Swift.print("\(#function)")
+        
+        UserDefaults.standard.set("0", forKey: "Latency Avg:")  // JT 19.01.31
+
         if UserDefaults.standard.string(forKey: "Latency Test Packets") == nil
         {
             UserDefaults.standard.set("5", forKey: "Latency Test Packets")
@@ -247,6 +261,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
     
     func askPermission()    // JT 19.01.16
     {
+        // Swift.print("\(#function)")
+
         let storyboard = UIStoryboard(name: "Permissions", bundle: nil)
         
         let vc =  storyboard.instantiateViewController(withIdentifier: "PermissionViewController")
@@ -261,6 +277,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
     // show more place info when info marker is tapped
     func mapView(_: GMSMapView, didTapInfoWindowOf marker: GMSMarker)
     {
+        // Swift.print("\(#function)")
+
         if marker.userData == nil
         {
             return
@@ -423,6 +441,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
 
     private func showSpoofGpsDialog(_ spoofLatLng: CLLocationCoordinate2D) // LatLng)
     {
+        // Swift.print("\(#function)")
+
         if userMarker == nil
         {
             return
@@ -467,6 +487,8 @@ class ViewController: UIViewController, GMSMapViewDelegate, UIAdaptivePresentati
     
     func askPermissionToVerifyLocation()    // JT 19.01.15
     {
+        // Swift.print("\(#function)")
+
         let alert = UIAlertController(title: "Alert", message: "Choose", preferredStyle: .alert) // .actionSheet)
         
         alert.addAction(UIAlertAction(title: "Request permission To Verify Location", style: .default, handler: { _ in
