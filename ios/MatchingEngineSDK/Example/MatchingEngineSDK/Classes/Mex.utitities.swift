@@ -1,6 +1,7 @@
 //// misc extensions
 
 import Foundation
+
 import GoogleMaps
 
 func getColorByHex(rgbHexValue: UInt32, alpha: Double = 1.0) -> UIColor

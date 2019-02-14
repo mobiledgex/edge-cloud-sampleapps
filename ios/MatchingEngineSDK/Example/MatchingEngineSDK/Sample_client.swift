@@ -1,23 +1,37 @@
 // Sample Client of SDK
 //
 //  Sample_client.swift
-//  MobiledgeXSDKDemo.IOS
+//  MatchingEngineSDK Example
 //
-//  Port from cpp SDK demo to swift by Jean Tantra, Metatheory
-//  Copyright © 2018 MobiledgeX. All rights reserved.
+//  Port from cpp SDK demo to swift by Jean Tantra, Metatheory.com
 //
+
+// Copyright 2019 MobiledgeX
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import Foundation
+import CoreLocation
+import MapKit
+import Security
+import UIKit
 
 import Alamofire
-import Foundation
-import UIKit
-import GoogleMaps   // JT 19.01.29
-import Security
-import CoreLocation
-import MapKit  
+import GoogleMaps
 
-import NSLogger // JT 19.01.07
-import MatchingEngineSDK    // JT 19.01.29
-//import MatchingEngineSDK.Swift // JT 19.01.29
+import NSLogger // JT 19.01.07 dlog
+
+import MatchingEngineSDK    // SDK
 
 // ----------------------------------------
 
@@ -248,6 +262,8 @@ private func useCloudlets(_ findCloudletReply: [String: Any]) // unused
  */
 public func updateLocSimLocation(_ lat: Double, _ lng: Double)
 {
+    // Swift.print("\(#function)")
+
     let jd: [String: Any]? = ["latitude": lat, "longitude": lng]    // Dictionary/json
 
     let hostName: String = MexUtil.shared.generateDmeHostPath(MexUtil.shared.getCarrierName()).replacingOccurrences(of: "dme", with: "locsim")
@@ -282,6 +298,8 @@ public func updateLocSimLocation(_ lat: Double, _ lng: Double)
 
 func processFindCloudletResult(_ d: [String: Any])  // JT 19.01.31
 {
+    // Swift.print("\(#function)")
+
     for (index, cld) in d.enumerated()
     {
         Swift.print("\n•\n \(index):\(cld)")
@@ -336,6 +354,8 @@ func processFindCloudletResult(_ d: [String: Any])  // JT 19.01.31
 
 func resetUserLocation(_ show: Bool) // called by "Reset user location" menu
 {
+    // Swift.print("\(#function)")
+
     locationRequest = Locator.subscribePosition(accuracy: .house, onUpdate:
         { newLocation in
             // print("New location received: \(newLocation)")
@@ -368,6 +388,8 @@ private func stopGPS()
 
 func doUserMarker(_ loc: CLLocationCoordinate2D)
 {
+    // Swift.print("\(#function)")
+
     // requestWhenInUseAuthorization()
     
     userMarker = GMSMarker(position: loc)
@@ -388,6 +410,8 @@ func doUserMarker(_ loc: CLLocationCoordinate2D)
 
  public func retrieveLocation() -> [String: Any]
 {
+    // Swift.print("\(#function)")
+
     var location:[String: Any] = [ "latitude": -122.149349, "longitude": 37.459609] //     //  json location, somewhere
 
     if userMarker != nil // get app isnt sets userMarker
@@ -407,15 +431,15 @@ class MexFaceRecognition
     var faceDetectionStartTimes:[String:DispatchTime]? // two at a time cloud/edge
     var faceRecognitionStartTimes:[String:DispatchTime]? // two at a time cloud/edge
 
-    
    var faceRecognitionCurrentImage: UIImage?
-
     
     // Mark: -
     // Mark: FaceDetection
     
     func FaceDetection(_ image: UIImage?, _ service: String)         -> Future<[String: AnyObject], Error>
     {
+        // Swift.print("\(#function)")
+
         let broadcast =  "FaceDetectionLatency" + service
         
         let faceDetectionFuture = FaceDetectionCore(image, service, post: broadcast)
@@ -427,6 +451,8 @@ class MexFaceRecognition
     
     func FaceDetectionCore(_ image: UIImage?,  _ service: String, post broardcastMsg: String?)     -> Future<[String: AnyObject], Error>
     {
+        // Swift.print("\(#function)")
+
         let promise = Promise<[String: AnyObject], Error>()
         
         // detector/detect
@@ -474,16 +500,14 @@ class MexFaceRecognition
                 ]
 
             
-        //    faceDetectionStartTime = DispatchTime.now() // <<<<<<<<<< Start time  //
-            
             if faceDetectionStartTimes == nil   //
             {
-                faceDetectionStartTimes = [String:DispatchTime]()
+                faceDetectionStartTimes = [String:DispatchTime]()   // JT 19.02.11 todo threadsafe Dictionary
             }
             faceDetectionStartTimes![service] =  DispatchTime.now() //
             
 
-            pendingCount.increment()    // JT 19.02.05
+            let _ = pendingCount.increment()    // JT 19.02.05
             //Swift.print("0=-- \(faceDetectCount.add(0)) \(pendingCount.add(0)) ")  // JT  // JT 19.02.05  // JT 19.02.06
 
             let requestObj = Alamofire.request(urlStr,
@@ -497,7 +521,7 @@ class MexFaceRecognition
                     //    Swift.print("----\n")
                     //    Swift.print("\(response)")
                     //    debugPrint(response)
-                    pendingCount.decrement()    // JT 19.02.05
+                    let _ = pendingCount.decrement()    // JT 19.02.05
 
                     switch response.result
                     {
@@ -542,10 +566,7 @@ class MexFaceRecognition
                             print("N.\(service) ", terminator:"")   // JT 19.01.28
 
                         }
-
-                  
-                        
-                       
+                     
                     case let .failure(error):
                         print(error)
 
@@ -580,6 +601,8 @@ class MexFaceRecognition
     
     func doNextFaceRecognition()
     {
+        // Swift.print("\(#function)")
+
         if faceRecognitionImages2.count == 0    // we put 2 copys of same image and route to cloud/edge
         {
             faceDetectCount = OSAtomicInt32(3)  // JT 19.02.05 next
@@ -591,7 +614,7 @@ class MexFaceRecognition
         let tuple = faceRecognitionImages2.removeFirst()
         let imageOfFace = tuple.0 as UIImage
         let service = tuple.1 as String
-     faceRecognitionCurrentImage = imageOfFace
+        faceRecognitionCurrentImage = imageOfFace
         
         var faceRecognitionFuture:Future<[String: AnyObject], Error>? // async result (captured by async?)
         
@@ -637,6 +660,8 @@ class MexFaceRecognition
     func FaceRecognition(_ image: UIImage?, _ service: String)
         -> Future<[String: AnyObject], Error>   // JT 19.02.05
     {
+        // Swift.print("\(#function)")
+
         let promise = Promise<[String: AnyObject], Error>()
         
        // Logger.shared.log(.network, .info, image! )      //
@@ -680,7 +705,6 @@ class MexFaceRecognition
                 "Charsets": "utf-8",
                 ]
             
-       //     faceRecognitionStartTime = DispatchTime.now() // <<<<<<<<<< Start time    //
     
             if faceRecognitionStartTimes == nil   // LIT hack
             {
@@ -810,9 +834,7 @@ func getNetworkLatency(_ hostName:String, post name: String)    // JT 19.01.14
 //        }
 //
 //    })
-    
-    
-  
+
     
 }
 
