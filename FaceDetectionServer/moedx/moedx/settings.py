@@ -25,7 +25,7 @@ SECRET_KEY = '5=h6y_)8yihpe!p*oftdc!t9c0c&nfn7eczjq%o76xe^7$aq*y'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['23.99.193.4', '10.157.107.83', 'acrotopia.com', '127.0.0.1', 'localhost', '192.168.1.86', '172.16.1.4', '104.42.217.135', '37.50.143.103', '.mobiledgex.net', '52.183.46.191', '168.62.183.61', '192.168.100.12', '10.252.1.55', '35.199.188.102']
+ALLOWED_HOSTS = ['*']
 
 LOGGING = {
     'version': 1,
