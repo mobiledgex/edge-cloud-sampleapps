@@ -37,6 +37,15 @@ import MatchingEngineSDK    // SDK
 
 private var locationRequest: LocationRequest? // so we can stop updates
 
+// --------
+// face servers
+//
+private let faceServerPort: String = "8008"
+
+private let DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net"
+private let DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net"
+
+// --------
 
 // This file Handles Events from:
 //  Menu:
@@ -466,13 +475,13 @@ class MexFaceRecognition
         //    Swift.print("====================\n")
         //
         
-        getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_EDGE, post: "updateNetworkLatenciesEdge")
-        getNetworkLatency(MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud")  //
+        getNetworkLatency(DEF_FACE_HOST_EDGE, post: "updateNetworkLatenciesEdge")
+        getNetworkLatency(DEF_FACE_HOST_CLOUD, post: "updateNetworkLatenciesCloud")  //
         
-        let _ = GetSocketLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, Int32(MexUtil.shared.faceServerPort)!, "latencyCloud")   //
+        let _ = GetSocketLatency( DEF_FACE_HOST_CLOUD, Int32(faceServerPort)!, "latencyCloud")   //
         
         
-        let baseuri = (service == "Cloud" ? MexUtil.shared.DEF_FACE_HOST_CLOUD  : MexUtil.shared.DEF_FACE_HOST_EDGE) + ":" + MexUtil.shared.faceServerPort  //
+        let baseuri = (service == "Cloud" ? DEF_FACE_HOST_CLOUD  : DEF_FACE_HOST_EDGE) + ":" + faceServerPort  //
         
         let urlStr = "http://" + baseuri + faceDetectionAPI //   URLConvertible
         
@@ -678,7 +687,7 @@ class MexFaceRecognition
         
         
         let postMsg =  "faceRecognitionLatency" + service
-        let baseuri = (service ==  "Cloud" ? MexUtil.shared.DEF_FACE_HOST_CLOUD : MexUtil.shared.DEF_FACE_HOST_EDGE)   + ":" + MexUtil.shared.faceServerPort  //
+        let baseuri = (service ==  "Cloud" ? DEF_FACE_HOST_CLOUD : DEF_FACE_HOST_EDGE)   + ":" + faceServerPort  //
         
         let urlStr = "http://" + baseuri + faceRecognitonAPI //  URLConvertible
         
@@ -785,12 +794,12 @@ func convertPointsToRect(_ a:[Int])  ->CGRect    //   Mex data
 
 func getNetworkLatencyEdge()
 {
-    getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_EDGE, post: "latencyEdge")
+    getNetworkLatency( DEF_FACE_HOST_EDGE, post: "latencyEdge")
 }
 
 func getNetworkLatencyCloud()   // JT 18.12.27 ? broken?
 {
-    getNetworkLatency( MexUtil.shared.DEF_FACE_HOST_CLOUD, post: "latencyCloud")
+    getNetworkLatency( DEF_FACE_HOST_CLOUD, post: "latencyCloud")
 }
 
 
