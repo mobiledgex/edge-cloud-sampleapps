@@ -28,9 +28,9 @@ import NSLogger // JT
 
 // MARK: -
 
-public class MexSDK // JT 19.01.29
+public class MexSDK
 {
-    public static let shared = MexSDK() /// singleton access: MexSDK.shared.whatever    // JT 19.01.30
+    public static let shared = MexSDK() /// singleton access: MexSDK.shared.whatever
 
     var sessionManager: SessionManager? // alamofire: creeated based on host trust
     // need different SessionManager for each host
@@ -64,21 +64,23 @@ public class MexSDK // JT 19.01.29
     {
         let promise = Promise<[String: AnyObject], Error>() // completion callback
 
+        // - Logging
+        
         Swift.print("URI to post to:\n \(uri)\n")
 
-        if ((false))
+        if ((false)) // DEBUG
         {
             Swift.print("\(request)")
             /// logw("•uri:\n\(uri)\n") // JT 18.11.26 log to file
         }
-        LogMarker(postName) // JT 19.01.04
+        LogMarker(postName)
 
         Logger.shared.log(.network, .info, postName + " request\n \(request) \n") // JT 19.01.04
 
         //  logw("•request:\n\(request)\n") // JT 18.11.26 log to file
-
+        // --
+        
         dealWithTrustPolicy(uri) // certs
-        // Swift.print("==========\n")
 
         let requestObj = MexSDK.shared.sessionManager!.request(
             uri,
@@ -124,7 +126,7 @@ public class MexSDK // JT 19.01.29
                 Swift.print("\(error)")
                 // Do whatever here
                 // If error
-                promise.fail(error: error) // JT 18.11.28
+                promise.fail(error: error)
                 return
 
             case let .success(data):
@@ -137,18 +139,18 @@ public class MexSDK // JT 19.01.29
                 Swift.print("=\(postName)=\n \(json)")
 
                 // If success
-                promise.succeed(value: json) // JT 18.11.28
+                promise.succeed(value: json)
 
                 NotificationCenter.default.post(name: NSNotification.Name(rawValue: postName),
                                                 object: json)
+                // - Logging
+                //      Log.logger.name = "curl"  // J
 
-                //      Log.logger.name = "curl"  // JT 18.12.05 todo
-
-                // let curl = response.request.debugDescription // JT 18.12.05  // JT 19.02.07
-                // logw("\n \(curl)\n")      // JT 18.12.05
+                // let curl = response.request.debugDescription
+                // logw("\n \(curl)\n")
                 // logw("postName:\(postName)\nresult:\n\(json)") //   log to file
 
-                Logger.shared.log(.network, .info, postName + " reply json\n \(json) \n") // JT 19.01.04
+                Logger.shared.log(.network, .info, postName + " reply json\n \(json) \n")
             }
 
             //  Swift.print("\(response)")
@@ -159,14 +161,12 @@ public class MexSDK // JT 19.01.29
             //           print(response.timeline)
         }
 
-        if (false) // JT 18.12.28
+        if (false)  // DEBUG
         {
             debugPrint(requestObj) // dump curl
         }
 
-        Logger.shared.log(.network, .info, postName + " curl\n \(requestObj.debugDescription) \n") // JT 19.01.05
-
-        // Logger.shared.log(.network, .noise, postName + " xxx \n" )     // JT 19.01.05 gray
+        Logger.shared.log(.network, .info, postName + " curl\n \(requestObj.debugDescription) \n")
 
         return promise.future
     }
@@ -341,30 +341,9 @@ public class MexUtil // common to Mex... below
     public let appinstlistAPI: String = "/v1/getappinstlist"
     public let findcloudletAPI: String = "/v1/findcloudlet"
     
-    // API: facedetection.defaultcloud.mobiledgex.net:8008
-    // API: facedetection.defaultedge.mobiledgex.net:8008
     
-    public let faceServerPort: String = "8008" // JT 18.12.20 was "8000"
     
-    public let DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net" // JT 18.12.20
-    
-    public let DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net" // JT 18.12.20
-    
-    // let timeoutSec: UInt64 = 5000   //  unused todo
-    // var sessionManager: SessionManager?  // persist
-    
-    //    var appName = "" // Your application name. was "EmptyMatchEngineApp"
-    //    var devName = "" // Your developer name
-    //
-    //    let appVersionStr = "1.0"   // used by createRegisterClientRequest
-    //
-    //    let headers: HTTPHeaders = [
-    //        "Accept": "application/json",
-    //        "Content-Type": "application/json", // This is the default
-    //        "Charsets": "utf-8",
-    //    ]
-    
-    public var closestCloudlet = "" // JT 19.01.31
+    public var closestCloudlet = ""
     
     private init() //   singleton called as of first access to shared
     {
@@ -387,7 +366,7 @@ public class MexUtil // common to Mex... below
         return carrierName + "." + baseDmeHostInUse
     }
     
-    public func generateBaseUri(_ carrierName: String, _: UInt) -> String // JT 19.01.31
+    public func generateBaseUri(_ carrierName: String, _: UInt) -> String
     {
         return "https://\(generateDmeHostPath(carrierName)):\(dmePort)"
     }
@@ -400,7 +379,7 @@ public class MexUtil // common to Mex... below
 
 //  gets sessioncookie  used by getApps and verifyLoc
 //
-public class MexRegisterClient // JT 19.01.31
+public class MexRegisterClient
 {
     public static let shared = MexRegisterClient() // singleton
 
@@ -472,7 +451,7 @@ public class MexRegisterClient // JT 19.01.31
     {
         var regClientRequest = [String: String]() // Dictionary/json regClientRequest
 
-        regClientRequest["ver"] = "1" // JT 19.01.31
+        regClientRequest["ver"] = "1"
         regClientRequest["AppName"] = appName
         regClientRequest["DevName"] = devName
         regClientRequest["AppVers"] = appVers
@@ -483,7 +462,7 @@ public class MexRegisterClient // JT 19.01.31
     // MARK: registerClientNow
 
     
-    public func registerClientNow(appName: String, devName: String,  appVers: String) // called by top right menu  // JT 19.01.31 "1.0"
+    public func registerClientNow(appName: String, devName: String,  appVers: String) // called by top right menu  //  "1.0"
     {
         Swift.print("registerClientNow") // log
         Swift.print("Register MEX client.") // log
@@ -493,14 +472,14 @@ public class MexRegisterClient // JT 19.01.31
         Swift.print("\(baseuri)") // log
 
         // 🔵 API
-        let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest(appName:appName, devName: devName, appVers: appVers) // JT // JT 19.02.01
+        let registerClientRequest = MexRegisterClient.shared.createRegisterClientRequest(appName:appName, devName: devName, appVers: appVers)
 
         let urlStr = baseuri + MexUtil.shared.registerAPI
 
         let future =
             MexSDK.shared.postRequest(urlStr, registerClientRequest, "RegisterClient1")
 
-        MexRegisterClient.shared.future = future // JT 19.01.30
+        MexRegisterClient.shared.future = future
 
         MexRegisterClient.shared.future!.on(
             success:
@@ -548,7 +527,7 @@ public class MexGetAppInst
 {
     public static let shared = MexGetAppInst()
 
-    public var future: Future<[String: AnyObject], Error>? // JT 19.01.31
+    public var future: Future<[String: AnyObject], Error>?
 
     private init() // singleton
     {}
@@ -575,23 +554,17 @@ public class MexGetAppInst
             sessioncookie: MexRegisterClient.shared.sessioncookie
         ) // JT 19.01.31
 
-        //// Log.logger.name = "GetAppInstlist"
-        //// logw("\n getAppInstListRequest:\n \(getAppInstListRequest)")    // JT 18.12.27 todo remove logging
-
         // 🔵
         let urlStr = baseuri + MexUtil.shared.appinstlistAPI
         future = MexSDK.shared.postRequest(urlStr, getAppInstListRequest, "GetAppInstlist1")
 
-        future!.on(success: // JT 19.01.31
+        future!.on(success:
             {
                 print("GetAppInstlist1 received value: \($0)")
 
                 let d = $0 as [String: Any]
 
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "processAppInstList"), object: d) // JT 19.01.31
-
-                ////  Log.logger.name = "GetAppInstlist"  // JT 19.01.28
-                ////  logw("\n GetAppInstlist result: \(d)") // JT 18.12.27 todo remove logging   // JT 19.01.28
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "processAppInstList"), object: d)
 
             },
                    failure: { print("failed with error: \($0)") },
@@ -632,7 +605,7 @@ public class MexFindNearestCloudlet
         // 🔵 API
         MexRegisterClient.shared.future = MexSDK.shared.postRequest(urlStr, findCloudletRequest, "FindCloudlet1")
 
-        MexRegisterClient.shared.future!.on( // JT 19.01.30
+        MexRegisterClient.shared.future!.on(
             success:
             {
                 print("GetToken received value: \($0)")
@@ -642,7 +615,7 @@ public class MexFindNearestCloudlet
                 //                Log.logger.name = "FindCloudlet"
                 //                logw("\n FindCloudlet result:\n \(d)")
 
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "processFindCloudletResult"), object: d) // JT 19.01.31
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "processFindCloudletResult"), object: d)
 
             },
             failure: { print("failed with error: \($0)") },
@@ -661,9 +634,9 @@ public class MexVerifyLocation
     public static let shared = MexVerifyLocation()
 
     var future: Future<[String: AnyObject], Error>? // async result (captured by async?)
-    var future0: Future<[String: AnyObject], Error>? // async result (captured by async?)
+    var futureForGetToken: Future<[String: AnyObject], Error>? // async result (captured by async?)
 
-    var location = [String: Any]() // JT 19.01.31
+    var location = [String: Any]()
 
     private init() // singleton
     {}
@@ -676,17 +649,10 @@ public class MexVerifyLocation
         Swift.print("Verify Location of this Mex client.")
         Swift.print("===================================\n\n")
 
-        //  // JT 18.12.28
-        //        let baseuri = MexUtil.shared.generateBaseUri(MexUtil.shared.carrierNameInUse, MexUtil.shared.dmePort)
-        //        let loc = retrieveLocation()
-        //
-        //        let verifyLocationRequest = createVerifyLocationRequest(MexUtil.shared.carrierNameInUse, loc, "", sessioncookie: MexRegisterClient.shared.sessioncookie)    // JT 18.12.26
-        //
-        //        VerifyLocation(baseuri, verifyLocationRequest)
-
-        if MexRegisterClient.shared.tokenserveruri.count == 0 // JT 18.12.28
+ 
+        if MexRegisterClient.shared.tokenserveruri.count == 0
         {
-            Swift.print("TokenURI is empty!")
+            Swift.print("ERROR: TokenURI is empty!")
             //     let empty = [String: Any]()
             return
         }
@@ -696,9 +662,9 @@ public class MexVerifyLocation
 
             if MexRegisterClient.shared.tokenserveruri.count != 0
             {
-                future0 = getToken(MexRegisterClient.shared.tokenserveruri) // async, will call verify after getting token   // JT 19.01.31
+                futureForGetToken = getToken(MexRegisterClient.shared.tokenserveruri) // async, will call verify after getting token
 
-                future0!.on(
+                futureForGetToken!.on(
                     success:
                     {
                         print("GetToken received value: \($0)")
@@ -790,14 +756,10 @@ public class MexVerifyLocation
 
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: "Verifylocation success"), object: d) // JT 19.01.31
 
-            // let image =  makeUserMakerImage(MexRegisterClient.COLOR_VERIFIED)
-            // userMarker!.icon = image
         },
                    failure: { print("Verifylocation failed with error: \($0)")
 
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: "Verifylocation failure"), object: nil) // JT 19.01.31
-            // let image =  makeUserMakerImage(MexRegisterClient.COLOR_FAILURE)
-            //  userMarker!.icon = image
         },
                    completion: { _ = $0 // print("completed with result: \($0)")
 
@@ -807,7 +769,7 @@ public class MexVerifyLocation
 
 // MARK: -
 
-public extension Dictionary // JT 19.01.29
+public extension Dictionary
 {
     static func += (lhs: inout [Key: Value], rhs: [Key: Value])
     {

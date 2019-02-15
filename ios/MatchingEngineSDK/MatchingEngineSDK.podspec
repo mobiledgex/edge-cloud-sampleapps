@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'MatchingEngineSDK'
-  s.version          = '0.1.45'
+  s.version          = '0.1.47'
   s.summary          = 'The MobiledgeX SDK for iOS Swift provides Swift APIs that allows developers to communicate to MobiledgeX infrastructure and to utilize its services.'
 
 # This description is used to generate tags and improve search results.
