@@ -44,14 +44,11 @@ class FaceDetector(object):
 
     def detect_faces(self, frame):
         """ 
-        Return a face object that represents a detected face.
+        Return a list of face objects that represents detected faces.
         """
         rows, cols = frame.shape[:2]
         
-        self.all_faces = self.face_cascade.detectMultiScale(
-            frame, scaleFactor=1.1, minNeighbors=3, flags=0,
-            minSize=(int(rows / 5), int(rows / 5)),
-            maxSize=(int(rows * 2 / 3), int(rows * 2 / 3)))
+        self.all_faces = self.face_cascade.detectMultiScale(frame, scaleFactor=1.3, minNeighbors=5)
 
         if len(self.all_faces) == 0:
             return []
