@@ -45,6 +45,13 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onAttachFragment(Fragment fragment) {
+        // Rotating the device creates a new instance of the fragment. Update reference here.
+        if (fragment instanceof Camera2BasicFragment)
+            cameraFragment = (Camera2BasicFragment) fragment;
+    }
+
+    @Override
     public void finish() {
         Intent resultIntent = new Intent();
         String stats = cameraFragment.getStatsText();

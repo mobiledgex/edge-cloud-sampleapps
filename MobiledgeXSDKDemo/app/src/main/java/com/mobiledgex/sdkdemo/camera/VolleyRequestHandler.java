@@ -193,16 +193,16 @@ public class VolleyRequestHandler {
             busy = true;
             if(doNetLatency) {
                 count++;
-                if (count == 1 || count % PING_INTERVAL == 0) {
+//                if (count == 2 || count % PING_INTERVAL == 0) {
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
                             doSinglePing(host, latencyNetOnlyRollingAvg, cloudLetType);
-                            busy = false;
+//                            busy = false;
                         }
                     });
-                    return;
-                }
+//                    return;
+//                }
             }
 
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -227,9 +227,9 @@ public class VolleyRequestHandler {
                             busy = false;
                             latency = endTime - startTime;
                             latencyFullProcessRollingAvg.add(latency);
-                            stdDev = latencyFullProcessRollingAvg.getStdDev();
-                            mImageServerInterface.updateFullProcessStats(cloudLetType, latency, latencyFullProcessRollingAvg);
-                            Log.i("BDA", cloudLetType+" mCameraMode="+mCameraMode+" latency="+(latency/1000000.0)+" stdDev="+(stdDev/1000000.0));
+                            mImageServerInterface.updateFullProcessStats(cloudLetType, latencyFullProcessRollingAvg);
+//                            mImageServerInterface.getNextFrame();
+                            Log.i("BDA", cloudLetType+" mCameraMode="+mCameraMode+" latency="+(latency/1000000.0));
                             try {
                                 JSONObject jsonObject = new JSONObject(response);
                                 JSONArray rects;
@@ -408,7 +408,7 @@ public class VolleyRequestHandler {
                 }
             }
 
-            mImageServerInterface.updateNetworkStats(cloudletType, latency, rollingAverage);
+            mImageServerInterface.updateNetworkStats(cloudletType, rollingAverage);
         }
 
     }
@@ -445,6 +445,7 @@ public class VolleyRequestHandler {
         private int position;
         private Camera2BasicFragment.CloudLetType cloudLetType;
         private String name;
+        private long current;
 
         public RollingAverage(Camera2BasicFragment.CloudLetType cloudLetType, String name, int size) {
             this.cloudLetType = cloudLetType;
@@ -453,6 +454,7 @@ public class VolleyRequestHandler {
         }
 
         public void add(long number) {
+            current = number;
 
             if(fill==window.length){
                 sum-=window[position];
@@ -468,6 +470,8 @@ public class VolleyRequestHandler {
             }
 
         }
+
+        public long getCurrent() { return current; }
 
         public long getAverage() {
             return (long) (sum / fill);
@@ -501,7 +505,7 @@ public class VolleyRequestHandler {
             long min = Integer.MAX_VALUE;
             long max = -1;
             for(int i = 0; i < fill; i++) {
-                //stats += i + ". time=" + decFor.format(window[i] / 1000000) + " ms\n";
+//                stats += i + ". time=" + decFor.format(window[i] / 1000000) + " ms\n";
                 if(window[i] / 1000000 < min) {
                     min = window[i] / 1000000;
                 }

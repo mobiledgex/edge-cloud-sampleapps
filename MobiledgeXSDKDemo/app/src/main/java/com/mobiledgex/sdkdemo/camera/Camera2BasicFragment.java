@@ -24,7 +24,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -49,6 +51,8 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -65,6 +69,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -76,6 +81,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -122,6 +128,8 @@ public class Camera2BasicFragment extends Fragment
     private static final String TAG = "Camera2BasicFragment";
     private static final int MAX_FACES = 8;
     protected Menu mOptionsMenu;
+    protected TextureView mVideoView;
+    protected TextureView mActiveTextureView;
     private TextView mLatencyFullTitle;
     private TextView mLatencyNetTitle;
     private TextView mCloudLatency;
@@ -134,6 +142,7 @@ public class Camera2BasicFragment extends Fragment
     private TextView mEdgeStd2;
     private TextView mProgressText;
     private ProgressBar mProgressBarTraining;
+    protected Toolbar mCameraToolbar;
 
     private BoundingBox mCloudBB;
     private BoundingBox mEdgeBB;
@@ -147,12 +156,13 @@ public class Camera2BasicFragment extends Fragment
     protected VolleyRequestHandler mVolleyRequestHandler;
     protected int mCameraLensFacingDirection = CameraCharacteristics.LENS_FACING_FRONT;
 
+    private boolean prefLegacyCamera;
     private boolean prefMultiFace;
     protected boolean prefShowFullLatency;
     protected boolean prefShowNetLatency;
     protected boolean prefShowStdDev;
-    private boolean prefUseRollingAvg;
-    protected boolean prefLocalProcessing = true;
+    protected boolean prefUseRollingAvg;
+    protected boolean prefLocalProcessing = false;
     private boolean prefRemoteProcessing = true;
     private List<String> mAssetImageFileList = new ArrayList<>();
     private String mAssetImagePath;
@@ -165,12 +175,24 @@ public class Camera2BasicFragment extends Fragment
     private int mBenchmarkFrameCount;
     private boolean mBenchmarkMaxCpuFlag = false;
     protected VolleyRequestHandler.CameraMode mCameraMode;
+    private long lastTime;
+    private long startTime;
+    private int frameCount;
+    private int imageSendWidth = 240;
+    private int imageSendHeight = 180;
+    private String debugInfo;
+    private MediaMetadataRetriever mMediaMetadataRetriever;
+    private MediaController mMediaController;
+    private String videoSource;
+    protected boolean mVideoMode;
+
+    private MediaPlayer mMediaPlayer;
 
     public String getStatsText() {
         return mVolleyRequestHandler.getStatsText();
     }
 
-    enum CloudLetType {
+    protected enum CloudLetType {
         EDGE,
         CLOUD,
         LOCAL_PROCESSING
@@ -211,14 +233,11 @@ public class Camera2BasicFragment extends Fragment
      */
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
-    //TODO: Perform profiling with these factor values swapped.
-    private int factor = 1; //TODO: Possibly calculate this based on camera resolution.
-    private int mImageReaderFactor = 12;
-
-    protected float serverToDisplayRatio;
+    protected float serverToDisplayRatioX;
+    protected float serverToDisplayRatioY;
 
     private CascadeClassifier cascadeClassifier;
-    private int absoluteFaceSize;
+    private int localOpenCvFaceSize;
     VolleyRequestHandler.RollingAverage localLatencyRollingAvg = new VolleyRequestHandler.RollingAverage(CloudLetType.LOCAL_PROCESSING, "On-Device", 100);
 
     public static final String EXTRA_BENCH_EDGE = "extra_bench_edge";
@@ -285,7 +304,9 @@ public class Camera2BasicFragment extends Fragment
             @Override
             public void onTick(long millisUntilFinished) {
                 long secondsRemaining = (mBenchmarkDurationMillis - (System.currentTimeMillis() - mBenchmarkStartTime))/1000;
-                mLatencyFullTitle.setText(convertSecondsToHMmSs(secondsRemaining)+" remaining");
+                if(mLatencyFullTitle != null) {
+                    mLatencyFullTitle.setText(convertSecondsToHMmSs(secondsRemaining) + " remaining");
+                }
                 if(!mBenchmarkMaxCpuFlag) {
                     loadImageAsset();
                 }
@@ -327,11 +348,12 @@ public class Camera2BasicFragment extends Fragment
         }.start();
 
         // Comment out the next 2 lines to use 200ms throttled "apples to apples" method.
-        mBenchmarkMaxCpuFlag = true;
-        new maxCpuLoop().execute();
+//        mBenchmarkMaxCpuFlag = true;
+//        new maxCpuLoop().execute();
     }
 
     private class maxCpuLoop extends AsyncTask<String, Void, String> {
+
 
         @Override
         protected String doInBackground(String... params) {
@@ -363,13 +385,14 @@ public class Camera2BasicFragment extends Fragment
             String imageFile = mAssetImageFileList.get(mAssetImageFileIndex);
             InputStream is = assetManager.open(mAssetImagePath +"/"+imageFile);
             Bitmap mTestBitmap = BitmapFactory.decodeStream(is);
-            serverToDisplayRatio = (float) mTextureView.getWidth() / mTestBitmap.getWidth();
+            serverToDisplayRatioX = (float) mTextureView.getWidth() / mTestBitmap.getWidth();
+            serverToDisplayRatioY = (float) mTextureView.getHeight() / mTestBitmap.getHeight();
             processImage(mTestBitmap);
 
             // Draw the image on the screen using the camera preview TextureView.
             Canvas canvas = mTextureView.lockCanvas();
             if(canvas == null) {
-                Log.i("BDA", "canvas is null :(");
+                Log.i(TAG, "canvas is null :(");
             } else {
                 //TODO: Pre-calculate these
                 Rect src = new Rect(0, 0, mTestBitmap.getWidth(), mTestBitmap.getHeight());
@@ -387,7 +410,7 @@ public class Camera2BasicFragment extends Fragment
                 mTextureView.unlockCanvasAndPost(canvas);
             }
 
-//            mAssetImageFileIndex++;
+            mAssetImageFileIndex++;
             if (mAssetImageFileIndex >= mAssetImageFileList.size()) {
                 mAssetImageFileIndex = 0;
             }
@@ -413,7 +436,40 @@ public class Camera2BasicFragment extends Fragment
 
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+            Log.i(TAG, "onSurfaceTextureAvailable: mVideoMode="+mVideoMode+" "+width+","+height);
             openCamera(width, height);
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
+            configureTransform(width, height);
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
+            return true;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
+        }
+
+    };
+
+    /**
+     /**
+     * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
+     * {@link TextureView}.
+     */
+    private final TextureView.SurfaceTextureListener mVideoSurfaceTextureListener
+            = new TextureView.SurfaceTextureListener() {
+
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+            Log.i(TAG, "Video onSurfaceTextureAvailable: mVideoMode="+mVideoMode+" "+width+","+height);
+            if(mVideoMode) {
+                prepareVideo();
+            }
         }
 
         @Override
@@ -517,6 +573,8 @@ public class Camera2BasicFragment extends Fragment
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
             = new ImageReader.OnImageAvailableListener() {
 
+        private DecimalFormat decFor = new DecimalFormat("#.###");
+
         @Override
         public void onImageAvailable(ImageReader reader) {
 //            Log.d(TAG, "onImageAvailable");
@@ -529,43 +587,60 @@ public class Camera2BasicFragment extends Fragment
                 return;
             }
 
-            ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
+            frameCount++;
+            long now = System.currentTimeMillis();
+            if(startTime == 0) {
+                startTime= now;
+            }
+            long totalSeconds = (now-startTime)/1000;
+            if(lastTime > 0) {
+                Log.i(TAG, "elapsed="+(now-lastTime)+" FPS="+(decFor.format((float)frameCount/totalSeconds)));
+            }
+            lastTime = now;
+
+            byte[] bytes = ImageUtil.imageToByteArray(image);
             Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
 
-            Matrix matrix = new Matrix();
 
-            Activity activity = getActivity();
+            processImage(prepareImage(bitmapImage));
 
-            int width = 0;
-            int height = 0;
-            try {
-                width = image.getWidth() / factor;
-                height = image.getHeight() / factor;
-            } catch (IllegalStateException e) {
-//                Log.d(TAG, "image already closed. bail out.");
-                return;
+            if (image != null) {
+                image.close();
             }
-//            Log.d(TAG, "image size="+image.getWidth()+","+image.getHeight()+"/factor("+factor+")="+width+","+height);
-            // The faces will be a 20% of the height of the screen
-            absoluteFaceSize = (int) (height * 0.2);
+        }
+    };
 
-            int deg = 0;
-            int rotation2 = 0;
-            try {
-                CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
-                CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics("" + mCameraDevice.getId());
-                rotation2 = cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+    public Bitmap prepareImage(Bitmap bitmap) {
+        Matrix matrix = new Matrix();
 
-                int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-                deg = getOrientation(rotation);
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
+        if(bitmap == null) {
+            return null;
+        }
+
+        localOpenCvFaceSize = (int) (bitmap.getHeight() * 0.2); //The faces will be a 20% of the height of the screen
+
+        int deg = 0;
+        int displayRotation = getActivity().getWindowManager().getDefaultDisplay().getRotation();
+        deg = getOrientation(displayRotation);
+        Log.d(TAG, "1.displayRotation="+displayRotation+" deg="+deg);
+
+        boolean swapDimensions = false;
+        Bitmap scaledBitmap;
+        if(mVideoMode) {
+            deg = 0;
+            if (displayRotation == Surface.ROTATION_0) {
+                swapDimensions = true;
+//                //Swap dimensions
+//                scaledBitmap = Bitmap.createScaledBitmap(bitmap,
+//                        imageSendHeight, imageSendWidth, true);
+//            } else {
+//                scaledBitmap = Bitmap.createScaledBitmap(bitmap,
+//                        imageSendWidth, imageSendHeight, true);
             }
+
+        } else {
 
             if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT) {
-                int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                 switch (displayRotation) {
                     case Surface.ROTATION_0:
                         deg = 270;
@@ -583,35 +658,60 @@ public class Camera2BasicFragment extends Fragment
                         Log.e(TAG, "Display rotation is invalid: " + displayRotation);
                 }
             }
+            Log.d(TAG, "2.displayRotation="+displayRotation+" deg="+deg);
 
-            if(deg != 0) {
-                matrix.postRotate(deg);
+            // For legacy camera mode, instead of pulling the image from an ImageReader instance,
+            // which is standard, we pull it from the preview texture. The rotation needed
+            // to send the correct image to the server is different. Handle that here.
+            if(prefLegacyCamera) {
+                swapDimensions = true;
+                switch (displayRotation) {
+                    case Surface.ROTATION_0:
+                        deg = 0;
+                        break;
+                    case Surface.ROTATION_180:
+                        deg = 180;
+                        break;
+                    case Surface.ROTATION_90:
+                        deg = 270;
+                        break;
+                    case Surface.ROTATION_270:
+                        deg = 90;
+                        break;
+                    default:
+                        Log.e(TAG, "Display rotation is invalid: " + displayRotation);
+                }
             }
-
-            //There appears to be a race condition when the camera is closed during this process.
-            //Do one final check if the image still exists.
-            if(image == null) {
-                Log.w(TAG, "image has become null. Abort processing.");
-                return;
-            }
-
-            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmapImage,
-                    image.getWidth() / factor, image.getHeight() / factor, true);
-
-            Bitmap rotatedBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0,
-                    scaledBitmap.getWidth() , scaledBitmap.getHeight(), matrix, true);
-
-            serverToDisplayRatio = (float) mTextureView.getWidth() / rotatedBitmap.getWidth();
-
-            processImage(rotatedBitmap);
-
-            if (image != null) {
-                image.close();
-            }
+            Log.d(TAG, "3.displayRotation="+displayRotation+" deg="+deg);
         }
-    };
+
+        if(swapDimensions) {
+            // Swap width and height.
+            scaledBitmap = Bitmap.createScaledBitmap(bitmap,
+                    imageSendHeight, imageSendWidth, true);
+        } else {
+            scaledBitmap = Bitmap.createScaledBitmap(bitmap,
+                    imageSendWidth, imageSendHeight, true);
+        }
+
+        if(deg != 0) {
+            matrix.postRotate(deg);
+            scaledBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0,
+                    scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix, true);
+        }
+        serverToDisplayRatioX = (float) mActiveTextureView.getWidth() / scaledBitmap.getWidth();
+        serverToDisplayRatioY = (float) mActiveTextureView.getHeight() / scaledBitmap.getHeight();
+        Log.d(TAG, "mActiveTextureView=" + mActiveTextureView.getWidth()+","
+                + mActiveTextureView.getHeight() + " serverToDisplayRatioX=" + serverToDisplayRatioX
+                + " serverToDisplayRatioY=" + serverToDisplayRatioY);
+        return scaledBitmap;
+    }
 
     public void processImage(Bitmap bitmap) {
+        if(bitmap == null) {
+            return;
+        }
+
         if(prefRemoteProcessing) {
             mVolleyRequestHandler.sendImage(bitmap);
         }
@@ -625,7 +725,7 @@ public class Camera2BasicFragment extends Fragment
             // Use the classifier to detect faces
             if (cascadeClassifier != null) {
                 cascadeClassifier.detectMultiScale(aInputFrame, faces, 1.2, 2, 2,
-                        new org.opencv.core.Size(absoluteFaceSize, absoluteFaceSize), new org.opencv.core.Size());
+                        new org.opencv.core.Size(localOpenCvFaceSize, localOpenCvFaceSize), new org.opencv.core.Size());
             }
 
             // If there are any faces found, build array of rectangles
@@ -647,7 +747,7 @@ public class Camera2BasicFragment extends Fragment
             localLatencyRollingAvg.add(localLatency);
             long localStdDev = localLatencyRollingAvg.getStdDev();
             long localAvg = localLatencyRollingAvg.getAverage();
-            Log.i("BDA", "localLatency="+(localLatency/1000000.0)+" localAvg="+(localAvg/1000000.0)+" localStdDev="+(localStdDev/1000000.0));
+            Log.i(TAG, "localLatency="+(localLatency/1000000.0)+" localAvg="+(localAvg/1000000.0)+" localStdDev="+(localStdDev/1000000.0));
 
             updateOverlay(CloudLetType.LOCAL_PROCESSING, jsonArray, null);
 
@@ -683,13 +783,10 @@ public class Camera2BasicFragment extends Fragment
                     return;
                 }
 
-                int widthOff = (int) mTextureView.getX();
-                int heightOff = (int) mTextureView.getY();
+                int widthOff = (int) mActiveTextureView.getX();
+                int heightOff = (int) mActiveTextureView.getY();
 
-                Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " serverToDisplayRatio=" + serverToDisplayRatio);
-                Rect textureRect = new Rect(1, 1, mTextureView.getWidth(), mTextureView.getHeight());
-                textureRect.offset(widthOff, heightOff);
-                Log.d(TAG, "textureRect=" + textureRect);
+                Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " serverToDisplayRatioX=" + serverToDisplayRatioX+" serverToDisplayRatioY=" + serverToDisplayRatioY);
 
                 int i;
                 int totalFaces;
@@ -717,46 +814,51 @@ public class Camera2BasicFragment extends Fragment
                             continue;
                         }
 
-                        rect.left *= serverToDisplayRatio;
-                        rect.right *= serverToDisplayRatio;
-                        rect.top *= serverToDisplayRatio;
-                        rect.bottom *= serverToDisplayRatio;
+                        //In case we received the exact same coordinates from both Edge and Cloud,
+                        //offset only one of the rectangles so they will be distinct.
+                        if (cloudletType == CloudLetType.EDGE) {
+                            rect.left -= 1;
+                            rect.right += 1;
+                            rect.top -= 1;
+                            rect.bottom += 1;
+                        }
 
-                        if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT) {
+                        rect.left *= serverToDisplayRatioX;
+                        rect.right *= serverToDisplayRatioX;
+                        rect.top *= serverToDisplayRatioY;
+                        rect.bottom *= serverToDisplayRatioY;
+
+                        if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT
+                            && !prefLegacyCamera && !mVideoMode) {
+                            Log.d(TAG, "Mirroring!");
                             // The image that was processed is what the camera sees, but the image we want to
                             // overlay the rectangle onto is mirrored. So not only do we have to scale it,
                             // but we have to flip it horizontally.
-                            rect.left = mTextureView.getWidth() - rect.left;
-                            rect.right = mTextureView.getWidth() - rect.right;
+                            rect.left = mActiveTextureView.getWidth() - rect.left;
+                            rect.right = mActiveTextureView.getWidth() - rect.right;
                             int tmp = rect.left;
                             rect.left = rect.right;
                             rect.right = tmp;
                         }
 
+                        Log.d(TAG, "jsonRect="+jsonRect+" scaled rect=" + rect.toShortString());
                         rect.offset(widthOff, heightOff);
 
-                        Log.d(TAG, "jsonRect="+jsonRect+" scaled rect=" + rect.toShortString() + " mTextureView size =" + mTextureView.getWidth() + "," + mTextureView.getHeight());
-
-                        if (textureRect.contains(rect)) {
-                            Log.d(TAG, "Adding "+rect);
-                            BoundingBox bb;
-                            if (cloudletType == CloudLetType.CLOUD) {
-                                bb = mCloudBBList.get(i);
-                            } else if (cloudletType == CloudLetType.EDGE) {
-                                bb = mEdgeBBList.get(i);
-                            } else if (cloudletType == CloudLetType.LOCAL_PROCESSING) {
-                                bb = mLocalBBList.get(i);
-                            } else {
-                                Log.e(TAG, "Unknown cloudletType: "+cloudletType);
-                                continue;
-                            }
-                            bb.rect = rect;
-                            bb.invalidate();
-                            bb.restartAnimation();
-                            bb.setSubject(subject);
+                        BoundingBox bb;
+                        if (cloudletType == CloudLetType.CLOUD) {
+                            bb = mCloudBBList.get(i);
+                        } else if (cloudletType == CloudLetType.EDGE) {
+                            bb = mEdgeBBList.get(i);
+                        } else if (cloudletType == CloudLetType.LOCAL_PROCESSING) {
+                            bb = mLocalBBList.get(i);
                         } else {
-                            Log.w(TAG, "invalid "+cloudletType+" rectangle received: " + jsonRect.toString()+" converted to: " + rect.toShortString());
+                            Log.e(TAG, "Unknown cloudletType: "+cloudletType);
+                            continue;
                         }
+                        bb.rect = rect;
+                        bb.invalidate();
+                        bb.restartAnimation();
+                        bb.setSubject(subject);
 
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -771,8 +873,9 @@ public class Camera2BasicFragment extends Fragment
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void updateTrainingProgress(int cloudTrainingCount, int edgeTrainingCount) {
-        Log.i("BDA7", "updateTrainingProgress() edge="+mVolleyRequestHandler.edgeImageSender.mCameraMode+" cloud="+mVolleyRequestHandler.cloudImageSender.mCameraMode);
+        Log.i(TAG, "updateTrainingProgress() edge="+mVolleyRequestHandler.edgeImageSender.mCameraMode+" cloud="+mVolleyRequestHandler.cloudImageSender.mCameraMode);
         mProgressBarTraining.setVisibility(View.VISIBLE);
         mProgressText.setVisibility(View.VISIBLE);
         //Find smaller value.
@@ -799,8 +902,15 @@ public class Camera2BasicFragment extends Fragment
         }
     }
 
-    public void updateFullProcessStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+    @Override
+    public void updateFullProcessStats(final CloudLetType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
+        final long latency;
+        if(prefUseRollingAvg) {
+            latency = rollingAverage.getAverage();
+        } else {
+            latency = rollingAverage.getCurrent();
+        }
 
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
@@ -825,8 +935,15 @@ public class Camera2BasicFragment extends Fragment
         });
     }
 
-    public void updateNetworkStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+    @Override
+    public void updateNetworkStats(final CloudLetType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
+        final long latency;
+        if(prefUseRollingAvg) {
+            latency = rollingAverage.getAverage();
+        } else {
+            latency = rollingAverage.getCurrent();
+        }
 
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
@@ -849,6 +966,40 @@ public class Camera2BasicFragment extends Fragment
                 }
             }
         });
+    }
+
+    @Override
+    public void getNextFrame() {
+        Log.i(TAG, "getNextFrame() mVideoMode="+mVideoMode);
+        if(mVideoMode) {
+            getCurrentVideoFrame();
+        }
+    }
+
+    private Range<Integer> getRange() {
+        CameraCharacteristics chars = null;
+        try {
+            CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
+            chars = manager.getCameraCharacteristics(mCameraId);
+            Range<Integer>[] ranges = chars.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+            Range<Integer> result = null;
+            for (Range<Integer> range : ranges) {
+                int upper = range.getUpper();
+                // 10 - min range upper for my needs
+                if (upper >= 10) {
+                    if (result == null || upper < result.getUpper().intValue()) {
+                        result = range;
+                    }
+                }
+            }
+            if (result == null) {
+                result = ranges[0];
+            }
+            return result;
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(getContext()) {
@@ -1096,6 +1247,28 @@ public class Camera2BasicFragment extends Fragment
             return true;
         }
 
+        if (id == R.id.action_camera_video) {
+            prepareVideo();
+            return true;
+        }
+
+        if (id == R.id.action_camera_debug) {
+            Log.i(TAG, "debugInfo=\n"+debugInfo);
+            TextView showText = new TextView(getActivity());
+            showText.setText(debugInfo);
+            showText.setTextIsSelectable(true);
+            int horzPadding = (int) (25 * getResources().getDisplayMetrics().density);
+            showText.setPadding(horzPadding, 0,horzPadding,0);
+            new android.support.v7.app.AlertDialog.Builder(getActivity())
+                    .setView(showText)
+                    .setTitle("Camera Info")
+                    .setCancelable(true)
+                    .setPositiveButton("OK", null)
+                    .show();
+
+            return true;
+        }
+
         if (id == R.id.action_camera_training) {
             if(!Account.getSingleton().isSignedIn()) {
                 new android.support.v7.app.AlertDialog.Builder(getContext())
@@ -1147,13 +1320,20 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        Log.i(TAG, "onViewCreated");
-        Toolbar cameraToolbar = view.findViewById(R.id.cameraToolbar);
-        ((AppCompatActivity)getActivity()).setSupportActionBar(cameraToolbar);
+        Log.i(TAG, "onViewCreated savedInstanceState="+savedInstanceState);
+        if(savedInstanceState != null) {
+            mVideoMode = savedInstanceState.getBoolean("VIDEO_MODE", false);
+        }
+        Log.i(TAG, "savedInstanceState mVideoMode="+mVideoMode);
+
+        mCameraToolbar = view.findViewById(R.id.cameraToolbar);
+        ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
 
         FrameLayout frameLayout = view.findViewById(R.id.container);
         mTextureView = view.findViewById(R.id.textureView);
         mTextureView.setOnClickListener(this);
+        mVideoView = view.findViewById(R.id.videoView);
+        mVideoView.setOnClickListener(this);
         mLatencyFullTitle = view.findViewById(R.id.network_latency);
         mLatencyNetTitle = view.findViewById(R.id.latency_title2);
         mCloudLatency = view.findViewById(R.id.cloud_latency);
@@ -1200,7 +1380,7 @@ public class Camera2BasicFragment extends Fragment
             mEdgeBBList.add(bb);
             frameLayout.addView(bb);
         }
-        Log.i("BDA1", "mEdgeBBList="+mEdgeBBList.size()+" mCloudBBList="+mCloudBBList.size()+" MAX_FACES="+MAX_FACES);
+        Log.i(TAG, "mEdgeBBList="+mEdgeBBList.size()+" mCloudBBList="+mCloudBBList.size()+" MAX_FACES="+MAX_FACES);
 
         //Find 1 LocalBB and create MAX_FACES-1 more, using the same LayoutParams.
         mLocalBB = view.findViewById(R.id.localBB);
@@ -1233,11 +1413,11 @@ public class Camera2BasicFragment extends Fragment
         if (faceRecognition) {
             mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_RECOGNITION);
             prefLocalProcessing = false;
-            cameraToolbar.setTitle(R.string.title_activity_face_recognition);
+            mCameraToolbar.setTitle(R.string.title_activity_face_recognition);
         } else {
             mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_DETECTION);
             mCameraMode = VolleyRequestHandler.CameraMode.FACE_DETECTION;
-            cameraToolbar.setTitle(R.string.title_activity_face_detection);
+            mCameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
         boolean benchEdge = intent.getBooleanExtra(EXTRA_BENCH_EDGE, false);
         boolean benchLocal = intent.getBooleanExtra(EXTRA_BENCH_LOCAL, false);
@@ -1260,6 +1440,12 @@ public class Camera2BasicFragment extends Fragment
                 }
             };
             handler.postDelayed(startBenchmark, 1000);
+        }
+
+        if(mVideoMode) {
+            mActiveTextureView = mVideoView;
+        } else {
+            mActiveTextureView = mTextureView;
         }
 
     }
@@ -1349,6 +1535,7 @@ public class Camera2BasicFragment extends Fragment
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+            mVideoView.setSurfaceTextureListener(mVideoSurfaceTextureListener);
         }
 
         //Only load the OpenCV library if we are doing local processing.
@@ -1377,6 +1564,9 @@ public class Camera2BasicFragment extends Fragment
         mBenchmarkMaxCpuFlag = false;
         closeCamera();
         stopBackgroundThread();
+        if(mMediaPlayer != null) {
+            mMediaPlayer.stop();
+        }
         super.onPause();
     }
 
@@ -1388,6 +1578,9 @@ public class Camera2BasicFragment extends Fragment
         stopBackgroundThread();
         if(mBenchmarkTimer != null) {
             mBenchmarkTimer.cancel();
+        }
+        if(mMediaPlayer != null) {
+            mMediaPlayer.stop();
         }
         super.onStop();
     }
@@ -1434,7 +1627,7 @@ public class Camera2BasicFragment extends Fragment
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
 
-                // We don't use a front facing camera in this sample.
+                // Only set up the camera we have currently selected.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing != mCameraLensFacingDirection) {
                     continue;
@@ -1446,11 +1639,33 @@ public class Camera2BasicFragment extends Fragment
                     continue;
                 }
 
+                Log.i(TAG, "map.getOutputSizes(ImageFormat.JPEG)="+Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)));
+                /*
+                Samsung Galaxy S5:
+                Front: [1920x1080, 1440x1080, 1280x960, 1280x720, 960x720, 720x480, 640x480, 320x240]
+                Rear: [5312x2988, 3984x2988, 3264x2448, 3264x1836, 2560x1920, 2048x1152, 1920x1080, 1280x960, 1280x720, 800x480, 640x480, 320x240]
+                Samsung Galaxy S8:
+                Front: [3264x2448, 3264x1836, 2880x2160, 2560x1920, 2560x1440, 2560x1080, 2448x2448, 2160x2160, 2048x1152, 1920x1080, 1440x1080, 1280x960, 1280x720, 720x480, 640x480, 320x240, 176x144]
+                Rear: [4032x3024, 4032x2268, 3984x2988, 3264x2448, 3264x1836, 3024x3024, 2976x2976, 2880x2160, 2560x1920, 2560x1440, 2560x1080, 2448x2448, 2160x2160, 2048x1152, 1920x1080, 1440x1080, 1280x960, 1280x720, 720x480, 640x480, 320x240, 176x144]
+                 */
                 // For still image captures, we use the largest available size.
                 Size largest = Collections.max(
                         Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
-                mImageReader = ImageReader.newInstance(largest.getWidth()/mImageReaderFactor, largest.getHeight()/mImageReaderFactor,
+                Log.i(TAG, "JPEG largest="+largest+" aspect="+((float)largest.getWidth()/(float)largest.getHeight()));
+
+                debugInfo = "Output sizes for JPEG: "+Arrays.asList(map.getOutputSizes(ImageFormat.JPEG));
+                debugInfo += "\nLargest chosen: "+largest;
+
+                //We only want a 4:3 aspect ratio for the camera.
+                if((float)largest.getWidth()/(float)largest.getHeight() > 1.34) {
+                    largest = new Size((int) (largest.getHeight()*1.33333334), largest.getHeight());
+                    debugInfo += "\nLargest after forcing 4:3 aspect ratio: "+largest;
+                }
+                Log.i(TAG, "new largest="+largest);
+
+                Size desiredImageSize = new Size(imageSendWidth, imageSendHeight);
+                mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
                         ImageFormat.JPEG, /*maxImages*/2);
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mBackgroundHandler);
@@ -1517,11 +1732,18 @@ public class Camera2BasicFragment extends Fragment
                             mPreviewSize.getHeight(), mPreviewSize.getWidth());
                 }
 
+                Log.i(TAG, "mPreviewSize="+mPreviewSize+" mTextureView="+mTextureView.getmRatioWidth()+","+mTextureView.getmRatioHeight());
+
                 // Check if the flash is supported.
                 Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                 mFlashSupported = available == null ? false : available;
 
                 mCameraId = cameraId;
+
+                debugInfo += "\ndisplayRotation="+displayRotation+" SensorOrientation="+mSensorOrientation;
+                debugInfo += "\nmPreviewSize="+mPreviewSize+" mTextureView="+mTextureView.getmRatioWidth()+","+mTextureView.getmRatioHeight();
+                debugInfo += "\nmFlashSupported="+mFlashSupported+" mCameraId="+mCameraId;
+
                 return;
             }
         } catch (CameraAccessException e) {
@@ -1599,6 +1821,7 @@ public class Camera2BasicFragment extends Fragment
      */
     private void stopBackgroundThread() {
         Log.d(TAG, "stopBackgroundThread()");
+        //TODO: mBackgroundHandler.removeCallbacks(XXX);
         if(mBackgroundThread == null) {
             Log.w(TAG, "mBackgroundThread is null. aborting stopBackgroundThread()");
             return;
@@ -1611,6 +1834,7 @@ public class Camera2BasicFragment extends Fragment
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
     }
 
     /**
@@ -1623,6 +1847,7 @@ public class Camera2BasicFragment extends Fragment
         }
         try {
             SurfaceTexture texture = mTextureView.getSurfaceTexture();
+            Log.i(TAG, "texture="+texture+" mPreviewSize="+mPreviewSize.getWidth()+","+mPreviewSize.getHeight());
 
             assert texture != null;
 
@@ -1636,7 +1861,24 @@ public class Camera2BasicFragment extends Fragment
             mPreviewRequestBuilder
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
-            mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
+            if(prefLegacyCamera) {
+                Log.i(TAG, "Legacy camera support. Not adding ImageReader.");
+                Runnable runnableCode = new Runnable() {
+                    @Override
+                    public void run() {
+
+                        if(mTextureView.getmRatioWidth() == 0 || mTextureView.getmRatioHeight() == 0) {
+                            return;
+                        }
+                        Bitmap bitmap = mTextureView.getBitmap();
+                        processImage(prepareImage(bitmap));
+                        mBackgroundHandler.postDelayed(this, 66);
+                    }
+                };
+                mBackgroundHandler.post(runnableCode);
+            } else {
+                mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
+            }
 
             // Here, we create a CameraCaptureSession for camera preview.
             mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
@@ -1657,6 +1899,7 @@ public class Camera2BasicFragment extends Fragment
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                                 // Flash is automatically enabled when necessary.
                                 setAutoFlash(mPreviewRequestBuilder);
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, getRange());
 
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
@@ -1836,8 +2079,14 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onClick(View view) {
-        Log.w(TAG, "cloudBusy="+mVolleyRequestHandler.cloudImageSender.busy+" edgeBusy="+mVolleyRequestHandler.edgeImageSender.busy);
         switch (view.getId()) {
+            case R.id.videoView: {
+                if(mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.pause();
+                } else {
+                    mMediaPlayer.start();
+                }
+            }
             /*case R.id.picture: {
                 takePicture();
                 break;
@@ -2000,6 +2249,7 @@ public class Camera2BasicFragment extends Fragment
             return;
         }
         String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+        String prefKeyLegacyCamera = getResources().getString(R.string.preference_fd_legacy_camera);
         String prefKeyMultiFace = getResources().getString(R.string.preference_fd_multi_face);
         String prefKeyLocalProc = getResources().getString(R.string.preference_fd_local_proc);
         String prefKeyShowFullLatency = getResources().getString(R.string.preference_fd_show_full_latency);
@@ -2020,8 +2270,11 @@ public class Camera2BasicFragment extends Fragment
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
         }
+        if (key.equals(prefKeyLegacyCamera) || key.equals("ALL")) {
+            prefLegacyCamera = sharedPreferences.getBoolean(prefKeyLegacyCamera, true);
+        }
         if (key.equals(prefKeyLocalProc) || key.equals("ALL")) {
-            prefLocalProcessing = sharedPreferences.getBoolean(prefKeyLocalProc, true);
+            prefLocalProcessing = sharedPreferences.getBoolean(prefKeyLocalProc, false);
         }
         if (key.equals(prefKeyShowFullLatency) || key.equals("ALL")) {
             prefShowFullLatency = sharedPreferences.getBoolean(prefKeyShowFullLatency, true);
@@ -2037,6 +2290,113 @@ public class Camera2BasicFragment extends Fragment
         }
 
         toggleViews();
+    }
+
+    private Runnable videoRunnableCode = new Runnable() {
+        @Override
+        public void run() {
+            if(mVolleyRequestHandler.cloudImageSender.busy && mVolleyRequestHandler.edgeImageSender.busy) {
+                Log.i(TAG, "both busy. bail.");
+                mBackgroundHandler.postDelayed(this, 33);
+                return;
+            }
+            getCurrentVideoFrame();
+            mBackgroundHandler.postDelayed(this, 66);
+        }
+    };
+
+    private void prepareVideo(){
+        Log.i(TAG, "prepareVideo()");
+        String videoFileName;
+        mVideoMode = true;
+        mActiveTextureView = mVideoView;
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            videoFileName = "Jason_720.mp4";
+        } else {
+            videoFileName = "Jason_portrait.mp4";
+        }
+
+        try {
+            Log.i(TAG, "Let's do it!");
+            AssetFileDescriptor afd = getActivity().getAssets().openFd("videos/"+videoFileName);
+            Log.i(TAG, "The variable afd="+afd);
+
+            Surface videoSurface = new Surface(mVideoView.getSurfaceTexture());
+            Log.i(TAG, "videoSurface="+videoSurface);
+
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            mMediaPlayer.setSurface(videoSurface);
+            mMediaPlayer.setLooping(true);
+            mMediaPlayer.prepareAsync();
+
+            // Play video when the media source is ready for playback.
+            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+                    mediaPlayer.start();
+                    getCurrentVideoFrame();
+                    mBackgroundHandler.post(videoRunnableCode);
+                }
+            });
+
+        } catch (IllegalArgumentException e) {
+            Log.d(TAG, e.getMessage());
+            showToast(e.getMessage());
+        } catch (SecurityException e) {
+            Log.d(TAG, e.getMessage());
+            showToast(e.getMessage());
+        } catch (IllegalStateException e) {
+            Log.d(TAG, e.getMessage());
+            showToast(e.getMessage());
+        } catch (IOException e) {
+            Log.d(TAG, e.toString());
+            showToast(e.getMessage());
+        }
+
+        closeCamera();
+
+        // Hide the status bar.
+        View decorView = getActivity().getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+        decorView.setSystemUiVisibility(uiOptions);
+
+        mCameraToolbar.setVisibility(View.GONE);
+        mTextureView.setVisibility(View.INVISIBLE);
+        imageSendWidth = 320; //Widescreen: 1.77:1
+
+    }
+
+    public void getCurrentVideoFrame() {
+        if(mMediaPlayer == null) {
+            Log.i(TAG, "mMediaPlayer is null. Abort getCurrentVideoFrame()");
+            return;
+        }
+
+        int currentPosition = mMediaPlayer.getCurrentPosition(); //in millisecond
+        Log.i(TAG, "bitmap from video: currentPosition="+currentPosition);
+
+        int pos = currentPosition * 1000;   //unit in microsecond
+
+        long start = System.currentTimeMillis();
+        Bitmap bitmap = mVideoView.getBitmap();
+        long now = System.currentTimeMillis();
+        Log.i(TAG, "getBitmap took "+(now-start)+" ms");
+
+        start = System.currentTimeMillis();
+        processImage(prepareImage(bitmap));
+        now = System.currentTimeMillis();
+        Log.i(TAG, "processImage took "+(now-start)+" ms");
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        // Save UI state changes to the savedInstanceState.
+        // This bundle will be passed to onCreate if the process is
+        // killed and restarted.
+        savedInstanceState.putBoolean("VIDEO_MODE", mVideoMode);
     }
 
 }

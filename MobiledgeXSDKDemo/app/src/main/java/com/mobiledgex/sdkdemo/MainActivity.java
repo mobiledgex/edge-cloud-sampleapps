@@ -787,8 +787,8 @@ public class MainActivity extends AppCompatActivity
                 Cloudlet cloudlet = null;
                 for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
                     cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
-                    if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.getCloudletLocation().getLat() &&
-                            cloudlet.getMarker().getPosition().longitude == closestCloudlet.getCloudletLocation().getLong() ) {
+                    if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.getCloudletLocation().getLatitude() &&
+                            cloudlet.getMarker().getPosition().longitude == closestCloudlet.getCloudletLocation().getLongitude() ) {
                         Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
                         cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, getBadgeText(cloudlet)));
                         cloudlet.setBestMatch(true);
@@ -859,7 +859,7 @@ public class MainActivity extends AppCompatActivity
                                     aPort.getPublicPath()));
                     }
                     double distance = cloudletLocation.getDistance();
-                    LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLat(), cloudletLocation.getGpsLocation().getLong());
+                    LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());
                     Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
                     marker.setTag(cloudletName);
 

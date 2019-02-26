@@ -6,10 +6,11 @@ import org.json.JSONArray;
  * Interface for clients of the Face/Pose detection/recognition Server.
  */
 public interface ImageServerInterface {
-    void updateFullProcessStats(Camera2BasicFragment.CloudLetType cloudletType, long latency, VolleyRequestHandler.RollingAverage rollingAverage);
-    void updateNetworkStats(Camera2BasicFragment.CloudLetType cloudletType, long latency, VolleyRequestHandler.RollingAverage rollingAverage);
+    void updateFullProcessStats(Camera2BasicFragment.CloudLetType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage);
+    void updateNetworkStats(Camera2BasicFragment.CloudLetType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage);
     void updateOverlay(Camera2BasicFragment.CloudLetType cloudletType, JSONArray overlayData);
     void updateOverlay(Camera2BasicFragment.CloudLetType cloudletType, JSONArray overlayData, String subject);
     void updateTrainingProgress(int cloudTrainingCount, int edgeTrainingCount);
+    void getNextFrame();
     void showToast(String message);
 }

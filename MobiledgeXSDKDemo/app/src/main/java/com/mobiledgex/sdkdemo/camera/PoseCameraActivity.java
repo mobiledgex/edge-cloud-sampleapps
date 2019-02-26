@@ -2,6 +2,7 @@ package com.mobiledgex.sdkdemo.camera;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.WindowManager;
 
@@ -22,6 +23,13 @@ public class PoseCameraActivity extends AppCompatActivity {
                     .replace(R.id.container, cameraFragment)
                     .commit();
         }
+    }
+
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+        // Rotating the device creates a new instance of the fragment. Update reference here.
+        if (fragment instanceof Camera2BasicFragment)
+            cameraFragment = (Camera2BasicFragment) fragment;
     }
 
     @Override

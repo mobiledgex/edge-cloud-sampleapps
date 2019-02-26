@@ -24,7 +24,8 @@ public class PoseRenderer extends View {
     private int height;
     private int widthOff;
     private int heightOff;
-    private float serverToDisplayRatio;
+    private float serverToDisplayRatioX;
+    private float serverToDisplayRatioY;
     private boolean mirrored;
 
     /**
@@ -76,12 +77,14 @@ public class PoseRenderer extends View {
         poses = posesJsonArray;
     }
 
-    public void setDisplayParms(int width, int height, int widthOff, int heightOff, float serverToDisplayRatio, boolean mirrored) {
+    public void setDisplayParms(int width, int height, int widthOff, int heightOff,
+                                float serverToDisplayRatioX, float serverToDisplayRatioY, boolean mirrored) {
         this.width = width;
         this.height = height;
         this.widthOff = widthOff;
         this.heightOff = heightOff;
-        this.serverToDisplayRatio = serverToDisplayRatio;
+        this.serverToDisplayRatioX = serverToDisplayRatioX;
+        this.serverToDisplayRatioY = serverToDisplayRatioY;
         this.mirrored = mirrored;
     }
 
@@ -109,13 +112,13 @@ public class PoseRenderer extends View {
                     Log.i(TAG, "indexStart="+indexStart+" indexEnd="+indexEnd);
 
                     JSONArray keypoint1 = pose.getJSONArray(indexStart);
-                    float x1 = (float) keypoint1.getDouble(0) * serverToDisplayRatio + widthOff;
-                    float y1 = (float) keypoint1.getDouble(1) * serverToDisplayRatio + heightOff;
+                    float x1 = (float) keypoint1.getDouble(0) * serverToDisplayRatioX + widthOff;
+                    float y1 = (float) keypoint1.getDouble(1) * serverToDisplayRatioY + heightOff;
                     float score1 = (float) keypoint1.getDouble(2);
 
                     JSONArray keypoint2 = pose.getJSONArray(indexEnd);
-                    float x2 = (float) keypoint2.getDouble(0) * serverToDisplayRatio + widthOff;
-                    float y2 = (float) keypoint2.getDouble(1) * serverToDisplayRatio + heightOff;
+                    float x2 = (float) keypoint2.getDouble(0) * serverToDisplayRatioX + widthOff;
+                    float y2 = (float) keypoint2.getDouble(1) * serverToDisplayRatioY + heightOff;
                     float score2 = (float) keypoint2.getDouble(2);
 
                     if(score1 == 0 || score2 == 0) {

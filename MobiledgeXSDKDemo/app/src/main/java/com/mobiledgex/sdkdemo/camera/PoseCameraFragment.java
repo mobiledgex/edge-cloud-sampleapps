@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -58,12 +57,18 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
                     return;
                 }
 
+                boolean mirrored = mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT;
                 int widthOff = (int) mTextureView.getX();
                 int heightOff = (int) mTextureView.getY();
 
+                if(mVideoMode) {
+                    widthOff = (int) mVideoView.getX();
+                    heightOff = (int) mVideoView.getY();
+                    mirrored = false;
+                }
+
                 mPoseRenderer.setDisplayParms(mTextureView.getWidth(), mTextureView.getHeight(),
-                        widthOff, heightOff, serverToDisplayRatio,
-                        mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT);
+                        widthOff, heightOff, serverToDisplayRatioX, serverToDisplayRatioY, mirrored);
                 mPoseRenderer.setPoses(posesJsonArray);
                 mPoseRenderer.invalidate();
             }
@@ -85,8 +90,14 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
         super.showToast(message);
     }
 
-    public void updateFullProcessStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+    public void updateFullProcessStats(final CloudLetType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
+        final long latency;
+        if(prefUseRollingAvg) {
+            latency = rollingAverage.getAverage();
+        } else {
+            latency = rollingAverage.getCurrent();
+        }
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
@@ -108,8 +119,15 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
     }
 
     @Override
-    public void updateNetworkStats(final CloudLetType cloudletType, final long latency, VolleyRequestHandler.RollingAverage rollingAverage) {
+    public void updateNetworkStats(final CloudLetType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
+        final long latency;
+        if(prefUseRollingAvg) {
+            latency = rollingAverage.getAverage();
+        } else {
+            latency = rollingAverage.getCurrent();
+        }
+
         if(getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
@@ -155,11 +173,17 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        Log.i(TAG, "onViewCreated PoseCameraFragment");
-        Toolbar cameraToolbar = view.findViewById(R.id.cameraToolbar);
-        ((AppCompatActivity)getActivity()).setSupportActionBar(cameraToolbar);
+        Log.i("BDA11", "onViewCreated PoseCameraFragment savedInstanceState="+savedInstanceState);
+        if(savedInstanceState != null) {
+            mVideoMode = savedInstanceState.getBoolean("VIDEO_MODE", false);
+        }
+        Log.i("BDA11", "savedInstanceState mVideoMode="+mVideoMode);
+        mCameraToolbar = view.findViewById(R.id.cameraToolbar);
+        ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
 
         mTextureView = view.findViewById(R.id.textureView);
+        mVideoView = view.findViewById(R.id.videoView);
+        mVideoView.setOnClickListener(this);
         mLatencyFull = view.findViewById(R.id.full_latency);
         mLatencyNet = view.findViewById(R.id.network_latency);
         mStdFull = view.findViewById(R.id.full_std_dev);
@@ -168,7 +192,13 @@ public class PoseCameraFragment extends Camera2BasicFragment implements ImageSer
 
         mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.POSE_DETECTION);
         mCameraMode = VolleyRequestHandler.CameraMode.POSE_DETECTION;
-        cameraToolbar.setTitle(R.string.title_activity_pose_detection);
+        mCameraToolbar.setTitle(R.string.title_activity_pose_detection);
+
+        if(mVideoMode) {
+            mActiveTextureView = mVideoView;
+        } else {
+            mActiveTextureView = mTextureView;
+        }
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         onSharedPreferenceChanged(prefs, "ALL");
