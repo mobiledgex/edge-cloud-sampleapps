@@ -6,6 +6,11 @@
     android:id="@+id/fd_preference_screen">
 
     <SwitchPreference
+        android:key="@string/preference_fd_legacy_camera"
+        android:title="@string/preference_fd_legacy_camera_title"
+        android:summary="@string/preference_fd_legacy_camera_summary"
+        android:defaultValue="false" />
+    <SwitchPreference
         android:key="@string/preference_fd_multi_face"
         android:title="@string/preference_fd_multi_face_title"
         android:summary="@string/preference_fd_multi_face_summary"

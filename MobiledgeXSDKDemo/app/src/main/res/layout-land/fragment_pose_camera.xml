@@ -8,6 +8,12 @@
     android:background="#000"
     tools:context="camera.CameraActivity">
 
+    <TextureView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
     <com.mobiledgex.sdkdemo.camera.AutoFitTextureView
         android:id="@+id/textureView"
         android:layout_width="wrap_content"

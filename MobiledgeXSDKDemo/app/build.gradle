@@ -8,9 +8,9 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.mobiledgex.sdkdemo"
-        minSdkVersion 23
+        minSdkVersion 21
         targetSdkVersion 27
-        versionCode 31
+        versionCode 38
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }

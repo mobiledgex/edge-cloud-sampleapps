@@ -18,4 +18,8 @@
     <item android:id="@+id/action_camera_training_guest"
         android:checkable="true"
         android:title="Guest Training Mode" />
+    <item android:id="@+id/action_camera_video"
+        android:title="Play Video" />
+    <item android:id="@+id/action_camera_debug"
+        android:title="Generate Debug Info" />
 </menu>
