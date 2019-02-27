@@ -16,6 +16,7 @@ total_latency_network_only = 0
 count_latency_network_only = 0
 json_params = None
 do_server_stats = False
+port_number = 8008
 
 class RequestClient(object):
     """ """
@@ -97,6 +98,7 @@ class RequestClient(object):
 
     def run_multi(self, num_repeat, host, endpoint, image_file_name, show_responses, thread_name):
         global do_server_stats
+        global port_number
         # print("run_multi(%s, %s)\n" %(host, image_file_name))
         print("%s Starting" %thread_name)
         for x in range(num_repeat):
@@ -104,7 +106,7 @@ class RequestClient(object):
             if x % 4 == 0:
                 if do_server_stats:
                     self.get_server_stats(host)
-                self.time_open_socket(host, 8008)
+                self.time_open_socket(host, port_number)
         print("%s Done" %thread_name)
 
 if __name__ == "__main__":
@@ -126,6 +128,7 @@ if __name__ == "__main__":
 
     do_server_stats = args.server_stats
     json_params = args.json_params
+    port_number = args.port
 
     for i in range(args.threads):
         rc = RequestClient()
