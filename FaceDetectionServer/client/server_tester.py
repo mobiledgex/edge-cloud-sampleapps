@@ -7,19 +7,19 @@ import requests
 import base64
 import time
 import socket
+import os
 
 # Globals
 total_latency_full_process = 0
 count_latency_full_process = 0
 total_latency_network_only = 0
 count_latency_network_only = 0
-
+json_params = None
 do_server_stats = False
 
 class RequestClient(object):
     """ """
     BASE_URL = 'http://%s:8008'
-    STATS_URL = BASE_URL
 
     def __init__(self):
         """ """
@@ -33,7 +33,14 @@ class RequestClient(object):
         """
         Sends the encoded image as the "image" POST paramater.
         """
-        return requests.post(url, data={'image':image})
+        global json_params
+        print("json_params=%s" %json_params)
+        data = {'image':image}
+        if json_params != None:
+            params = json.loads(json_params)
+            data.update(params)
+
+        return requests.post(url, data=data)
 
     def get_server_stats(self, host):
         url = self.BASE_URL %host + "/server/usage"
@@ -67,7 +74,12 @@ class RequestClient(object):
             exit()
 
         now = time.time()
-        content = self.send_image_param(self.BASE_URL %host + endpoint, image).content
+        response = self.send_image_param(self.BASE_URL %host + endpoint, image)
+        content = response.content
+        if response.status_code != 200:
+            print "non-200 response: %d: %s" %(response.status_code, content)
+            return
+
         millis = (time.time() - now)*1000
         elapsed = "%.3f" %millis
         total_latency_full_process = total_latency_full_process + millis
@@ -86,13 +98,14 @@ class RequestClient(object):
     def run_multi(self, num_repeat, host, endpoint, image_file_name, show_responses, thread_name):
         global do_server_stats
         # print("run_multi(%s, %s)\n" %(host, image_file_name))
-        for x in xrange(num_repeat):
+        print("%s Starting" %thread_name)
+        for x in range(num_repeat):
             self.encode_and_send_image(host, endpoint, image_file_name, show_responses)
             if x % 4 == 0:
                 if do_server_stats:
                     self.get_server_stats(host)
                 self.time_open_socket(host, 8008)
-        # print("%s Done" %thread_name)
+        print("%s Done" %thread_name)
 
 if __name__ == "__main__":
     import sys
@@ -105,19 +118,31 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--endpoint", required=True, help="Endpoint of web service to call (e.g. /detector/detect/, /recognizer/predict/, /openpose/detect/)")
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of concurent execution threads.")
+    parser.add_argument("-p", "--port", type=int, default=8008, help="Port number")
+    parser.add_argument("-j", "--json-params", required=False, help='Extra parameters to include with image. Ex: {subject":"Max Door", "owner":"Bruce Armstrong}')
     parser.add_argument("--show-responses", action='store_true', help="Show responses.")
     parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
     args = parser.parse_args()
 
     do_server_stats = args.server_stats
+    json_params = args.json_params
 
-    for i in xrange(args.threads):
+    for i in range(args.threads):
         rc = RequestClient()
+        rc.BASE_URL = 'http://%s:'+str(args.port)
         thread = Thread(target=rc.run_multi, args=(args.repeat, args.server, args.endpoint, args.filename, args.show_responses, "thread-%d" %i))
         thread.start()
-        thread.join()
 
-    average_latency_full_process = total_latency_full_process / count_latency_full_process
-    average_latency_network_only = total_latency_network_only / count_latency_network_only
-    print("Average Latency Full Process=%.3f ms" %average_latency_full_process)
-    print("Average Latency Network Only=%.3f ms" %average_latency_network_only)
+    # Wait for the last thread to finish.
+    thread.join()
+
+    file_size = os.path.getsize(args.filename)
+    if count_latency_full_process > 0:
+        average_latency_full_process = total_latency_full_process / count_latency_full_process
+        print("Average Latency Full Process=%.3f ms" %average_latency_full_process)
+    if count_latency_network_only > 0:
+        average_latency_network_only = total_latency_network_only / count_latency_network_only
+        print("Average Latency Network Only=%.3f ms" %average_latency_network_only)
+
+    # The following line outputs CSV data that can be imported to a spreadsheet.
+    #print("%s,%s,%d,%.3f,%.3f" %((args.server, args.filename, file_size, average_latency_full_process, average_latency_network_only)))
