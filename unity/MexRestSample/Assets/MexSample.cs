@@ -2,7 +2,7 @@
 
 using System;
 using System.IO;
-using System.Net.Http;
+
 using System.Threading.Tasks;
 using System.Runtime.Serialization.Json;
 
@@ -19,15 +19,19 @@ public class MexSample : MonoBehaviour
   static string host = "TDG.dme.mobiledgex.net";
   static UInt32 port = 38001;
 
+  string authToken; // Supplied by developer
+
   DistributedMatchEngine.MatchingEngine me;
 
   StatusContainer statusContainer;
+  LocationService locationService;
 
   // Use this for initialization
   void Start()
   {
     statusContainer = GameObject.Find("/UICanvas/SampleOutput").GetComponent<StatusContainer>();
-    RunSampleFlow();
+    // Split into 2 buttons.
+    //RunSampleFlow();
   }
 
   // Update is called once per frame
@@ -40,7 +44,7 @@ public class MexSample : MonoBehaviour
   public async Task<string> getCurrentCarrierName()
   {
     var dummy = await Task.FromResult(0);
-    return carrierName = "TDG";
+    return carrierName;
   }
 
   public async void RunSampleFlow()
@@ -57,8 +61,8 @@ public class MexSample : MonoBehaviour
       port = 38001;  // MatchingEngine.defaultDmeRestPort;
       statusContainer.Post("RestSample Port:" + port);
 
-      // Start location task:
-      var locTask = Util.GetLocationFromDevice();
+      // Start location and await:
+      var location = await LocationService.RetrieveLocation();
       statusContainer.Post("RestSample Location Task started.");
 
       var registerClientRequest = me.CreateRegisterClientRequest(carrierName, appName, devName, appVers, developerAuthToken);
@@ -79,25 +83,25 @@ public class MexSample : MonoBehaviour
 
       string jsonStr = Util.StreamToString(ms);
       statusContainer.Post(" --> RegisterClient as string: " + jsonStr);
+      Debug.Log(" --> RegisterClient as string: " + jsonStr);
 
       statusContainer.Post(" RegisterClient to host: " + host + ", port: " + port);
 
       var registerClientReply = await me.RegisterClient(host, port, registerClientRequest);
       Console.WriteLine("Reply: Session Cookie: " + registerClientReply.SessionCookie);
 
-      statusContainer.Post("RegisterClient TokenServerURI: " + registerClientReply);
+      statusContainer.Post("RegisterClient TokenServerURI: " + registerClientReply.TokenServerURI);
 
       // Do Verify and FindCloudlet in parallel tasks:
-      var loc = await locTask;
 
-      var verifyLocationRequest = me.CreateVerifyLocationRequest(carrierName, loc);
-      var findCloudletRequest = me.CreateFindCloudletRequest(carrierName, devName, appName, appVers, loc);
+      var verifyLocationRequest = me.CreateVerifyLocationRequest(carrierName, location);
+      var findCloudletRequest = me.CreateFindCloudletRequest(carrierName, devName, appName, appVers, location);
       var getLocationRequest = me.CreateGetLocationRequest(carrierName);
 
 
       // Async:
       var findCloudletTask = me.FindCloudlet(host, port, findCloudletRequest);
-      var verfiyLocationTask = me.VerifyLocation(host, port, verifyLocationRequest);
+      //var verfiyLocationTask = me.VerifyLocation(host, port, verifyLocationRequest);
 
 
       var getLocationTask = me.GetLocation(host, port, getLocationRequest);
@@ -107,14 +111,17 @@ public class MexSample : MonoBehaviour
       Console.WriteLine("FindCloudlet Reply: " + findCloudletReply.status);
       statusContainer.Post("FindCloudlet Status: " + findCloudletReply.status);
 
-      var verifyLocationReply = await verfiyLocationTask;
-      Console.WriteLine("VerifyLocation Reply: " + verifyLocationReply.gps_location_status);
-      statusContainer.Post("VerifyLocation Status: " + verifyLocationReply.gps_location_status);
+      // The following requires a valid SIM card from a MobiledgeX enabled carrier
+      // to validate the device location. It will attempt to contact the carrier,
+      // and will timeout if not within the carrier network.
+      //var verifyLocationReply = await verfiyLocationTask;
+      //Console.WriteLine("VerifyLocation Reply: " + verifyLocationReply.gps_location_status);
+      //statusContainer.Post("VerifyLocation Status: " + verifyLocationReply.gps_location_status);
 
       var getLocationReply = await getLocationTask;
-      var location = getLocationReply.NetworkLocation;
-      Console.WriteLine("GetLocationReply: longitude: " + location.longitude + ", latitude: " + location.latitude);
-      statusContainer.Post("GetLocationReply: longitude: " + location.longitude + ", latitude: " + location.latitude);
+      var carrierLocation = getLocationReply.NetworkLocation;
+      Console.WriteLine("GetLocationReply: longitude: " + carrierLocation.longitude + ", latitude: " + carrierLocation.latitude);
+      statusContainer.Post("GetLocationReply: longitude: " + carrierLocation.longitude + ", latitude: " + carrierLocation.latitude);
     }
     catch (InvalidTokenServerTokenException itste)
     {
