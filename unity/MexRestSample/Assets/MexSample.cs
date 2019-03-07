@@ -10,18 +10,20 @@ using DistributedMatchEngine;
 
 public class MexSample : MonoBehaviour
 {
-  static string carrierName = "TDG";
-  static string appName = "EmptyMatchEngineApp";
-  static string devName = "EmptyMatchEngineApp";
-  static string appVers = "1.0";
-  static string developerAuthToken = "";
+  public string carrierName { get; set; } = "mexdemo"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
+  public string appName { get; set; } = "EmptyMatchEngineApp";
+  public string devName { get; set; } = "EmptyMatchEngineApp";
+  public string appVers { get; set; } = "1.0";
+  public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
-  static string host = "TDG.dme.mobiledgex.net";
-  static UInt32 port = 38001;
+  public string host { get; set; } = "mexdemo.dme.mobiledgex.net"; // Demo host, with some edge cloudlets.
+  public UInt32 port { get; set; } = 38001;
 
-  string authToken; // Supplied by developer
+  public string authToken; // Supplied by developer
 
-  DistributedMatchEngine.MatchingEngine me;
+  // For demoonstartion purposes in the sample, we need a copy of DME somewhere
+  // for individual button scripts to access.
+  public DistributedMatchEngine.MatchingEngine dme { get; set; } = new MatchingEngine();
 
   StatusContainer statusContainer;
   LocationService locationService;
@@ -30,8 +32,6 @@ public class MexSample : MonoBehaviour
   void Start()
   {
     statusContainer = GameObject.Find("/UICanvas/SampleOutput").GetComponent<StatusContainer>();
-    // Split into 2 buttons.
-    //RunSampleFlow();
   }
 
   // Update is called once per frame
@@ -51,13 +51,12 @@ public class MexSample : MonoBehaviour
   {
     try
     {
-
       carrierName = await getCurrentCarrierName();
 
       Console.WriteLine("RestSample!");
       statusContainer.Post("RestSample!");
 
-      me = new MatchingEngine();
+      dme = new MatchingEngine();
       port = 38001;  // MatchingEngine.defaultDmeRestPort;
       statusContainer.Post("RestSample Port:" + port);
 
@@ -65,7 +64,7 @@ public class MexSample : MonoBehaviour
       var location = await LocationService.RetrieveLocation();
       statusContainer.Post("RestSample Location Task started.");
 
-      var registerClientRequest = me.CreateRegisterClientRequest(carrierName, appName, devName, appVers, developerAuthToken);
+      var registerClientRequest = dme.CreateRegisterClientRequest(carrierName, appName, devName, appVers, developerAuthToken);
 
       // Await synchronously.
 
@@ -87,24 +86,24 @@ public class MexSample : MonoBehaviour
 
       statusContainer.Post(" RegisterClient to host: " + host + ", port: " + port);
 
-      var registerClientReply = await me.RegisterClient(host, port, registerClientRequest);
+      var registerClientReply = await dme.RegisterClient(host, port, registerClientRequest);
       Console.WriteLine("Reply: Session Cookie: " + registerClientReply.SessionCookie);
 
       statusContainer.Post("RegisterClient TokenServerURI: " + registerClientReply.TokenServerURI);
 
       // Do Verify and FindCloudlet in parallel tasks:
 
-      var verifyLocationRequest = me.CreateVerifyLocationRequest(carrierName, location);
-      var findCloudletRequest = me.CreateFindCloudletRequest(carrierName, devName, appName, appVers, location);
-      var getLocationRequest = me.CreateGetLocationRequest(carrierName);
+      var verifyLocationRequest = dme.CreateVerifyLocationRequest(carrierName, location);
+      var findCloudletRequest = dme.CreateFindCloudletRequest(carrierName, devName, appName, appVers, location);
+      var getLocationRequest = dme.CreateGetLocationRequest(carrierName);
 
 
       // Async:
-      var findCloudletTask = me.FindCloudlet(host, port, findCloudletRequest);
+      var findCloudletTask = dme.FindCloudlet(host, port, findCloudletRequest);
       //var verfiyLocationTask = me.VerifyLocation(host, port, verifyLocationRequest);
 
 
-      var getLocationTask = me.GetLocation(host, port, getLocationRequest);
+      var getLocationTask = dme.GetLocation(host, port, getLocationRequest);
 
       // Awaits:
       var findCloudletReply = await findCloudletTask;

@@ -27,11 +27,14 @@ public class LocationService : MonoBehaviour
   // A simple UI logger.
   static StatusContainer statusContainer;
 
-  public async void Start()
+  public void Start()
   {
     statusContainer = GameObject.Find("/UICanvas/SampleOutput").GetComponent<StatusContainer>();
     statusContainer.Post("Location Services Start()");
-    await UpdateLocation();
+  }
+
+  public void Update()
+  {
   }
 
   public static async Task<LocationInfo> UpdateLocation()
@@ -43,23 +46,25 @@ public class LocationService : MonoBehaviour
       statusContainer.Post("Location Services Disabled");
       // Per documentation, on iOS, CoreLocation asks the user for permission.
 #if UNITY_ANDROID
+      // FIXME: Request permissions Unity UI for Android.
       throw new LocationException(""Location Services Disabled, cannot get location.");
 #endif
     }
-    statusContainer.Post("Location Services updateLocation 2()");
+
     // Start service before querying location
     Input.location.Start();
 
     // Wait until service initializes
     int maxWait = 10;
+    int start = maxWait;
     while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0)
     {
       await Task.Delay(TimeSpan.FromSeconds(1));
       maxWait--;
     }
 
-    statusContainer.Post("Location Services waited 20");
-    // Service didn't initialize in 20 seconds
+    statusContainer.Post("Location Services waited " + (start-maxWait));
+    // Service didn't initialize in time.
     if (maxWait < 1)
     {
       print("Timed out");
