@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-
 using UnityEngine.UI;
 
 public class LocationButtonScript : MonoBehaviour
@@ -16,7 +15,14 @@ public class LocationButtonScript : MonoBehaviour
   {
     Debug.Log("location button clicked!");
     var loc = await LocationService.RetrieveLocation();
-    Debug.Log("Location: Lat: " + loc.latitude + ", Long: " + loc.longitude);
+    if (loc == null)
+    {
+      Debug.Log("No location returned!");
+    }
+    else
+    {
+      Debug.Log("Location: Lat: " + loc.latitude + ", Long: " + loc.longitude);
+    }
   }
 
 }
