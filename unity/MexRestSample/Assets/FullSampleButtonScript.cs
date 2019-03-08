@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 
 using UnityEngine.UI;
+using DistributedMatchEngine;
 
-public class ButtonScript : MonoBehaviour {
+public class FullSampleButtonScript : MonoBehaviour {
     public Button startMexSampleButton;
     public MexSample mexSample;
 
@@ -11,9 +12,9 @@ public class ButtonScript : MonoBehaviour {
         btn.onClick.AddListener(TaskOnClick);
     }
 
-    void TaskOnClick(){
-        Debug.Log ("You have clicked the button!");
-        mexSample.RunSampleFlow();
-    }
-
+  void TaskOnClick()
+  {
+    Debug.Log("You have clicked the button!");
+    mexSample.RunSampleFlow();
+  }
 }

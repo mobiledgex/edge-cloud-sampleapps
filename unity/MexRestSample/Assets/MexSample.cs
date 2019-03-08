@@ -2,7 +2,7 @@
 
 using System;
 using System.IO;
-using System.Net.Http;
+
 using System.Threading.Tasks;
 using System.Runtime.Serialization.Json;
 
@@ -10,24 +10,28 @@ using DistributedMatchEngine;
 
 public class MexSample : MonoBehaviour
 {
-  static string carrierName = "TDG";
-  static string appName = "EmptyMatchEngineApp";
-  static string devName = "EmptyMatchEngineApp";
-  static string appVers = "1.0";
-  static string developerAuthToken = "";
+  public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
+  public string appName { get; set; } = "MobiledgeX SDK Demo";
+  public string devName { get; set; } = "MobiledgeX SDK Demo";
+  public string appVers { get; set; } = "1.0";
+  public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
-  static string host = "TDG.dme.mobiledgex.net";
-  static UInt32 port = 38001;
+  public string host { get; set; } = "mexdemo.dme.mobiledgex.net"; // Demo host, with some edge cloudlets.
+  public UInt32 port { get; set; } = 38001;
 
-  DistributedMatchEngine.MatchingEngine me;
+  public string authToken; // Supplied by developer
+
+  // For demoonstartion purposes in the sample, we need a copy of DME somewhere
+  // for individual button scripts to access.
+  public DistributedMatchEngine.MatchingEngine dme { get; set; } = new MatchingEngine();
 
   StatusContainer statusContainer;
+  LocationService locationService;
 
   // Use this for initialization
   void Start()
   {
     statusContainer = GameObject.Find("/UICanvas/SampleOutput").GetComponent<StatusContainer>();
-    RunSampleFlow();
   }
 
   // Update is called once per frame
@@ -40,28 +44,27 @@ public class MexSample : MonoBehaviour
   public async Task<string> getCurrentCarrierName()
   {
     var dummy = await Task.FromResult(0);
-    return carrierName = "TDG";
+    return carrierName;
   }
 
   public async void RunSampleFlow()
   {
     try
     {
-
       carrierName = await getCurrentCarrierName();
 
       Console.WriteLine("RestSample!");
       statusContainer.Post("RestSample!");
 
-      me = new MatchingEngine();
+      dme = new MatchingEngine();
       port = 38001;  // MatchingEngine.defaultDmeRestPort;
       statusContainer.Post("RestSample Port:" + port);
 
-      // Start location task:
-      var locTask = Util.GetLocationFromDevice();
+      // Start location and await:
+      var location = await LocationService.RetrieveLocation();
       statusContainer.Post("RestSample Location Task started.");
 
-      var registerClientRequest = me.CreateRegisterClientRequest(carrierName, appName, devName, appVers, developerAuthToken);
+      var registerClientRequest = dme.CreateRegisterClientRequest(carrierName, appName, devName, appVers, developerAuthToken);
 
       // Await synchronously.
 
@@ -79,42 +82,45 @@ public class MexSample : MonoBehaviour
 
       string jsonStr = Util.StreamToString(ms);
       statusContainer.Post(" --> RegisterClient as string: " + jsonStr);
+      Debug.Log(" --> RegisterClient as string: " + jsonStr);
 
       statusContainer.Post(" RegisterClient to host: " + host + ", port: " + port);
 
-      var registerClientReply = await me.RegisterClient(host, port, registerClientRequest);
+      var registerClientReply = await dme.RegisterClient(host, port, registerClientRequest);
       Console.WriteLine("Reply: Session Cookie: " + registerClientReply.SessionCookie);
 
-      statusContainer.Post("RegisterClient TokenServerURI: " + registerClientReply);
+      statusContainer.Post("RegisterClient TokenServerURI: " + registerClientReply.TokenServerURI);
 
       // Do Verify and FindCloudlet in parallel tasks:
-      var loc = await locTask;
 
-      var verifyLocationRequest = me.CreateVerifyLocationRequest(carrierName, loc);
-      var findCloudletRequest = me.CreateFindCloudletRequest(carrierName, devName, appName, appVers, loc);
-      var getLocationRequest = me.CreateGetLocationRequest(carrierName);
+      var verifyLocationRequest = dme.CreateVerifyLocationRequest(carrierName, location);
+      var findCloudletRequest = dme.CreateFindCloudletRequest(carrierName, devName, appName, appVers, location);
+      var getLocationRequest = dme.CreateGetLocationRequest(carrierName);
 
 
       // Async:
-      var findCloudletTask = me.FindCloudlet(host, port, findCloudletRequest);
-      var verfiyLocationTask = me.VerifyLocation(host, port, verifyLocationRequest);
+      var findCloudletTask = dme.FindCloudlet(host, port, findCloudletRequest);
+      //var verfiyLocationTask = me.VerifyLocation(host, port, verifyLocationRequest);
 
 
-      var getLocationTask = me.GetLocation(host, port, getLocationRequest);
+      var getLocationTask = dme.GetLocation(host, port, getLocationRequest);
 
       // Awaits:
       var findCloudletReply = await findCloudletTask;
       Console.WriteLine("FindCloudlet Reply: " + findCloudletReply.status);
       statusContainer.Post("FindCloudlet Status: " + findCloudletReply.status);
 
-      var verifyLocationReply = await verfiyLocationTask;
-      Console.WriteLine("VerifyLocation Reply: " + verifyLocationReply.gps_location_status);
-      statusContainer.Post("VerifyLocation Status: " + verifyLocationReply.gps_location_status);
+      // The following requires a valid SIM card from a MobiledgeX enabled carrier
+      // to validate the device location. It will attempt to contact the carrier,
+      // and will timeout if not within the carrier network.
+      //var verifyLocationReply = await verfiyLocationTask;
+      //Console.WriteLine("VerifyLocation Reply: " + verifyLocationReply.gps_location_status);
+      //statusContainer.Post("VerifyLocation Status: " + verifyLocationReply.gps_location_status);
 
       var getLocationReply = await getLocationTask;
-      var location = getLocationReply.NetworkLocation;
-      Console.WriteLine("GetLocationReply: longitude: " + location.longitude + ", latitude: " + location.latitude);
-      statusContainer.Post("GetLocationReply: longitude: " + location.longitude + ", latitude: " + location.latitude);
+      var carrierLocation = getLocationReply.NetworkLocation;
+      Console.WriteLine("GetLocationReply: longitude: " + carrierLocation.longitude + ", latitude: " + carrierLocation.latitude);
+      statusContainer.Post("GetLocationReply: longitude: " + carrierLocation.longitude + ", latitude: " + carrierLocation.latitude);
     }
     catch (InvalidTokenServerTokenException itste)
     {
