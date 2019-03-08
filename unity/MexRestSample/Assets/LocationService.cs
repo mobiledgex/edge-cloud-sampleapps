@@ -21,7 +21,7 @@ public class LocationTimeoutException : Exception
   }
 }
 
-// Unity Location Service
+// Unity Location Service, based on the documentation example:
 public class LocationService : MonoBehaviour
 {
   // A simple UI logger.
@@ -46,8 +46,8 @@ public class LocationService : MonoBehaviour
       statusContainer.Post("Location Services Disabled");
       // Per documentation, on iOS, CoreLocation asks the user for permission.
 #if UNITY_ANDROID
-      // FIXME: Request permissions Unity UI for Android.
-      throw new LocationException(""Location Services Disabled, cannot get location.");
+      statusContainer.Post("Location Services Disabled, cannot get location.");
+      return Input.location.lastData;
 #endif
     }
 
