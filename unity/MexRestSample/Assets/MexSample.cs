@@ -10,9 +10,9 @@ using DistributedMatchEngine;
 
 public class MexSample : MonoBehaviour
 {
-  public string carrierName { get; set; } = "mexdemo"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
-  public string appName { get; set; } = "EmptyMatchEngineApp";
-  public string devName { get; set; } = "EmptyMatchEngineApp";
+  public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
+  public string appName { get; set; } = "MobiledgeX SDK Demo";
+  public string devName { get; set; } = "MobiledgeX SDK Demo";
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
