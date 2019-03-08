@@ -53,11 +53,14 @@ public class VerifyLocationButtonScript : MonoBehaviour
       Debug.Log("Device sourced location: Lat: " + deviceSourcedLocation.latitude + "  Long: " + deviceSourcedLocation.longitude);
 
       var verifyLocationRequest = dme.CreateVerifyLocationRequest(
-          dme.getCarrierName(), // TODO: carrierName is the current carrier string, and must be provided by the app.
+          mexSample.carrierName, // TODO: carrierName is the current carrier string, and must be provided by the app.
           deviceSourcedLocation);
 
       reply = await dme.VerifyLocation(mexSample.host, mexSample.port, verifyLocationRequest);
       statusContainer.Post("VerifyLocation Reply mobile tower status: " + reply.tower_status.ToString());
+      if (reply.tower_status.Equals(FindCloudletReply.FindStatus.FIND_FOUND.ToString())) {
+        ok = true;
+      }
     }
     catch (Exception e)
     {
