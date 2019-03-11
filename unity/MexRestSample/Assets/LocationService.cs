@@ -45,7 +45,9 @@ public class LocationService : MonoBehaviour
     {
       statusContainer.Post("Location Services Disabled");
       // Per documentation, on iOS, CoreLocation asks the user for permission.
-#if UNITY_ANDROID
+#if UNITY_IOS
+      statusContainer.Post("CoreLocation.");
+#else
       statusContainer.Post("Location Services Disabled, cannot get location.");
       return Input.location.lastData;
 #endif
