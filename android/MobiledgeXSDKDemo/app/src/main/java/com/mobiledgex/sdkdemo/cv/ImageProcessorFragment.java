@@ -96,8 +96,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefLocalProcessing = false;
     private boolean prefRemoteProcessing = true;
     protected VolleyRequestHandler.CameraMode mCameraMode;
-    protected float serverToDisplayRatioX;
-    protected float serverToDisplayRatioY;
+    protected float mServerToDisplayRatioX;
+    protected float mServerToDisplayRatioY;
     private boolean mBenchmarkActive;
 
     protected enum CloudletType {
@@ -110,8 +110,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     public static final String EXTRA_FACE_RECOGNITION = "extra_face_recognition";
 
-    private CascadeClassifier cascadeClassifier;
-    private int localOpenCvFaceSize;
+    private CascadeClassifier mCascadeClassifier;
 
     public String getStatsText() {
         return mVolleyRequestHandler.getStatsText();
@@ -149,10 +148,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         mImageRect = imageRect;
-        serverToDisplayRatioX = (float) mImageRect.width() / bitmap.getWidth();
-        serverToDisplayRatioY = (float) mImageRect.height() / bitmap.getHeight();
+        mServerToDisplayRatioX = (float) mImageRect.width() / bitmap.getWidth();
+        mServerToDisplayRatioY = (float) mImageRect.height() / bitmap.getHeight();
 
-        Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" serverToDisplayRatioX=" + serverToDisplayRatioX+" serverToDisplayRatioY=" + serverToDisplayRatioY);
+        Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
         if(prefRemoteProcessing) {
             if(mBenchmarkActive) {
@@ -191,10 +190,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             return;
         }
 
-        localOpenCvFaceSize = (int) (bitmap.getHeight() * 0.2); //The faces will be a 20% of the height of the screen
+        int localOpenCvFaceSize = (int) (bitmap.getHeight() * 0.2);
         // Use the classifier to detect faces
-        if (cascadeClassifier != null) {
-            cascadeClassifier.detectMultiScale(aInputFrame, faces, 1.2, 2, 2,
+        if (mCascadeClassifier != null) {
+            mCascadeClassifier.detectMultiScale(aInputFrame, faces, 1.2, 2, 2,
                     new org.opencv.core.Size(localOpenCvFaceSize, localOpenCvFaceSize), new org.opencv.core.Size());
         }
 
@@ -254,7 +253,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 int widthOff = mImageRect.left;
                 int heightOff = mImageRect.top;
 
-                Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " serverToDisplayRatioX=" + serverToDisplayRatioX+" serverToDisplayRatioY=" + serverToDisplayRatioY);
+                Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
                 int i;
                 int totalFaces;
@@ -291,10 +290,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                             rect.bottom += 1;
                         }
 
-                        rect.left *= serverToDisplayRatioX;
-                        rect.right *= serverToDisplayRatioX;
-                        rect.top *= serverToDisplayRatioY;
-                        rect.bottom *= serverToDisplayRatioY;
+                        rect.left *= mServerToDisplayRatioX;
+                        rect.right *= mServerToDisplayRatioX;
+                        rect.top *= mServerToDisplayRatioY;
+                        rect.bottom *= mServerToDisplayRatioY;
 
                         if (mCamera2BasicFragment.mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT
                                 && !prefLegacyCamera && !mCamera2BasicFragment.mVideoMode) {
@@ -488,7 +487,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             os.close();
 
             // Load the cascade classifier
-            cascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
+            mCascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
         } catch (Exception e) {
             Log.e(TAG, "OpenCV: Error loading cascade", e);
         }
