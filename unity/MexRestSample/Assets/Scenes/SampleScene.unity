@@ -427,7 +427,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 246998963}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 680a8194bc4c74be79884a5cb4699f50, type: 3}
+  m_Script: {fileID: 11500000, guid: f09a7f8da1abb4523a453ecc89a9fd7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   registerClientButton: {fileID: 246998966}
@@ -603,7 +603,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   status: 
-  scrollViewText: {fileID: 0}
+  scrollViewText: {fileID: 290778442}
 --- !u!1 &437066750
 GameObject:
   m_ObjectHideFlags: 0
@@ -760,7 +760,6 @@ GameObject:
   - component: {fileID: 534669905}
   - component: {fileID: 534669904}
   - component: {fileID: 534669903}
-  - component: {fileID: 534669906}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: Untagged
@@ -832,19 +831,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &534669906
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 534669902}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 076ba35ec93da4946afa8b4a08d0f922, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  findCloudletButton: {fileID: 0}
 --- !u!1 &606930957
 GameObject:
   m_ObjectHideFlags: 0
@@ -990,7 +976,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 809187002}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 69d37d92905384b788d1bec680e00a64, type: 3}
+  m_Script: {fileID: 11500000, guid: e9372a454f7dd410ea1c632bc4b34236, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   locationUpdateButton: {fileID: 809187007}
@@ -1242,7 +1228,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 925747663}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2dbbd6c5971f4c34b4dc61c644f61b2, type: 3}
+  m_Script: {fileID: 11500000, guid: 392bc95bb87b448c2b552e2c88feb187, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &925747666
@@ -1254,7 +1240,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 925747663}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b72263100825c482bbc2fe0729cefe5f, type: 3}
+  m_Script: {fileID: 11500000, guid: 0b60fd7b224934b00b497d5140a30429, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1101193122
@@ -1608,10 +1594,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1511304560}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 680a8194bc4c74be79884a5cb4699f50, type: 3}
+  m_Script: {fileID: 11500000, guid: f09a7f8da1abb4523a453ecc89a9fd7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  registerClientButton: {fileID: 0}
+  registerClientButton: {fileID: 246998966}
 --- !u!1 &1567199472
 GameObject:
   m_ObjectHideFlags: 0
@@ -1767,7 +1753,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1597047496}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 188e50f1999354e0b8221e389291e83e, type: 3}
+  m_Script: {fileID: 11500000, guid: 2e66e4f41e3b943559699ee203bf1045, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   verifyLocationButton: {fileID: 1597047499}
@@ -1899,7 +1885,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1659293170}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ac2ce3ad0cb14c0483bc14c7d2338fd, type: 3}
+  m_Script: {fileID: 11500000, guid: 990e4d0b338434eb18745cf4642ae824, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   startMexSampleButton: {fileID: 1659293173}
@@ -1995,9 +1981,6 @@ GameObject:
   - component: {fileID: 1672885645}
   - component: {fileID: 1672885644}
   - component: {fileID: 1672885643}
-  - component: {fileID: 1672885649}
-  - component: {fileID: 1672885648}
-  - component: {fileID: 1672885647}
   m_Layer: 5
   m_Name: UICanvas
   m_TagString: Untagged
@@ -2093,42 +2076,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &1672885647
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1672885642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b72263100825c482bbc2fe0729cefe5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1672885648
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1672885642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b72263100825c482bbc2fe0729cefe5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1672885649
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1672885642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b72263100825c482bbc2fe0729cefe5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1775828213
 GameObject:
   m_ObjectHideFlags: 0
@@ -2416,7 +2363,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1937185344}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 076ba35ec93da4946afa8b4a08d0f922, type: 3}
+  m_Script: {fileID: 11500000, guid: 1a043066c651847c9a4ca2b2399c1b10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   findCloudletButton: {fileID: 1937185347}
