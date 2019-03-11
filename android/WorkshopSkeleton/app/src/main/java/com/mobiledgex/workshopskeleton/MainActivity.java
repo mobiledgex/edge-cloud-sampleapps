@@ -202,12 +202,12 @@ public class MainActivity extends AppCompatActivity {
         checkboxCloudletFound.setText(R.string.cloudlet_found);
 
         // Populate cloudlet details.
-        latitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLat());
-        longitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLong());
+        latitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLatitude());
+        longitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLongitude());
         fqdnTv.setText(mClosestCloudlet.getFQDN());
         LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-        LatLng cloudletLatLng = new LatLng(mClosestCloudlet.getCloudletLocation().getLat(),
-                mClosestCloudlet.getCloudletLocation().getLong());
+        LatLng cloudletLatLng = new LatLng(mClosestCloudlet.getCloudletLocation().getLatitude(),
+                mClosestCloudlet.getCloudletLocation().getLongitude());
         double distance = SphericalUtil.computeDistanceBetween(userLatLng, cloudletLatLng)/1000;
         distanceTv.setText(String.format("%.2f", distance)+" km");
         //Extract cloudlet name from FQDN
