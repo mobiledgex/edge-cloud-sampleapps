@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_camera_swap"
+        android:icon="@drawable/ic_menu_switch_camera"
+        android:title="Swap Camera"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_camera_settings"
+        android:icon="@drawable/ic_menu_settings"
+        android:title="Settings"
+        app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_camera_training"
+        android:title="Training Mode" />
+    <item android:id="@+id/action_camera_training_guest"
+        android:checkable="true"
+        android:title="Guest Training Mode" />
+    <item android:id="@+id/action_camera_video"
+        android:title="Play Video" />
+    <item android:id="@+id/action_camera_debug"
+        android:title="Generate Debug Info" />
+    <item android:title="Benchmark"
+        android:id="@+id/action_benchmark_submenu">
+        <menu>
+            <item
+                android:id="@+id/action_benchmark_edge"
+                android:icon="@mipmap/ic_marker_cloudlet"
+                android:title="Edge" />
+            <item
+                android:id="@+id/action_benchmark_local"
+                android:icon="@mipmap/ic_marker_mobile"
+                android:title="Local" />
+        </menu>
+    </item>
+
+</menu>

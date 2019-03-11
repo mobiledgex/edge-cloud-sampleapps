@@ -1,0 +1,190 @@
+<resources>
+    <string name="app_name">MobiledgeX SDK Demo</string>
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <string name="action_reset_location">Reset Location</string>
+    <string name="action_register_client">Register Client</string>
+    <string name="action_verify_location">Verify Location</string>
+    <string name="action_find_cloudlet">Find Closest Cloudlet</string>
+
+    <string name="request_camera_permission">This app needs camera permission.</string>
+
+    <string name="train_guest_start">Start</string>
+    <string name="train_guest_title">Guest Name</string>
+    <string name="train_guest_message">Enter the guest name, then face recognition training will begin.</string>
+    <string name="sign_in_required_title">Sign-in required.</string>
+    <string name="sign_in_required_message">Return to main menu and choose \"Sign in with Google\".</string>
+
+    <!-- Strings related to Settings -->
+    <string name="action_settings">Settings</string>
+    <string name="preference_first_time_use">first_time_use</string>
+    <string name="preference_allow_find_before_verify">allow_find_before_verify</string>
+    <string name="preference_mex_user_uuid">mex_user_uuid</string>
+    <string name="enhanced_location_permission">This application uses enhanced features of carrier networks to validate your device location. Please enable in app settings.</string>
+    <string name="preference_mex_location_verification">location_verification</string>
+    <string name="preference_mex_location_verification_title">Location Verification</string>
+    <string name="preference_mex_location_verification_summary">Enhanced Network Location Services</string>
+    <string name="preference_net_switching_allowed">net_switching_allowed</string>
+    <string name="preference_net_switching_allowed_title">Network Switching Enabled</string>
+    <string name="preference_net_switching_allowed_summary">Wifi to Cell network switching</string>
+
+    <!-- String for Face Detection preferences -->
+    <string name="preference_fd_front_camera">fd_front_camera</string>
+    <string name="preference_fd_local_proc">fd_local_proc</string>
+    <string name="preference_fd_local_proc_title">Local processing</string>
+    <string name="preference_fd_local_proc_summary">Include tracking via local processing</string>
+    <string name="preference_fd_multi_face">fd_multi_face</string>
+    <string name="preference_fd_multi_face_title">Multi-face</string>
+    <string name="preference_fd_multi_face_summary">Track multiple faces</string>
+    <string name="preference_fd_show_full_latency">fd_show_full_latency</string>
+    <string name="preference_fd_show_full_latency_title">Show full process latency</string>
+    <string name="preference_fd_show_full_latency_summary">Measures image upload, face detection, results being returned.</string>
+    <string name="preference_fd_show_net_latency">fd_show_net_latency</string>
+    <string name="preference_fd_show_net_latency_title">Show network latency</string>
+    <string name="preference_fd_show_net_latency_summary">Measures only network latency.</string>
+    <string name="preference_fd_show_stddev">fd_show_stddev</string>
+    <string name="preference_fd_show_stddev_title">Show Stddev</string>
+    <string name="preference_fd_show_stddev_summary">Standard deviation</string>
+    <string name="preference_fd_use_rolling_avg">fd_use_rolling_avg</string>
+    <string name="preference_fd_use_rolling_avg_title">Use Rolling Average</string>
+    <string name="preference_fd_use_rolling_avg_summary">Show individual measurements or rolling average</string>
+    <string name="preference_fd_host_cloud">fd_host_cloud</string>
+    <string name="preference_fd_host_cloud_title">Cloud Server</string>
+    <string name="preference_fd_host_cloud_summary">Enter a custom IP or hostname.</string>
+    <string name="preference_fd_host_edge">fd_host_edge</string>
+    <string name="preference_fd_host_edge_title">Edge Server</string>
+    <string name="preference_fd_host_edge_summary">Enter a custom IP or hostname.</string>
+    <string name="preference_fd_reset_both_hosts">fd_reset_both_hosts</string>
+    <string name="preference_fd_reset_both_hosts_title">Reset hosts to default.</string>
+    <string name="preference_fd_reset_both_hosts_message">Are you sure?</string>
+    <string name="preference_fd_legacy_camera">fd_legacy_camera</string>
+    <string name="preference_fd_legacy_camera_title">Legacy Camera</string>
+    <string name="preference_fd_legacy_camera_summary">Camera handling for older devices</string>
+    <string name="preference_fd_show_latency_stats_dialog">fd_show_latency_stats_dialog</string>
+    <string name="preference_fd_show_latency_stats_dialog_title">Show Latency Stats after session</string>
+    <string name="preference_fd_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
+
+    <string-array name="pref_fd_reset_both_hosts_choices">
+        <item>Yes. Reset hosts to default.</item>
+        <item>No. Retain current values.</item>
+    </string-array>
+
+    <!-- Strings related to first-use screen -->
+    <string name="why">Why?</string>
+    <string name="needed_permissions_text">We need these permissions to make everything work:</string>
+    <string name="location_permission_summary">We need to have access to your device location</string>
+    <string name="location_carrier_permission_summary">We want to verify your location with your mobile operator</string>
+    <string name="location_device_permission_title">Device Location Verification</string>
+    <string name="location_device_permission_explanation">Location with Device Supplied Location Permission Explanation</string>
+    <string name="location_carrier_permission_title">Carrier Location Verification</string>
+    <string name="location_carrier_permission_explanation">To ensure that all players experience fair game play, we need to validate if your device\'s location corresponds with your location in the mobile network.</string>
+
+    <string name="drag_to_spoof">Drag to spoof GPS</string>
+
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_main">MobiledgeX SDK Demo</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_face_detection">Face Detection</string>
+    <string name="title_activity_face_recognition">Face Recognition</string>
+    <string name="title_activity_pose_detection">Pose Detection</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">MobiledgeX</string>
+    <string name="nav_header_subtitle">android@mobiledgex.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_get_app_inst_list">Get App Instances</string>
+    <string name="action_about">About</string>
+    <string name="preference_speed_test_settings">Speed Test Settings</string>
+    <string name="preference_general_settings">General Settings</string>
+    <string name="preference_fd_settings">Computer Vision Settings</string>
+
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+
+    <!-- Settings for Speed Test -->
+    <string name="pref_title_download_size">Download Size</string>
+    <string name="download_size">download_size</string>
+    <string-array name="pref_download_size_titles">
+        <item>1 MB</item>
+        <item>5 MB</item>
+        <item>10 MB</item>
+        <item>20 MB</item>
+    </string-array>
+    <string-array name="pref_download_size_values">
+        <item>1048576</item>
+        <item>5242880</item>
+        <item>10485760</item>
+        <item>20971520</item>
+    </string-array>
+
+    <string name="pref_title_download_type">Download Type</string>
+    <string name="download_type">download_type</string>
+    <string-array name="pref_download_type_titles">
+        <item>Dynamically Generated</item>
+        <item>Static Files</item>
+    </string-array>
+    <string-array name="pref_download_type_values">
+        <item>dynamic</item>
+        <item>staticFile</item>
+    </string-array>
+
+    <string name="pref_title_latency_packets">Latency Test Packets</string>
+    <string name="latency_packets">latency_packets</string>
+    <string-array name="pref_latency_packets_titles">
+        <item>4</item>
+        <item>10</item>
+        <item>20</item>
+    </string-array>
+    <string-array name="pref_latency_packets_values">
+        <item>4</item>
+        <item>10</item>
+        <item>20</item>
+    </string-array>
+
+    <string name="pref_title_latency_method">Latency Test Method</string>
+    <string name="latency_method">latency_method</string>
+    <string-array name="pref_latency_test_method_titles">
+        <item>System Ping (ICMP)</item>
+        <item>Socket</item>
+    </string-array>
+    <string-array name="pref_latency_test_method_values">
+        <item>ping</item>
+        <item>socket</item>
+    </string-array>
+
+    <string name="pref_latency_autostart">latency_autostart</string>
+    <string name="pref_latency_autostart_title">Latency Test Auto-Start</string>
+    <string name="pref_latency_autostart_summary">Automatically start latency test when cloudlet is discovered.</string>
+
+    <string name="pref_title_dme_hostname">DME Selection</string>
+    <string name="pref_summary_dme_hostname">Select Demo or GDDT Integration environment</string>
+    <string name="dme_hostname">dme_hostname</string>
+    <string name="pref_summary_latency_method">Select socket connection or ICMP ping</string>
+    <string name="pref_summary_latency_packets">Number of times to repeat latency test</string>
+    <string name="pref_summary_download_type">Type of data to use for download for speed test</string>
+    <string name="pref_summary_download_size">Number of Megabytes to download for speed test</string>
+    <string name="face_detection_title">Face Detection</string>
+    <string-array name="pref_dme_hostname_titles">
+        <item>Demo (mexdemo)</item>
+        <item>DT LocAPI Integration (gddt2)</item>
+        <item>Automation Testing (automationbuckhorn)</item>
+    </string-array>
+    <string-array name="pref_dme_hostname_values">
+        <item>mexdemo.dme.mobiledgex.net</item>
+        <item>gddt2.dme.mobiledgex.net</item>
+        <item>automationbuckhorn.dme.mobiledgex.net</item>
+    </string-array>
+    <string name="title_activity_qoe_map">Predictive QoE</string>
+    <string name="map_type">Map Type</string>
+    <string name="pqoe_map_mode">Mode</string>
+    <string name="pqoe_route_mode">Route Mode</string>
+    <string name="pqoe_grid_mode">Grid Mode</string>
+    <string name="pqoe_map_type_normal">Normal</string>
+    <string name="pqoe_map_type_satellite">Satellite</string>
+    <string name="pqoe_map_type_terrain">Terrain</string>
+    <string name="pqoe_map_type_hybrid">Hybrid</string>
+    <string name="pqoe_map_type_silver">Silver</string>
+
+</resources>
