@@ -43,7 +43,7 @@ public class RegisterClientButtonScript : MonoBehaviour
     try
     {
       var registerClientRequest = dme.CreateRegisterClientRequest(
-          dme.getCarrierName(),
+          mexSample.carrierName,
           mexSample.devName,
           mexSample.appName,
           mexSample.appVers,

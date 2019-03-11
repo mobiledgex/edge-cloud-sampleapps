@@ -53,11 +53,18 @@ public class FindCloudletButtonScript : MonoBehaviour
       Debug.Log("Device sourced location: Lat: " + deviceSourcedLocation.latitude + "  Long: " + deviceSourcedLocation.longitude);
 
       var findCloudletRequest = dme.CreateFindCloudletRequest(
-          dme.getCarrierName(),
+          mexSample.carrierName,
           mexSample.devName,
           mexSample.appName,
           mexSample.appVers,
           deviceSourcedLocation);
+
+      if (findCloudletRequest == null)
+      {
+        Debug.Log("Failed to create request.");
+        ok = false;
+        return ok;
+      }
 
       reply = await dme.FindCloudlet(mexSample.host, mexSample.port, findCloudletRequest);
       statusContainer.Post("FindCloudlet Reply status: " + reply.status);
