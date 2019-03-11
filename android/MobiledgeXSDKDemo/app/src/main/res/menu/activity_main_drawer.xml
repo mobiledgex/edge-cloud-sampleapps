@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <!--<item-->
+            <!--android:id="@+id/nav_camera"-->
+            <!--android:icon="@drawable/ic_menu_camera"-->
+            <!--android:title="Import" />-->
+        <!--<item-->
+            <!--android:id="@+id/nav_gallery"-->
+            <!--android:icon="@drawable/ic_menu_gallery"-->
+            <!--android:title="Gallery" />-->
+        <!--<item-->
+            <!--android:id="@+id/nav_slideshow"-->
+            <!--android:icon="@drawable/ic_menu_slideshow"-->
+            <!--android:title="Slideshow" />-->
+        <!--<item-->
+            <!--android:id="@+id/nav_manage"-->
+            <!--android:icon="@drawable/ic_menu_manage"-->
+            <!--android:title="Tools" />-->
+        <item
+            android:id="@+id/nav_google_signin"
+            android:icon="@drawable/googleg_color"
+            android:title="Sign in with Google" />
+        <item
+            android:id="@+id/nav_google_signout"
+            android:icon="@drawable/googleg_color"
+            android:title="Sign out" />
+        <item
+            android:id="@+id/nav_face_recognition"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="Face Recognition" />
+        <item
+            android:id="@+id/nav_camera"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="Face Detection" />
+        <item
+            android:id="@+id/nav_pose_detection"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="Pose Detection" />
+        <item
+            android:id="@+id/nav_qoe_map"
+            android:icon="@drawable/ic_menu_qoe"
+            android:title="Predictive QoE" />
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_menu_settings"
+            android:title="Settings" />
+        <item
+            android:id="@+id/nav_about"
+            android:icon="@drawable/ic_menu_help"
+            android:title="About" />
+    </group>
+
+</menu>
