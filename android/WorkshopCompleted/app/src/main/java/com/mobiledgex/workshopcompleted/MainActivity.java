@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         // NOTICE: In a real app, these values would be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
-        devName = "MobiledgeX SDK Demo"; // NOTICE: In the current demo config, this matches the appName.
+        devName = "MobiledgeX";
         carrierName = "TDG";
 
         //NOTICE: A real app would request permission to enable this.

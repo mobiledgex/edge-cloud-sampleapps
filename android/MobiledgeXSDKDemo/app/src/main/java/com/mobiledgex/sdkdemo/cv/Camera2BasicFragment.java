@@ -273,7 +273,9 @@ public class Camera2BasicFragment extends Fragment
             Rect rect = new Rect(mTextureView.getLeft(),
                     mTextureView.getTop(), mTextureView.getRight(), mTextureView.getBottom());
             Log.i(TAG, "mTextureView rect="+rect.toShortString()+" ImageReader.OnImageAvailable");
-            mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+            if(mImageProviderInterface != null) {
+                mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+            }
 
             if (image != null) {
                 image.close();
@@ -591,7 +593,9 @@ public class Camera2BasicFragment extends Fragment
             Bitmap bitmap = BitmapFactory.decodeStream(is);
             Rect rect = new Rect(mTextureView.getLeft(),
                     mTextureView.getTop(), mTextureView.getRight(), mTextureView.getBottom());
-            mImageProviderInterface.onBitmapAvailable(bitmap, rect);  //TODO: See if prepageImage() is required here.
+            if(mImageProviderInterface != null) {
+                mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+            }
 
             // Draw the image on the screen using the camera preview TextureView.
             Canvas canvas = mTextureView.lockCanvas();
@@ -832,9 +836,6 @@ public class Camera2BasicFragment extends Fragment
             closeCamera();
             reopenCamera();
         }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
-        prefs.edit().putInt(prefKeyFrontCamera, mCameraLensFacingDirection).apply();
     }
 
     private void reopenCamera() {
@@ -1558,7 +1559,9 @@ public class Camera2BasicFragment extends Fragment
             Rect rect = new Rect(mTextureView.getLeft(),
                     mTextureView.getTop(), mTextureView.getRight(), mTextureView.getBottom());
             Log.i(TAG, "mTextureView rect="+rect.toShortString()+" mLegacyCamera preview");
-            mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+            if(mImageProviderInterface != null) {
+                mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+            }
             mBackgroundHandler.postDelayed(this, 66);
         }
     };
@@ -1666,7 +1669,9 @@ public class Camera2BasicFragment extends Fragment
         Rect rect = new Rect(mVideoView.getLeft(),
                 mVideoView.getTop(), mVideoView.getRight(), mVideoView.getBottom());
         Log.i(TAG, "mVideoView rect="+rect.toShortString()+" getCurrentVideoFrame()");
-        mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+        if(mImageProviderInterface != null) {
+            mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+        }
         now = System.currentTimeMillis();
         Log.i(TAG, "processImage took "+(now-start)+" ms");
     }
