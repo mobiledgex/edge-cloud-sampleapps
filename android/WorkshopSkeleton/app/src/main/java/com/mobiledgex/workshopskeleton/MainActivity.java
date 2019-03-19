@@ -156,8 +156,11 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_face_recognition) {
+        if (id == R.id.nav_face_detection) {
             // Handle the camera action
+            someText = "TODO: Add Face Detection activity";
+            Log.e(TAG, someText);
+            showErrorMsg(someText);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

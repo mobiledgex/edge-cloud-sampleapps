@@ -5,9 +5,9 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_face_recognition"
+            android:id="@+id/nav_face_detection"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Face Recognition" />
+            android:title="Face Detection" />
     </group>
 
 </menu>
