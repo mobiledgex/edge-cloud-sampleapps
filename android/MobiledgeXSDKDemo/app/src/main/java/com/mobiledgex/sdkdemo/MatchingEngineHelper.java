@@ -110,7 +110,7 @@ public class MatchingEngineHelper {
                 String host = mHostname; // Override host.
                 int port = mMatchingEngine.getPort(); // Keep same port.
                 String carrierName = "TDG";
-                String devName = "MobiledgeX SDK Demo"; //TODO: In the current demo config, this matches the appName.
+                String devName = "MobiledgeX";
                 String appVersion = ""; //SDK will populate this automatically if we pass in "".
                 boolean reportCookie = false;
 

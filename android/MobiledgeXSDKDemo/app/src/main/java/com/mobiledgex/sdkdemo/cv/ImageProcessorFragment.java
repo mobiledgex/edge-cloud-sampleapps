@@ -521,6 +521,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         if (id == R.id.action_camera_swap) {
             mCamera2BasicFragment.switchCamera();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+            prefs.edit().putInt(prefKeyFrontCamera, mCamera2BasicFragment.mCameraLensFacingDirection).apply();
             return true;
         }
 
