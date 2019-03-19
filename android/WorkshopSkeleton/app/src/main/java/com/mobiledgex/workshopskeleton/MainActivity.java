@@ -131,8 +131,19 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_reset) {
+            carrierNameTv.setText("none");
+            appNameTv.setText("none");
+            latitudeTv.setText("none");
+            longitudeTv.setText("none");
+            fqdnTv.setText("none");
+            portNumberTv.setText("none");
+            distanceTv.setText("none");
+            cloudletNameTv.setText("none");
+            checkboxRegistered.setChecked(false);
+            checkboxRegistered.setText(R.string.client_registered_question);
+            checkboxCloudletFound.setChecked(false);
+            checkboxCloudletFound.setText(R.string.cloudlet_found_question);
             return true;
         }
 
