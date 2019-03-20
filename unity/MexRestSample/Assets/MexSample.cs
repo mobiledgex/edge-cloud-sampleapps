@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 using System;
 using System.IO;
@@ -11,8 +11,8 @@ using DistributedMatchEngine;
 public class MexSample : MonoBehaviour
 {
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
+  public string devName { get; set; } = "MobiledgeX";
   public string appName { get; set; } = "MobiledgeX SDK Demo";
-  public string devName { get; set; } = "MobiledgeX SDK Demo";
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
@@ -32,6 +32,7 @@ public class MexSample : MonoBehaviour
   void Start()
   {
     statusContainer = GameObject.Find("/UICanvas/SampleOutput").GetComponent<StatusContainer>();
+
   }
 
   // Update is called once per frame
@@ -41,9 +42,16 @@ public class MexSample : MonoBehaviour
   }
 
   // Get the ephemerial carriername from device specific properties.
-  public async Task<string> getCurrentCarrierName()
+  public string getCurrentCarrierName()
   {
-    var dummy = await Task.FromResult(0);
+    // Call whenever network provider changes, but the demo app pointed to mexdemo server
+    // won't need to track the carrier. The demo requires TDG:
+    var Platform = new PlatformIntegration();
+    string cn = Platform.GetCurrentCarrierName();
+    Debug.Log("Inspection only: Platform carrierName is [" + cn + "]");
+
+
+    // Just return default for MexSample:
     return carrierName;
   }
 
@@ -51,7 +59,7 @@ public class MexSample : MonoBehaviour
   {
     try
     {
-      carrierName = await getCurrentCarrierName();
+      carrierName = getCurrentCarrierName();
 
       Console.WriteLine("RestSample!");
       statusContainer.Post("RestSample!");
@@ -64,7 +72,7 @@ public class MexSample : MonoBehaviour
       var location = await LocationService.RetrieveLocation();
       statusContainer.Post("RestSample Location Task started.");
 
-      var registerClientRequest = dme.CreateRegisterClientRequest(carrierName, appName, devName, appVers, developerAuthToken);
+      var registerClientRequest = dme.CreateRegisterClientRequest(carrierName, devName, appName, appVers, developerAuthToken);
 
       // Await synchronously.
 
