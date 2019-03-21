@@ -6,7 +6,6 @@ properties.load(project.rootProject.file('local.properties').newDataInputStream(
 def nexusUser = properties.getProperty("nexus.user")
 def nexusPassword = properties.getProperty("nexus.password")
 
-
 buildscript {
 
     repositories {
@@ -25,17 +24,17 @@ buildscript {
 
 allprojects {
     repositories {
+        google()
+        jcenter()
+        mavenLocal()
         maven {
             credentials {
-                // Create these variables if you don't have them.
+                // Create these variables in local.properties if you don't have them.
                 username nexusUser
                 password nexusPassword
             }
             url "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
         }
-        mavenLocal()
-        google()
-        jcenter()
     }
 }
 
