@@ -1,4 +1,4 @@
-package com.mobiledgex.workshopcompleted;
+package com.mobiledgex.workshopskeleton;
 
 import org.junit.Test;
 
