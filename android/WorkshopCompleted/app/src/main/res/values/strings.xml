@@ -1,9 +1,16 @@
 <resources>
-    <string name="app_name">MobiledgeX Workshop</string>
+    <string name="app_name">Workshop Completed</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">MobiledgeX Workshop</string>
+    <string name="nav_header_subtitle">android@mobiledgex.com</string>
+    <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+
     <string name="action_reset">Reset</string>
     <string name="cloudlet_found_question">Cloudlet Found?</string>
     <string name="client_registered_question">Client Registered?</string>
     <string name="cloudlet_found">Cloudlet Found</string>
     <string name="client_registered">Client Registered</string>
+
 </resources>
