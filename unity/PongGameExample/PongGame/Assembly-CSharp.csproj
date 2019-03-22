@@ -60,25 +60,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\GameManager.cs" />
-    <Compile Include="Assets\Scripts\BallControl.cs" />
-    <Compile Include="Assets\Scripts\PlatformIntegration.cs" />
-    <Compile Include="Assets\Scripts\PlayerControls.cs" />
-    <Compile Include="Assets\Scripts\Sidewalls.cs" />
+    <Compile Include="Assets\Scripts\PlayerManager.cs" />
+    <Compile Include="Assets\Scripts\wsClient.cs" />
     <Reference Include="Unity.TextMeshPro.Editor">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.PackageManagerUI.Editor">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.CollabProxy.Editor">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/ScriptAssemblies/Unity.CollabProxy.Editor.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/ScriptAssemblies/Unity.CollabProxy.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Analytics.DataPrivacy">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/ScriptAssemblies/Unity.Analytics.DataPrivacy.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/ScriptAssemblies/Unity.Analytics.DataPrivacy.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AIModule">
       <HintPath>/Applications/Unity/Unity.app/Contents/Managed/UnityEngine/UnityEngine.AIModule.dll</HintPath>
@@ -282,13 +279,13 @@
       <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/UnitySpatialTracking/RuntimeEditor/UnityEngine.SpatialTracking.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Analytics.Tracker">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.Tracker.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.Tracker.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Analytics.Editor">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.Editor.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Analytics.StandardEvents">
-      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGame/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.StandardEvents.dll</HintPath>
+      <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.StandardEvents.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
       <HintPath>/Applications/Unity/Unity.app/Contents/NetStandard/ref/2.0.0/netstandard.dll</HintPath>
