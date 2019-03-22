@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerControls : MonoBehaviour
 {
+  // This should be serialized.
   public KeyCode moveUp = KeyCode.W;
   public KeyCode moveDown = KeyCode.S;
   public float speed = 10f;

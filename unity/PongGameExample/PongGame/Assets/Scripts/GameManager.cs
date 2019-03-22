@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
     }
   }
 
+  // Separate from Update()
   void OnGUI()
   {
     GUI.skin = layout;
@@ -40,18 +41,27 @@ public class GameManager : MonoBehaviour
     {
       PlayerScore1 = 0;
       PlayerScore2 = 0;
-      theBall.SendMessage("RestartGame", 0.5f, SendMessageOptions.RequireReceiver);
+      if (theBall != null)
+      {
+        theBall.SendMessage("RestartGame", 0.5f, SendMessageOptions.RequireReceiver);
+      }
     }
 
     if (PlayerScore1 == 10)
     {
       GUI.Label(new Rect(Screen.width / 2 - 150, 200, 2000, 1000), "PLAYER ONE WINS");
-      theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+      if (theBall != null)
+      {
+        theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+      }
     }
     else if (PlayerScore2 == 10)
     {
       GUI.Label(new Rect(Screen.width / 2 - 150, 200, 2000, 1000), "PLAYER TWO WINS");
-      theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+      if (theBall != null)
+      {
+        theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+      }
     }
   }
 
