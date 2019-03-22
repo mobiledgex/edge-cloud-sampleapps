@@ -37,7 +37,7 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="?attr/colorPrimary"
                 app:popupTheme="@style/AppTheme.PopupOverlay"
-                app:title="@string/face_detection_title" />
+                app:title="@string/title_activity_face_detection" />
         </android.support.design.widget.AppBarLayout>
 
         <RelativeLayout

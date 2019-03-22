@@ -27,11 +27,9 @@
         <menu>
             <item
                 android:id="@+id/action_benchmark_edge"
-                android:icon="@mipmap/ic_marker_cloudlet"
                 android:title="Edge" />
             <item
                 android:id="@+id/action_benchmark_local"
-                android:icon="@mipmap/ic_marker_mobile"
                 android:title="Local" />
         </menu>
     </item>

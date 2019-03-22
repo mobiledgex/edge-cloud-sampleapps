@@ -30,25 +30,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.mobiledgex.sdkdemo.Account;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.mobiledgex.sdkdemo.R;
 import com.mobiledgex.sdkdemo.SettingsActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfRect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.objdetect.CascadeClassifier;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,11 +83,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefShowStdDev;
     protected boolean prefUseRollingAvg;
     protected boolean prefLocalProcessing = false;
-    private boolean prefRemoteProcessing = true;
+    protected boolean prefRemoteProcessing = true;
     protected VolleyRequestHandler.CameraMode mCameraMode;
     protected float mServerToDisplayRatioX;
     protected float mServerToDisplayRatioY;
-    private boolean mBenchmarkActive;
+    protected boolean mBenchmarkActive;
+    private String defaultLatencyMethod = "ping";
 
     protected enum CloudletType {
         EDGE,
@@ -106,11 +96,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         LOCAL_PROCESSING
     }
 
-    VolleyRequestHandler.RollingAverage localLatencyRollingAvg = new VolleyRequestHandler.RollingAverage(CloudletType.LOCAL_PROCESSING, "On-Device", 100);
-
     public static final String EXTRA_FACE_RECOGNITION = "extra_face_recognition";
-
-    private CascadeClassifier mCascadeClassifier;
 
     public String getStatsText() {
         return mVolleyRequestHandler.getStatsText();
@@ -159,72 +145,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             }
             mVolleyRequestHandler.sendImage(bitmap);
         }
-
-        if(prefLocalProcessing) {
-            processImageLocal(bitmap);
-        }
     }
 
     @Override
     public void setMessageText(String messageText) {
         mProgressText.setVisibility(View.VISIBLE);
         mProgressText.setText(messageText);
-    }
-
-    /**
-     * Via OpenCV library, use on-device processing to detect faces in the bitmap.
-     *
-     * @param bitmap
-     */
-    private void processImageLocal(Bitmap bitmap) {
-        long startTime = System.nanoTime();
-
-        Mat aInputFrame = null;
-        MatOfRect faces = null;
-        try {
-            aInputFrame = new Mat();
-            Utils.bitmapToMat(bitmap, aInputFrame);
-            faces = new MatOfRect();
-        } catch (UnsatisfiedLinkError e) {
-            Log.w(TAG, "OpenCV libraries not yet loaded.");
-            return;
-        }
-
-        int localOpenCvFaceSize = (int) (bitmap.getHeight() * 0.2);
-        // Use the classifier to detect faces
-        if (mCascadeClassifier != null) {
-            mCascadeClassifier.detectMultiScale(aInputFrame, faces, 1.2, 2, 2,
-                    new org.opencv.core.Size(localOpenCvFaceSize, localOpenCvFaceSize), new org.opencv.core.Size());
-        }
-
-        // If there are any faces found, build array of rectangles
-        //Ex: [[64, 84, 175, 195], [50, 32, 193, 175]]
-        JSONArray jsonArray = new JSONArray();
-        org.opencv.core.Rect[] facesArray = faces.toArray();
-        for (int i = 0; i < facesArray.length; i++) {
-            JSONArray jsonRect = new JSONArray();
-            Imgproc.rectangle(aInputFrame, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0, 255), 3);
-            jsonRect.put(facesArray[i].x);
-            jsonRect.put(facesArray[i].y);
-            jsonRect.put((int)facesArray[i].br().x);
-            jsonRect.put((int)facesArray[i].br().y);
-            jsonArray.put(jsonRect);
-        }
-
-        long endTime = System.nanoTime();
-        long localLatency = endTime - startTime;
-        localLatencyRollingAvg.add(localLatency);
-        long localStdDev = localLatencyRollingAvg.getStdDev();
-        long localAvg = localLatencyRollingAvg.getAverage();
-        Log.i(TAG, "localLatency="+(localLatency/1000000.0)+" localAvg="+(localAvg/1000000.0)+" localStdDev="+(localStdDev/1000000.0));
-
-        updateOverlay(CloudletType.LOCAL_PROCESSING, jsonArray, null);
-
-        // Save image to local storage.
-//            if (facesArray.length > 0) {
-//                Imgproc.cvtColor(aInputFrame, aInputFrame, CvType.CV_8UC1);
-//                Imgcodecs.imwrite(String.valueOf(mFile), aInputFrame);
-//            }
     }
 
     /**
@@ -437,7 +363,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     @Override
     public void onSetGuestName(String guestName) {
-        mVolleyRequestHandler.setSubjectName(guestName);
+        mVolleyRequestHandler.setGuestName(guestName);
         mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_TRAINING);
     }
 
@@ -454,45 +380,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     public static ImageProcessorFragment newInstance() {
         return new ImageProcessorFragment();
-    }
-
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(getContext()) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                    initializeOpenCVDependencies();
-                    break;
-                default:
-                    super.onManagerConnected(status);
-                    break;
-            }
-        }
-    };
-
-    private void initializeOpenCVDependencies() {
-        try {
-            // Copy the resource into a temp file so OpenCV can load it
-            InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
-            File cascadeDir = getActivity().getDir("cascade", Context.MODE_PRIVATE);
-            File mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
-            FileOutputStream os = new FileOutputStream(mCascadeFile);
-
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                os.write(buffer, 0, bytesRead);
-            }
-            is.close();
-            os.close();
-
-            // Load the cascade classifier
-            mCascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-        } catch (Exception e) {
-            Log.e(TAG, "OpenCV: Error loading cascade", e);
-        }
-
-        // And we are ready to go
     }
 
     @Override
@@ -547,7 +434,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_camera_training) {
-            if(!Account.getSingleton().isSignedIn()) {
+            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getContext());
+            if(account == null) {
                 new android.support.v7.app.AlertDialog.Builder(getContext())
                         .setTitle(R.string.sign_in_required_title)
                         .setMessage(R.string.sign_in_required_message)
@@ -562,7 +450,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (id == R.id.action_camera_training_guest) {
             //Even in guest mode, the user must be signed in because they will be listed as the
             //owner of the guest images on the face training server.
-            if(!Account.getSingleton().isSignedIn()) {
+            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getContext());
+            if(account == null) {
                 new android.support.v7.app.AlertDialog.Builder(getContext())
                         .setTitle(R.string.sign_in_required_title)
                         .setMessage(R.string.sign_in_required_message)
@@ -573,7 +462,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             if(item.isChecked()) {
                 // If item already checked then uncheck it
                 item.setChecked(false);
-                mVolleyRequestHandler.setSubjectName(Account.getSingleton().getGoogleSignInAccount().getDisplayName());
+                mVolleyRequestHandler.setGuestName("");
             } else {
                 item.setChecked(true);
                 TrainGuestDialog trainGuestDialog = new TrainGuestDialog();
@@ -594,14 +483,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mCamera2BasicFragment.runBenchmark(getContext(), "Edge");
             return true;
         }
-        if (id == R.id.action_benchmark_local) {
-            mBenchmarkActive = true;
-            prefLocalProcessing = true;
-            prefRemoteProcessing = false;
-            loadOpencvLibrary();
-            mCamera2BasicFragment.runBenchmark(getContext(), "Local");
-            return true;
-        }
 
         return false;
     }
@@ -610,22 +491,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public void onResume() {
         Log.d(TAG, "onResume()");
         super.onResume();
-        //Only load the OpenCV library if we are doing local processing.
-        if(prefLocalProcessing) {
-            loadOpencvLibrary();
-        } else {
-            Log.d(TAG, "Local processing not enabled. Skipping loading OpenCV library.");
-        }
-    }
-
-    private void loadOpencvLibrary() {
-        if (!OpenCVLoader.initDebug()) {
-            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, getContext(), mLoaderCallback);
-        } else {
-            Log.d(TAG, "OpenCV library found inside package. Using it!");
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }
     }
 
     @Override
@@ -635,6 +500,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             //Can happen during rapid screen rotations.
             return;
         }
+        String prefKeyLatencyMethod = getResources().getString(R.string.fd_latency_method);
         String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
         String prefKeyLegacyCamera = getResources().getString(R.string.preference_fd_legacy_camera);
         String prefKeyMultiFace = getResources().getString(R.string.preference_fd_multi_face);
@@ -654,6 +520,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (key.equals(prefKeyFrontCamera) || key.equals("ALL")) {
             mCamera2BasicFragment.mCameraLensFacingDirection =
                     sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);
+        }
+        if (key.equals(prefKeyLatencyMethod) || key.equals("ALL")) {
+            String latencyTestMethodString = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
+            mVolleyRequestHandler.latencyTestMethod = VolleyRequestHandler.LatencyTestMethod.valueOf(latencyTestMethodString);
+            Log.i(TAG, "mVolleyRequestHandler.latencyTestMethod="+mVolleyRequestHandler.latencyTestMethod);
         }
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
