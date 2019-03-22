@@ -60,7 +60,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\PlayerManager.cs" />
+    <Compile Include="Assets\Scripts\BallControl.cs" />
+    <Compile Include="Assets\Scripts\GameManager.cs" />
+    <Compile Include="Assets\Scripts\PlatformIntegration.cs" />
+    <Compile Include="Assets\Scripts\PlayerControls.cs" />
+    <Compile Include="Assets\Scripts\Sidewalls.cs" />
     <Compile Include="Assets\Scripts\wsClient.cs" />
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>/Users/garnerlee/go/src/github.com/mobiledgex/edge-cloud-sampleapps/unity/PongGameExample/PongGame/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
