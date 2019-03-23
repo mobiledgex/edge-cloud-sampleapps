@@ -20,7 +20,7 @@ public class PlatformIntegration : MonoBehaviour, CarrierInfo
   void Start()
   {
     string networkOperatorName = GetCurrentCarrierName();
-    Debug.Log("ZZZZZZZZZZZZZZZZZZZZZZZ networkOperatorName gotten: [" + networkOperatorName + "] ZZZZZZZZZZZZZZZZZZZZZZ");
+    Debug.Log("networkOperatorName gotten: [" + networkOperatorName + "]");
   }
 
   // Update is called once per frame

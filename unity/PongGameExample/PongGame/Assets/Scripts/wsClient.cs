@@ -56,16 +56,16 @@ public class wsClient : MonoBehaviour
         Debug.Log("Server says to Client: " + receivedMessage);
     }
 
-    async Task Connect(string uri)
+    public async Task Connect(string uri)
     {
         Task connectTask = ws.ConnectAsync(new Uri(uri), CancellationToken.None);
         while (ws.State == WebSocketState.Connecting)
         {
-            connectTask.Wait(20); // in milliseconds
+            connectTask.Wait(10); // in milliseconds
         }
     }
 
-    async static Task Send(ClientWebSocket webSocket, string message)
+    public async Task Send(string message)
     {
         byte[] buffer = encoder.GetBytes(message);
         Debug.Log("Message to send: " + buffer.Length);
@@ -73,7 +73,7 @@ public class wsClient : MonoBehaviour
         Debug.Log("Send done");
     }
 
-    async static Task<string> Recieve(ClientWebSocket ws, UInt64 maxSize = MAXREADSIZE)
+    public async Task<string> Recieve(UInt64 maxSize = MAXREADSIZE)
     {
         // A read buffer, and a memory stream to stuff unknown number of chunks into:
         byte[] buf = new byte[4 * 1024];

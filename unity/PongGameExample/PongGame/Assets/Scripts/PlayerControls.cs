@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using System;
+
 public class PlayerControls : MonoBehaviour
 {
   // This should be serialized.
@@ -9,12 +11,17 @@ public class PlayerControls : MonoBehaviour
   public KeyCode moveDown = KeyCode.S;
   public float speed = 10f;
   public float boundY = 2.25f;
-  private Rigidbody2D rb2d;
+  public Rigidbody2D rb2d;
+
+  // for server
+  public string uuid = new System.Guid(DateTime.Now.Ticks + "").ToString();
 
   // Start is called before the first frame update
   void Start()
   {
     rb2d = GetComponent<Rigidbody2D>();
+
+    // Not Smart, but we're just going to register the client.
   }
 
   // Update is called once per frame

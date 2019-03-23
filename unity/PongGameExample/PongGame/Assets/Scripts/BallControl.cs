@@ -2,15 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+using System;
+
 public class BallControl : MonoBehaviour
 {
-  private Rigidbody2D rb2d;
+  public Rigidbody2D rb2d;
+
+  // For Server.
+  public string uuid = new System.Guid(DateTime.Now.Ticks + "").ToString();
 
   // Start is called before the first frame update
   void Start()
   {
     rb2d = GetComponent<Rigidbody2D>();
     Invoke("GoBall", 2);
+
   }
 
   // Update is called once per frame
