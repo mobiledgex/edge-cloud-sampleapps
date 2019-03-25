@@ -165,7 +165,6 @@ public class MainActivity extends AppCompatActivity
         // Check for existing Google Sign In account, if the user is already signed in
         // the GoogleSignInAccount will be non-null.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        Account.getSingleton().setGoogleSignInAccount(account);
 
         signInMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signin);
         signOutMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signout);
@@ -427,7 +426,6 @@ public class MainActivity extends AppCompatActivity
                             Toast.makeText(MainActivity.this, "Sign out successful.", Toast.LENGTH_LONG).show();
                             signInMenuItem.setVisible(true);
                             signOutMenuItem.setVisible(false);
-                            Account.getSingleton().setGoogleSignInAccount(null);
                         }
                     });
         }
@@ -1026,7 +1024,6 @@ public class MainActivity extends AppCompatActivity
             // Signed in successfully, show authenticated UI.
             signInMenuItem.setVisible(false);
             signOutMenuItem.setVisible(true);
-            Account.getSingleton().setGoogleSignInAccount(account);
             Toast.makeText(MainActivity.this, "Sign in successful. Welcome, "+account.getDisplayName(), Toast.LENGTH_LONG).show();
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.

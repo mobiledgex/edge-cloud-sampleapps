@@ -16,8 +16,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.mobiledgex.sdkdemo.Account;
-import com.mobiledgex.sdkdemo.CloudletListHolder;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
@@ -42,10 +42,7 @@ import static com.mobiledgex.sdkdemo.cv.ImageProcessorFragment.CloudletType.CLOU
 
 public class VolleyRequestHandler {
     private static final String TAG = "VolleyRequestHandler";
-    /**
-     * For every N face detection requests, do a network latency test.
-     */
-    public static final int PING_INTERVAL = 4;
+
     public static final int TRAINING_COUNT_TARGET = 10;
 
     private RequestQueue queue;
@@ -57,21 +54,22 @@ public class VolleyRequestHandler {
     public static final String DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net";
     public static final String DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net";
 
-    //Bruce's private test environment
-//    public static String DEF_FACE_HOST_CLOUD = "acrotopia.com";
-//    public static String DEF_FACE_HOST_EDGE = "192.168.1.86";
-//    public static String DEF_FACE_HOST_EDGE = "10.157.107.83";
-
     private String cloudHost;
     private String edgeHost;
 
     public ImageSender cloudImageSender;
     public ImageSender edgeImageSender;
 
+    public enum LatencyTestMethod {
+        ping,
+        socket
+    }
+
     //Variables for latency test
-    public CloudletListHolder.LatencyTestMethod latencyTestMethod;
+    public LatencyTestMethod latencyTestMethod;
     private final int socketTimeout = 3000;
-    private String mSubject = "";
+    private GoogleSignInAccount mAccount;
+    private String mGuestName = "";
 
     public String getStatsText() {
         return edgeImageSender.latencyFullProcessRollingAvg.getStatsText() + "\n\n" +
@@ -95,16 +93,22 @@ public class VolleyRequestHandler {
         return port;
     }
 
+    public boolean isSignedIn() {
+        return mAccount != null;
+    }
+
     public VolleyRequestHandler(ImageServerInterface imageServerInterface, Activity activity) {
         mImageServerInterface = imageServerInterface;
 
-        latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
-        if(Account.getSingleton().isSignedIn()) {
-            mSubject = Account.getSingleton().getGoogleSignInAccount().getDisplayName();
+        mAccount = GoogleSignIn.getLastSignedInAccount(activity);
+        if(mAccount != null) {
+            Log.i(TAG, "mAccount=" + mAccount.toJson());
+        } else {
+            Log.i(TAG, "mAccount=" + mAccount);
         }
 
         // Get hosts from preferences.
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         cloudHost = prefs.getString(activity.getResources().getString(R.string.preference_fd_host_cloud), DEF_FACE_HOST_CLOUD);
         edgeHost = prefs.getString(activity.getResources().getString(R.string.preference_fd_host_edge), DEF_FACE_HOST_EDGE);
 
@@ -128,9 +132,9 @@ public class VolleyRequestHandler {
         edgeImageSender.sendImage(image);
     }
 
-    public void setSubjectName(String subjectName) {
-        Log.d(TAG, "setSubjectName="+subjectName);
-        mSubject = subjectName;
+    public void setGuestName(String guestName) {
+        Log.d(TAG, "setGuestName="+guestName);
+        mGuestName = guestName;
     }
 
     public class ImageSender {
@@ -145,7 +149,6 @@ public class VolleyRequestHandler {
         private String djangoUrl = "/detector/detect/";
         private ImageProcessorFragment.CloudletType cloudLetType;
         private Handler mHandler;
-
 
         public ImageSender(String host, ImageProcessorFragment.CloudletType cloudLetType) {
             this.host = host;
@@ -175,6 +178,20 @@ public class VolleyRequestHandler {
             Log.i(TAG, "setCameraMode("+mCameraMode+") djangoUrl="+djangoUrl);
         }
 
+        private Map<String,String> getUserParams() {
+            Map<String, String> params = new HashMap<String, String>();
+            if(isSignedIn()) {
+                params.put("owner", mAccount.getDisplayName());
+                if(mGuestName.equals("")) {
+                    params.put("subject", mAccount.getDisplayName());
+                } else {
+                    params.put("subject", mGuestName);
+                }
+            }
+            Log.i(TAG, "getUserParams="+params);
+            return params;
+        }
+
         /**
          * Encode the bitmap and use Volley async to request face detection
          * coordinates. Decode the returned JSON string and update the rectangles
@@ -199,7 +216,8 @@ public class VolleyRequestHandler {
 
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 67, byteStream);
-//            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+            //TODO: Add preferences for quality and to allow lossless Bitmap.CompressFormat.PNG
+
             byte[] bytes = byteStream.toByteArray();
             String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
 
@@ -267,14 +285,8 @@ public class VolleyRequestHandler {
 
                 @Override
                 protected Map<String,String> getParams(){
-                    Map<String, String> params = new HashMap<String, String>();
-                    params.put("subject", mSubject);
+                    Map<String, String> params = getUserParams();
                     params.put("image", requestBody);
-                    if(Account.getSingleton().isSignedIn()) {
-                        if(mSubject != Account.getSingleton().getGoogleSignInAccount().getDisplayName()) {
-                            params.put("owner", Account.getSingleton().getGoogleSignInAccount().getDisplayName());
-                        }
-                    }
                     return params;
                 }
             };
@@ -321,9 +333,7 @@ public class VolleyRequestHandler {
             }) {
                 @Override
                 protected Map<String,String> getParams(){
-                    Map<String, String> params = new HashMap<String, String>();
-                    params.put("subject", mSubject);
-                    return params;
+                    return getUserParams();
                 }
             };
 
@@ -344,7 +354,7 @@ public class VolleyRequestHandler {
          */
         private void doSinglePing(String host, RollingAverage rollingAverage, ImageProcessorFragment.CloudletType cloudletType) {
             long latency = 0;
-            if(latencyTestMethod.equals(CloudletListHolder.LatencyTestMethod.ping)) {
+            if(latencyTestMethod.equals(LatencyTestMethod.ping)) {
                 try {
                     String pingCommand = "/system/bin/ping -c 1 " + host;
                     String inputLine = "";
@@ -373,7 +383,7 @@ public class VolleyRequestHandler {
                             break;
 
                         } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
-                            latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+                            latencyTestMethod = LatencyTestMethod.socket;
                             mImageServerInterface.showToast("Ping failed. Switching to socket latency test mode.");
                             break;
                         }

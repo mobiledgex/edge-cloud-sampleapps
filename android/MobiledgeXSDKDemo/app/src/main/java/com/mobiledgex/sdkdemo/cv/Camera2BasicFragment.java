@@ -22,7 +22,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
@@ -54,7 +53,6 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -594,7 +592,7 @@ public class Camera2BasicFragment extends Fragment
             Rect rect = new Rect(mTextureView.getLeft(),
                     mTextureView.getTop(), mTextureView.getRight(), mTextureView.getBottom());
             if(mImageProviderInterface != null) {
-                mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
+                mImageProviderInterface.onBitmapAvailable(bitmap, rect);
             }
 
             // Draw the image on the screen using the camera preview TextureView.
@@ -1140,7 +1138,6 @@ public class Camera2BasicFragment extends Fragment
      */
     private void stopBackgroundThread() {
         Log.d(TAG, "stopBackgroundThread()");
-        //TODO: mBackgroundHandler.removeCallbacks(XXX);
         if(mBackgroundThread == null) {
             Log.w(TAG, "mBackgroundThread is null. aborting stopBackgroundThread()");
             return;
@@ -1388,6 +1385,9 @@ public class Camera2BasicFragment extends Fragment
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.videoView: {
+                if(mMediaPlayer == null) {
+                    return;
+                }
                 if(mMediaPlayer.isPlaying()) {
                     mMediaPlayer.pause();
                 } else {

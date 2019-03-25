@@ -26,7 +26,7 @@ import com.mobiledgex.sdkdemo.R;
 
 public class ImageProcessorActivity extends AppCompatActivity {
 
-    private ImageProcessorFragment imageProcessorFragment;
+    private OpencvImageProcessorFragment imageProcessorFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +34,7 @@ public class ImageProcessorActivity extends AppCompatActivity {
         setContentView(R.layout.fragment_image_processor);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (null == savedInstanceState) {
-            imageProcessorFragment = ImageProcessorFragment.newInstance();
+            imageProcessorFragment = OpencvImageProcessorFragment.newInstance();
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.container, imageProcessorFragment)
                     .commit();
@@ -44,8 +44,8 @@ public class ImageProcessorActivity extends AppCompatActivity {
     @Override
     public void onAttachFragment(Fragment fragment) {
         // Rotating the device creates a new instance of the fragment. Update reference here.
-        if (fragment instanceof ImageProcessorFragment)
-            imageProcessorFragment = (ImageProcessorFragment) fragment;
+        if (fragment instanceof OpencvImageProcessorFragment)
+            imageProcessorFragment = (OpencvImageProcessorFragment) fragment;
     }
 
     @Override
