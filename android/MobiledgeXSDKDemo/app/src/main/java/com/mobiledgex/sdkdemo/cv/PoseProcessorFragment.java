@@ -157,7 +157,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
 
         //TODO: Revisit when we have GPU support on multiple servers.
         //The only GPU-enabled server we have doesn't support ping.
-        mVolleyRequestHandler.latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+        mVolleyRequestHandler.latencyTestMethod = VolleyRequestHandler.LatencyTestMethod.socket;
 
     }
 
