@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,28 +6,30 @@ using UnityEngine;
 // We need this one for importing our IOS functions
 using System.Runtime.InteropServices;
 
-public interface CarrierInfo
+namespace MexPongGame
 {
-  string GetCurrentCarrierName();
-}
-
-public class PlatformIntegration : MonoBehaviour, CarrierInfo
-{
-  [DllImport("__Internal")]
-  private static extern string _getCurrentCarrierName();
-
-  // Start is called before the first frame update
-  void Start()
+  public interface CarrierInfo
   {
-    string networkOperatorName = GetCurrentCarrierName();
-    Debug.Log("networkOperatorName gotten: [" + networkOperatorName + "]");
+    string GetCurrentCarrierName();
   }
 
-  // Update is called once per frame
-  void Update()
+  public class PlatformIntegration : MonoBehaviour, CarrierInfo
   {
+    [DllImport("__Internal")]
+    private static extern string _getCurrentCarrierName();
 
-  }
+    // Start is called before the first frame update
+    void Start()
+    {
+      string networkOperatorName = GetCurrentCarrierName();
+      Debug.Log("networkOperatorName gotten: [" + networkOperatorName + "]");
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 
 #if UNITY_ANDROID
   public string GetCurrentCarrierName()
@@ -66,15 +68,15 @@ public class PlatformIntegration : MonoBehaviour, CarrierInfo
     return networkOperatorName;
   }
 #elif UNITY_IOS
-  public string GetCurrentCarrierName()
-  {
-    string networkOperatorName = "";
-    if (Application.platform == RuntimePlatform.IPhonePlayer)
+    public string GetCurrentCarrierName()
     {
-      networkOperatorName = _getCurrentCarrierName();
+      string networkOperatorName = "";
+      if (Application.platform == RuntimePlatform.IPhonePlayer)
+      {
+        networkOperatorName = _getCurrentCarrierName();
+      }
+      return networkOperatorName;
     }
-    return networkOperatorName;
-  }
 #else
   public String GetCurrentCarrierName()
   {
@@ -83,4 +85,5 @@ public class PlatformIntegration : MonoBehaviour, CarrierInfo
   }
 #endif
 
+  }
 }

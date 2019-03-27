@@ -1,25 +1,72 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-using System;
+using System.IO;
+using System.Text;
 using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 
 // Example server is JSON based serialization
 namespace MexPongGame
 {
+  public static class Messaging<T>
+  {
+    /*
+     * Stream must be repositionable.
+     */
+    private static string StreamToString(Stream s)
+    {
+      s.Position = 0;
+      StreamReader reader = new StreamReader(s);
+      string jsonStr = reader.ReadToEnd();
+      return jsonStr;
+    }
+
+    public static string Serialize(T t)
+    {
+      DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(T));
+      MemoryStream ms = new MemoryStream();
+
+      serializer.WriteObject(ms, t);
+      string jsonStr = StreamToString(ms);
+
+      return jsonStr;
+    }
+
+    public static T Deserialize(string jsonString)
+    {
+      MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString ?? ""));
+      return Deserialize(ms);
+    }
+
+    public static T Deserialize(Stream stream)
+    {
+      DataContractJsonSerializer deserializer = new DataContractJsonSerializer(typeof(T));
+      T t = (T)deserializer.ReadObject(stream);
+      return t;
+    }
+
+  }
+
   [DataContract]
   public class GameState
   {
     [DataMember]
-    long seq = 0;
+    public string type = "gameState";
 
     [DataMember]
-    public string room_id;
+    public string source;
+
     [DataMember]
-    public string scene_id;
+    public uint seq;
+
     [DataMember]
-    public string player_self_id; // Local player id.
+    public string gameId;
+    [DataMember]
+    public string sceneId;
+    [DataMember]
+    public string playerSelfId; // Local player id.
 
     // All players in room, scene
     [DataMember]
@@ -30,9 +77,9 @@ namespace MexPongGame
     public Ball[] balls;
 
     [DataMember]
-    int score1 = 0;
+    public int score1;
     [DataMember]
-    int score2 = 0;
+    public int score2;
   }
 
   [DataContract]
@@ -45,7 +92,7 @@ namespace MexPongGame
     [DataMember]
     public Velocity velocity = new Velocity();
 
-    public Player CopyPlayer(PlayerControls pc)
+    public static Player CopyPlayer(PlayerControls pc)
     {
       Transform tf = pc.transform;
 
@@ -65,7 +112,6 @@ namespace MexPongGame
 
       Player player = new Player
       {
-        uuid = pc.uuid,
         position = pos,
         velocity = vel
       };
@@ -77,8 +123,6 @@ namespace MexPongGame
   [DataContract]
   public class Ball
   {
-    [DataMember]
-    public string uuid = "";
     [DataMember]
     public Position position = new Position();
     [DataMember]
@@ -105,7 +149,6 @@ namespace MexPongGame
 
       Ball nb = new Ball
       {
-        uuid = bc.uuid,
         position = pos,
         velocity = vel
       };

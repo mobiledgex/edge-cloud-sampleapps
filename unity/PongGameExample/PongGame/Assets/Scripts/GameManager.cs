@@ -1,14 +1,16 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using System.Net.WebSockets;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 
 namespace MexPongGame {
   public class GameManager : MonoBehaviour
   {
-    string uuid = new System.Guid(DateTime.Now.Ticks + "").ToString();
-
     public static int PlayerScore1 = 0;
     public static int PlayerScore2 = 0;
 
@@ -16,37 +18,49 @@ namespace MexPongGame {
 
     GameObject theBall;
     GameState gs;
+    WsClient client;
 
-    wsClient client = new wsClient();
+    string server = "ws://localhost:3000";
 
-    string server = "ws://localhost:8080";
+    private Uri uri = new Uri("ws://localhost:3000");
+    private ClientWebSocket ws = new ClientWebSocket();
+
+    Task openTask;
+    Task<string> receiveTask;
 
     // Use this for initialization
-    void Start()
+    async void Start()
     {
+
       theBall = GameObject.FindGameObjectWithTag("Ball");
-      client.Connect(server);
-
-    }
-
-    private void Update()
-    {
-      // periodic server updates.
-
-
-      // Gather Game state. Local player runs locally.
-      // 1) Upload entire local state to server, server authoritive still, but server gets to check the score and such.
-      // ???
-      // 3) Profit!
+      client = new WsClient();
 
       gs = new GameState();
 
+      await client.Connect(uri);
+    }
+    
 
+    void Update()
+    {
+      // Receive runs in a background filling the receive concurrent queue.
+      var cqueue = client.receiveQueue;
+      string msg;
+      while(cqueue.TryPeek(out msg))
+      {
+        cqueue.TryDequeue(out msg);
+        Debug.Log("Dequeued this message: " + msg);
+      }
+
+      UpdateServer();
 
     }
 
 
-
+    public void ReceiveMessage(string message)
+    {
+      Debug.Log("Message: " + message);
+    }
 
 
     public static void Score(string wallID)
@@ -96,102 +110,58 @@ namespace MexPongGame {
       }
     }
 
-    bool applyGameState(GameState gs)
+    bool ApplyGameState(GameState gameState)
     {
       // Instantiate other player, inspect, and then apply game state.
       return true;
     }
 
     // Not differential, but this is small. Bespoke. TODO: GRPC
-    GameState gatherGameState()
+    GameState GatherGameState()
     {
-      GameState gs = new GameState();
 
+      GameState gameState = new GameState();
+      gameState.gameId = gs.gameId; // Keep gameId.
+      gameState.score1 = PlayerScore1;
+      gameState.score2 = PlayerScore2;
+
+      // copy Balls:
       GameObject[] bls = GameObject.FindGameObjectsWithTag("Ball");
       if (bls.Length > 0)
       {
-        gs.balls = new Ball[bls.Length];
-      }
-
-      // copyPlayer(s)
-      GameObject[] pcs = GameObject.FindGameObjectsWithTag("Player");
-      if (pcs.Length > 0)
-      {
-        Player[] players = new Player[pcs.Length];
-      }
-
-      foreach(GameObject go in pcs)
-      {
-        PlayerControls pc = go.GetComponent<PlayerControls>();
-        if (pc != null) {
-          Player player = CopyPlayer(pc);
+        gameState.balls = new Ball[bls.Length];
+        for (uint i = 0; i < bls.Length; i++)
+        {
+          BallControl bc = bls[i].GetComponent<BallControl>();
+          gameState.balls[i] = Ball.CopyBall(bc);
         }
       }
 
-
-
-    }
-
-    Ball CopyBall(BallControl bc)
-    {
-
-      Transform tf = bc.transform;
-
-      Position position = new Position
+      // copy Player(s)
+      GameObject[] pcs = GameObject.FindGameObjectsWithTag("Player");
+      if (pcs.Length > 0)
       {
-        x = tf.position.x,
-        y = tf.position.y,
-        z = tf.position.z
-      };
-
-      Velocity velocity = new Velocity
-      {
-        x = bc.rb2d.velocity.x,
-        y = bc.rb2d.velocity.y,
-        z = 0f
-      };
-
-      Ball ball = new Ball
-      {
-        uuid = bc.uuid,
-        position = position,
-        velocity = velocity,
-
-      };
-
-      return ball;
-    }
-
-    Player CopyPlayer(PlayerControls pc)
-    {
-      Transform tf = pc.transform;
-
-      Position position = new Position
-      {
-        x = tf.position.x,
-        y = tf.position.y,
-        z = tf.position.z
-      };
-
-      Velocity velocity = new Velocity
-      {
-        x = pc.rb2d.velocity.x,
-        y = pc.rb2d.velocity.y,
-        z = 0f
-      };
-
-      Player player = new Player
-      {
-        uuid = pc.uuid,
-        position = position,
-        velocity = velocity
+        gameState.players = new Player[pcs.Length];
+        for (uint i = 0; i < bls.Length; i++)
+        {
+          PlayerControls pc = pcs[i].GetComponent<PlayerControls>();
+          gameState.players[i] = Player.CopyPlayer(pc);
+        }
       }
 
-      return player;
+      return gameState;
     }
 
-    async Task UpdateServer(GameState gs)
+    async void UpdateServer()
     {
+      GameState gameState = GatherGameState();
+      gameState.type = "gameState";
+      gameState.source = "client";
+
+      string jsonStr = Messaging<GameState>.Serialize(gameState);
+      Debug.Log("UpdateServer: " + jsonStr);
+      await client.Send(jsonStr);
+
       return;
     }
 
