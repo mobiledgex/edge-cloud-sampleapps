@@ -49,6 +49,33 @@ namespace MexPongGame
 
   }
 
+  /* There is no intermediate JSON object. 
+   * The MessageWrapper intermediate class specifies the type of object in the message,
+   * so that it can be deserialized to the correct typed object.
+   */
+  [DataContract]
+  public class MessageWrapper
+  {
+    [DataMember]
+    public string type = "utf8";
+
+    [DataMember]
+    public string utf8data;
+
+    public static MessageWrapper WrapTextMessage(string jsonStr)
+    {
+      var wrapper = new MessageWrapper();
+      wrapper.utf8data = jsonStr;
+      return wrapper;
+    }
+
+    public static MessageWrapper UnWrapMessage(string wrappedJsonStr)
+    {
+      var wrapper = Messaging<MessageWrapper>.Deserialize(wrappedJsonStr);
+      return wrapper;
+    }
+  }
+
   [DataContract]
   public class GameState
   {
@@ -67,6 +94,9 @@ namespace MexPongGame
     public string sceneId;
     [DataMember]
     public string playerSelfId; // Local player id.
+
+    [DataMember]
+    public string currentPlayer;
 
     // All players in room, scene
     [DataMember]

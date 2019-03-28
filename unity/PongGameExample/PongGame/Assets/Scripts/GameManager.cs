@@ -50,16 +50,36 @@ namespace MexPongGame {
       {
         cqueue.TryDequeue(out msg);
         Debug.Log("Dequeued this message: " + msg);
+        HandleMessage(msg);
       }
-
-      UpdateServer();
 
     }
 
-
-    public void ReceiveMessage(string message)
+    public void HandleMessage(string message)
     {
-      Debug.Log("Message: " + message);
+      var msg = MessageWrapper.UnWrapMessage(message);
+      switch (msg.type)
+      {
+        case "qotd":
+          break;
+        case "register":
+          break;
+        case "gameJoin":
+          break;
+        case "gameState":
+          GameState serverGs = Messaging<GameState>.Deserialize(msg.utf8data);
+
+          break;
+        case "gameStart":
+          break;
+        case "resign":
+          break;
+        case "restart":
+          break;
+        default:
+          Debug.Log("Unknown message arrived: " + msg.type + ", message: " + message);
+          break;
+      }
     }
 
 
@@ -160,7 +180,8 @@ namespace MexPongGame {
 
       string jsonStr = Messaging<GameState>.Serialize(gameState);
       Debug.Log("UpdateServer: " + jsonStr);
-      await client.Send(jsonStr);
+      MessageWrapper wrapped = MessageWrapper.WrapTextMessage(jsonStr);
+      await client.Send(Messaging<MessageWrapper>.Serialize(wrapped));
 
       return;
     }
