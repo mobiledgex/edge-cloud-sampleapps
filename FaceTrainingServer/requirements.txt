@@ -1,0 +1,8 @@
+django
+djangorestframework
+gunicorn
+numpy
+opencv-contrib-python
+imageio
+psutil
+requests

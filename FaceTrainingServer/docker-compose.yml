@@ -1,0 +1,5 @@
+version: '3'
+services:
+  facetraining:
+    image: "registry.mobiledgex.net:5000/mobiledgex/facetraining"
+    network_mode: "host"
