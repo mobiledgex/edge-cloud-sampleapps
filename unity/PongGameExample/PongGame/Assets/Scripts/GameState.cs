@@ -7,7 +7,7 @@ using System.Text;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 
-// Example server is JSON based serialization
+// Example server is JSON based serialization. Binary GRPC later.
 namespace MexPongGame
 {
   public static class Messaging<T>
@@ -36,6 +36,7 @@ namespace MexPongGame
 
     public static T Deserialize(string jsonString)
     {
+      Debug.Log("Deserilaizing this: <" + jsonString + ">");
       MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString ?? ""));
       return Deserialize(ms);
     }
@@ -60,12 +61,12 @@ namespace MexPongGame
     public string type = "utf8";
 
     [DataMember]
-    public string utf8data;
+    public string utf8Data;
 
     public static MessageWrapper WrapTextMessage(string jsonStr)
     {
       var wrapper = new MessageWrapper();
-      wrapper.utf8data = jsonStr;
+      wrapper.utf8Data = jsonStr;
       return wrapper;
     }
 
@@ -77,6 +78,46 @@ namespace MexPongGame
   }
 
   [DataContract]
+  public class GameRegister
+  {
+    [DataMember]
+    public string type = "register";
+
+    [DataMember]
+    public string sessionId;
+
+    [DataMember]
+    public string uuidPlayer;
+  }
+
+  [DataContract]
+  public class GameJoin
+  {
+    [DataMember]
+    public string type = "gameJoin";
+
+    [DataMember]
+    public string gameId;
+
+    [DataMember]
+    public int side;
+
+    [DataMember]
+    public string uuidOtherPlayer;
+  }
+
+  [DataContract]
+  public class GameRestart
+  {
+    [DataMember]
+    public string type = "gameRestart";
+
+    [DataMember]
+    public string gameId;
+  }
+
+
+  [DataContract]
   public class GameState
   {
     [DataMember]
@@ -86,14 +127,10 @@ namespace MexPongGame
     public string source;
 
     [DataMember]
-    public uint seq;
+    public uint sequence;
 
     [DataMember]
     public string gameId;
-    [DataMember]
-    public string sceneId;
-    [DataMember]
-    public string playerSelfId; // Local player id.
 
     [DataMember]
     public string currentPlayer;
@@ -107,9 +144,56 @@ namespace MexPongGame
     public Ball[] balls;
 
     [DataMember]
-    public int score1;
+    public int score1; // Side 0
+
     [DataMember]
-    public int score2;
+    public int score2; // Side 1
+
+    public GameState() { }
+
+    // Copies everything, using the current ball and player
+    public GameState(GameState gs, BallControl ballc, PlayerControls currentPlayer)
+    {
+      this.source = "client";
+      this.sequence = gs.sequence;
+      this.gameId = gs.gameId;
+
+      this.currentPlayer = currentPlayer.uuid;
+
+      int plen = this.players.Length;
+      this.players = new Player[plen];
+
+      Ball b;
+      int blen = this.balls.Length;
+      this.balls = new Ball[blen];
+      for (var idx = 0; idx < plen; idx++)
+      {
+        b = gs.balls[idx];
+        if (b.uuid != currentPlayer.uuid)
+        {
+          this.balls[idx] = new Ball(b);
+        }
+        else
+        {
+          this.balls[idx] = Ball.CopyBall(ballc);
+        }
+      }
+
+      Player p;
+      for (var idx = 0; idx < plen; idx++)
+      {
+        p = gs.players[idx];
+        if (p.uuid != currentPlayer.uuid)
+        {
+          this.players[idx] = new Player(p);
+        }
+        else
+        {
+          this.players[idx] = Player.CopyPlayer(currentPlayer);
+        }
+      }
+
+    }
   }
 
   [DataContract]
@@ -118,33 +202,33 @@ namespace MexPongGame
     [DataMember]
     public string uuid = "";
     [DataMember]
-    public Position position = new Position();
+    public Position position = new Position(Vector2.zero);
     [DataMember]
-    public Velocity velocity = new Velocity();
+    public Velocity velocity = new Velocity(Vector2.zero);
+
+    public Player(Player p)
+    {
+      this.uuid = p.uuid;
+      this.position = new Position(p.position);
+      this.velocity = new Velocity(p.velocity);
+    }
+
+    public Player(string uuid, Position pos, Velocity vel)
+    {
+      this.uuid = uuid;
+      this.position = new Position(pos);
+      this.velocity = new Velocity(vel);
+    }
 
     public static Player CopyPlayer(PlayerControls pc)
     {
       Transform tf = pc.transform;
 
-      Position pos = new Position
-      {
-        x = tf.position.x,
-        y = tf.position.y,
-        z = tf.position.z
-      };
+      Position pos = new Position(tf.position);
+      Velocity vel = new Velocity(pc.rb2d.velocity);
 
-      Velocity vel = new Velocity
-      {
-        x = pc.rb2d.velocity.x,
-        y = pc.rb2d.velocity.y,
-        z = 0f
-      };
+      Player player = new Player(pc.uuid, pos, vel);
 
-      Player player = new Player
-      {
-        position = pos,
-        velocity = vel
-      };
 
       return player;
     }
@@ -154,34 +238,36 @@ namespace MexPongGame
   public class Ball
   {
     [DataMember]
-    public Position position = new Position();
+    public string uuid;
+
     [DataMember]
-    public Velocity velocity = new Velocity();
+    public Position position = new Position(Vector2.zero);
+    [DataMember]
+    public Velocity velocity = new Velocity(Vector2.zero);
+
+    public Ball(Ball p)
+    {
+      this.uuid = p.uuid;
+      this.position = new Position(p.position);
+      this.velocity = new Velocity(p.velocity);
+    }
+
+    public Ball(string uuid, Position pos, Velocity vel)
+    {
+      this.uuid = uuid;
+      this.position = new Position(pos);
+      this.velocity = new Velocity(vel);
+    }
 
     public static Ball CopyBall(BallControl bc)
     {
 
       Transform tf = bc.transform;
 
-      Position pos = new Position
-      {
-        x = tf.position.x,
-        y = tf.position.y,
-        z = tf.position.z
-      };
+      Position pos = new Position(tf.position);
+      Velocity vel = new Velocity(bc.rb2d.velocity);
 
-      Velocity vel = new Velocity
-      {
-        x = bc.rb2d.velocity.x,
-        y = bc.rb2d.velocity.y,
-        z = 0f
-      };
-
-      Ball nb = new Ball
-      {
-        position = pos,
-        velocity = vel
-      };
+      Ball nb = new Ball(bc.uuid, pos, vel);
 
       return nb;
     }
@@ -194,8 +280,19 @@ namespace MexPongGame
     public float x = 0;
     [DataMember]
     public float y = 0;
-    [DataMember]
-    public float z = 0;
+
+    public Position(Vector2 p)
+    {
+      x = p.x;
+      y = p.y;
+    }
+
+    public Position(Position p)
+    {
+      x = p.x;
+      y = p.y;
+    }
+
   }
 
   [DataContract]
@@ -205,7 +302,17 @@ namespace MexPongGame
     public float x = 0;
     [DataMember]
     public float y = 0;
-    [DataMember]
-    public float z = 0;
+
+    public Velocity(Vector2 v)
+    {
+      x = v.x;
+      y = v.y;
+    }
+
+    public Velocity(Velocity v)
+    {
+      x = v.x;
+      y = v.y;
+    }
   }
 }

@@ -9,6 +9,7 @@ namespace MexPongGame
 {
   public class BallControl : MonoBehaviour
   {
+    public string uuid;
     public Rigidbody2D rb2d;
     GameObject theBall;
 

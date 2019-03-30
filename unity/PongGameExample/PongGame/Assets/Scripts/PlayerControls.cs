@@ -8,6 +8,8 @@ namespace MexPongGame
 {
   public class PlayerControls : MonoBehaviour
   {
+    public string uuid;
+
     // This should be serialized.
     public KeyCode moveUp = KeyCode.W;
     public KeyCode moveDown = KeyCode.S;
