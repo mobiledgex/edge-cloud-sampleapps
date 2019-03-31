@@ -216,7 +216,7 @@ class FaceRecognizer(object):
         faces, labels, subjects = self.prepare_training_data_single(self.working_dir+"/training-data", subject)
         logger.info("subjects=%s len(subjects)=%d len(labels)=%d" %(subjects, len(subjects), len(labels)))
         if len(subjects) != 1:
-            log.error("Must be a single subject")
+            logger.error("Must be a single subject")
             return False
 
         # Count existing LabelInfo values.
@@ -248,7 +248,7 @@ class FaceRecognizer(object):
 
     def get_training_data_timestamp(self):
         self.training_data_timestamp = os.path.getmtime(self.training_data_filepath)
-        logger.info("self.training_data_timestamp=%d ctime=%s" %(self.training_data_timestamp, time.ctime(self.training_data_timestamp)))
+        logger.info("get_training_data_timestamp=%d ctime=%s" %(self.training_data_timestamp, time.ctime(self.training_data_timestamp)))
         return self.training_data_timestamp
 
     def save_subject_image(self, subject, image):
