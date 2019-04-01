@@ -35,7 +35,6 @@ class RequestClient(object):
         Sends the encoded image as the "image" POST paramater.
         """
         global json_params
-        print("json_params=%s" %json_params)
         data = {'image':image}
         if json_params != None:
             params = json.loads(json_params)
@@ -116,7 +115,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-s", "--server", required=True, help="Server host name or IP address.")
-    parser.add_argument("-f", "--filename", required=True, help="Name of image file to send.")
+    parser.add_argument("-f", "--filename", required=False, help="Name of image file to send.")
+    parser.add_argument("-d", "--directory", required=False, help="Directory containing image files to send.")
     parser.add_argument("-e", "--endpoint", required=True, help="Endpoint of web service to call (e.g. /detector/detect/, /recognizer/predict/, /openpose/detect/)")
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of concurent execution threads.")
@@ -130,16 +130,37 @@ if __name__ == "__main__":
     json_params = args.json_params
     port_number = args.port
 
-    for i in range(args.threads):
-        rc = RequestClient()
-        rc.BASE_URL = 'http://%s:'+str(args.port)
-        thread = Thread(target=rc.run_multi, args=(args.repeat, args.server, args.endpoint, args.filename, args.show_responses, "thread-%d" %i))
-        thread.start()
+    if args.filename != None and args.directory != None:
+        print("Can't include both filename and directory arguments")
+        sys.exit()
+
+    if args.filename != None:
+        for i in range(args.threads):
+            rc = RequestClient()
+            rc.BASE_URL = 'http://%s:'+str(args.port)
+            thread = Thread(target=rc.run_multi, args=(args.repeat, args.server, args.endpoint, args.filename, args.show_responses, "thread-%d" %i))
+            thread.start()
+
+    elif args.directory != None:
+        files = os.listdir(args.directory)
+        for file in files:
+            print("file=%s" %file)
+            if file.startswith("."):
+                continue
+            for i in range(args.threads):
+                rc = RequestClient()
+                rc.BASE_URL = 'http://%s:'+str(args.port)
+                thread = Thread(target=rc.run_multi, args=(args.repeat, args.server, args.endpoint, args.directory+"/"+file, args.show_responses, "thread-%d" %i))
+                thread.start()
+                thread.join()
+
+    else:
+        print("Must include either filename or directory argument")
+        sys.exit()
 
     # Wait for the last thread to finish.
     thread.join()
 
-    file_size = os.path.getsize(args.filename)
     if count_latency_full_process > 0:
         average_latency_full_process = total_latency_full_process / count_latency_full_process
         print("Average Latency Full Process=%.3f ms" %average_latency_full_process)
@@ -147,5 +168,6 @@ if __name__ == "__main__":
         average_latency_network_only = total_latency_network_only / count_latency_network_only
         print("Average Latency Network Only=%.3f ms" %average_latency_network_only)
 
+    # file_size = os.path.getsize(args.filename)
     # The following line outputs CSV data that can be imported to a spreadsheet.
     #print("%s,%s,%d,%.3f,%.3f" %((args.server, args.filename, file_size, average_latency_full_process, average_latency_network_only)))

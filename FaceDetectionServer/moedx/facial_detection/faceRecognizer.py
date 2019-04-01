@@ -6,6 +6,11 @@ import json
 import sys
 import glob
 import logging
+import requests
+from requests.auth import HTTPBasicAuth
+import imghdr
+from threading import Thread
+import zlib
 
 logger = logging.getLogger(__name__)
 
@@ -17,27 +22,58 @@ class FaceRecognizer(object):
     def __init__(self):
         self.working_dir = os.path.dirname(os.path.realpath(__file__))
 
+        #Create face detector
+        self.face_cascade = cv2.CascadeClassifier(self.working_dir+'/opencv-files/haarcascade_frontalface_alt.xml')
+
         #create our LBPH face recognizer
         self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
         #face_recognizer = cv2.face.EigenFaceRecognizer_create()
         #face_recognizer = cv2.face.FisherFaceRecognizer_create()
 
-        self.trainingDataTimestamp = None
-        self.trainingDataFileName = self.working_dir+'/trainer.yml'
+        self.training_data_local_timestamp = 0
+        self.training_data_filename = self.working_dir+'/trainer.yml'
+
+        # TODO: Update this when we have a different auth method.
+        self.training_data_hostname = 'opencv.facetraining.mobiledgex.net'
+        self.training_data_url = 'http://'+self.training_data_hostname+':8009'
+        self.training_data_auth = HTTPBasicAuth('mexf4ceuser555', 'p4ssw0dmexf4c3999')
+        self.training_data_timestamp = 0
+
+        try:
+            while self.is_update_in_progress():
+                logger.info("Sleeping while another worker updates training data")
+                time.sleep(2)
+            self.download_training_data_if_needed()
+            self.read_training_data_if_needed()
+        except Exception as e:
+            logger.error(e)
 
     def read_trained_data(self):
+        logger.info("read_trained_data()")
+        # self.set_update_in_progress(True)
+
         # Create a new instance and load the trained data
+        # Note: New instance is required when starting the server with --preload,
+        # otherwise, the updated data doesn't "take".
         self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
-        self.face_recognizer.read(self.trainingDataFileName)
+        self.face_recognizer.read(self.training_data_filename)
 
-        self.trainingDataTimestamp = time.time()
-        dataFileTs = os.path.getmtime(self.trainingDataFileName)
-        print("self.trainingDataTimestamp=%d dataFileTs=%d" %(self.trainingDataTimestamp,dataFileTs))
+        x = 0
+        while self.face_recognizer.getLabelInfo(x) != "":
+            logger.info("%d. Loaded trained data for label: %s" %(x, self.face_recognizer.getLabelInfo(x)))
+            x += 1
 
-    #this function will read all persons' training images, detect face from each image
-    #and will return two lists of exactly same size, one list
-    # of faces and another list of labels for each face
+        self.training_data_local_timestamp = time.time()
+        dataFileTs = os.path.getmtime(self.training_data_filename)
+        logger.info("training_data_local_timestamp=%d dataFileTs=%d" %(self.training_data_local_timestamp,dataFileTs))
+        # self.set_update_in_progress(False)
+
     def prepare_training_data(self, data_folder_path):
+        """
+        this function will read all persons' training images, detect face from each image
+        and will return two lists of exactly same size, one list
+        of faces and another list of labels for each face
+        """
 
         #get the directories (one directory for each subject) in data folder
         dirs = os.listdir(data_folder_path)
@@ -59,6 +95,7 @@ class FaceRecognizer(object):
 
             label += 1
             subjects.append(dir_name)
+            logger.info("label=%d subject=%s" %(label, dir_name))
 
             #build path of directory containing images for current subject subject
             #sample subject_dir_path = "training-data/Bruce"
@@ -91,24 +128,75 @@ class FaceRecognizer(object):
 
         return faces, labels, subjects
 
-    def update_training_data(self):
+    def prepare_training_data_single(self, data_folder_path, subject):
+        """
+        this function will read a single person's training images, detect face from each image
+        and will return two lists of exactly same size, one list
+        of faces and another list of labels for each face
+        """
+
+        #get the directories (one directory for each subject) in data folder
+        dirs = os.listdir(data_folder_path)
+
+        #list to hold all subject faces
+        faces = []
+        #list to hold labels for all subjects
+        labels = []
+        #List to hold single subject name
+        subjects = [subject]
+
+        label = 0
+
+        #build path of directory containing images for current subject subject
+        #sample subject_dir_path = "training-data/Bruce"
+        subject_dir_path = data_folder_path + "/" + subject
+
+        #get the images names that are inside the given subject directory
+        subject_images_names = os.listdir(subject_dir_path)
+
+        #go through each image name, read image,
+        #detect face and add face to list of faces
+        for image_name in subject_images_names:
+
+            #ignore system files like .DS_Store
+            if image_name.startswith("."):
+                continue;
+
+            image_path = subject_dir_path + "/" + image_name
+            image = cv2.imread(image_path)
+            face, rect = self.detect_face(image)
+
+            #we will ignore faces that are not detected
+            if face is not None:
+                #add face to list of faces
+                faces.append(face)
+                #add label for this face
+                labels.append(label)
+
+        return faces, labels, subjects
+
+    def update_training_data(self, subject=None):
         faces, labels, subjects = self.prepare_training_data(self.working_dir+"/training-data")
+        logger.info("subjects=%s len(subjects)=%d len(labels)=%d" %(subjects, len(subjects), len(labels)))
+
         # Save the subjects (directory names) to their corresponding labels.
         index = 0
         for subject in subjects:
+            logger.info("setLabelInfo(%d, %s)" %(index, subject))
             self.face_recognizer.setLabelInfo(index, subject)
             index += 1
 
         self.face_recognizer.train(faces, np.array(labels))
-        self.face_recognizer.save(self.trainingDataFileName)
+        self.face_recognizer.save(self.training_data_filename)
 
     def save_subject_image(self, subject, image):
         #Save current image with timestamp
+        extension = imghdr.what("", image)
         now = time.time()
         mlsec = repr(now).split('.')[1][:3]
         timestr = time.strftime("%Y%m%d-%H%M%S")+"."+mlsec
         os.makedirs(self.working_dir+"/training-data/"+subject, exist_ok=True)
-        fileName = self.working_dir+"/training-data/"+subject+"/face_"+timestr+".png"
+        fileName = self.working_dir+"/training-data/"+subject+"/face_"+timestr+"."+extension
         with open(fileName, "wb") as fh:
             fh.write(image)
         #Delete all old files except the 20 most recent
@@ -119,19 +207,16 @@ class FaceRecognizer(object):
             #print("removing %s" %file)
             os.remove(file)
 
-    #function to detect face using OpenCV
     def detect_face(self, img):
+        """
+        function to detect a single face using OpenCV
+        """
         #convert the test image to gray image as opencv face detector expects gray images
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        #load OpenCV face detector, I am using LBP which is fast
-        #there is also a more accurate but slow Haar classifier
-        # face_cascade = cv2.CascadeClassifier('opencv-files/lbpcascade_frontalface.xml')
-        face_cascade = cv2.CascadeClassifier(self.working_dir+'/opencv-files/haarcascade_frontalface_alt.xml')
-
         #let's detect multiscale (some images may be closer to camera than others) images
         #result is a list of faces
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5);
+        faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5);
 
         #if no faces are detected then return None
         if (len(faces) == 0):
@@ -144,18 +229,53 @@ class FaceRecognizer(object):
         #return only the face part of the image
         return gray[y:y+w, x:x+h], faces[0]
 
-    #this function recognizes the person in image passed
-    #and draws a rectangle around detected face with name of the
-    #subject
+    def set_db_timestamps(self, last_download_timestamp=None):
+        from tracker.models import CentralizedTraining
+        ct = CentralizedTraining.objects.get(
+            server_name = self.training_data_hostname)
+        ct.last_check_timestamp = time.time()
+        if last_download_timestamp != None:
+            ct.last_download_timestamp = last_download_timestamp
+        logger.debug("set_db_timestamps %s" %ct.dump_timestamps())
+        ct.save()
+
+    def get_db_timestamps(self):
+        from tracker.models import CentralizedTraining
+        ct, created = CentralizedTraining.objects.get_or_create(
+            server_name = self.training_data_hostname)
+        logger.debug("get_db_timestamps %s" %ct.dump_timestamps())
+        return ct.last_download_timestamp, ct.last_check_timestamp
+
+    def set_update_in_progress(self, flag):
+        from tracker.models import CentralizedTraining
+        ct = CentralizedTraining.objects.get(
+            server_name = self.training_data_hostname)
+        ct.update_in_progress = flag
+        ct.update_started_timestamp = int(time.time())
+        ct.save()
+        logger.debug("set_update_in_progress %s" %ct.dump_update_flags())
+
+    def is_update_in_progress(self):
+        from tracker.models import CentralizedTraining
+        ct, created = CentralizedTraining.objects.get_or_create(
+            server_name = self.training_data_hostname)
+        logger.debug("is_update_in_progress %s" %ct.dump_update_flags())
+        now = time.time()
+        if ct.update_in_progress:
+            # Check to make sure we're not hung trying to download.
+            if now - ct.update_started_timestamp > 30:
+                logger.error("Update in progress for more than 30 seconds. Resetting flag.")
+                ct.update_in_progress = False
+                ct.save()
+        return ct.update_in_progress
+
     def predict(self, test_img):
-        # Is training data current?
-        dataFileTs = os.path.getmtime(self.trainingDataFileName)
-        diff = dataFileTs - self.trainingDataTimestamp
-        logger.debug("Worker=%s. diff=%d. Do we need to re-read training data?" %(os.getpid(), diff))
-        if diff > 10:
-            logger.info("Worker=%s. diff=%d. Yes, re-reading training data" %(os.getpid(), diff))
-            self.read_trained_data()
-            logger.info("read_trained_data() complete")
+        """
+        this function recognizes the person in image passed
+        and draws a rectangle around detected face with name of the
+        subject
+        """
+        self.read_training_data_if_needed()
 
         #make a copy of the image as we don't want to change original image
         img = test_img.copy()
@@ -174,6 +294,75 @@ class FaceRecognizer(object):
 
         # print(label_text, confidence, rect)
         return img, label_text, confidence, rect
+
+    def download_training_data_if_needed(self):
+        # Is training data current with server?
+        logger.info("Checking with FaceTrainingServer")
+        if not self.is_training_data_file_current():
+            self.download_training_data()
+            self.read_trained_data()
+            ret = "Downloaded and re-read training data"
+            logger.info(ret)
+            return ret
+        return "No update needed"
+
+    def read_training_data_if_needed(self):
+        if self.is_training_data_read_required():
+            logger.info("read_training_data_if_needed() Yes, read training data")
+            self.read_trained_data()
+            logger.info("Loaded training data")
+            return True
+        else:
+            return False
+
+    def is_training_data_read_required(self):
+        # Is loaded version of local training data current?
+        dataFileTs = os.path.getmtime(self.training_data_filename)
+        diff = dataFileTs - self.training_data_local_timestamp
+        logger.debug("is_training_data_read_required() diff=%d. Do we need to read training data?" %(diff))
+        return diff > 0
+
+    def is_training_data_file_current(self):
+        """
+        Makes call to centralized training data server to see if our copy is up to date.
+        Returns True if our copy is up to date, False if newer data is available.
+        """
+        self.set_update_in_progress(True)
+        self.training_data_timestamp, last_check_timestamp = self.get_db_timestamps()
+        now = time.time()
+        url = self.training_data_url + '/trainer/lastupdate/'
+        logger.info("is_training_data_file_current() url=%s" %url)
+        timestamp = int(requests.get(url, auth=self.training_data_auth).content)
+        elapsed = "%.3f" %((time.time() - now)*1000)
+        logger.info("%s ms to get centralized training data timestamp: %d. local=%d" %(elapsed, timestamp, self.training_data_timestamp))
+        self.set_db_timestamps() #Updates last_check_timestamp only
+        self.set_update_in_progress(False)
+        if timestamp > self.training_data_timestamp:
+            logger.info("Newer training data available.")
+            return False
+        else:
+            logger.info("Local copy of centralized training data is current")
+            return True
+
+    def download_training_data(self):
+        """
+        Downloads centralized training data.
+        """
+        self.set_update_in_progress(True)
+        now = time.time()
+        url = self.training_data_url + '/trainer/download'
+        logger.info("Downloading from %s..." %url)
+        r = requests.get(url, auth=self.training_data_auth)
+        if r.status_code != 200:
+            logger.error("Error downloading centralized training data. status_code=%d" %r.status_code)
+            return False
+        self.training_data_timestamp = int(r.headers.get('Last-Modified'))
+        open(self.training_data_filename, 'wb').write(r.content)
+        elapsed = "%.3f" %((time.time() - now)*1000)
+        logger.info("%s ms to download centralized training data. training_data_timestamp=%d" %(elapsed, self.training_data_timestamp))
+        self.set_db_timestamps(self.training_data_timestamp)
+        self.set_update_in_progress(False)
+        return True
 
 if __name__ == "__main__":
 
