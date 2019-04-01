@@ -104,6 +104,9 @@ namespace MexPongGame
 
     [DataMember]
     public string uuidOtherPlayer;
+
+    [DataMember]
+    public string ballId;
   }
 
   [DataContract]
@@ -114,6 +117,48 @@ namespace MexPongGame
 
     [DataMember]
     public string gameId;
+  }
+
+  // On start of game, ever player is assigned player1 (0) or player2 (1) and a user id.
+  [DataContract]
+  public class ScoreEvent
+  {
+    [DataMember]
+    public string type = "scoreEvent";
+
+    [DataMember]
+    public string gameId;
+
+    [DataMember]
+    public string uuid;
+
+    [DataMember]
+    public int side;
+
+    [DataMember]
+    public int playerScore1;
+    [DataMember]
+    public int playerScore2;
+  }
+
+  // Generic position and velocity, with uuid.
+  [DataContract]
+  public class MoveEvent
+  {
+    [DataMember]
+    public string type = "moveEvent";
+
+    [DataMember]
+    public string objectType;
+
+    [DataMember]
+    public string uuid;
+
+    [DataMember]
+    public Position position;
+
+    [DataMember]
+    public Velocity velocity;
   }
 
 

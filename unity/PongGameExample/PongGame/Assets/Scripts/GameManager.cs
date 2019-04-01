@@ -39,10 +39,6 @@ namespace MexPongGame {
     public static int PlayerScore1 = 0;
     public static int PlayerScore2 = 0;
 
-    Dictionary<string, int> scoreDictionary = new Dictionary<string, int>();
-    Dictionary<string, WeakReference<PlayerControls>> _playercache;
-    Dictionary<string, WeakReference<BallControl>> _ballcache;
-
     public GUISkin layout;
 
     GameObject theBall;
@@ -87,16 +83,29 @@ namespace MexPongGame {
 
     }
 
-    public static void Score(string wallID)
+    public async Task Score(string wallID)
     {
+
       if (wallID == "RightWall")
       {
         PlayerScore1++;
       }
-      else
+      else // Score for player 2.
       {
         PlayerScore2++;
       }
+
+      // Let the star topology server know about this event!
+      ScoreEvent scoreEvent = new ScoreEvent
+      {
+        uuid = gameSession.uuidPlayer,
+        gameId = gameSession.gameId,
+        side = gameSession.side,
+        playerScore1 = PlayerScore1,
+        playerScore2 = PlayerScore2
+      };
+
+      await client.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
     }
 
     // Separate from Update()
@@ -132,6 +141,112 @@ namespace MexPongGame {
           theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
         }
       }
+    }
+
+
+    // Match whatever WebSocket text is sending
+    // Consistency: General rule here is that the game state if not timestamped, events may not represent the same time window.
+    async Task HandleMessage(string message)
+    {
+      var msg = MessageWrapper.UnWrapMessage(message);
+      // Not quite symetric, but the server is text only.
+      switch (msg.type)
+      {
+        case "qotd":
+          break;
+        case "register":
+          // {"type":"register","sessionid":"hneLPx7piEKjb70S5t7pXg==","alias":"94f7aa0c-f5c9-4cb3-8eb1-bb3be15bc265"}
+          GameRegister register = Messaging<GameRegister>.Deserialize(message);
+          gameSession.sessionId = register.sessionId;
+          gameSession.uuidPlayer = register.uuidPlayer;
+          break;
+        case "gameJoin":
+          // {"type":"gameJoin","gameId":"119b91e6-68c3-4e53-81b3-657ffbe458d5"}
+          GameJoin gj = Messaging<GameJoin>.Deserialize(message);
+          JoinGame(gj);
+          break;
+        case "scoreEvent":
+          ScoreEvent se = Messaging<ScoreEvent>.Deserialize(message);
+          UpdateScore(se);
+          break;
+        case "moveEvent":
+          MoveEvent me = Messaging<MoveEvent>.Deserialize(message);
+          UpdatePosition(me);
+          break;
+        case "gameState":
+          // {"type":"gameState","source":"server","gameId":"119b91e6-68c3-4e53-81b3-657ffbe458d5","sequence":0,"currentPlayer":"3979a6f8-7361-415b-89b5-3559f1aca652","players":[{"uuid":"3979a6f8-7361-415b-89b5-3559f1aca652","position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}},{"uuid":"94f7aa0c-f5c9-4cb3-8eb1-bb3be15bc265","position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}}],"balls":[{"position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}}]}
+          GameState serverGs = Messaging<GameState>.Deserialize(message);
+          UpdateLocalGame(serverGs);
+          break;
+
+        case "resign":
+          break;
+        case "restart":
+          // {"type": "restart", "source": "server"}
+          GameRestart gr = Messaging<GameRestart>.Deserialize(message);
+          RestartGame(gr);
+          break;
+
+        default:
+          Debug.Log("Unknown message arrived: " + msg.type + ", message: " + message);
+          break;
+      }
+
+    }
+
+    bool UpdateScore(ScoreEvent se)
+    {
+      // Policy: Server rules:
+      PlayerScore1 = se.playerScore1;
+      PlayerScore2 = se.playerScore2;
+
+      return true;
+    }
+
+    bool UpdatePosition(MoveEvent moveItem)
+    {
+      Debug.Log("moveItem: " + moveItem.uuid);
+      var gs = gameSession.currentGs;
+
+      // blind update:
+      if (moveItem.uuid == gs.balls[0].uuid)
+      {
+        gs.balls[0].position = moveItem.position;
+        gs.balls[0].velocity = moveItem.velocity;
+
+      }
+
+      if (moveItem.uuid == gameSession.uuidPlayer)
+      {
+        // Server echo of current player position and velocity.
+        // Add a gameObject if not existing, and show it along with the current player's position.
+        // Also, if significantly different, jump player to "server" position, or interpolate postion over time.
+      }
+      else if (moveItem.uuid == gameSession.uuidOtherPlayer) // Other player, blind copy.
+      {
+        foreach (var player in gs.players)
+        {
+          if (player.uuid == gameSession.uuidOtherPlayer)
+          {
+            player.position = moveItem.position;
+            player.velocity = moveItem.velocity;
+            // Apply to GameObject of player:
+            var gp = GameObject.FindGameObjectsWithTag("Player");
+            foreach (var g in gp)
+            {
+              var p = g.GetComponent<PlayerControls>();
+              if (p.uuid == gameSession.uuidOtherPlayer)
+              {
+                p.setPosition(moveItem.position);
+                p.setVelocity(moveItem.velocity);
+              }
+            }
+          }
+        }
+      }
+
+
+      return true;
     }
 
     bool ApplyGameState(GameState gameState)
@@ -232,26 +347,29 @@ namespace MexPongGame {
       localGs.score2 = serverGameState.score2;
 
       // Ball, just assume ball is fair, if close to server.
-      float error = 1f;
       BallControl bc = theBall.GetComponent<BallControl>();
       Ball ball = Ball.CopyBall(bc);
-      Ball serverBall = serverGameState.balls[0];
-
-
-      bool ballPositionOK = PositionInRange(ball.position, serverBall.position);
-      bool ballVelocityOK = VelocityInRange(ball.velocity, serverBall.velocity);
-
-      if (ballPositionOK && ballVelocityOK)
+      /// Grab the first one...
+      Ball serverBall = null;
+      if (serverGameState.balls.Length > 0)
       {
-        // do nothing.
+        serverBall = serverGameState.balls[0];
+        bool ballPositionOK = PositionInRange(ball.position, serverBall.position);
+        bool ballVelocityOK = VelocityInRange(ball.velocity, serverBall.velocity);
+
+        if (!ballPositionOK || !ballVelocityOK)
+        {
+          // Blindly use server's ball position and velocity to resync. Better: Blend and rubber band.
+          Vector2 newPos;
+          newPos.x = serverBall.position.x;
+          newPos.y = serverBall.position.y;
+          bc.rb2d.position = newPos;
+        }
+      } else {
+        // Perhaps a new game. No server info.
+
       }
-      else // Blindly use server's ball position and velocity to resync. Better: Blend and rubber band.
-      {
-        Vector2 newPos;
-        newPos.x = serverBall.position.x;
-        newPos.y = serverBall.position.y;
-        bc.rb2d.position = newPos;
-      }
+
 
       // Copy other paddle location(s) from server. Current player knows their own position.
       // TODO: need a map/ordered list.
@@ -339,6 +457,56 @@ namespace MexPongGame {
       gameSession.uuidOtherPlayer = gj.uuidOtherPlayer;
       gameSession.status = STATUS.JOINED;
 
+      var gs = gameSession.currentGs;
+      // Update Ball:
+      if (gs.balls.Length == 0)
+      {
+        gs.balls = new Ball[2];
+      }
+      gs.balls[0].uuid = gj.ballId;
+      gs.balls[0].velocity = 0;
+      gs.balls[0].position = 0;
+      // Actual object:
+      BallControl bc = theBall.GetComponent<BallControl>();
+      bc.uuid = gj.ballId;
+
+      // Match Assignments:
+      // Given a side, 0 one is player one (left). 1 other player (right)
+      GameObject[] pcs = GameObject.FindGameObjectsWithTag("Player");
+      PlayerControls selected = null;
+      PlayerControls other = null;
+
+      if (pcs.Length != 2)
+      {
+        return false; // Can't join this game.
+      }
+
+      foreach (GameObject g in pcs)
+      {
+        if (selected == null)
+        {
+          selected = g.GetComponent<PlayerControls>();
+          continue;
+        }
+
+        other = g.GetComponent<PlayerControls>();
+        if (other.rb2d.position.x < selected.rb2d.position.x)
+        {
+          selected = other;
+        }
+      }
+
+      if (gameSession.side == 0)
+      {
+        selected.uuid = gameSession.uuidPlayer; // Player 1 assigned in match by server.
+        other.uuid = gameSession.uuidOtherPlayer;
+      }
+      else if (gameSession.side == 1)
+      {
+        other.uuid = gameSession.uuidPlayer; // Player 2 assigned in match by server.
+        selected.uuid = gameSession.uuidOtherPlayer;
+      }
+
       return false;
     }
 
@@ -360,47 +528,7 @@ namespace MexPongGame {
       return false;
     }
 
-    // Match whatever WebSocket text is sending:
-    void HandleMessage(string message)
-    {
-      var msg = MessageWrapper.UnWrapMessage(message);
-      // Not quite symetric, but the server is text only.
-      switch (msg.type)
-      {
-        case "qotd":
-          break;
-        case "register":
-          // {"type":"register","sessionid":"hneLPx7piEKjb70S5t7pXg==","alias":"94f7aa0c-f5c9-4cb3-8eb1-bb3be15bc265"}
-          GameRegister register = Messaging<GameRegister>.Deserialize(message);
-          gameSession.sessionId = register.sessionId;
-          gameSession.uuidPlayer = register.uuidPlayer;
-          break;
-        case "gameJoin":
-          // {"type":"gameJoin","gameId":"119b91e6-68c3-4e53-81b3-657ffbe458d5"}
-          GameJoin gj = Messaging<GameJoin>.Deserialize(message);
-          JoinGame(gj);
-          break;
 
-        case "gameState":
-          // {"type":"gameState","source":"server","gameId":"119b91e6-68c3-4e53-81b3-657ffbe458d5","sequence":0,"currentPlayer":"3979a6f8-7361-415b-89b5-3559f1aca652","players":[{"uuid":"3979a6f8-7361-415b-89b5-3559f1aca652","position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}},{"uuid":"94f7aa0c-f5c9-4cb3-8eb1-bb3be15bc265","position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}}],"balls":[{"position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}}]}
-          GameState serverGs = Messaging<GameState>.Deserialize(message);
-          UpdateLocalGame(serverGs);
-          break;
-
-        case "resign":
-          break;
-        case "restart":
-          // {"type": "restart", "source": "server"}
-          GameRestart gr = Messaging<GameRestart>.Deserialize(message);
-          RestartGame(gr);
-          break;
-
-        default:
-          Debug.Log("Unknown message arrived: " + msg.type + ", message: " + message);
-          break;
-      }
-
-    }
 
   }
 
