@@ -1,7 +1,9 @@
 from django.apps import AppConfig
 from facial_detection.faceRecognizer import FaceRecognizer
+import threading
 import logging
 import sys
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -15,21 +17,17 @@ class TrackerConfig(AppConfig):
         global myFaceRecognizer
         myFaceRecognizer = FaceRecognizer()
         logger.info("Created myFaceRecognizer")
-        logger.info("Calling update_training_data()")
-        myFaceRecognizer.update_training_data()
-        logger.info("update_training_data() complete")
-        logger.info("Calling read_trained_data()")
-        myFaceRecognizer.read_trained_data()
-        logger.info("read_trained_data() complete")
 
         global myOpenPose
-        sys.path.append('/home/mobiledgex/openpose/build/python') #TODO: Fix this!
+        global opWrapper
+        sys.path.append('/openpose/build/python')
         try:
-            from openpose import openpose as op
+            from openpose import pyopenpose as myOpenPose
         except:
             logger.error('Error: OpenPose library could not be found. Did you enable `BUILD_PYTHON` in CMake and have this Python script in the right folder?')
-            logger.warn('/oenpose/ web services calls will not be allowed.')
+            logger.warn('/openpose/ web services calls will not be allowed.')
             myOpenPose = None
+            opWrapper = None
             return
 
         params = dict()
@@ -45,7 +43,10 @@ class TrackerConfig(AppConfig):
         params["num_gpu_start"] = 0
         params["disable_blending"] = False
         # Ensure you point to the correct path where models are located
-        params["default_model_folder"] = "/home/mobiledgex/openpose/models/" #TODO: Fix this!
-        # Construct OpenPose object allocates GPU memory
-        myOpenPose = op.OpenPose(params)
-        logger.info("Created myOpenPose")
+        params["model_folder"] = "/openpose/models/"
+
+        # Starting OpenPose
+        opWrapper = myOpenPose.WrapperPython()
+        opWrapper.configure(params)
+        opWrapper.start()
+        logger.info("Created OpenPose wrapper")
