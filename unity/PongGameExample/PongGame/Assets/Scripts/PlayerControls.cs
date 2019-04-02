@@ -55,5 +55,19 @@ namespace MexPongGame
       }
       transform.position = pos;
     }
+
+    public void setPosition(Position position)
+    {
+      var pos = transform.position;
+      pos.x = position.x;
+      pos.y = position.y;
+    }
+
+    public void setVelocity(Velocity velocity)
+    {
+      var vel = rb2d.velocity;
+      vel.x = velocity.x;
+      vel.y = velocity.y;
+    }
   }
 }

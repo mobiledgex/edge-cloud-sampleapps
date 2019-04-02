@@ -15,6 +15,7 @@ namespace MexPongGame {
     LOBBY = 0,
     JOINED,
     INGAME,
+    NEXTROUND,
     LOST,
     WON,
     RESTART
@@ -42,6 +43,9 @@ namespace MexPongGame {
     public GUISkin layout;
 
     GameObject theBall;
+    GameObject[] players;
+    GameObject ghostBall; // Just one.
+    GameObject ghostPlayer; // Local player.
     WsClient client;
 
     GameSession gameSession = new GameSession();
@@ -62,6 +66,7 @@ namespace MexPongGame {
     {
 
       theBall = GameObject.FindGameObjectWithTag("Ball");
+      players = GameObject.FindGameObjectsWithTag("Player");
       client = new WsClient();
       gameSession.status = STATUS.LOBBY;
 
@@ -69,7 +74,7 @@ namespace MexPongGame {
     }
     
 
-    void Update()
+    async void Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
       var cqueue = client.receiveQueue;
@@ -78,8 +83,16 @@ namespace MexPongGame {
       {
         cqueue.TryDequeue(out msg);
         Debug.Log("Dequeued this message: " + msg);
-        HandleMessage(msg);
+        await HandleMessage(msg);
       }
+
+      // Sever needs to know where the ball is:
+      //await updateBall();
+
+      // Update local player paddle (local authority)
+      await updatePlayer();
+
+      // Update Server paddle( reslove differences against server)
 
     }
 
@@ -106,6 +119,60 @@ namespace MexPongGame {
       };
 
       await client.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
+    }
+
+    public async Task updateBall()
+    {
+      var bc = theBall.GetComponent<BallControl>();
+      Ball ball = Ball.CopyBall(bc);
+
+      gameSession.currentGs.balls[0] = ball;
+
+      MoveEvent moveEvent = new MoveEvent
+      {
+        uuid = bc.uuid,
+        gameId = gameSession.gameId,
+        objectType = "Ball",
+        position = ball.position,
+        velocity = ball.velocity
+      };
+
+      await client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+    }
+
+    public async Task updatePlayer()
+    {
+      // Client side dict needed.
+      Player[] gsPlayers = new Player[gameSession.currentGs.players.Length];
+      Player selected = null;
+      // Only ever need to tell the server of own location (for now)
+
+      int idx = 0;
+      foreach (GameObject gpc in players)
+      {
+        PlayerControls pc = gpc.GetComponent<PlayerControls>();
+        if (pc.uuid == gameSession.uuidPlayer)
+        {
+          selected = Player.CopyPlayer(pc);
+          gsPlayers[idx++] = selected;
+        }
+        else
+        { // Stright copy and update.
+          gsPlayers[idx++] = Player.CopyPlayer(pc);
+        }
+      }
+      gameSession.currentGs.players = gsPlayers;
+
+      MoveEvent moveEvent = new MoveEvent
+      {
+        uuid = selected.uuid,
+        gameId = gameSession.gameId,
+        objectType = "Player",
+        position = selected.position,
+        velocity = selected.velocity
+      };
+
+      await client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
 
     // Separate from Update()
@@ -155,13 +222,11 @@ namespace MexPongGame {
         case "qotd":
           break;
         case "register":
-          // {"type":"register","sessionid":"hneLPx7piEKjb70S5t7pXg==","alias":"94f7aa0c-f5c9-4cb3-8eb1-bb3be15bc265"}
           GameRegister register = Messaging<GameRegister>.Deserialize(message);
           gameSession.sessionId = register.sessionId;
           gameSession.uuidPlayer = register.uuidPlayer;
           break;
         case "gameJoin":
-          // {"type":"gameJoin","gameId":"119b91e6-68c3-4e53-81b3-657ffbe458d5"}
           GameJoin gj = Messaging<GameJoin>.Deserialize(message);
           JoinGame(gj);
           break;
@@ -174,9 +239,8 @@ namespace MexPongGame {
           UpdatePosition(me);
           break;
         case "gameState":
-          // {"type":"gameState","source":"server","gameId":"119b91e6-68c3-4e53-81b3-657ffbe458d5","sequence":0,"currentPlayer":"3979a6f8-7361-415b-89b5-3559f1aca652","players":[{"uuid":"3979a6f8-7361-415b-89b5-3559f1aca652","position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}},{"uuid":"94f7aa0c-f5c9-4cb3-8eb1-bb3be15bc265","position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}}],"balls":[{"position":{"x":0,"y":0,"z":0},"velocity":{"x":0,"y":0,"z":0}}]}
           GameState serverGs = Messaging<GameState>.Deserialize(message);
-          UpdateLocalGame(serverGs);
+          //UpdateLocalGame(serverGs);
           break;
 
         case "resign":
@@ -208,12 +272,12 @@ namespace MexPongGame {
       Debug.Log("moveItem: " + moveItem.uuid);
       var gs = gameSession.currentGs;
 
-      // blind update:
+      // blind update: single ball.
       if (moveItem.uuid == gs.balls[0].uuid)
       {
         gs.balls[0].position = moveItem.position;
         gs.balls[0].velocity = moveItem.velocity;
-
+        // Apply server state to Component
       }
 
       if (moveItem.uuid == gameSession.uuidPlayer)
@@ -452,6 +516,8 @@ namespace MexPongGame {
       {
         return false;
       }
+      gameSession.currentGs = GatherGameState();
+
       gameSession.gameId = gj.gameId;
       gameSession.side = gj.side;
       gameSession.uuidOtherPlayer = gj.uuidOtherPlayer;
@@ -464,8 +530,8 @@ namespace MexPongGame {
         gs.balls = new Ball[2];
       }
       gs.balls[0].uuid = gj.ballId;
-      gs.balls[0].velocity = 0;
-      gs.balls[0].position = 0;
+      gs.balls[0].velocity = new Velocity(Vector2.zero);
+      gs.balls[0].position = new Position(Vector2.zero);
       // Actual object:
       BallControl bc = theBall.GetComponent<BallControl>();
       bc.uuid = gj.ballId;

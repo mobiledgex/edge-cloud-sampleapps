@@ -155,6 +155,9 @@ namespace MexPongGame
     public string uuid;
 
     [DataMember]
+    public string gameId;
+
+    [DataMember]
     public Position position;
 
     [DataMember]
