@@ -13,7 +13,7 @@ namespace MexPongGame
     // This should be serialized.
     public KeyCode moveUp = KeyCode.W;
     public KeyCode moveDown = KeyCode.S;
-    public float speed = 10f;
+    public float speed = 15f;
     public float boundY = 2.25f;
     public Rigidbody2D rb2d;
 
@@ -29,6 +29,11 @@ namespace MexPongGame
     // Note: rigid body physics is set to kinematics.
     void Update()
     {
+      if (uuid == "")
+      {
+        return; // Not a player.
+      }
+
       var vel = rb2d.velocity;
       if (Input.GetKey(moveUp))
       {
@@ -61,6 +66,7 @@ namespace MexPongGame
       var pos = transform.position;
       pos.x = position.x;
       pos.y = position.y;
+      transform.position = pos;
     }
 
     public void setVelocity(Velocity velocity)
@@ -68,6 +74,7 @@ namespace MexPongGame
       var vel = rb2d.velocity;
       vel.x = velocity.x;
       vel.y = velocity.y;
+      rb2d.velocity = vel;
     }
   }
 }

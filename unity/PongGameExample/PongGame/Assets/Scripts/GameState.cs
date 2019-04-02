@@ -289,9 +289,9 @@ namespace MexPongGame
     public string uuid;
 
     [DataMember]
-    public Position position = new Position(Vector2.zero);
+    public Position position;
     [DataMember]
-    public Velocity velocity = new Velocity(Vector2.zero);
+    public Velocity velocity;
 
     public Ball(Ball p)
     {

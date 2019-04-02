@@ -72,6 +72,7 @@ namespace MexPongGame
       var pos = transform.position;
       pos.x = position.x;
       pos.y = position.y;
+      transform.position = pos;
     }
 
     public void setVelocity(Velocity velocity)
@@ -79,6 +80,7 @@ namespace MexPongGame
       var vel = rb2d.velocity;
       vel.x = velocity.x;
       vel.y = velocity.y;
+      rb2d.velocity = vel;
     }
 
   }

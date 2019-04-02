@@ -70,16 +70,19 @@ namespace MexPongGame {
       client = new WsClient();
       gameSession.status = STATUS.LOBBY;
 
+      // Create a Mex Paddle (for local user) from the Prefab:
+      ghostPlayer = (GameObject)Instantiate(Resources.Load("PaddleGhost"));
+
       await client.Connect(uri);
     }
-    
+
 
     async void Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
       var cqueue = client.receiveQueue;
       string msg;
-      while(cqueue.TryPeek(out msg))
+      while (cqueue.TryPeek(out msg))
       {
         cqueue.TryDequeue(out msg);
         Debug.Log("Dequeued this message: " + msg);
@@ -90,8 +93,10 @@ namespace MexPongGame {
       //await updateBall();
 
       // Update local player paddle (local authority)
-      await updatePlayer();
-
+      if (gameSession.status == STATUS.INGAME)
+      {
+        await UpdatePlayer();
+      }
       // Update Server paddle( reslove differences against server)
 
     }
@@ -121,7 +126,7 @@ namespace MexPongGame {
       await client.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
     }
 
-    public async Task updateBall()
+    public async Task UpdateBall()
     {
       var bc = theBall.GetComponent<BallControl>();
       Ball ball = Ball.CopyBall(bc);
@@ -140,7 +145,7 @@ namespace MexPongGame {
       await client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
 
-    public async Task updatePlayer()
+    public async Task UpdatePlayer()
     {
       // Client side dict needed.
       Player[] gsPlayers = new Player[gameSession.currentGs.players.Length];
@@ -282,6 +287,7 @@ namespace MexPongGame {
 
       if (moveItem.uuid == gameSession.uuidPlayer)
       {
+        updatePlayerGhost(moveItem);
         // Server echo of current player position and velocity.
         // Add a gameObject if not existing, and show it along with the current player's position.
         // Also, if significantly different, jump player to "server" position, or interpolate postion over time.
@@ -313,6 +319,24 @@ namespace MexPongGame {
       return true;
     }
 
+    bool updatePlayerGhost(MoveEvent moveItem)
+    {
+      if (moveItem.objectType == "Player" &&
+          moveItem.uuid == gameSession.uuidPlayer)
+      {
+        // Ghost is a variant of the regular player paddle.
+        PlayerControls pc = ghostPlayer.GetComponent<PlayerControls>();
+        if (pc != null)
+        {
+          pc.setPosition(moveItem.position);
+          pc.setVelocity(moveItem.velocity);
+        }
+
+        
+      }
+      return true;
+    }
+
     bool ApplyGameState(GameState gameState)
     {
       // Instantiate other player, inspect, and then apply game state.
@@ -341,13 +365,12 @@ namespace MexPongGame {
       }
 
       // copy Player(s)
-      GameObject[] pcs = GameObject.FindGameObjectsWithTag("Player");
-      if (pcs.Length > 0)
+      if (players.Length > 0)
       {
-        gameState.players = new Player[pcs.Length];
+        gameState.players = new Player[players.Length];
         for (uint i = 0; i < bls.Length; i++)
         {
-          PlayerControls pc = pcs[i].GetComponent<PlayerControls>();
+          PlayerControls pc = players[i].GetComponent<PlayerControls>();
           gameState.players[i] = Player.CopyPlayer(pc);
         }
       }
@@ -424,22 +447,19 @@ namespace MexPongGame {
         if (!ballPositionOK || !ballVelocityOK)
         {
           // Blindly use server's ball position and velocity to resync. Better: Blend and rubber band.
-          Vector2 newPos;
-          newPos.x = serverBall.position.x;
-          newPos.y = serverBall.position.y;
-          bc.rb2d.position = newPos;
+          bc.setPosition(serverBall.position);
+          bc.setVelocity(serverBall.velocity);
         }
       } else {
         // Perhaps a new game. No server info.
 
       }
 
-
       // Copy other paddle location(s) from server. Current player knows their own position.
       // TODO: need a map/ordered list.
       int cpIdx = -1; // current player
       int opIdx = -1; // other player
-      Player[] players = serverGameState.players;
+      Player[] serverPlayers = serverGameState.players;
 
       GameObject[] pcs = GameObject.FindGameObjectsWithTag("Player");
       foreach(GameObject p in pcs)
@@ -450,9 +470,9 @@ namespace MexPongGame {
           // Find other player in server view:
           for (var i = 0; i < serverGameState.players.Length; i++)
           {
-            if (a.uuid == players[i].uuid)
+            if (a.uuid == serverPlayers[i].uuid)
             {
-              a.rb2d.position = new Vector2(players[i].position.x, players[i].position.y);
+              a.setPosition(serverPlayers[i].position);
               if (a.uuid == gameSession.uuidPlayer)
               {
                 cpIdx = i;
@@ -524,30 +544,28 @@ namespace MexPongGame {
       gameSession.status = STATUS.JOINED;
 
       var gs = gameSession.currentGs;
+      gs.currentPlayer = gameSession.uuidOtherPlayer; // Hmm.
+
       // Update Ball:
       if (gs.balls.Length == 0)
       {
         gs.balls = new Ball[2];
       }
-      gs.balls[0].uuid = gj.ballId;
-      gs.balls[0].velocity = new Velocity(Vector2.zero);
-      gs.balls[0].position = new Position(Vector2.zero);
-      // Actual object:
       BallControl bc = theBall.GetComponent<BallControl>();
-      bc.uuid = gj.ballId;
+      bc.uuid = gj.ballId; // Add uuid to ball.
+      gs.balls[0] = Ball.CopyBall(bc);
 
       // Match Assignments:
       // Given a side, 0 one is player one (left). 1 other player (right)
-      GameObject[] pcs = GameObject.FindGameObjectsWithTag("Player");
       PlayerControls selected = null;
       PlayerControls other = null;
 
-      if (pcs.Length != 2)
+      if (players.Length != 2)
       {
         return false; // Can't join this game.
       }
 
-      foreach (GameObject g in pcs)
+      foreach (GameObject g in players)
       {
         if (selected == null)
         {
@@ -573,7 +591,8 @@ namespace MexPongGame {
         selected.uuid = gameSession.uuidOtherPlayer;
       }
 
-      return false;
+      gameSession.status = STATUS.INGAME;
+      return true;
     }
 
     bool RestartGame(GameRestart gr)
