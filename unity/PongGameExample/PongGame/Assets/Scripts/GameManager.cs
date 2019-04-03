@@ -72,6 +72,7 @@ namespace MexPongGame {
 
       // Create a Mex Paddle (for local user) from the Prefab:
       ghostPlayer = (GameObject)Instantiate(Resources.Load("PaddleGhost"));
+      ghostBall = (GameObject)Instantiate(Resources.Load("BallGhost"));
 
       await client.Connect(uri);
     }
@@ -89,19 +90,16 @@ namespace MexPongGame {
         await HandleMessage(msg);
       }
 
-      // Sever needs to know where the ball is:
-      //await updateBall();
-
-      // Update local player paddle (local authority)
       if (gameSession.status == STATUS.INGAME)
       {
-        await UpdatePlayer();
+        // These puts messages into a send queue, sent via a thread.
+        UpdateBall();
+        UpdatePlayer();
       }
-      // Update Server paddle( reslove differences against server)
 
     }
 
-    public async Task Score(string wallID)
+    public void Score(string wallID)
     {
 
       if (wallID == "RightWall")
@@ -123,10 +121,10 @@ namespace MexPongGame {
         playerScore2 = PlayerScore2
       };
 
-      await client.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
+      client.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
     }
 
-    public async Task UpdateBall()
+    public void UpdateBall()
     {
       var bc = theBall.GetComponent<BallControl>();
       Ball ball = Ball.CopyBall(bc);
@@ -138,14 +136,14 @@ namespace MexPongGame {
         uuid = bc.uuid,
         gameId = gameSession.gameId,
         objectType = "Ball",
-        position = ball.position,
-        velocity = ball.velocity
+        position = new Position(ball.position),
+        velocity = new Velocity(ball.velocity)
       };
 
-      await client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+      client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
 
-    public async Task UpdatePlayer()
+    public void UpdatePlayer()
     {
       // Client side dict needed.
       Player[] gsPlayers = new Player[gameSession.currentGs.players.Length];
@@ -173,11 +171,11 @@ namespace MexPongGame {
         uuid = selected.uuid,
         gameId = gameSession.gameId,
         objectType = "Player",
-        position = selected.position,
-        velocity = selected.velocity
+        position = new Position(selected.position),
+        velocity = new Velocity(selected.velocity)
       };
 
-      await client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+      client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
 
     // Separate from Update()
@@ -282,12 +280,13 @@ namespace MexPongGame {
       {
         gs.balls[0].position = moveItem.position;
         gs.balls[0].velocity = moveItem.velocity;
-        // Apply server state to Component
+
+        UpdateBallGhost(moveItem);
       }
 
       if (moveItem.uuid == gameSession.uuidPlayer)
       {
-        updatePlayerGhost(moveItem);
+        UpdatePlayerGhost(moveItem);
         // Server echo of current player position and velocity.
         // Add a gameObject if not existing, and show it along with the current player's position.
         // Also, if significantly different, jump player to "server" position, or interpolate postion over time.
@@ -319,7 +318,20 @@ namespace MexPongGame {
       return true;
     }
 
-    bool updatePlayerGhost(MoveEvent moveItem)
+    bool UpdateBallGhost(MoveEvent moveItem)
+    {
+      if (moveItem.objectType == "Ball")
+      {
+        BallControl bc = ghostBall.GetComponent<BallControl>();
+        if (bc != null)
+        {
+          bc.setPosition(moveItem.position);
+          bc.setVelocity(moveItem.velocity);
+        }
+      }
+      return true;
+    }
+    bool UpdatePlayerGhost(MoveEvent moveItem)
     {
       if (moveItem.objectType == "Player" &&
           moveItem.uuid == gameSession.uuidPlayer)
@@ -387,7 +399,7 @@ namespace MexPongGame {
       string jsonStr = Messaging<GameState>.Serialize(gameState);
       Debug.Log("UpdateServer: " + jsonStr);
       MessageWrapper wrapped = MessageWrapper.WrapTextMessage(jsonStr);
-      await client.Send(Messaging<MessageWrapper>.Serialize(wrapped));
+      client.Send(Messaging<MessageWrapper>.Serialize(wrapped));
 
       gameSession.currentGs = gameState;
 

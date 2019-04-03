@@ -15,7 +15,7 @@ namespace MexPongGame
 
     }
 
-    async void OnTriggerEnter2D(Collider2D hitInfo)
+    void OnTriggerEnter2D(Collider2D hitInfo)
     {
       if (hitInfo.name == "Ball")
       {
@@ -24,7 +24,7 @@ namespace MexPongGame
         string wallName = transform.name;
 
         // async check scoring on "goal" wall hit, and send to server.
-        await gameManager.Score(wallName); 
+        gameManager.Score(wallName); 
 
         hitInfo.gameObject.SendMessage("RestartGame", 1.0f, SendMessageOptions.RequireReceiver);
       }
