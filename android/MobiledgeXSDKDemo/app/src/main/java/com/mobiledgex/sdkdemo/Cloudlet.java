@@ -415,7 +415,7 @@ public class Cloudlet implements Serializable {
 
                 @Override
                 public void onError(SpeedTestError speedTestError, String errorMessage) {
-                    // called when a download/upload error occur
+                    // called when a download/upload error occurs
                 }
 
                 @Override

@@ -117,7 +117,7 @@ public class MatchingEngineHelper {
                 if(reqType == RequestType.REQ_REGISTER_CLIENT) {
                     reportCookie = true;
                 }
-                Log.i(TAG, "host:" + host);
+                Log.i(TAG, "mHost:" + host);
 
                 if (!registerClient(ctx, host, port, devName, appVersion, carrierName, reportCookie)) {
                     return null;
