@@ -16,8 +16,13 @@ namespace MexPongGame
 {
   public class WsClient
   {
-    // Life of wsClient:
-    private Uri uri = new Uri("ws://localhost:3000");
+    // Life of WsClient:
+    private static string proto = "ws";
+    private static string host = "localhost";
+    private static int port = 3000;
+    private static string server = proto + "://" + host + ":" + port;
+
+    private Uri uri = new Uri(server);
     private ClientWebSocket ws = new ClientWebSocket();
     static UTF8Encoding encoder; // For websocket text message encoding.
     const UInt64 MAXREADSIZE = 1 * 1024 * 1024;
@@ -27,10 +32,15 @@ namespace MexPongGame
 
     GameObject gameManagerObject;
 
-    Thread receiveThread;
-    Thread sendThread;
+    Thread receiveThread { get; set; }
+    Thread sendThread { get; set; }
 
 
+    Thread netTestThread;
+    const int testIntervalMs = 5000;
+    bool shouldRun = true;
+
+    // TODO: CancellationToken for Tasks to handle OnApplicationFocus, OnApplicationPause.
     public WsClient()
     {
       encoder = new UTF8Encoding();
@@ -38,6 +48,8 @@ namespace MexPongGame
       gameManagerObject = GameObject.FindGameObjectWithTag("GameManager");
 
       // This long running WebSocket thread must be kept alive to receive server WebSocket messages.
+      ShouldRunThreads(true);
+
       receiveQueue = new ConcurrentQueue<string>();
       receiveThread = new Thread(RunReceive);
       receiveThread.Start();
@@ -45,6 +57,24 @@ namespace MexPongGame
       sendQueue = new ConcurrentQueue<ArraySegment<byte>>();
       sendThread = new Thread(RunSend);
       sendThread.Start();
+
+      // Mini diagnostics.
+      netTestThread = new Thread(() => RunNetTest(host, port, testIntervalMs));
+      netTestThread.Start();
+    }
+
+    public bool ShouldRunThreads(bool run)
+    {
+      // Run flag conditional in run loops.
+      shouldRun = run;
+
+      if (shouldRun)
+      {
+        // Mini network diagnostics, parameterized to one server.
+        netTestThread = new Thread(() => RunNetTest(host, port, testIntervalMs));
+        netTestThread.Start();
+      }
+      return shouldRun;
     }
 
     public bool isConnecting()
@@ -95,7 +125,7 @@ namespace MexPongGame
     {
       Debug.Log("WebSocket Message Receiver looping.");
       string result;
-      while (true) // TODO: ws.State seems to not like concurrent thread access.
+      while (true)
       {
         result = await Receive();
         if (result != null && result.Length > 0)
@@ -103,6 +133,17 @@ namespace MexPongGame
           receiveQueue.Enqueue(result);
           //Debug.Log("Added Message: " + result);
         }
+      }
+    }
+
+    public void RunNetTest(string ahost, int aport, int intervalMs=5000)
+    {
+      NetTest nt = new NetTest();
+      while(shouldRun)
+      {
+        double elapsed = nt.ConnectAndDisconnect(ahost, aport);
+        Debug.Log("Round(-ish) trip to host: " + ahost + ", port: " + aport + ", elapsed: " + elapsed);
+        Thread.Sleep(intervalMs);
       }
     }
 

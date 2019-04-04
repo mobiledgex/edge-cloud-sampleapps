@@ -36,7 +36,7 @@ namespace MexPongGame
 
     public static T Deserialize(string jsonString)
     {
-      Debug.Log("Deserilaizing this: <" + jsonString + ">");
+      //Debug.Log("Deserilaizing this: <" + jsonString + ">");
       MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonString ?? ""));
       return Deserialize(ms);
     }

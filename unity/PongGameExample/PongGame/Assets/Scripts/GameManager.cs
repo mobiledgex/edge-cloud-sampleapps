@@ -61,6 +61,8 @@ namespace MexPongGame {
     Task openTask;
     Task<string> receiveTask;
 
+    bool isPaused = false;
+
     // Use this for initialization
     async void Start()
     {
@@ -86,7 +88,7 @@ namespace MexPongGame {
       while (cqueue.TryPeek(out msg))
       {
         cqueue.TryDequeue(out msg);
-        Debug.Log("Dequeued this message: " + msg);
+        //Debug.Log("Dequeued this message: " + msg);
         await HandleMessage(msg);
       }
 
@@ -95,6 +97,25 @@ namespace MexPongGame {
         // These puts messages into a send queue, sent via a thread.
         UpdateBall();
         UpdatePlayer();
+      }
+
+    }
+
+    // TODO: Should manage the thread runnables.
+    private void OnApplicationFocus(bool focus)
+    {
+      if (client != null)
+      {
+        client.ShouldRunThreads(focus);
+      }
+    }
+    // TODO: Should manage the thread runnables.
+    void OnApplicationPause(bool pauseStatus)
+    {
+      isPaused = pauseStatus;
+      if (client != null)
+      {
+        client.ShouldRunThreads(!isPaused);
       }
 
     }
@@ -272,7 +293,7 @@ namespace MexPongGame {
 
     bool UpdatePosition(MoveEvent moveItem)
     {
-      Debug.Log("moveItem: " + moveItem.uuid);
+      //Debug.Log("moveItem: " + moveItem.uuid);
       var gs = gameSession.currentGs;
 
       // blind update: single ball.
@@ -511,35 +532,6 @@ namespace MexPongGame {
       // Next update, gather and send that to server.
 
       return;
-    }
-
-    /* Have to pick a paddle up (local system) to play.
-     * Policy: Returns left most bottom
-     * Assming horizontal right now.    
-     */
-    string GrabPaddleOrSpawn()
-    {
-      GameObject[] pcs = GameObject.FindGameObjectsWithTag("Player");
-
-      GameObject selectedG = null;
-      PlayerControls selected = null;
-      foreach(GameObject g in pcs)
-      {
-        if (selected == null)
-        {
-          selected = pcs[0].GetComponent<PlayerControls>();
-          continue;
-        }
-
-        PlayerControls pc = g.GetComponent<PlayerControls>();
-        if (pc.rb2d.position.x < selected.rb2d.position.x)
-        {
-          selected = pc;
-          selectedG = g;
-        }
-
-      }
-      return selected.uuid;
     }
 
     bool JoinGame(GameJoin gj)
