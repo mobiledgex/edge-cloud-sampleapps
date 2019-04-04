@@ -7,6 +7,8 @@ TagManager:
   - Ball
   - Receiver
   - GameManager
+  - PlayerGhost
+  - BallGhost
   layers:
   - Default
   - TransparentFX
