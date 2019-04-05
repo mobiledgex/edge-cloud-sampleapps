@@ -4,9 +4,10 @@ using UnityEngine;
 
 using System.Net.WebSockets;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
+
+using DistributedMatchEngine;
 
 namespace MexPongGame {
 
@@ -50,7 +51,11 @@ namespace MexPongGame {
 
     GameSession gameSession = new GameSession();
 
-
+    /**
+     * MobiledgeX Integration: thin example encapsulation outside Pong for ease
+     * of viewing.    
+     */
+    MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
 
     string server = "ws://localhost:3000";
@@ -75,6 +80,9 @@ namespace MexPongGame {
       // Create a Mex Paddle (for local user) from the Prefab:
       ghostPlayer = (GameObject)Instantiate(Resources.Load("PaddleGhost"));
       ghostBall = (GameObject)Instantiate(Resources.Load("BallGhost"));
+
+      // Register and find cloudlet:
+      await RegisterAndFindCloudlet();
 
       await client.Connect(uri);
     }
@@ -118,6 +126,71 @@ namespace MexPongGame {
         client.ShouldRunThreads(!isPaused);
       }
 
+    }
+
+    // Start() is a time to do this, but can change if the device moves to a new location.
+    async Task<string> RegisterAndFindCloudlet()
+    {
+      // For Demo App purposes, it's the TCP app port. Your app may point somewhere else:
+      string tcpAppPort = "";
+
+      bool registered = await integration.Register();
+
+      if (registered)
+      {
+        FindCloudletReply reply;
+        reply = await integration.FindCloudlet();
+
+
+        // Handle reply status:
+        if (reply.status == FindCloudletReply.FindStatus.FIND_NOTFOUND.ToString())
+        {
+          Debug.Log("FindCloudlet Found no edge cloudlets in range.");
+
+        }
+        else if (reply.status == FindCloudletReply.FindStatus.FIND_UNKNOWN.ToString())
+        {
+          Debug.Log("FindCloudlet status unknown. No edge cloudlets.");
+
+        }
+        else if (reply.status == FindCloudletReply.FindStatus.FIND_FOUND.ToString())
+        {
+          // Edge cloudlets found!
+          Debug.Log("Edge cloudlets found!");
+
+          // Where is this app specific edge enabled cloud server:
+          Debug.Log("GPS location: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
+
+          // Where is the URI for this app specific edge enabled cloud server:
+          Debug.Log("FQDN: " + reply.FQDN);
+          // Port?
+          Debug.Log("On ports: ");
+
+
+          foreach (AppPort port in reply.ports)
+          {
+            Debug.Log("Port: proto: " + port.proto + ", prefix: " +
+                port.FQDN_prefix + ", public path: " + port.public_path + ", port: " +
+                port.public_port);
+
+            // We're looking for the TCP app port:
+            if (port.proto == LProto.LProtoTCP.ToString())
+            {
+              tcpAppPort = reply.FQDN + ":" + port.public_port;
+              // FQDN prefix to append to base FQDN in FindCloudlet response. May be empty.
+              if (port.FQDN_prefix != "")
+              {
+                tcpAppPort = port.FQDN_prefix + tcpAppPort;
+              }
+            }
+
+          }
+
+        }
+
+      }
+
+      return tcpAppPort;
     }
 
     public void Score(string wallID)

@@ -22,7 +22,7 @@ namespace MexPongGame
     private static int port = 3000;
     private static string server = proto + "://" + host + ":" + port;
 
-    private Uri uri = new Uri(server);
+    public Uri uri = new Uri(server);
     private ClientWebSocket ws = new ClientWebSocket();
     static UTF8Encoding encoder; // For websocket text message encoding.
     const UInt64 MAXREADSIZE = 1 * 1024 * 1024;
