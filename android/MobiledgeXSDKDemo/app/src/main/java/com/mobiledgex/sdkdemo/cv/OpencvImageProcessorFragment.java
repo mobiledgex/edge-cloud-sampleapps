@@ -28,7 +28,7 @@ public class OpencvImageProcessorFragment extends ImageProcessorFragment {
     private static final String TAG = "OpencvImageProcessor";
     private CascadeClassifier mCascadeClassifier;
 
-    VolleyRequestHandler.RollingAverage localLatencyRollingAvg = new VolleyRequestHandler.RollingAverage(ImageProcessorFragment.CloudletType.LOCAL_PROCESSING, "On-Device", 100);
+    RollingAverage localLatencyRollingAvg = new RollingAverage(ImageProcessorFragment.CloudletType.LOCAL_PROCESSING, "On-Device", 100);
 
     public static OpencvImageProcessorFragment newInstance() {
         return new OpencvImageProcessorFragment();
@@ -43,7 +43,7 @@ public class OpencvImageProcessorFragment extends ImageProcessorFragment {
             return;
         }
 
-        if(!prefLocalProcessing) {
+        if(!prefLocalProcessing || mCameraMode != ImageSender.CameraMode.FACE_DETECTION) {
             return;
         }
 
@@ -176,6 +176,14 @@ public class OpencvImageProcessorFragment extends ImageProcessorFragment {
             mBenchmarkActive = true;
             prefLocalProcessing = true;
             prefRemoteProcessing = false;
+            mCloudLatency.setVisibility(View.GONE);
+            mCloudLatency2.setVisibility(View.GONE);
+            mCloudStd.setVisibility(View.GONE);
+            mCloudStd2.setVisibility(View.GONE);
+            mEdgeLatency.setVisibility(View.GONE);
+            mEdgeLatency2.setVisibility(View.GONE);
+            mEdgeStd.setVisibility(View.GONE);
+            mEdgeStd2.setVisibility(View.GONE);
             loadOpencvLibrary();
             mCamera2BasicFragment.runBenchmark(getContext(), "Local");
             return true;

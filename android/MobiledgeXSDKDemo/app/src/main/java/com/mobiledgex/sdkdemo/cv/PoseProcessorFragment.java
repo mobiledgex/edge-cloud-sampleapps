@@ -2,6 +2,8 @@ package com.mobiledgex.sdkdemo.cv;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.mobiledgex.sdkdemo.CloudletListHolder;
 import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
@@ -39,12 +40,36 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     }
 
     /**
+     * Perform any processing of the given bitmap.
+     *
+     * @param bitmap  The bitmap from the camera or video.
+     * @param imageRect  The coordinates of the image on the screen. Needed for scaling/offsetting
+     *                   resulting pose skeleton coordinates.
+     */
+    @Override
+    public void onBitmapAvailable(Bitmap bitmap, Rect imageRect) {
+        if(bitmap == null) {
+            return;
+        }
+
+        mImageRect = imageRect;
+        mServerToDisplayRatioX = (float) mImageRect.width() / bitmap.getWidth();
+        mServerToDisplayRatioY = (float) mImageRect.height() / bitmap.getHeight();
+
+        Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
+
+        mImageSenderEdge.sendImage(bitmap);
+    }
+
+    /**
      * Update the body poses.
      *
-     * @param cloudletType
-     * @param posesJsonArray
+     * @param cloudletType  The cloudlet type. Not used for Poses.
+     * @param posesJsonArray  An array of skeleton coordinates for each pose detected.
+     * @param subject  Should be null or empty for Poses.
      */
-    public void updateOverlay(final CloudletType cloudletType, final JSONArray posesJsonArray) {
+    @Override
+    public void updateOverlay(CloudletType cloudletType, final JSONArray posesJsonArray, String subject) {
         Log.i(TAG, "updateOverlay Poses("+cloudletType+","+posesJsonArray.toString());
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -77,16 +102,11 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     }
 
     @Override
-    public void updateOverlay(CloudletType cloudletType, JSONArray overlayData, String subject) {
+    public void updateTrainingProgress(int trainingCount, ImageSender.CameraMode mode) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public void updateTrainingProgress(int cloudTrainingCount, int edgeTrainingCount) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateFullProcessStats(final CloudletType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
+    public void updateFullProcessStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if(prefUseRollingAvg) {
@@ -115,7 +135,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     }
 
     @Override
-    public void updateNetworkStats(final CloudletType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
+    public void updateNetworkStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if(prefUseRollingAvg) {
@@ -145,23 +165,6 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        prefs.registerOnSharedPreferenceChangeListener(this);
-        //We can't create the VolleyRequestHandler until we have a context available.
-        mVolleyRequestHandler = new VolleyRequestHandler(this, this.getActivity());
-        mVolleyRequestHandler.cloudImageSender.busy = true; //TODO: Revisit this
-        mVolleyRequestHandler.edgeImageSender.host = "openpose.bonn-mexdemo.mobiledgex.net";
-//        mVolleyRequestHandler.edgeImageSender.host = "35.190.190.39";
-
-        //TODO: Revisit when we have GPU support on multiple servers.
-        //The only GPU-enabled server we have doesn't support ping.
-        mVolleyRequestHandler.latencyTestMethod = VolleyRequestHandler.LatencyTestMethod.socket;
-
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.i(TAG, "onCreateView PoseProcessorFragment");
@@ -186,13 +189,20 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         mStdNet = view.findViewById(R.id.network_std_dev);
         mPoseRenderer = view.findViewById(R.id.poseSkeleton);
 
-        mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.POSE_DETECTION);
-        mCameraMode = VolleyRequestHandler.CameraMode.POSE_DETECTION;
-        mCameraToolbar.setTitle(R.string.title_activity_pose_detection);
-
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        prefs.registerOnSharedPreferenceChangeListener(this);
         onSharedPreferenceChanged(prefs, "ALL");
 
+        //TODO: Make this a preference when we have GPU support on multiple servers.
+        String host = "openpose.bonn-mexdemo.mobiledgex.net";
+        mImageSenderEdge = new ImageSender(getActivity(),this, CloudletType.EDGE, host, FACE_DETECTION_HOST_PORT);
+
+        //TODO: Revisit when we have GPU support on multiple servers.
+        //The only GPU-enabled server we have doesn't support ping.
+        mImageSenderEdge.mLatencyTestMethod = ImageSender.LatencyTestMethod.socket;
+        mImageSenderEdge.setCameraMode(ImageSender.CameraMode.POSE_DETECTION);
+        mCameraMode = ImageSender.CameraMode.POSE_DETECTION;
+        mCameraToolbar.setTitle(R.string.title_activity_pose_detection);
     }
 
     @Override

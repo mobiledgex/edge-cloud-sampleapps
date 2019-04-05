@@ -15,9 +15,13 @@
         app:showAsAction="ifRoom" />
     <item android:id="@+id/action_camera_training"
         android:title="Training Mode" />
+    <item android:id="@+id/action_camera_remove_training_data"
+        android:title="Remove Training Data" />
     <item android:id="@+id/action_camera_training_guest"
         android:checkable="true"
         android:title="Guest Training Mode" />
+    <item android:id="@+id/action_camera_remove_training_guest_data"
+        android:title="Remove Guest Data" />
     <item android:id="@+id/action_camera_video"
         android:title="Play Video" />
     <item android:id="@+id/action_camera_debug"

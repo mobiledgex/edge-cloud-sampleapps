@@ -2,6 +2,7 @@ package com.mobiledgex.sdkdemo.cv;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -36,11 +37,8 @@ import com.mobiledgex.sdkdemo.R;
 import com.mobiledgex.sdkdemo.SettingsActivity;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ImageProcessorFragment extends Fragment implements ImageServerInterface, ImageProviderInterface,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -50,31 +48,25 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private static final String TAG = "ImageProcessorFragment";
 
     protected Camera2BasicFragment mCamera2BasicFragment;
-    private static final int MAX_FACES = 8;
     protected Menu mOptionsMenu;
     private TextView mLatencyFullTitle;
     private TextView mLatencyNetTitle;
-    private TextView mCloudLatency;
-    private TextView mEdgeLatency;
-    private TextView mCloudLatency2;
-    private TextView mEdgeLatency2;
-    private TextView mCloudStd;
-    private TextView mEdgeStd;
-    private TextView mCloudStd2;
-    private TextView mEdgeStd2;
+    protected TextView mCloudLatency;
+    protected TextView mEdgeLatency;
+    protected TextView mCloudLatency2;
+    protected TextView mEdgeLatency2;
+    protected TextView mCloudStd;
+    protected TextView mEdgeStd;
+    protected TextView mCloudStd2;
+    protected TextView mEdgeStd2;
     private TextView mProgressText;
     private ProgressBar mProgressBarTraining;
     protected Toolbar mCameraToolbar;
 
     protected Rect mImageRect;
-    private BoundingBox mCloudBB;
-    private BoundingBox mEdgeBB;
-    private BoundingBox mLocalBB;
-    private List<BoundingBox> mCloudBBList = new ArrayList<>();
-    private List<BoundingBox> mEdgeBBList = new ArrayList<>();
-    private List<BoundingBox> mLocalBBList = new ArrayList<>();
-
-    protected VolleyRequestHandler mVolleyRequestHandler;
+    private FaceBoxRenderer mCloudFaceBoxRenderer;
+    private FaceBoxRenderer mEdgeFaceBoxRenderer;
+    private FaceBoxRenderer mLocalFaceBoxRenderer;
 
     private boolean prefLegacyCamera;
     private boolean prefMultiFace;
@@ -84,7 +76,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefUseRollingAvg;
     protected boolean prefLocalProcessing = false;
     protected boolean prefRemoteProcessing = true;
-    protected VolleyRequestHandler.CameraMode mCameraMode;
+    protected ImageSender.CameraMode mCameraMode;
     protected float mServerToDisplayRatioX;
     protected float mServerToDisplayRatioY;
     protected boolean mBenchmarkActive;
@@ -93,13 +85,30 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected enum CloudletType {
         EDGE,
         CLOUD,
-        LOCAL_PROCESSING
+        LOCAL_PROCESSING,
+        PUBLIC
     }
+
+    public static final int FACE_DETECTION_HOST_PORT = 8008;
+    private static final int FACE_TRAINING_HOST_PORT = 8009;
+    public static final String DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net";
+    public static final String DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net";
+    public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
+    protected ImageSender mImageSenderEdge;
+    private ImageSender mImageSenderCloud;
+    private ImageSender mImageSenderTraining;
+
+    private String mHostDetectionCloud;
+    protected String mHostDetectionEdge;
+    private String mHostTraining;
 
     public static final String EXTRA_FACE_RECOGNITION = "extra_face_recognition";
 
     public String getStatsText() {
-        return mVolleyRequestHandler.getStatsText();
+        return mImageSenderEdge.mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
+                mImageSenderEdge.mLatencyNetOnlyRollingAvg.getStatsText() + "\n\n" +
+                mImageSenderCloud.mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
+                mImageSenderCloud.mLatencyNetOnlyRollingAvg.getStatsText();
     }
 
     /**
@@ -125,13 +134,14 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      *
      * @param bitmap  The bitmap from the camera or video.
      * @param imageRect  The coordinates of the image on the screen. Needed for scaling/offsetting
-     *                   resulting face rectangles or pose skeleton coordinates.
+     *                   resulting face rectangle coordinates.
      */
     @Override
     public void onBitmapAvailable(Bitmap bitmap, Rect imageRect) {
         if(bitmap == null) {
             return;
         }
+        Log.i(TAG, "onBitmapAvailable mCameraMode="+mCameraMode);
 
         mImageRect = imageRect;
         mServerToDisplayRatioX = (float) mImageRect.width() / bitmap.getWidth();
@@ -139,11 +149,18 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
+        // Determine which ImageSenders should handle this image.
         if(prefRemoteProcessing) {
             if(mBenchmarkActive) {
-                mVolleyRequestHandler.cloudImageSender.busy = true;
+                mImageSenderCloud.mBusy = true;
             }
-            mVolleyRequestHandler.sendImage(bitmap);
+            if(mCameraMode == ImageSender.CameraMode.FACE_TRAINING
+                || mCameraMode == ImageSender.CameraMode.FACE_UPDATING_SERVER) {
+                mImageSenderTraining.sendImage(bitmap);
+            } else {
+                mImageSenderEdge.sendImage(bitmap);
+                mImageSenderCloud.sendImage(bitmap);
+            }
         }
     }
 
@@ -156,9 +173,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     /**
      * Update the face rectangle coordinates and the UI.
      *
-     * @param cloudletType
-     * @param rectJsonArray
-     * @param subject  The identified subject name.
+     * @param cloudletType  The cloudlet type determines which FaceBoxRender to use.
+     * @param rectJsonArray  An array of rectangular coordinates for each face detected.
+     * @param subject  The Recognized subject name. Null or empty for Face Detection.
      */
     @Override
     public void updateOverlay(final CloudletType cloudletType, final JSONArray rectJsonArray, final String subject) {
@@ -176,119 +193,57 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                     return;
                 }
 
+                boolean mirrored = mCamera2BasicFragment.mCameraLensFacingDirection ==
+                        CameraCharacteristics.LENS_FACING_FRONT && !mCamera2BasicFragment.mLegacyCamera;
                 int widthOff = mImageRect.left;
                 int heightOff = mImageRect.top;
 
                 Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
-                int i;
-                int totalFaces;
-                JSONArray jsonRect;
-                if(prefMultiFace) {
-                    totalFaces = rectJsonArray.length();
-                    if(totalFaces > MAX_FACES) {
-                        totalFaces = MAX_FACES;
-                        Log.w(TAG, "MAX_FACES ("+MAX_FACES+") exceeded. Ignoring additional");
-                    }
+                FaceBoxRenderer faceBoxRenderer;
+                if (cloudletType == CloudletType.CLOUD) {
+                    faceBoxRenderer = mCloudFaceBoxRenderer;
+                } else if (cloudletType == CloudletType.EDGE) {
+                    faceBoxRenderer = mEdgeFaceBoxRenderer;
+                } else if (cloudletType == CloudletType.LOCAL_PROCESSING) {
+                    faceBoxRenderer = mLocalFaceBoxRenderer;
+                } else if (cloudletType == CloudletType.PUBLIC) {
+                    faceBoxRenderer = mLocalFaceBoxRenderer; //Borrow the local processing renderer.
+                    faceBoxRenderer.setColor(Color.GRAY);//TODO: Create a separate in-progress renderer.
                 } else {
-                    totalFaces = 1;
+                    Log.e(TAG, "Unknown cloudletType: "+cloudletType);
+                    return;
                 }
-                for(i = 0; i < totalFaces; i++) {
-                    try {
-                        jsonRect = rectJsonArray.getJSONArray(i);
-                        Rect rect = new Rect();
-                        rect.left = jsonRect.getInt(0);
-                        rect.top = jsonRect.getInt(1);
-                        rect.right = jsonRect.getInt(2);
-                        rect.bottom = jsonRect.getInt(3);
-                        Log.d(TAG, "received rect=" + rect.toShortString());
-                        if (rect.top == 0 && rect.left == 0 && rect.right == 0 && rect.bottom == 0) {
-                            Log.d(TAG, "Discarding empty rectangle");
-                            continue;
-                        }
-
-                        //In case we received the exact same coordinates from both Edge and Cloud,
-                        //offset only one of the rectangles so they will be distinct.
-                        if (cloudletType == CloudletType.EDGE) {
-                            rect.left -= 1;
-                            rect.right += 1;
-                            rect.top -= 1;
-                            rect.bottom += 1;
-                        }
-
-                        rect.left *= mServerToDisplayRatioX;
-                        rect.right *= mServerToDisplayRatioX;
-                        rect.top *= mServerToDisplayRatioY;
-                        rect.bottom *= mServerToDisplayRatioY;
-
-                        if (mCamera2BasicFragment.mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT
-                                && !prefLegacyCamera && !mCamera2BasicFragment.mVideoMode) {
-                            Log.d(TAG, "Mirroring!");
-                            // The image that was processed is what the camera sees, but the image we want to
-                            // overlay the rectangle onto is mirrored. So not only do we have to scale it,
-                            // but we have to flip it horizontally.
-                            rect.left = mImageRect.width() - rect.left;
-                            rect.right = mImageRect.width() - rect.right;
-                            int tmp = rect.left;
-                            rect.left = rect.right;
-                            rect.right = tmp;
-                        }
-
-                        Log.d(TAG, "jsonRect="+jsonRect+" scaled rect=" + rect.toShortString());
-                        rect.offset(widthOff, heightOff);
-
-                        BoundingBox bb;
-                        if (cloudletType == CloudletType.CLOUD) {
-                            bb = mCloudBBList.get(i);
-                        } else if (cloudletType == CloudletType.EDGE) {
-                            bb = mEdgeBBList.get(i);
-                        } else if (cloudletType == CloudletType.LOCAL_PROCESSING) {
-                            bb = mLocalBBList.get(i);
-                        } else {
-                            Log.e(TAG, "Unknown cloudletType: "+cloudletType);
-                            continue;
-                        }
-                        bb.rect = rect;
-                        bb.invalidate();
-                        bb.restartAnimation();
-                        bb.setSubject(subject);
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
+                faceBoxRenderer.setDisplayParms(mImageRect, mServerToDisplayRatioX, mServerToDisplayRatioY, mirrored, prefMultiFace);
+                faceBoxRenderer.setRectangles(rectJsonArray, subject);
+                faceBoxRenderer.invalidate();
+                faceBoxRenderer.restartAnimation();
             }
         });
     }
 
     @Override
-    public void updateOverlay(final CloudletType cloudletType, final JSONArray posesJsonArray) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void updateTrainingProgress(int cloudTrainingCount, int edgeTrainingCount) {
-        Log.i(TAG, "updateTrainingProgress() edge="+mVolleyRequestHandler.edgeImageSender.mCameraMode+" cloud="+mVolleyRequestHandler.cloudImageSender.mCameraMode);
+    public void updateTrainingProgress(int trainingCount, ImageSender.CameraMode mode) {
+        Log.i(TAG, "updateTrainingProgress() mTrainingCount="+trainingCount+" mode="+mode);
         mProgressBarTraining.setVisibility(View.VISIBLE);
         mProgressText.setVisibility(View.VISIBLE);
-        //Find smaller value.
-        int progress = cloudTrainingCount;
-        if( edgeTrainingCount <= progress) {
-            progress = edgeTrainingCount;
-        }
+        mCameraMode = mode;
+        int progress = trainingCount;
 
-        VolleyRequestHandler.CameraMode edgeMode = mVolleyRequestHandler.edgeImageSender.mCameraMode;
-        VolleyRequestHandler.CameraMode cloudMode = mVolleyRequestHandler.cloudImageSender.mCameraMode;
-        if(edgeMode == VolleyRequestHandler.CameraMode.FACE_TRAINING
-                || cloudMode == VolleyRequestHandler.CameraMode.FACE_TRAINING) {
+        if(mode == ImageSender.CameraMode.FACE_TRAINING) {
             mProgressBarTraining.setProgress(progress);
-            mProgressText.setText("Collecting images... "+progress+"/"+VolleyRequestHandler.TRAINING_COUNT_TARGET);
-        } else if(edgeMode == VolleyRequestHandler.CameraMode.FACE_UPDATING_SERVER
-                && cloudMode == VolleyRequestHandler.CameraMode.FACE_UPDATING_SERVER) {
+            mProgressText.setText("Collecting images... "+progress+"/"+ImageSender.TRAINING_COUNT_TARGET);
+            if(trainingCount >= ImageSender.TRAINING_COUNT_TARGET) {
+                mImageSenderTraining.trainerTrain();
+            }
+
+        } else if(mode == ImageSender.CameraMode.FACE_UPDATING_SERVER) {
             mProgressBarTraining.setIndeterminate(true);
             mProgressText.setText("Updating server...");
-        } else if(edgeMode == VolleyRequestHandler.CameraMode.FACE_RECOGNITION
-                && cloudMode == VolleyRequestHandler.CameraMode.FACE_RECOGNITION) {
+        } else if(mode == ImageSender.CameraMode.FACE_RECOGNITION) {
+            mImageSenderCloud.recognizerUpdate();
+            mImageSenderEdge.recognizerUpdate();
+        } else if(mode == ImageSender.CameraMode.FACE_UPDATE_SERVER_COMPLETE) {
             mProgressBarTraining.setVisibility(View.GONE);
             mProgressText.setVisibility(View.GONE);
             guestTrainingMenuUncheck();
@@ -296,7 +251,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     @Override
-    public void updateFullProcessStats(final CloudletType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
+    public void updateFullProcessStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if(prefUseRollingAvg) {
@@ -329,7 +284,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     @Override
-    public void updateNetworkStats(final CloudletType cloudletType, VolleyRequestHandler.RollingAverage rollingAverage) {
+    public void updateNetworkStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if(prefUseRollingAvg) {
@@ -362,9 +317,24 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     @Override
-    public void onSetGuestName(String guestName) {
-        mVolleyRequestHandler.setGuestName(guestName);
-        mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_TRAINING);
+    public void onSetGuestName(String guestName, int requestCode) {
+        Log.i(TAG, "onSetGuestName("+guestName+", "+requestCode+")");
+        switch (requestCode) {
+            case TrainGuestDialog.RC_START_TRAINING:
+                mCameraMode = ImageSender.CameraMode.FACE_TRAINING;
+                mImageSenderTraining.setCameraMode(mCameraMode);
+                mImageSenderTraining.setGuestName(guestName);
+                updateTrainingProgress(0, mCameraMode);
+                break;
+            case TrainGuestDialog.RC_REMOVE_DATA:
+                mCameraMode = ImageSender.CameraMode.FACE_UPDATING_SERVER;
+                mImageSenderTraining.setCameraMode(mCameraMode);
+                mImageSenderTraining.setGuestName(guestName);
+                mImageSenderTraining.trainerRemove();
+                updateTrainingProgress(0, mCameraMode);
+                break;
+        }
+
     }
 
     @Override
@@ -384,15 +354,19 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        Log.i(TAG, "onCreateOptionsMenu");
+        Log.i(TAG, "onCreateOptionsMenu mCameraMode="+mCameraMode);
         mOptionsMenu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.camera_menu, menu);
 
-        if(mCameraMode == VolleyRequestHandler.CameraMode.FACE_DETECTION) {
+        if(mCameraMode == ImageSender.CameraMode.FACE_DETECTION) {
+            //Hide all training stuff
             menu.findItem(R.id.action_camera_training).setVisible(false);
+            menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
             menu.findItem(R.id.action_camera_training_guest).setVisible(false);
+            menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
         } else {
+            //Benchmarking is only available in FACE_DETECTION mode.
             menu.findItem(R.id.action_benchmark_edge).setVisible(false);
             menu.findItem(R.id.action_benchmark_local).setVisible(false);
             menu.findItem(R.id.action_benchmark_submenu).setVisible(false);
@@ -434,45 +408,77 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_camera_training) {
-            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getContext());
-            if(account == null) {
-                new android.support.v7.app.AlertDialog.Builder(getContext())
-                        .setTitle(R.string.sign_in_required_title)
-                        .setMessage(R.string.sign_in_required_message)
-                        .setPositiveButton("OK", null)
-                        .show();
+            if(!verifySignedIn()) {
                 return true;
             }
-            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_TRAINING);
+            mImageSenderTraining.setCameraMode(ImageSender.CameraMode.FACE_TRAINING);
+            mCameraMode = ImageSender.CameraMode.FACE_TRAINING;
+            updateTrainingProgress(0, mCameraMode);
             return true;
         }
 
         if (id == R.id.action_camera_training_guest) {
             //Even in guest mode, the user must be signed in because they will be listed as the
             //owner of the guest images on the face training server.
-            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getContext());
-            if(account == null) {
-                new android.support.v7.app.AlertDialog.Builder(getContext())
-                        .setTitle(R.string.sign_in_required_title)
-                        .setMessage(R.string.sign_in_required_message)
-                        .setPositiveButton("OK", null)
-                        .show();
+            if(!verifySignedIn()) {
                 return true;
             }
             if(item.isChecked()) {
                 // If item already checked then uncheck it
                 item.setChecked(false);
-                mVolleyRequestHandler.setGuestName("");
+                mImageSenderTraining.setGuestName("");
             } else {
                 item.setChecked(true);
                 TrainGuestDialog trainGuestDialog = new TrainGuestDialog();
+                trainGuestDialog.setRequestCode(TrainGuestDialog.RC_START_TRAINING);
                 trainGuestDialog.setTargetFragment(this, 1);
                 trainGuestDialog.show(getActivity().getSupportFragmentManager(), "training_guest_dialog");
             }
             return true;
         }
 
+        if (id == R.id.action_camera_remove_training_data) {
+            if(!verifySignedIn()) {
+                return true;
+            }
+            //Show a dialog to verify the user really wants to delete their data.
+            new android.support.v7.app.AlertDialog.Builder(getContext())
+                    .setTitle(R.string.verify_delete_title)
+                    .setMessage(R.string.verify_delete_message)
+                    .setNegativeButton(android.R.string.cancel,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            mCameraMode = ImageSender.CameraMode.FACE_UPDATING_SERVER;
+                            mImageSenderTraining.setCameraMode(mCameraMode);
+                            mImageSenderTraining.setGuestName("");
+                            mImageSenderTraining.trainerRemove();
+                            updateTrainingProgress(0, mCameraMode);
+                        }
+                    })
+                    .show();
+            return true;
+        }
+
+        if (id == R.id.action_camera_remove_training_guest_data) {
+            if(!verifySignedIn()) {
+                return true;
+            }
+            TrainGuestDialog trainGuestDialog = new TrainGuestDialog();
+            trainGuestDialog.setRequestCode(TrainGuestDialog.RC_REMOVE_DATA);
+            trainGuestDialog.setTargetFragment(this, 1);
+            trainGuestDialog.show(getActivity().getSupportFragmentManager(), "training_guest_dialog");
+            return true;
+        }
+
         if (id == R.id.action_benchmark_edge) {
+            mCameraToolbar.setVisibility(View.GONE);
             mBenchmarkActive = true;
             prefLocalProcessing = false;
             prefRemoteProcessing = true;
@@ -485,6 +491,19 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         return false;
+    }
+
+    public boolean verifySignedIn() {
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getContext());
+        if(account == null) {
+            new android.support.v7.app.AlertDialog.Builder(getContext())
+                    .setTitle(R.string.sign_in_required_title)
+                    .setMessage(R.string.sign_in_required_message)
+                    .setPositiveButton("OK", null)
+                    .show();
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -511,27 +530,45 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+        String prefKeyHostTraining = getResources().getString(R.string.preference_fd_host_training);
 
-        if(key.equals(prefKeyHostCloud) || key.equals(prefKeyHostEdge)) {
-            Log.d(TAG, "Nothing to do for "+key);
-            return;
+        if (key.equals(prefKeyHostCloud) || key.equals("ALL")) {
+            mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_FACE_HOST_CLOUD);
+            Log.i(TAG, "prefKeyHostCloud="+prefKeyHostCloud+" mHostDetectionCloud="+mHostDetectionCloud);
+        }
+        if (key.equals(prefKeyHostEdge) || key.equals("ALL")) {
+            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_FACE_HOST_EDGE);
+            Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge="+mHostDetectionEdge);
+        }
+        if (key.equals(prefKeyHostTraining) || key.equals("ALL")) {
+            mHostTraining = sharedPreferences.getString(prefKeyHostTraining, DEF_FACE_HOST_TRAINING);
+            Log.i(TAG, "prefKeyHostTraining="+prefKeyHostTraining+" mHostTraining="+mHostTraining);
         }
 
         if (key.equals(prefKeyFrontCamera) || key.equals("ALL")) {
-            mCamera2BasicFragment.mCameraLensFacingDirection =
-                    sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);
+            if(mCamera2BasicFragment != null) {
+                mCamera2BasicFragment.mCameraLensFacingDirection =
+                        sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);
+            }
         }
         if (key.equals(prefKeyLatencyMethod) || key.equals("ALL")) {
             String latencyTestMethodString = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
-            mVolleyRequestHandler.latencyTestMethod = VolleyRequestHandler.LatencyTestMethod.valueOf(latencyTestMethodString);
-            Log.i(TAG, "mVolleyRequestHandler.latencyTestMethod="+mVolleyRequestHandler.latencyTestMethod);
+            if(mImageSenderCloud != null) {
+                mImageSenderCloud.mLatencyTestMethod = ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString);
+            }
+            if(mImageSenderEdge != null) {
+                mImageSenderEdge.mLatencyTestMethod = ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString);
+                Log.i(TAG, "mLatencyTestMethod=" + latencyTestMethodString);
+            }
         }
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
         }
         if (key.equals(prefKeyLegacyCamera) || key.equals("ALL")) {
             prefLegacyCamera = sharedPreferences.getBoolean(prefKeyLegacyCamera, true);
-            mCamera2BasicFragment.mLegacyCamera = prefLegacyCamera;
+            if(mCamera2BasicFragment != null) {
+                mCamera2BasicFragment.mLegacyCamera = prefLegacyCamera;
+            }
         }
         if (key.equals(prefKeyLocalProc) || key.equals("ALL")) {
             prefLocalProcessing = sharedPreferences.getBoolean(prefKeyLocalProc, false);
@@ -547,6 +584,17 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         if (key.equals(prefKeyUseRollingAvg) || key.equals("ALL")) {
             prefUseRollingAvg = sharedPreferences.getBoolean(prefKeyUseRollingAvg, false);
+        }
+
+        Log.i(TAG, "prefKeyShowNetLatency=" + prefKeyShowNetLatency);
+        if(mImageSenderCloud != null) {
+            mImageSenderCloud.setDoNetLatency(prefShowNetLatency);
+        }
+        if(mImageSenderEdge != null) {
+            mImageSenderEdge.setDoNetLatency(prefShowNetLatency);
+        }
+        if(mImageSenderTraining != null) {
+            mImageSenderTraining.setDoNetLatency(prefShowNetLatency);
         }
 
         toggleViews();
@@ -569,11 +617,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated savedInstanceState="+savedInstanceState);
-
-        mCamera2BasicFragment = new Camera2BasicFragment();
-        mCamera2BasicFragment.setImageProviderInterface(this);
-        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-        transaction.replace(R.id.child_camera_fragment_container, mCamera2BasicFragment).commit();
 
         mCameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
@@ -598,71 +641,54 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mEdgeStd2 = view.findViewById(R.id.edge_std_dev2);
         mEdgeStd2.setTextColor(Color.GREEN);
 
-        //Find 1 CLoudBB and create MAX_FACES-1 more, using the same LayoutParams.
-        mCloudBB = view.findViewById(R.id.cloudBB);
-        mCloudBB.setColor(Color.RED);
-        mCloudBB.setCloudletType(CloudletType.CLOUD);
-        mCloudBBList.add(mCloudBB);
-        for(int i = 1; i <= MAX_FACES; i++) {
-            BoundingBox bb = new BoundingBox(getContext());
-            bb.setColor(Color.RED);
-            bb.setCloudletType(CloudletType.CLOUD);
-            bb.setLayoutParams(mCloudBB.getLayoutParams());
-            mCloudBBList.add(bb);
-            frameLayout.addView(bb);
-        }
+        mCloudFaceBoxRenderer = view.findViewById(R.id.cloudFaceBoxRender);
+        mCloudFaceBoxRenderer.setColor(Color.RED);
+        mCloudFaceBoxRenderer.setCloudletType(CloudletType.CLOUD);
 
-        //Find 1 EdgeBB and create MAX_FACES-1 more, using the same LayoutParams.
-        mEdgeBB = view.findViewById(R.id.edgeBB);
-        mEdgeBB.setColor(Color.GREEN);
-        mEdgeBB.setCloudletType(CloudletType.EDGE);
-        mEdgeBBList.add(mEdgeBB);
-        for(int i = 1; i <= MAX_FACES; i++) {
-            BoundingBox bb = new BoundingBox(getContext());
-            bb.setColor(Color.GREEN);
-            bb.setCloudletType(CloudletType.EDGE);
-            bb.setLayoutParams(mEdgeBB.getLayoutParams());
-            mEdgeBBList.add(bb);
-            frameLayout.addView(bb);
-        }
-        Log.i(TAG, "mEdgeBBList="+mEdgeBBList.size()+" mCloudBBList="+mCloudBBList.size()+" MAX_FACES="+MAX_FACES);
+        mEdgeFaceBoxRenderer = view.findViewById(R.id.edgeFaceBoxRender);
+        mEdgeFaceBoxRenderer.setColor(Color.GREEN);
+        mEdgeFaceBoxRenderer.setCloudletType(CloudletType.EDGE);
 
-        //Find 1 LocalBB and create MAX_FACES-1 more, using the same LayoutParams.
-        mLocalBB = view.findViewById(R.id.localBB);
-        mLocalBB.setColor(Color.BLUE);
-//        mLocalBB.shapeType = BoundingBox.ShapeType.OVAL;
-        mLocalBBList.add(mLocalBB);
-        for(int i = 1; i <= MAX_FACES; i++) {
-            BoundingBox bb = new BoundingBox(getContext());
-            bb.setColor(Color.BLUE);
-//            bb.shapeType = BoundingBox.ShapeType.OVAL;
-            bb.setLayoutParams(mLocalBB.getLayoutParams());
-            mLocalBBList.add(bb);
-            frameLayout.addView(bb);
-        }
+        mLocalFaceBoxRenderer = view.findViewById(R.id.localFaceBoxRender);
+        mLocalFaceBoxRenderer.setColor(Color.BLUE);
+        mLocalFaceBoxRenderer.setCloudletType(CloudletType.LOCAL_PROCESSING);
 
         mProgressBarTraining = view.findViewById(R.id.progressBarTraining);
         mProgressBarTraining.setProgress(0);
-        mProgressBarTraining.setMax(VolleyRequestHandler.TRAINING_COUNT_TARGET);
+        mProgressBarTraining.setMax(ImageSender.TRAINING_COUNT_TARGET);
         mProgressBarTraining.setVisibility(View.GONE);
         mProgressText = view.findViewById(R.id.progressTextView);
         mProgressText.setVisibility(View.GONE);
 
+        mCamera2BasicFragment = new Camera2BasicFragment();
+        mCamera2BasicFragment.setImageProviderInterface(this);
+        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+        transaction.replace(R.id.child_camera_fragment_container, mCamera2BasicFragment).commit();
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        prefs.registerOnSharedPreferenceChangeListener(this);
         onSharedPreferenceChanged(prefs, "ALL");
+
+        mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT);
+        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
+        mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT);
+        mImageSenderCloud.setCameraMode(mCameraMode);
+        mImageSenderEdge.setCameraMode(mCameraMode);
 
         Intent intent = getActivity().getIntent();
         boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
         if (faceRecognition) {
-            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_RECOGNITION);
-            prefLocalProcessing = false;
-            mCameraMode = VolleyRequestHandler.CameraMode.FACE_RECOGNITION;
+            mCameraMode = ImageSender.CameraMode.FACE_RECOGNITION;
             mCameraToolbar.setTitle(R.string.title_activity_face_recognition);
+            mImageSenderCloud.recognizerUpdate();
+            mImageSenderEdge.recognizerUpdate();
         } else {
-            mVolleyRequestHandler.setCameraMode(VolleyRequestHandler.CameraMode.FACE_DETECTION);
-            mCameraMode = VolleyRequestHandler.CameraMode.FACE_DETECTION;
+            mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
+
+
+        onSharedPreferenceChanged(prefs, "ALL");
     }
 
     protected void toggleViews() {
@@ -700,17 +726,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mCloudStd2.setVisibility(View.GONE);
         }
 
-        mVolleyRequestHandler.setDoNetLatency(prefShowNetLatency);
     }
 
     @Override
     public void onAttach(Context context) {
         Log.i(TAG, "onAttach("+context+")");
         super.onAttach(context);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        prefs.registerOnSharedPreferenceChangeListener(this);
-        //We can't create the VolleyRequestHandler until we have a context available.
-        mVolleyRequestHandler = new VolleyRequestHandler(this, this.getActivity());
     }
 
     @Override

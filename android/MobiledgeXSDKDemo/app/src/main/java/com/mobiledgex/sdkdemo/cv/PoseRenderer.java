@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PoseRenderer extends View {
-    private static final String TAG = "PoseSkeleton";
+    private static final String TAG = "PoseRenderer";
     public static final int RADIUS = 18;
     public static final int STROKE_WIDTH = 15;
     JSONArray poses;
@@ -56,8 +56,7 @@ public class PoseRenderer extends View {
         init(context);
     }
 
-    public PoseRenderer(Context context, AttributeSet attrs)
-    {
+    public PoseRenderer(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }

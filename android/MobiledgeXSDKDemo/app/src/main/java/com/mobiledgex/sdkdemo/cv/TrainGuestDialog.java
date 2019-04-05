@@ -15,13 +15,30 @@ import com.mobiledgex.sdkdemo.R;
 
 
 /**
- * Shows dialog for entering guest name, and starting Face Recognition training.
+ * Shows dialog for entering guest name, and starting Face Recognition training. Dialog can also
+ * be used for entering a guest name whose data should be deleted from the training server.
  */
 public class TrainGuestDialog extends DialogFragment {
+    private static final String TAG = "TrainGuestDialog";
+    public static final int RC_START_TRAINING = 1;
+    public static final int RC_REMOVE_DATA = 2;
     private TrainGuestDialogListener mListener;
+    private int mMessage;
+    private int mRequestCode;
+
+    public void setRequestCode(int rc) {
+        mRequestCode = rc;
+        if(mRequestCode == RC_START_TRAINING) {
+            mMessage = R.string.train_guest_message;
+        } else if(mRequestCode == RC_REMOVE_DATA) {
+            mMessage = R.string.delete_guest_message;
+        } else {
+
+        }
+    }
 
     public interface TrainGuestDialogListener {
-        void onSetGuestName(String guestName);
+        void onSetGuestName(String guestName, int requestCode);
         void onCancelTrainGuestDialog();
     }
 
@@ -30,7 +47,7 @@ public class TrainGuestDialog extends DialogFragment {
         super.onCreate(savedInstanceState);
         try {
             mListener = (TrainGuestDialogListener) getTargetFragment();
-            Log.i("BDA5", "1.mListener="+mListener);
+            Log.i(TAG, "1.mListener="+mListener);
         } catch (ClassCastException e) {
             throw new ClassCastException("Calling Fragment must implement TrainGuestDialogListener");
         }
@@ -47,7 +64,7 @@ public class TrainGuestDialog extends DialogFragment {
         // Pass null as the parent view because its going in the dialog layout
         builder.setView(inflater.inflate(R.layout.dialog_train_guest, null))
                 // Add action buttons
-                .setPositiveButton(R.string.train_guest_start, null)
+                .setPositiveButton(R.string.ok, null)
                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         mListener.onCancelTrainGuestDialog();
@@ -56,11 +73,11 @@ public class TrainGuestDialog extends DialogFragment {
                 })
                 .setCancelable(false)
                 .setTitle(R.string.train_guest_title)
-                .setMessage(R.string.train_guest_message)
+                .setMessage(mMessage)
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
-                        Log.i("BDA5", "onDismiss()");
+                        Log.i(TAG, "onDismiss()");
                     }
                 });
         return builder.create();
@@ -77,7 +94,7 @@ public class TrainGuestDialog extends DialogFragment {
                 //Is this a valid name that can be used as a directory name on the server?
                 EditText editText = getDialog().findViewById(R.id.editTextGuestName);
                 String guestName = editText.getText().toString();
-                Log.i("BDA5", "guestName="+guestName);
+                Log.i(TAG, "guestName="+guestName);
                 String errorMessage = null;
                 String[] reservedChars = {"|", "\\", "?", "*", "<", "\"", ":", ">"};
                 if(guestName.isEmpty()) {
@@ -92,11 +109,11 @@ public class TrainGuestDialog extends DialogFragment {
                     new android.support.v7.app.AlertDialog.Builder(getContext())
                             .setTitle("Error")
                             .setMessage(errorMessage)
-                            .setPositiveButton("OK", null)
+                            .setPositiveButton(R.string.ok, null)
                             .show();
                     return;
                 }
-                mListener.onSetGuestName(guestName);
+                mListener.onSetGuestName(guestName, mRequestCode);
                 TrainGuestDialog.this.getDialog().cancel();
             }
         });
