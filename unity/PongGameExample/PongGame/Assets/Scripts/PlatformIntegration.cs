@@ -8,12 +8,12 @@ using System.Runtime.InteropServices;
 
 namespace MexPongGame
 {
-  public interface CarrierInfo
+  public interface ICarrierInfo
   {
     string GetCurrentCarrierName();
   }
 
-  public class PlatformIntegration : MonoBehaviour, CarrierInfo
+  public class PlatformIntegration : ICarrierInfo
   {
     [DllImport("__Internal")]
     private static extern string _getCurrentCarrierName();
@@ -78,7 +78,7 @@ namespace MexPongGame
       return networkOperatorName;
     }
 #else
-  public String GetCurrentCarrierName()
+  public string GetCurrentCarrierName()
   {
     Debug.Log("GetCurrentCarrierName is NOT IMPLEMENTED");
     return "";

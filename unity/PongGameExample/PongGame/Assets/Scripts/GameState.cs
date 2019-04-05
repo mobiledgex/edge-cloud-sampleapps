@@ -197,7 +197,19 @@ namespace MexPongGame
     [DataMember]
     public int score2; // Side 1
 
-    public GameState() { }
+    public GameState()
+    {
+      this.source = "client";
+      this.sequence = 0;
+      this.gameId = "";
+      this.currentPlayer = "";
+      this.players = new Player[2];
+
+      this.balls = new Ball[1];
+
+      score1 = 0;
+      score2 = 0;
+    }
 
     // Copies everything, using the current ball and player
     public GameState(GameState gs, BallControl ballc, PlayerControls currentPlayer)
@@ -208,22 +220,18 @@ namespace MexPongGame
 
       this.currentPlayer = currentPlayer.uuid;
 
-      int plen = this.players.Length;
+      int plen = 2;
       this.players = new Player[plen];
 
       Ball b;
-      int blen = this.balls.Length;
+      int blen = 1;
       this.balls = new Ball[blen];
       for (var idx = 0; idx < plen; idx++)
       {
         b = gs.balls[idx];
         if (b.uuid != currentPlayer.uuid)
         {
-          this.balls[idx] = new Ball(b);
-        }
-        else
-        {
-          this.balls[idx] = Ball.CopyBall(ballc);
+          this.balls[idx] = new Ball(b.uuid, new Position(Vector2.zero), new Velocity(Vector2.zero));
         }
       }
 
@@ -293,11 +301,11 @@ namespace MexPongGame
     [DataMember]
     public Velocity velocity;
 
-    public Ball(Ball p)
+    public Ball(Ball b)
     {
-      this.uuid = p.uuid;
-      this.position = new Position(p.position);
-      this.velocity = new Velocity(p.velocity);
+      this.uuid = b.uuid;
+      this.position = new Position(b.position);
+      this.velocity = new Velocity(b.velocity);
     }
 
     public Ball(string uuid, Position pos, Velocity vel)

@@ -14,6 +14,9 @@ using UnityEngine;
 
 namespace MexPongGame
 {
+  // C#'s built in WebSockets concurrency model supports the use a single queue for
+  // send, and another queue for recieve. WsClient here has 1 independent thread
+  // per send or receive direction of communication.
   public class WsClient
   {
     // Life of WsClient:
@@ -30,11 +33,8 @@ namespace MexPongGame
     public ConcurrentQueue<String> receiveQueue { get; }
     public ConcurrentQueue<ArraySegment<byte>> sendQueue { get; }
 
-    GameObject gameManagerObject;
-
     Thread receiveThread { get; set; }
     Thread sendThread { get; set; }
-
 
     Thread netTestThread;
     const int testIntervalMs = 5000;
@@ -45,7 +45,6 @@ namespace MexPongGame
     {
       encoder = new UTF8Encoding();
       ws = new ClientWebSocket();
-      gameManagerObject = GameObject.FindGameObjectWithTag("GameManager");
 
       // This long running WebSocket thread must be kept alive to receive server WebSocket messages.
       ShouldRunThreads(true);
@@ -87,6 +86,18 @@ namespace MexPongGame
       return ws.State == WebSocketState.Open;
     }
 
+    // Basic utility funtion to connect and disconnect from any TCP port.
+    public void RunNetTest(string ahost, int aport, int intervalMs = 5000)
+    {
+      NetTest nt = new NetTest();
+      while (shouldRun)
+      {
+        double elapsed = nt.ConnectAndDisconnect(ahost, aport);
+        Debug.Log("Round(-ish) trip to host: " + ahost + ", port: " + aport + ", elapsed: " + elapsed);
+        Thread.Sleep(intervalMs);
+      }
+    }
+
     public async Task Connect(Uri uri)
     {
       await ws.ConnectAsync(uri, CancellationToken.None);
@@ -118,32 +129,6 @@ namespace MexPongGame
           //Debug.Log("Dequeued this message to send: " + msg);
           await ws.SendAsync(msg, WebSocketMessageType.Text, true /* is last part of message */, CancellationToken.None);
         }
-      }
-    }
-
-    public async void RunReceive()
-    {
-      Debug.Log("WebSocket Message Receiver looping.");
-      string result;
-      while (true)
-      {
-        result = await Receive();
-        if (result != null && result.Length > 0)
-        {
-          receiveQueue.Enqueue(result);
-          //Debug.Log("Added Message: " + result);
-        }
-      }
-    }
-
-    public void RunNetTest(string ahost, int aport, int intervalMs=5000)
-    {
-      NetTest nt = new NetTest();
-      while(shouldRun)
-      {
-        double elapsed = nt.ConnectAndDisconnect(ahost, aport);
-        Debug.Log("Round(-ish) trip to host: " + ahost + ", port: " + aport + ", elapsed: " + elapsed);
-        Thread.Sleep(intervalMs);
       }
     }
 
@@ -179,6 +164,21 @@ namespace MexPongGame
       }
 
       return "";
+    }
+
+    public async void RunReceive()
+    {
+      Debug.Log("WebSocket Message Receiver looping.");
+      string result;
+      while (true)
+      {
+        result = await Receive();
+        if (result != null && result.Length > 0)
+        {
+          receiveQueue.Enqueue(result);
+          //Debug.Log("Added Message: " + result);
+        }
+      }
     }
 
     static string StreamToString(MemoryStream ms, Encoding encoding)

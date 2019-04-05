@@ -68,6 +68,8 @@ namespace MexPongGame {
 
     bool isPaused = false;
 
+    bool demoServer = true;
+
     // Use this for initialization
     async void Start()
     {
@@ -82,9 +84,27 @@ namespace MexPongGame {
       ghostBall = (GameObject)Instantiate(Resources.Load("BallGhost"));
 
       // Register and find cloudlet:
-      await RegisterAndFindCloudlet();
+      string edgeCloudletStr = await RegisterAndFindCloudlet();
+      Uri edgeCloudletUri = null;
+      if (edgeCloudletStr != null)
+      {
+        edgeCloudletUri = new Uri(edgeCloudletStr);
+      }
 
-      await client.Connect(uri);
+      // This might be inside the update loop. Re-register client and check periodically.
+      bool verifiedLocation = await integration.VerifyLocation();
+
+      // Decide what to do with location status.
+
+      // For the non-demo server case:
+      if (demoServer)
+      {
+        await client.Connect(uri);
+      }
+      else
+      {
+        await client.Connect(edgeCloudletUri);
+      }
     }
 
 
@@ -98,6 +118,11 @@ namespace MexPongGame {
         cqueue.TryDequeue(out msg);
         //Debug.Log("Dequeued this message: " + msg);
         await HandleMessage(msg);
+      }
+
+      if (gameSession.status == STATUS.JOINED)
+      {
+        //theBall.SendMessage("GoBall", null, SendMessageOptions.RequireReceiver);
       }
 
       if (gameSession.status == STATUS.INGAME)
@@ -163,9 +188,8 @@ namespace MexPongGame {
 
           // Where is the URI for this app specific edge enabled cloud server:
           Debug.Log("FQDN: " + reply.FQDN);
-          // Port?
+          // AppPorts?
           Debug.Log("On ports: ");
-
 
           foreach (AppPort port in reply.ports)
           {
@@ -437,7 +461,6 @@ namespace MexPongGame {
           pc.setPosition(moveItem.position);
           pc.setVelocity(moveItem.velocity);
         }
-
         
       }
       return true;
@@ -613,20 +636,21 @@ namespace MexPongGame {
       {
         return false;
       }
-      gameSession.currentGs = GatherGameState();
 
       gameSession.gameId = gj.gameId;
       gameSession.side = gj.side;
       gameSession.uuidOtherPlayer = gj.uuidOtherPlayer;
       gameSession.status = STATUS.JOINED;
 
+      gameSession.currentGs = new GameState();
       var gs = gameSession.currentGs;
-      gs.currentPlayer = gameSession.uuidOtherPlayer; // Hmm.
+
+      gs.currentPlayer = gameSession.uuidPlayer;
 
       // Update Ball:
       if (gs.balls.Length == 0)
       {
-        gs.balls = new Ball[2];
+        gs.balls = new Ball[1];
       }
       BallControl bc = theBall.GetComponent<BallControl>();
       bc.uuid = gj.ballId; // Add uuid to ball.
@@ -653,7 +677,9 @@ namespace MexPongGame {
         other = g.GetComponent<PlayerControls>();
         if (other.rb2d.position.x < selected.rb2d.position.x)
         {
+          var tmp = selected;
           selected = other;
+          other = tmp;
         }
       }
 
@@ -661,12 +687,19 @@ namespace MexPongGame {
       {
         selected.uuid = gameSession.uuidPlayer; // Player 1 assigned in match by server.
         other.uuid = gameSession.uuidOtherPlayer;
+        gs.players[0] = Player.CopyPlayer(selected);
+        gs.players[1] = Player.CopyPlayer(other);
       }
       else if (gameSession.side == 1)
       {
         other.uuid = gameSession.uuidPlayer; // Player 2 assigned in match by server.
         selected.uuid = gameSession.uuidOtherPlayer;
+        gs.players[0] = Player.CopyPlayer(other);
+        gs.players[1] = Player.CopyPlayer(selected);
       }
+
+      // Assign player state:
+      gameSession.currentGs = gs;
 
       gameSession.status = STATUS.INGAME;
       return true;

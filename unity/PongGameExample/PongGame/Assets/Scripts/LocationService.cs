@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -90,7 +90,6 @@ public class LocationService : MonoBehaviour
     Input.location.Stop();
 
     LocationInfo info = Input.location.lastData;
-
 
     return info;
   }
