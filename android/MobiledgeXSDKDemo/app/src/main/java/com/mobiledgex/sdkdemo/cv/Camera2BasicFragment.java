@@ -407,7 +407,6 @@ public class Camera2BasicFragment extends Fragment
         int deg = 0;
         int displayRotation = getActivity().getWindowManager().getDefaultDisplay().getRotation();
         deg = getOrientation(displayRotation);
-        Log.d(TAG, "1.displayRotation="+displayRotation+" deg="+deg);
 
         boolean swapDimensions = false;
         Bitmap scaledBitmap;
@@ -437,7 +436,6 @@ public class Camera2BasicFragment extends Fragment
                         Log.e(TAG, "Display rotation is invalid: " + displayRotation);
                 }
             }
-            Log.d(TAG, "2.displayRotation="+displayRotation+" deg="+deg);
 
             // For legacy camera mode, instead of pulling the image from an ImageReader instance,
             // which is standard, we pull it from the preview texture. The rotation needed
@@ -461,7 +459,6 @@ public class Camera2BasicFragment extends Fragment
                         Log.e(TAG, "Display rotation is invalid: " + displayRotation);
                 }
             }
-            Log.d(TAG, "3.displayRotation="+displayRotation+" deg="+deg);
         }
 
         if(swapDimensions) {
@@ -495,7 +492,6 @@ public class Camera2BasicFragment extends Fragment
      * @param context
      */
     public void runBenchmark(Context context, String benchmarkType) {
-        //TODO Remove menubar
         closeCamera();
         stopBackgroundThread();
 

@@ -69,8 +69,8 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.sdkdemo.cv.ImageProcessorActivity;
 import com.mobiledgex.sdkdemo.cv.ImageProcessorFragment;
+import com.mobiledgex.sdkdemo.cv.ImageSender;
 import com.mobiledgex.sdkdemo.cv.PoseProcessorActivity;
-import com.mobiledgex.sdkdemo.cv.VolleyRequestHandler;
 import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
 
 import org.json.JSONException;
@@ -87,8 +87,6 @@ import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_C
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
-import static com.mobiledgex.sdkdemo.cv.VolleyRequestHandler.DEF_FACE_HOST_CLOUD;
-import static com.mobiledgex.sdkdemo.cv.VolleyRequestHandler.DEF_FACE_HOST_EDGE;
 import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
 import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_VERIFIED;
 
@@ -1106,12 +1104,14 @@ public class MainActivity extends AppCompatActivity
         if(key.equals(prefKeyHostCloud)) {
             // This call will attempt to connect to the server at prefKeyHostCloud.
             // If it fails, the default will be restored.
-            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DEF_FACE_HOST_CLOUD, key);
+            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+                    ImageProcessorFragment.DEF_FACE_HOST_CLOUD, key);
         }
         if(key.equals(prefKeyHostEdge)) {
             // This call will attempt to connect to the server at prefKeyHostEdge.
             // If it fails, the default will be restored.
-            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DEF_FACE_HOST_EDGE, key);
+            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+                    ImageProcessorFragment.DEF_FACE_HOST_EDGE, key);
         }
 
         if(key.equals(prefKeyResetFdHosts)) {
@@ -1119,8 +1119,8 @@ public class MainActivity extends AppCompatActivity
             Log.i(TAG, prefKeyResetFdHosts+" "+value);
             if(value.startsWith("Yes")) {
                 Log.i(TAG, "Resetting Face server hosts.");
-                sharedPreferences.edit().putString(prefKeyHostCloud, DEF_FACE_HOST_CLOUD).apply();
-                sharedPreferences.edit().putString(prefKeyHostEdge, DEF_FACE_HOST_EDGE).apply();
+                sharedPreferences.edit().putString(prefKeyHostCloud, ImageProcessorFragment.DEF_FACE_HOST_CLOUD).apply();
+                sharedPreferences.edit().putString(prefKeyHostEdge, ImageProcessorFragment.DEF_FACE_HOST_EDGE).apply();
                 Toast.makeText(this, "Face detection hosts reset to default.", Toast.LENGTH_SHORT).show();
             }
             //Always set the value back to something so that either clicking Yes or No in the dialog
@@ -1139,8 +1139,8 @@ public class MainActivity extends AppCompatActivity
             String keyName = params[1];
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
             newHost = prefs.getString(keyName, defaultHost);
-            boolean reachable = VolleyRequestHandler.isReachable(newHost,
-                    VolleyRequestHandler.getFaceServerPort(newHost), 3000);
+            boolean reachable = ImageSender.isReachable(newHost,
+                    ImageSender.getFaceDetectionServerPort(newHost), 3000);
             if(!reachable) {
                 Log.e(TAG, newHost+" not reachable. Resetting "+keyName+" to default.");
                 prefs.edit().putString(keyName, defaultHost).apply();
