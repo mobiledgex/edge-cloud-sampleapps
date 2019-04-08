@@ -1,4 +1,4 @@
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -12,15 +12,15 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
-import com.mobiledgex.sdkdemo.R;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 
+/**
+ * Draws a shape around detected faces, and if a "subject" value is specified, draws that text too.
+ */
 public class FaceBoxRenderer extends View {
     private static final String TAG = "FaceBoxRender";
-    private static final int MAX_FACES = 8;
-    public static final int STROKE_WIDTH = 10;
+    private static final int STROKE_WIDTH = 10;
     private boolean mMirrored;
     private boolean mMultiFace;
     private int mWidth;
@@ -30,20 +30,20 @@ public class FaceBoxRenderer extends View {
     private float mServerToDisplayRatioX;
     private float mServerToDisplayRatioY;
 
-    ImageProcessorFragment.CloudletType mCloudletType;
-    JSONArray rectJsonArray;
-    String mSubject = null;
-    int mTextSize = (int) (getResources().getDisplayMetrics().scaledDensity * 20);
-    Paint mPaint;
-    Paint mTextPaint;
+    private ImageServerInterface.CloudletType mCloudletType;
+    private JSONArray rectJsonArray;
+    private String mSubject = null;
+    private int mTextSize = (int) (getResources().getDisplayMetrics().scaledDensity * 20);
+    private Paint mPaint;
+    private Paint mTextPaint;
 
-    enum ShapeType {
+    public enum ShapeType {
         RECT,
         OVAL
     }
 
-    public ShapeType shapeType = ShapeType.RECT;
-    public Animation alphaAnim;
+    private ShapeType mShapeType = ShapeType.RECT;
+    private Animation mAlphaAnim;
 
     public FaceBoxRenderer(Context context) {
         super(context);
@@ -63,25 +63,44 @@ public class FaceBoxRenderer extends View {
         mTextPaint.setTextSize(mTextSize);
         mTextPaint.setColor(Color.BLUE);
 
-        alphaAnim = AnimationUtils.loadAnimation(context, R.anim.alpha);
-        alphaAnim.setFillAfter(true);
-        startAnimation(alphaAnim);
+        mAlphaAnim = AnimationUtils.loadAnimation(context, R.anim.alpha);
+        mAlphaAnim.setFillAfter(true);
+        startAnimation(mAlphaAnim);
     }
 
+    /**
+     * Sets the color used to draw the face coordinates and the subject name.
+     * @param color  The color to be used.
+     */
     public void setColor(int color) {
         mPaint.setColor(color);
         mTextPaint.setColor(color);
     }
 
-    public void setCloudletType(ImageProcessorFragment.CloudletType type) {
+    /**
+     * Sets the cloudlet type. Used to determine where to draw the subject name.
+     * @param type  The cloudlet type.
+     * @see com.mobiledgex.computervision.ImageServerInterface.CloudletType
+     */
+    public void setCloudletType(ImageServerInterface.CloudletType type) {
         mCloudletType = type;
-        if (mCloudletType == ImageProcessorFragment.CloudletType.EDGE) {
+        if (mCloudletType == ImageServerInterface.CloudletType.EDGE) {
             mTextPaint.setTextAlign(Paint.Align.RIGHT);
-        } else if (mCloudletType == ImageProcessorFragment.CloudletType.CLOUD) {
+        } else if (mCloudletType == ImageServerInterface.CloudletType.CLOUD) {
             mTextPaint.setTextAlign(Paint.Align.LEFT);
         }
     }
 
+    /**
+     * Sets display parameters used to determine ratios and offsets to correctly draw the face coordinates.
+     * @param imageRect  The coordinates of the TextureView that is showing the preview image.
+     * @param serverToDisplayRatioX  The ratio of the width of the image sent to the server vs.
+     *                               the width of the preview image being displayed.
+     * @param serverToDisplayRatioY  The ratio of the height of the image sent to the server vs.
+     *                               the height of the preview image being displayed.
+     * @param mirrored  Whether the preview image is being mirrored.
+     * @param multiFace  Whether multiple faces should be drawn if coordinates are received.
+     */
     public void setDisplayParms(Rect imageRect, float serverToDisplayRatioX, float serverToDisplayRatioY,
                                 boolean mirrored, boolean multiFace) {
         mWidth = imageRect.width();
@@ -94,10 +113,27 @@ public class FaceBoxRenderer extends View {
         mMultiFace = multiFace;
     }
 
+    /**
+     * Reset the fade-out animation back to the beginning.
+     */
     public void restartAnimation() {
-        startAnimation(alphaAnim);
+        startAnimation(mAlphaAnim);
     }
 
+    /**
+     * Sets the shape type.
+     * @param shapeType  The shape type. Can be either RECT or OVAL.
+     */
+    public void setShapeType(ShapeType shapeType) {
+        this.mShapeType = shapeType;
+    }
+
+    /**
+     * Sets the array of detected face coordinates.
+     *
+     * @param rectJsonArray  The array of detected face coordinates.
+     * @param subject  The identified subject name. Use empty string to draw no text.
+     */
     public void setRectangles(JSONArray rectJsonArray, String subject) {
         this.rectJsonArray = rectJsonArray;
         this.mSubject = subject;
@@ -117,10 +153,6 @@ public class FaceBoxRenderer extends View {
         JSONArray jsonRect;
         if(mMultiFace) {
             totalFaces = rectJsonArray.length();
-            if(totalFaces > MAX_FACES) {
-                totalFaces = MAX_FACES;
-                Log.w(TAG, "MAX_FACES ("+MAX_FACES+") exceeded. Ignoring additional");
-            }
         } else {
             totalFaces = 1;
         }
@@ -140,7 +172,7 @@ public class FaceBoxRenderer extends View {
 
                 //In case we received the exact same coordinates from both Edge and Cloud,
                 //offset only one of the rectangles so they will be distinct.
-                if (mCloudletType == ImageProcessorFragment.CloudletType.EDGE) {
+                if (mCloudletType == ImageServerInterface.CloudletType.EDGE) {
                     rect.left -= 1;
                     rect.right += 1;
                     rect.top -= 1;
@@ -167,7 +199,7 @@ public class FaceBoxRenderer extends View {
                 Log.d(TAG, "jsonRect=" + jsonRect + " scaled rect=" + rect.toShortString());
                 rect.offset(mWidthOff, mHeightOff);
 
-                if(shapeType == ShapeType.RECT) {
+                if(mShapeType == ShapeType.RECT) {
                     canvas.drawRect(rect, mPaint);
                 } else {
                     canvas.drawOval(new RectF(rect), mPaint);
@@ -175,10 +207,10 @@ public class FaceBoxRenderer extends View {
                 if (mSubject != null) {
                     int x = 0;
                     int y = 0;
-                    if(mCloudletType == ImageProcessorFragment.CloudletType.EDGE) {
+                    if(mCloudletType == ImageServerInterface.CloudletType.EDGE) {
                         x = rect.right;
                         y = rect.bottom+ mTextSize;
-                    } else if(mCloudletType == ImageProcessorFragment.CloudletType.CLOUD) {
+                    } else if(mCloudletType == ImageServerInterface.CloudletType.CLOUD) {
                         x = rect.left;
                         y = rect.top- mTextSize /2;
                     }
@@ -190,5 +222,4 @@ public class FaceBoxRenderer extends View {
             }
         }
     }
-
 }

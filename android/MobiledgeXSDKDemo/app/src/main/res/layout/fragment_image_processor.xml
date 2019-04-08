@@ -14,26 +14,25 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center" />
 
-    <com.mobiledgex.sdkdemo.cv.FaceBoxRenderer
+    <com.mobiledgex.computervision.FaceBoxRenderer
         android:id="@+id/cloudFaceBoxRender"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
-    <com.mobiledgex.sdkdemo.cv.FaceBoxRenderer
+    <com.mobiledgex.computervision.FaceBoxRenderer
         android:id="@+id/edgeFaceBoxRender"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
-    <com.mobiledgex.sdkdemo.cv.FaceBoxRenderer
+    <com.mobiledgex.computervision.FaceBoxRenderer
         android:id="@+id/localFaceBoxRender"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
     <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical" >
@@ -177,6 +176,15 @@
                 android:layout_above="@+id/cloudStatsLayout"
                 android:layout_centerHorizontal="true"
                 android:text="TextView" />
+
+            <TextView
+                android:id="@+id/statusTextView"
+                android:textColor="@android:color/white"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/progressTextView"
+                android:layout_centerHorizontal="true"
+                android:text="" />
 
         </RelativeLayout>
 

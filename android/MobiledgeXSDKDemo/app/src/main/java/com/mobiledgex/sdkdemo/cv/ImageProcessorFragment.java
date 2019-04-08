@@ -33,6 +33,12 @@ import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.mobiledgex.computervision.Camera2BasicFragment;
+import com.mobiledgex.computervision.FaceBoxRenderer;
+import com.mobiledgex.computervision.ImageProviderInterface;
+import com.mobiledgex.computervision.ImageSender;
+import com.mobiledgex.computervision.ImageServerInterface;
+import com.mobiledgex.computervision.RollingAverage;
 import com.mobiledgex.sdkdemo.R;
 import com.mobiledgex.sdkdemo.SettingsActivity;
 
@@ -59,6 +65,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected TextView mEdgeStd;
     protected TextView mCloudStd2;
     protected TextView mEdgeStd2;
+    private TextView mStatusText;
     private TextView mProgressText;
     private ProgressBar mProgressBarTraining;
     protected Toolbar mCameraToolbar;
@@ -82,13 +89,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean mBenchmarkActive;
     private String defaultLatencyMethod = "ping";
 
-    protected enum CloudletType {
-        EDGE,
-        CLOUD,
-        LOCAL_PROCESSING,
-        PUBLIC
-    }
-
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
     public static final String DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net";
@@ -103,12 +103,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private String mHostTraining;
 
     public static final String EXTRA_FACE_RECOGNITION = "extra_face_recognition";
+    public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "extra_edge_cloudlet_hostname";
 
     public String getStatsText() {
-        return mImageSenderEdge.mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
-                mImageSenderEdge.mLatencyNetOnlyRollingAvg.getStatsText() + "\n\n" +
-                mImageSenderCloud.mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
-                mImageSenderCloud.mLatencyNetOnlyRollingAvg.getStatsText();
+        return mImageSenderEdge.getStatsText() + "\n\n" +
+                mImageSenderCloud.getStatsText();
     }
 
     /**
@@ -117,7 +116,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      * @param text The message to show
      */
     @Override
-    public void showToast(final String text) {
+    public void showMessage(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
             activity.runOnUiThread(new Runnable() {
@@ -151,23 +150,25 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         // Determine which ImageSenders should handle this image.
         if(prefRemoteProcessing) {
-            if(mBenchmarkActive) {
-                mImageSenderCloud.mBusy = true;
-            }
             if(mCameraMode == ImageSender.CameraMode.FACE_TRAINING
                 || mCameraMode == ImageSender.CameraMode.FACE_UPDATING_SERVER) {
                 mImageSenderTraining.sendImage(bitmap);
             } else {
                 mImageSenderEdge.sendImage(bitmap);
-                mImageSenderCloud.sendImage(bitmap);
+                if(!mBenchmarkActive) {
+                    mImageSenderCloud.sendImage(bitmap);
+                }
             }
         }
     }
 
+    /**
+     * Show a status message from the ImageProvider.
+     * @param status  The status to show.
+     */
     @Override
-    public void setMessageText(String messageText) {
-        mProgressText.setVisibility(View.VISIBLE);
-        mProgressText.setText(messageText);
+    public void setStatus(String status) {
+        mStatusText.setText(status);
     }
 
     /**
@@ -193,31 +194,31 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                     return;
                 }
 
-                boolean mirrored = mCamera2BasicFragment.mCameraLensFacingDirection ==
-                        CameraCharacteristics.LENS_FACING_FRONT && !mCamera2BasicFragment.mLegacyCamera;
+                boolean mirrored = mCamera2BasicFragment.getCameraLensFacingDirection() ==
+                        CameraCharacteristics.LENS_FACING_FRONT && !mCamera2BasicFragment.isLegacyCamera();
                 int widthOff = mImageRect.left;
                 int heightOff = mImageRect.top;
 
                 Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
-                FaceBoxRenderer faceBoxRenderer;
+                FaceBoxRenderer mFaceBoxRenderer;
                 if (cloudletType == CloudletType.CLOUD) {
-                    faceBoxRenderer = mCloudFaceBoxRenderer;
+                    mFaceBoxRenderer = mCloudFaceBoxRenderer;
                 } else if (cloudletType == CloudletType.EDGE) {
-                    faceBoxRenderer = mEdgeFaceBoxRenderer;
+                    mFaceBoxRenderer = mEdgeFaceBoxRenderer;
                 } else if (cloudletType == CloudletType.LOCAL_PROCESSING) {
-                    faceBoxRenderer = mLocalFaceBoxRenderer;
+                    mFaceBoxRenderer = mLocalFaceBoxRenderer;
                 } else if (cloudletType == CloudletType.PUBLIC) {
-                    faceBoxRenderer = mLocalFaceBoxRenderer; //Borrow the local processing renderer.
-                    faceBoxRenderer.setColor(Color.GRAY);//TODO: Create a separate in-progress renderer.
+                    mFaceBoxRenderer = mLocalFaceBoxRenderer; //Borrow the local processing renderer.
+                    mFaceBoxRenderer.setColor(Color.GRAY);//TODO: Create a separate in-progress renderer.
                 } else {
                     Log.e(TAG, "Unknown cloudletType: "+cloudletType);
                     return;
                 }
-                faceBoxRenderer.setDisplayParms(mImageRect, mServerToDisplayRatioX, mServerToDisplayRatioY, mirrored, prefMultiFace);
-                faceBoxRenderer.setRectangles(rectJsonArray, subject);
-                faceBoxRenderer.invalidate();
-                faceBoxRenderer.restartAnimation();
+                mFaceBoxRenderer.setDisplayParms(mImageRect, mServerToDisplayRatioX, mServerToDisplayRatioY, mirrored, prefMultiFace);
+                mFaceBoxRenderer.setRectangles(rectJsonArray, subject);
+                mFaceBoxRenderer.invalidate();
+                mFaceBoxRenderer.restartAnimation();
             }
         });
     }
@@ -384,7 +385,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mCamera2BasicFragment.switchCamera();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
             String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
-            prefs.edit().putInt(prefKeyFrontCamera, mCamera2BasicFragment.mCameraLensFacingDirection).apply();
+            prefs.edit().putInt(prefKeyFrontCamera, mCamera2BasicFragment.getCameraLensFacingDirection()).apply();
             return true;
         }
 
@@ -514,7 +515,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.i(TAG, "onSharedPreferenceChanged("+key+")");
+        Log.i("BDA", "onSharedPreferenceChanged("+key+")");
         if(getContext() == null) {
             //Can happen during rapid screen rotations.
             return;
@@ -547,18 +548,17 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         if (key.equals(prefKeyFrontCamera) || key.equals("ALL")) {
             if(mCamera2BasicFragment != null) {
-                mCamera2BasicFragment.mCameraLensFacingDirection =
-                        sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);
+                mCamera2BasicFragment.setCameraLensFacingDirection(sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT));
             }
         }
         if (key.equals(prefKeyLatencyMethod) || key.equals("ALL")) {
             String latencyTestMethodString = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
+            Log.i("BDA", "latencyTestMethod=" + latencyTestMethodString+" mImageSenderCloud="+mImageSenderCloud);
             if(mImageSenderCloud != null) {
-                mImageSenderCloud.mLatencyTestMethod = ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString);
+                mImageSenderCloud.setLatencyTestMethod(ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString));
             }
             if(mImageSenderEdge != null) {
-                mImageSenderEdge.mLatencyTestMethod = ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString);
-                Log.i(TAG, "mLatencyTestMethod=" + latencyTestMethodString);
+                mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString));
             }
         }
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
@@ -567,7 +567,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (key.equals(prefKeyLegacyCamera) || key.equals("ALL")) {
             prefLegacyCamera = sharedPreferences.getBoolean(prefKeyLegacyCamera, true);
             if(mCamera2BasicFragment != null) {
-                mCamera2BasicFragment.mLegacyCamera = prefLegacyCamera;
+                mCamera2BasicFragment.setLegacyCamera(prefLegacyCamera);
             }
         }
         if (key.equals(prefKeyLocalProc) || key.equals("ALL")) {
@@ -652,6 +652,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mLocalFaceBoxRenderer = view.findViewById(R.id.localFaceBoxRender);
         mLocalFaceBoxRenderer.setColor(Color.BLUE);
         mLocalFaceBoxRenderer.setCloudletType(CloudletType.LOCAL_PROCESSING);
+        mLocalFaceBoxRenderer.setShapeType(FaceBoxRenderer.ShapeType.OVAL);
 
         mProgressBarTraining = view.findViewById(R.id.progressBarTraining);
         mProgressBarTraining.setProgress(0);
@@ -660,6 +661,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mProgressText = view.findViewById(R.id.progressTextView);
         mProgressText.setVisibility(View.GONE);
 
+        mStatusText = view.findViewById(R.id.statusTextView);
+
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
@@ -667,13 +670,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         prefs.registerOnSharedPreferenceChangeListener(this);
+        // Get preferences for everything we've instantiated so far.
         onSharedPreferenceChanged(prefs, "ALL");
-
-        mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT);
-        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
-        mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT);
-        mImageSenderCloud.setCameraMode(mCameraMode);
-        mImageSenderEdge.setCameraMode(mCameraMode);
 
         Intent intent = getActivity().getIntent();
         boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
@@ -686,8 +684,19 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
+        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
+        if(edgeCloudletHostname != null) {
+            Log.i(TAG, "Using "+edgeCloudletHostname+" for mHostDetectionEdge.");
+            mHostDetectionEdge = edgeCloudletHostname;
+        }
 
+        mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT);
+        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
+        mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT);
+        mImageSenderCloud.setCameraMode(mCameraMode);
+        mImageSenderEdge.setCameraMode(mCameraMode);
 
+        //One more call to get preferences for ImageSenders
         onSharedPreferenceChanged(prefs, "ALL");
     }
 

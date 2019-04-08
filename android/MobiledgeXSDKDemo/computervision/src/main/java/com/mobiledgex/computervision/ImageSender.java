@@ -1,4 +1,4 @@
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -40,22 +40,22 @@ public class ImageSender {
     private ImageServerInterface mImageServerInterface;
     private RequestQueue mRequestQueue;
 
-    protected String mHost;
+    private String mHost;
     private int mPort;
-    protected RollingAverage mLatencyFullProcessRollingAvg;
-    protected RollingAverage mLatencyNetOnlyRollingAvg;
+    private RollingAverage mLatencyFullProcessRollingAvg;
+    private RollingAverage mLatencyNetOnlyRollingAvg;
     private int mTrainingCount;
-    public boolean mBusy;
+    private boolean mBusy;
     private long mLatency = 0;
     private boolean mDoNetLatency = true;
     private final int mRollingAvgSize = 100;
     private CameraMode mCameraMode;
     private String djangoUrl = "/detector/detect/";
-    private ImageProcessorFragment.CloudletType mCloudLetType;
+    private ImageServerInterface.CloudletType mCloudLetType;
     private Handler mHandler;
 
     //Variables for latency test
-    public LatencyTestMethod mLatencyTestMethod = LatencyTestMethod.ping;
+    private LatencyTestMethod mLatencyTestMethod = LatencyTestMethod.ping;
     private final int mSocketTimeout = 3000;
 
     private GoogleSignInAccount mAccount;
@@ -66,7 +66,7 @@ public class ImageSender {
         socket
     }
     
-    enum CameraMode {
+    public enum CameraMode {
         FACE_DETECTION,
         FACE_RECOGNITION,
         FACE_TRAINING,
@@ -75,7 +75,7 @@ public class ImageSender {
         POSE_DETECTION
     }
 
-    public ImageSender(Activity activity, ImageServerInterface imageServerInterface, ImageProcessorFragment.CloudletType cloudLetType, String host, int port) {
+    public ImageSender(Activity activity, ImageServerInterface imageServerInterface, ImageServerInterface.CloudletType cloudLetType, String host, int port) {
         mCloudLetType = cloudLetType;
         mHost = host;
         mPort = port;
@@ -84,7 +84,7 @@ public class ImageSender {
 
         mAccount = GoogleSignIn.getLastSignedInAccount(activity);
         if(mAccount != null) {
-            Log.i(TAG, "mAccount=" + mAccount.toJson());
+            Log.i(TAG, "mAccount=" + mAccount.getDisplayName()+" "+mAccount.getId());
         } else {
             Log.i(TAG, "mAccount=" + mAccount);
         }
@@ -256,7 +256,7 @@ public class ImageSender {
     /**
      * Sends request to the FaceDetectionServer to perform the update procedure.
      */
-    protected void recognizerUpdate() {
+    public void recognizerUpdate() {
         Log.i(TAG, mCloudLetType +" recognizerUpdate mCameraMode="+mCameraMode);
         setCameraMode(CameraMode.FACE_RECOGNITION);
 
@@ -309,7 +309,7 @@ public class ImageSender {
     /**
      * Sends request to the FaceTrainingServer to perform the train procedure.
      */
-    protected void trainerTrain() {
+    public void trainerTrain() {
         Log.i(TAG, mCloudLetType +" trainerTrain mCameraMode="+mCameraMode);
         setCameraMode(CameraMode.FACE_UPDATING_SERVER);
 
@@ -402,7 +402,7 @@ public class ImageSender {
      * @param host
      * @param cloudletType
      */
-    private void doSinglePing(String host, RollingAverage rollingAverage, ImageProcessorFragment.CloudletType cloudletType) {
+    private void doSinglePing(String host, RollingAverage rollingAverage, ImageServerInterface.CloudletType cloudletType) {
         long latency = 0;
         if(mLatencyTestMethod.equals(LatencyTestMethod.ping)) {
             try {
@@ -434,7 +434,7 @@ public class ImageSender {
 
                     } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
                         mLatencyTestMethod = LatencyTestMethod.socket;
-                        mImageServerInterface.showToast("Ping failed. Switching to socket latency test mode.");
+                        mImageServerInterface.showMessage("Ping failed. Switching to socket latency test mode.");
                         break;
                     }
                     inputLine = bufferedReader.readLine();
@@ -461,6 +461,23 @@ public class ImageSender {
         mImageServerInterface.updateNetworkStats(cloudletType, rollingAverage);
     }
 
+    public void setLatencyTestMethod(LatencyTestMethod latencyTestMethod) {
+        Log.i("BDA", "latencyTestMethod="+latencyTestMethod);
+        this.mLatencyTestMethod = latencyTestMethod;
+    }
+
+    public String getStatsText() {
+        return mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
+                mLatencyNetOnlyRollingAvg.getStatsText();
+    }
+
+    /**
+     * Creates a socket and connects to the server with a specified timeout value.
+     * @param addr  the Host name or IP address
+     * @param openPort  The port number
+     * @param timeOutMillis  the timeout value to be used in milliseconds
+     * @return  True if socket connection is successfully made.
+     */
     public static boolean isReachable(String addr, int openPort, int timeOutMillis) {
         // Any Open port on other machine
         // mOpenPort =  22 - ssh, 80 or 443 - webserver, 25 - mailserver etc.

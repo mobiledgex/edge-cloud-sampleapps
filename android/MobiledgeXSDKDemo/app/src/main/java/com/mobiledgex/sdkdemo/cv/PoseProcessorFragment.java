@@ -1,6 +1,5 @@
 package com.mobiledgex.sdkdemo.cv;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -19,6 +18,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.mobiledgex.computervision.Camera2BasicFragment;
+import com.mobiledgex.computervision.ImageProviderInterface;
+import com.mobiledgex.computervision.ImageSender;
+import com.mobiledgex.computervision.ImageServerInterface;
+import com.mobiledgex.computervision.PoseRenderer;
+import com.mobiledgex.computervision.RollingAverage;
 import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
@@ -37,6 +42,10 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
 
     public static PoseProcessorFragment newInstance() {
         return new PoseProcessorFragment();
+    }
+
+    public String getStatsText() {
+        return mImageSenderEdge.getStatsText();
     }
 
     /**
@@ -84,17 +93,14 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
                     return;
                 }
 
-                boolean mirrored = mCamera2BasicFragment.mCameraLensFacingDirection ==
-                        CameraCharacteristics.LENS_FACING_FRONT && !mCamera2BasicFragment.mLegacyCamera;
-                int widthOff = mImageRect.left;
-                int heightOff = mImageRect.top;
+                boolean mirrored = mCamera2BasicFragment.getCameraLensFacingDirection() ==
+                        CameraCharacteristics.LENS_FACING_FRONT && !mCamera2BasicFragment.isLegacyCamera();
 
-                if(mCamera2BasicFragment.mVideoMode) {
+                if(mCamera2BasicFragment.isVideoMode()) {
                     mirrored = false;
                 }
 
-                mPoseRenderer.setDisplayParms(mImageRect.width(), mImageRect.height(),
-                        widthOff, heightOff, mServerToDisplayRatioX, mServerToDisplayRatioY, mirrored);
+                mPoseRenderer.setDisplayParms(mImageRect, mServerToDisplayRatioX, mServerToDisplayRatioY, mirrored);
                 mPoseRenderer.setPoses(posesJsonArray);
                 mPoseRenderer.invalidate();
             }
@@ -199,7 +205,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
 
         //TODO: Revisit when we have GPU support on multiple servers.
         //The only GPU-enabled server we have doesn't support ping.
-        mImageSenderEdge.mLatencyTestMethod = ImageSender.LatencyTestMethod.socket;
+        mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.socket);
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.POSE_DETECTION);
         mCameraMode = ImageSender.CameraMode.POSE_DETECTION;
         mCameraToolbar.setTitle(R.string.title_activity_pose_detection);

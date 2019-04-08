@@ -1,4 +1,4 @@
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.graphics.ImageFormat;
 import android.graphics.Rect;

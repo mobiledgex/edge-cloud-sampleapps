@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.Manifest;
 import android.app.Activity;
@@ -69,8 +69,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.mobiledgex.sdkdemo.R;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -93,7 +91,7 @@ public class Camera2BasicFragment extends Fragment
         implements View.OnClickListener {
 
     private static final String TAG = "Camera2BasicFragment";
-    protected int mCameraLensFacingDirection = CameraCharacteristics.LENS_FACING_FRONT;
+    private int mCameraLensFacingDirection = CameraCharacteristics.LENS_FACING_FRONT;
 
     private String mDebugInfo;
 
@@ -113,9 +111,9 @@ public class Camera2BasicFragment extends Fragment
     private boolean mBenchmarkMaxCpuFlag = false;
 
     private MediaPlayer mMediaPlayer;
-    protected TextureView mVideoView;
-    protected boolean mVideoMode;
-    protected boolean mLegacyCamera;
+    private TextureView mVideoView;
+    private boolean mVideoMode;
+    private boolean mLegacyCamera;
 
     private int mImageSendWidth = 240;
     private int mImageSendHeight = 180;
@@ -513,7 +511,7 @@ public class Camera2BasicFragment extends Fragment
             public void onTick(long millisUntilFinished) {
                 long secondsRemaining = (mBenchmarkDurationMillis - (System.currentTimeMillis() - mBenchmarkStartTime))/1000;
 
-                mImageProviderInterface.setMessageText(convertSecondsToHMmSs(secondsRemaining) + " remains");
+                mImageProviderInterface.setStatus(convertSecondsToHMmSs(secondsRemaining) + " remains");
 
                 if(!mBenchmarkMaxCpuFlag) {
                     loadImageAsset();
@@ -551,6 +549,14 @@ public class Camera2BasicFragment extends Fragment
         // Comment out the next 2 lines to use 200ms throttled "apples to apples" method.
 //        mBenchmarkMaxCpuFlag = true;
 //        new maxCpuLoop().execute();
+    }
+
+    public int getCameraLensFacingDirection() {
+        return mCameraLensFacingDirection;
+    }
+
+    public void setCameraLensFacingDirection(int mCameraLensFacingDirection) {
+        this.mCameraLensFacingDirection = mCameraLensFacingDirection;
     }
 
     private class maxCpuLoop extends AsyncTask<String, Void, String> {
@@ -819,7 +825,7 @@ public class Camera2BasicFragment extends Fragment
         mVideoView.setOnClickListener(this);
     }
 
-    protected void switchCamera() {
+    public void switchCamera() {
         if (mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_BACK) {
             mCameraLensFacingDirection = CameraCharacteristics.LENS_FACING_FRONT;
             closeCamera();
@@ -1379,16 +1385,15 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.videoView: {
-                if(mMediaPlayer == null) {
-                    return;
-                }
-                if(mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.pause();
-                } else {
-                    mMediaPlayer.start();
-                }
+        int i = view.getId();
+        if (i == R.id.videoView) {
+            if (mMediaPlayer == null) {
+                return;
+            }
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.pause();
+            } else {
+                mMediaPlayer.start();
             }
             /*case R.id.picture: {
                 takePicture();
@@ -1670,6 +1675,18 @@ public class Camera2BasicFragment extends Fragment
         }
         now = System.currentTimeMillis();
         Log.i(TAG, "processImage took "+(now-start)+" ms");
+    }
+
+    public boolean isVideoMode() {
+        return mVideoMode;
+    }
+
+    public boolean isLegacyCamera() {
+        return mLegacyCamera;
+    }
+
+    public void setLegacyCamera(boolean mLegacyCamera) {
+        this.mLegacyCamera = mLegacyCamera;
     }
 
     @Override

@@ -1,0 +1,72 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def nexusUser = properties.getProperty("nexus.user")
+def nexusPassword = properties.getProperty("nexus.password")
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "0.0.1"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:support-v4:28.0.0'
+
+    implementation 'com.android.volley:volley:1.1.1'
+    implementation 'com.google.android.gms:play-services-auth:16.0.1'
+}
+
+publishing {
+    repositories {
+        maven {
+            def version = android.defaultConfig.versionName
+            def releasesRepoUrl = "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
+            def snapshotsRepoUrl = "https://registry.mobiledgex.net/nexus/content/repositories/snapshots/"
+            url = version.endsWith('SNAP') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username nexusUser
+                password nexusPassword
+            }
+            authentication {
+                digest(DigestAuthentication)
+            }
+        }
+        mavenLocal()
+    }
+
+    publications {
+        maven(MavenPublication) {
+            // AAR of each library
+            version android.defaultConfig.versionName
+            groupId "com.mobiledgex"
+            artifactId "${project.name}"
+            artifact "${project.buildDir}/outputs/aar/${project.name}-release.aar"
+        }
+    }
+}

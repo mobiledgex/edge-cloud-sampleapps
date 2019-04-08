@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
 /**
  * A {@link TextureView} that can be adjusted to a specified aspect ratio.
  */
 public class AutoFitTextureView extends TextureView {
+    private static final String TAG = "AutoFitTextureView";
 
     private int mRatioWidth = 0;
     private int mRatioHeight = 0;
@@ -49,7 +51,7 @@ public class AutoFitTextureView extends TextureView {
      * @param height Relative vertical size
      */
     public void setAspectRatio(int width, int height) {
-        System.out.println("BDA setAspectRatio("+width+","+height+")");
+        Log.i(TAG, "setAspectRatio("+width+","+height+")");
         if (width < 0 || height < 0) {
             throw new IllegalArgumentException("Size cannot be negative.");
         }
@@ -72,7 +74,7 @@ public class AutoFitTextureView extends TextureView {
                 setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
             }
         }
-        System.out.println("BDA onMeasure("+widthMeasureSpec+","+heightMeasureSpec+") w,h="+
+        Log.i(TAG, "onMeasure("+widthMeasureSpec+","+heightMeasureSpec+") w,h="+
                 width+","+height+" getMeasured="+getMeasuredWidthAndState()+","+getMeasuredHeight());
     }
 

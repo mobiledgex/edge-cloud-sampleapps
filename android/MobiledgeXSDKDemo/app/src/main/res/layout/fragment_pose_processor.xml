@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center" />
 
-    <com.mobiledgex.sdkdemo.cv.PoseRenderer
+    <com.mobiledgex.computervision.PoseRenderer
         android:id="@+id/poseSkeleton"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

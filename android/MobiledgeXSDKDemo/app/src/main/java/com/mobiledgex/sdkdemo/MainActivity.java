@@ -69,7 +69,7 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.sdkdemo.cv.ImageProcessorActivity;
 import com.mobiledgex.sdkdemo.cv.ImageProcessorFragment;
-import com.mobiledgex.sdkdemo.cv.ImageSender;
+import com.mobiledgex.computervision.ImageSender;
 import com.mobiledgex.sdkdemo.cv.PoseProcessorActivity;
 import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
 
@@ -117,6 +117,7 @@ public class MainActivity extends AppCompatActivity
     private Location mLastKnownLocation;
     private Location mLocationForMatching;
     private Location mLocationInSimulator;
+    private String mClosestCloudletHostname;
 
     private RequestPermissions mRpUtil;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -392,24 +393,27 @@ public class MainActivity extends AppCompatActivity
             // Handle the About action
             showAboutDialog();
             return true;
-        } else if (id == R.id.nav_camera) {
+        } else if (id == R.id.nav_face_detection) {
             // Start the face detection Activity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
+            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_face_recognition) {
             // Start the face recognition Activity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_FACE_RECOGNITION, true);
+            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_pose_detection) {
             // Start the pose detection Activity
             Intent intent = new Intent(this, PoseProcessorActivity.class);
+            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_qoe_map) {
-            // Start the face detection Activity in Edge benchmark mode
+            // Start the face PQoE Activity
             Intent intent = new Intent(this, QoeMapActivity.class);
             startActivity(intent);
             return true;
@@ -783,6 +787,8 @@ public class MainActivity extends AppCompatActivity
                             .add(mUserLocationMarker.getPosition(), cloudlet.getMarker().getPosition())
                             .width(8)
                             .color(COLOR_VERIFIED));
+                    //Save the hostname for use by Face Detection Activity.
+                    mClosestCloudletHostname = cloudlet.getHostName();
                 }
             }
         });

@@ -7,6 +7,9 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.mobiledgex.computervision.ImageSender;
+import com.mobiledgex.computervision.ImageServerInterface;
+import com.mobiledgex.computervision.RollingAverage;
 import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
@@ -28,7 +31,7 @@ public class OpencvImageProcessorFragment extends ImageProcessorFragment {
     private static final String TAG = "OpencvImageProcessor";
     private CascadeClassifier mCascadeClassifier;
 
-    RollingAverage localLatencyRollingAvg = new RollingAverage(ImageProcessorFragment.CloudletType.LOCAL_PROCESSING, "On-Device", 100);
+    RollingAverage localLatencyRollingAvg = new RollingAverage(ImageServerInterface.CloudletType.LOCAL_PROCESSING, "On-Device", 100);
 
     public static OpencvImageProcessorFragment newInstance() {
         return new OpencvImageProcessorFragment();
@@ -103,7 +106,7 @@ public class OpencvImageProcessorFragment extends ImageProcessorFragment {
         long localAvg = localLatencyRollingAvg.getAverage();
         Log.i(TAG, "localLatency="+(localLatency/1000000.0)+" localAvg="+(localAvg/1000000.0)+" localStdDev="+(localStdDev/1000000.0));
 
-        updateOverlay(ImageProcessorFragment.CloudletType.LOCAL_PROCESSING, jsonArray, null);
+        updateOverlay(ImageServerInterface.CloudletType.LOCAL_PROCESSING, jsonArray, null);
 
         // Save image to local storage.
 //            if (facesArray.length > 0) {

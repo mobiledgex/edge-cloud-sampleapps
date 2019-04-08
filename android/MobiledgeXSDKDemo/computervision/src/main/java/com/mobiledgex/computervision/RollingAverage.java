@@ -1,4 +1,4 @@
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import java.text.DecimalFormat;
 
@@ -10,17 +10,28 @@ public class RollingAverage {
     private float sum = 0f;
     private int fill;
     private int position;
-    private ImageProcessorFragment.CloudletType cloudLetType;
+    private ImageServerInterface.CloudletType cloudLetType;
     private String name;
     private long current;
+
     private boolean detailedStats = false; //TODO: Make a preference.
 
-    public RollingAverage(ImageProcessorFragment.CloudletType cloudLetType, String name, int size) {
+    /**
+     * Constructor for the RollingAverage.
+     * @param cloudLetType  The cloudlet type. Used for the statistics text.
+     * @param name  The name of the set. Used for the statistics text.
+     * @param size  The maximum number of values to keep in the set.
+     */
+    public RollingAverage(ImageServerInterface.CloudletType cloudLetType, String name, int size) {
         this.cloudLetType = cloudLetType;
         this.name = name;
         this.window=new long[size];
     }
 
+    /**
+     * Add a number to the set.
+     * @param number  The number to add to the set.
+     */
     public void add(long number) {
         current = number;
 
@@ -39,8 +50,16 @@ public class RollingAverage {
 
     }
 
+    /**
+     * Return the most recently added value.
+     * @return  The most recently added value.
+     */
     public long getCurrent() { return current; }
 
+    /**
+     * Return the rolling average.
+     * @return  The rolling average.
+     */
     public long getAverage() {
         return (long) (sum / fill);
     }
@@ -58,6 +77,14 @@ public class RollingAverage {
         }
 
         return (long) Math.sqrt(sum/fill);
+    }
+
+    /**
+     * Sets whether to include each sample in the set when {@link #getStatsText()} is called.
+     * @param detailedStats
+     */
+    public void setDetailedStats(boolean detailedStats) {
+        this.detailedStats = detailedStats;
     }
 
     /**
