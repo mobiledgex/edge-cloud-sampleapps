@@ -201,24 +201,24 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
                 Log.d(TAG, "widthOff=" + widthOff + " heightOff=" + heightOff + " mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
-                FaceBoxRenderer mFaceBoxRenderer;
+                FaceBoxRenderer faceBoxRenderer;
                 if (cloudletType == CloudletType.CLOUD) {
-                    mFaceBoxRenderer = mCloudFaceBoxRenderer;
+                    faceBoxRenderer = mCloudFaceBoxRenderer;
                 } else if (cloudletType == CloudletType.EDGE) {
-                    mFaceBoxRenderer = mEdgeFaceBoxRenderer;
+                    faceBoxRenderer = mEdgeFaceBoxRenderer;
                 } else if (cloudletType == CloudletType.LOCAL_PROCESSING) {
-                    mFaceBoxRenderer = mLocalFaceBoxRenderer;
+                    faceBoxRenderer = mLocalFaceBoxRenderer;
                 } else if (cloudletType == CloudletType.PUBLIC) {
-                    mFaceBoxRenderer = mLocalFaceBoxRenderer; //Borrow the local processing renderer.
-                    mFaceBoxRenderer.setColor(Color.GRAY);//TODO: Create a separate in-progress renderer.
+                    faceBoxRenderer = mLocalFaceBoxRenderer; //Borrow the local processing renderer.
+                    faceBoxRenderer.setColor(Color.GRAY);//TODO: Create a separate in-progress renderer.
                 } else {
                     Log.e(TAG, "Unknown cloudletType: "+cloudletType);
                     return;
                 }
-                mFaceBoxRenderer.setDisplayParms(mImageRect, mServerToDisplayRatioX, mServerToDisplayRatioY, mirrored, prefMultiFace);
-                mFaceBoxRenderer.setRectangles(rectJsonArray, subject);
-                mFaceBoxRenderer.invalidate();
-                mFaceBoxRenderer.restartAnimation();
+                faceBoxRenderer.setDisplayParms(mImageRect, mServerToDisplayRatioX, mServerToDisplayRatioY, mirrored, prefMultiFace);
+                faceBoxRenderer.setRectangles(rectJsonArray, subject);
+                faceBoxRenderer.invalidate();
+                faceBoxRenderer.restartAnimation();
             }
         });
     }
