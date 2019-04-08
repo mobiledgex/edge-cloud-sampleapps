@@ -78,7 +78,6 @@ dependencies {
     // Required for local unit tests (JUnit 4 framework)
     implementation project(':opencv')
 
-    //GRPC
     implementation 'javax.annotation:javax.annotation-api:1.2'
     implementation project(path: ':computervision')
 

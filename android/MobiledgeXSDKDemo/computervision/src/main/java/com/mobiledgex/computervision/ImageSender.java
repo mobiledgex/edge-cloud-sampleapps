@@ -462,7 +462,7 @@ public class ImageSender {
     }
 
     public void setLatencyTestMethod(LatencyTestMethod latencyTestMethod) {
-        Log.i("BDA", "latencyTestMethod="+latencyTestMethod);
+        Log.i(TAG, "latencyTestMethod="+latencyTestMethod);
         this.mLatencyTestMethod = latencyTestMethod;
     }
 

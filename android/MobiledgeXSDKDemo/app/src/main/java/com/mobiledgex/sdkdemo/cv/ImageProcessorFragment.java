@@ -515,7 +515,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.i("BDA", "onSharedPreferenceChanged("+key+")");
+        Log.i(TAG, "onSharedPreferenceChanged("+key+")");
         if(getContext() == null) {
             //Can happen during rapid screen rotations.
             return;
@@ -553,7 +553,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         if (key.equals(prefKeyLatencyMethod) || key.equals("ALL")) {
             String latencyTestMethodString = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
-            Log.i("BDA", "latencyTestMethod=" + latencyTestMethodString+" mImageSenderCloud="+mImageSenderCloud);
+            Log.i(TAG, "latencyTestMethod=" + latencyTestMethodString+" mImageSenderCloud="+mImageSenderCloud);
             if(mImageSenderCloud != null) {
                 mImageSenderCloud.setLatencyTestMethod(ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString));
             }
