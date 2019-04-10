@@ -95,11 +95,12 @@ namespace MexPongGame {
       bool verifiedLocation = await integration.VerifyLocation();
 
       // Decide what to do with location status.
+      Debug.Log("VerifiedLocation: " + verifiedLocation);
 
       // For the non-demo server case:
       if (demoServer)
       {
-        await client.Connect(uri);
+        await client.Connect(new Uri(server));
       }
       else
       {
@@ -636,6 +637,8 @@ namespace MexPongGame {
       {
         return false;
       }
+
+      Debug.Log("Told to join gameId: " + gj.gameId + ", side: " + gj.side);
 
       gameSession.gameId = gj.gameId;
       gameSession.side = gj.side;

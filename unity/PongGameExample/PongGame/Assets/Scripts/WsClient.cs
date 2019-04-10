@@ -31,7 +31,7 @@ namespace MexPongGame
     const UInt64 MAXREADSIZE = 1 * 1024 * 1024;
 
     public ConcurrentQueue<String> receiveQueue { get; }
-    public ConcurrentQueue<ArraySegment<byte>> sendQueue { get; }
+    public BlockingCollection<ArraySegment<byte>> sendQueue { get; }
 
     Thread receiveThread { get; set; }
     Thread sendThread { get; set; }
@@ -53,7 +53,7 @@ namespace MexPongGame
       receiveThread = new Thread(RunReceive);
       receiveThread.Start();
 
-      sendQueue = new ConcurrentQueue<ArraySegment<byte>>();
+      sendQueue = new BlockingCollection<ArraySegment<byte>>();
       sendThread = new Thread(RunSend);
       sendThread.Start();
 
@@ -100,11 +100,14 @@ namespace MexPongGame
 
     public async Task Connect(Uri uri)
     {
+      Debug.Log("Connecting to: " + uri);
       await ws.ConnectAsync(uri, CancellationToken.None);
       while (ws.State == WebSocketState.Connecting)
       {
+        Debug.Log("Waiting to connect...");
         Task.Delay(50).Wait();
       }
+      Debug.Log("Connect status: " + ws.State);
     }
 
     public void Send(string message)
@@ -113,8 +116,7 @@ namespace MexPongGame
       //Debug.Log("Message to queue for send: " + buffer.Length + ", message: " + message);
       var sendBuf = new ArraySegment<byte>(buffer);
 
-      //Debug.Log("Send Message queue size: " + sendQueue.Count);
-      sendQueue.Enqueue(sendBuf);
+      sendQueue.Add(sendBuf);
     }
 
     public async void RunSend()
@@ -123,10 +125,10 @@ namespace MexPongGame
       Debug.Log("RunSend entered.");
       while (true)
       {
-        while (sendQueue.TryPeek(out msg))
+        while(!sendQueue.IsCompleted)
         {
-          sendQueue.TryDequeue(out msg);
-          //Debug.Log("Dequeued this message to send: " + msg);
+          msg = sendQueue.Take();
+          Debug.Log("Dequeued this message to send: " + msg);
           await ws.SendAsync(msg, WebSocketMessageType.Text, true /* is last part of message */, CancellationToken.None);
         }
       }
@@ -172,11 +174,11 @@ namespace MexPongGame
       string result;
       while (true)
       {
+        Debug.Log("Awaiting Receive...");
         result = await Receive();
         if (result != null && result.Length > 0)
         {
           receiveQueue.Enqueue(result);
-          //Debug.Log("Added Message: " + result);
         }
       }
     }
