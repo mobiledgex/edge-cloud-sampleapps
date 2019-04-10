@@ -2,11 +2,11 @@
   "name": "yawsps",
   "version": "1.0.0",
   "description": "A Pong Server Example using WebSockets",
-  "main": "index.js",
+  "main": "yawsps.js",
   "dependencies": {
     "util": "^0.11.1",
-    "uuidv4": "^3.0.1",
-    "websocket": "^1.0.28"
+    "uuidv4": "^4.0.0",
+    "ws": "^6.2.1"
   },
   "devDependencies": {},
   "scripts": {
@@ -14,5 +14,5 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "MobiledgeX",
-  "license": "Apache"
+  "license": "Apache-2.0"
 }

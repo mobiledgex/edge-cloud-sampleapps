@@ -25,7 +25,7 @@ public class MobiledgeXIntegration
    */
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
   public string devName { get; set; } = "MobiledgeX";
-  public string appName { get; set; } = "MobiledgeX SDK Demo";
+  public string appName { get; set; } = "PongGameHackathonApp";
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 

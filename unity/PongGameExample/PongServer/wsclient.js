@@ -1,11 +1,11 @@
 const WebSocket = require('ws');
 
-// Test only. Does not reconnect!
-// (use some kind of use reconnecting-websocket and retry, with backoff.)
-
-var ws = new WebSocket('ws://127.0.0.1:3000');
+// FIXME: This test client does not use FindCloudlet to get this URL.
+//var server = 'ws://ponggamehackathonapp-tcp.mobiledgexponggamehackathonapp10.bonn-mexdemo.tdg.mobiledgex.net:3000';
+var server = 'ws://ponggamehackathonapp-tcp.mobiledgexponggamehackathonapp10.bonn-mexdemo.tdg.mobiledgex.net:3000';
+var ws = new WebSocket(server);
 ws.onopen = function(){
-  console.log('Connected to 127.0.0.1:3000!');
+  console.log('Connected to %s!', server);
 }
 
 var uuidPlayer = "";

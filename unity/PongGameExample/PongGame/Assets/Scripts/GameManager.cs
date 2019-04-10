@@ -68,7 +68,7 @@ namespace MexPongGame {
 
     bool isPaused = false;
 
-    bool demoServer = true;
+    bool demoServer = false;
 
     // Use this for initialization
     async void Start()
@@ -88,7 +88,7 @@ namespace MexPongGame {
       Uri edgeCloudletUri = null;
       if (edgeCloudletStr != null)
       {
-        edgeCloudletUri = new Uri(edgeCloudletStr);
+        edgeCloudletUri = new Uri("ws://" + edgeCloudletStr);
       }
 
       // This might be inside the update loop. Re-register client and check periodically.

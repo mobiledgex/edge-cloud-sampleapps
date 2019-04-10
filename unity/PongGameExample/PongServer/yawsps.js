@@ -105,7 +105,7 @@ wsServer.on('connection', function connection(ws, request) {
 
 
 // We'll need some way to do sessions to reconnect, and match them up with "activity"
-const SIMULATELAGTIMEINMS = 200; // In milliseconds.
+const SIMULATELAGTIMEINMS = 0; // In milliseconds.
 var connectedClients = {};
 var games = {};
 var lobby = new Map(); // Mob Map.

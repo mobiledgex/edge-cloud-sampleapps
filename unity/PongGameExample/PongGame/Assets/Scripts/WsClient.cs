@@ -128,7 +128,7 @@ namespace MexPongGame
         while(!sendQueue.IsCompleted)
         {
           msg = sendQueue.Take();
-          Debug.Log("Dequeued this message to send: " + msg);
+          //Debug.Log("Dequeued this message to send: " + msg);
           await ws.SendAsync(msg, WebSocketMessageType.Text, true /* is last part of message */, CancellationToken.None);
         }
       }
@@ -174,7 +174,7 @@ namespace MexPongGame
       string result;
       while (true)
       {
-        Debug.Log("Awaiting Receive...");
+        //Debug.Log("Awaiting Receive...");
         result = await Receive();
         if (result != null && result.Length > 0)
         {
