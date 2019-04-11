@@ -143,6 +143,10 @@ namespace MexPongGame
         {
           receiveQueue.Enqueue(result);
         }
+        else
+        {
+          Task.Delay(50).Wait();
+        }
       }
     }
 

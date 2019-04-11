@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 using System.Net.WebSockets;
 using System;
@@ -68,6 +69,9 @@ namespace MexPongGame {
     bool demoServer = true;
     NetTest netTest = new NetTest();
 
+    GameObject uiG;
+    public Text uiConsole;
+
     // Use this for initialization
     async void Start()
     {
@@ -81,8 +85,13 @@ namespace MexPongGame {
       ghostPlayer = (GameObject)Instantiate(Resources.Load("PaddleGhost"));
       ghostBall = (GameObject)Instantiate(Resources.Load("BallGhost"));
 
+      uiG = GameObject.FindGameObjectWithTag("UIConsole");
+      uiConsole = uiG.GetComponent<Text>();
+
       // Register and find cloudlet:
+      uiConsole.text = "Registering to DME: ";
       string edgeCloudletStr = await RegisterAndFindCloudlet();
+      clog("Found Cloudlet from DME result: " + edgeCloudletStr);
       Uri edgeCloudletUri = null;
       if (edgeCloudletStr != null)
       {
@@ -96,13 +105,16 @@ namespace MexPongGame {
       Debug.Log("VerifiedLocation: " + verifiedLocation);
 
       // For the non-demo server case:
+      clog("Connecting to WebSocket Server...");
       if (demoServer)
       {
         await client.Connect(new Uri(server));
+        clog("Connection to " + server + " status: " + client.isOpen());
       }
       else
       {
         await client.Connect(edgeCloudletUri);
+        clog("Connection to " + edgeCloudletStr + " status: " + client.isOpen());
       }
     }
 
@@ -133,6 +145,12 @@ namespace MexPongGame {
 
     }
 
+    void clog(string msg)
+    {
+      uiConsole.text = msg;
+      Debug.Log(msg);
+    }
+
     // TODO: Should manage the thread runnables.
     private void OnApplicationFocus(bool focus)
     {
@@ -158,11 +176,13 @@ namespace MexPongGame {
       // For Demo App purposes, it's the TCP app port. Your app may point somewhere else:
       string tcpAppPort = "";
 
+      clog("Calling DME to register client...");
       bool registered = await integration.Register();
 
       if (registered)
       {
         FindCloudletReply reply;
+        clog("Finding Cloudlet...");
         reply = await integration.FindCloudlet();
 
 
@@ -213,6 +233,7 @@ namespace MexPongGame {
 
       }
 
+      clog("FindCloudlet found: " + tcpAppPort);
       return tcpAppPort;
     }
 
@@ -397,6 +418,9 @@ namespace MexPongGame {
       {
         gs.balls[0].position = moveItem.position;
         gs.balls[0].velocity = moveItem.velocity;
+        var bc = theBall.GetComponent<BallControl>();
+        bc.setPosition(gs.balls[0].position);
+        bc.setVelocity(gs.balls[0].velocity);
 
         UpdateBallGhost(moveItem);
       }
@@ -631,12 +655,12 @@ namespace MexPongGame {
 
     bool JoinGame(GameJoin gj)
     {
+      clog("Told to join gameId: " + gj.gameId + ", side: " + gj.side);
       if (gj.gameId == "")
       {
+        clog("Bad gameId!");
         return false;
       }
-
-      Debug.Log("Told to join gameId: " + gj.gameId + ", side: " + gj.side);
 
       gameSession.gameId = gj.gameId;
       gameSession.side = gj.side;
@@ -702,24 +726,31 @@ namespace MexPongGame {
       // Assign player state:
       gameSession.currentGs = gs;
 
+      clog("Transition to inGame.");
       gameSession.status = STATUS.INGAME;
       return true;
     }
 
     bool RestartGame(GameRestart gr)
     {
+      clog("Restarting game, gameId: " + gr.gameId);
       if (gr.gameId != gameSession.gameId)
       {
         return false;
       }
       gameSession.status = STATUS.RESTART;
 
-      theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+      //theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
       PlayerScore1 = 0;
       PlayerScore2 = 0;
 
       gameSession.currentGs.sequence = 0;
-      gameSession.status = STATUS.JOINED;
+      gameSession.status = STATUS.INGAME;
+
+      // The server has to restart the ball, in some random direction so relality starts
+      // at some kind of common point to resync against.
+
+      
 
       return false;
     }
