@@ -6,7 +6,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.mobiledgex.workshopskeleton"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -34,7 +34,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
 
     // Matching Engine SDK
-    implementation 'com.mobiledgex:matchingengine:1.3.5.4-SNAP'
+    implementation 'com.mobiledgex:matchingengine:1.3.1'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
