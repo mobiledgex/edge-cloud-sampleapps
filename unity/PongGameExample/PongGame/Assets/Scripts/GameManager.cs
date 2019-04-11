@@ -60,15 +60,13 @@ namespace MexPongGame {
 
     string server = "ws://localhost:3000";
 
-    private Uri uri = new Uri("ws://localhost:3000");
-    private ClientWebSocket ws = new ClientWebSocket();
-
     Task openTask;
     Task<string> receiveTask;
 
     bool isPaused = false;
 
-    bool demoServer = false;
+    bool demoServer = true;
+    NetTest netTest = new NetTest();
 
     // Use this for initialization
     async void Start()
@@ -140,7 +138,7 @@ namespace MexPongGame {
     {
       if (client != null)
       {
-        client.ShouldRunThreads(focus);
+        netTest.doPing(focus);
       }
     }
     // TODO: Should manage the thread runnables.
@@ -149,7 +147,7 @@ namespace MexPongGame {
       isPaused = pauseStatus;
       if (client != null)
       {
-        client.ShouldRunThreads(!isPaused);
+        netTest.doPing(!isPaused);
       }
 
     }

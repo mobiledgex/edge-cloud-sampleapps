@@ -36,18 +36,11 @@ namespace MexPongGame
     Thread receiveThread { get; set; }
     Thread sendThread { get; set; }
 
-    Thread netTestThread;
-    const int testIntervalMs = 5000;
-    bool shouldRun = true;
-
     // TODO: CancellationToken for Tasks to handle OnApplicationFocus, OnApplicationPause.
     public WsClient()
     {
       encoder = new UTF8Encoding();
       ws = new ClientWebSocket();
-
-      // This long running WebSocket thread must be kept alive to receive server WebSocket messages.
-      ShouldRunThreads(true);
 
       receiveQueue = new ConcurrentQueue<string>();
       receiveThread = new Thread(RunReceive);
@@ -56,24 +49,6 @@ namespace MexPongGame
       sendQueue = new BlockingCollection<ArraySegment<byte>>();
       sendThread = new Thread(RunSend);
       sendThread.Start();
-
-      // Mini diagnostics.
-      netTestThread = new Thread(() => RunNetTest(host, port, testIntervalMs));
-      netTestThread.Start();
-    }
-
-    public bool ShouldRunThreads(bool run)
-    {
-      // Run flag conditional in run loops.
-      shouldRun = run;
-
-      if (shouldRun)
-      {
-        // Mini network diagnostics, parameterized to one server.
-        netTestThread = new Thread(() => RunNetTest(host, port, testIntervalMs));
-        netTestThread.Start();
-      }
-      return shouldRun;
     }
 
     public bool isConnecting()
@@ -84,18 +59,6 @@ namespace MexPongGame
     public bool isOpen()
     {
       return ws.State == WebSocketState.Open;
-    }
-
-    // Basic utility funtion to connect and disconnect from any TCP port.
-    public void RunNetTest(string ahost, int aport, int intervalMs = 5000)
-    {
-      NetTest nt = new NetTest();
-      while (shouldRun)
-      {
-        double elapsed = nt.ConnectAndDisconnect(ahost, aport);
-        Debug.Log("Round(-ish) trip to host: " + ahost + ", port: " + aport + ", elapsed: " + elapsed);
-        Thread.Sleep(intervalMs);
-      }
     }
 
     public async Task Connect(Uri uri)
