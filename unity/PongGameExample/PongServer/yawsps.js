@@ -128,6 +128,9 @@ setInterval(function() {
 
 function updateScore(uuidPlayer, scoreEvent) {
   var gameId = scoreEvent.gameId;
+  if (gameId == null) {
+    return;
+  }
 
   var game = games[gameId];
 
@@ -223,8 +226,10 @@ function updateClients(game, objectToUpdate) {
     var playerKey = nameMap[player];
     if (playerKey !== undefined) {
       connection = connectedClients[playerKey];
-      if (connection) {
+      if (connection && connection.readyState === connection.OPEN) {
         connection.send(JSON.stringify(objectToUpdate));
+      } else {
+        console.log("Client connection is invalid for [%s].");
       }
   }
   });
