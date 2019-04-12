@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_camera_swap"
+        android:icon="@drawable/ic_menu_switch_camera"
+        android:title="Swap Camera"
+        app:showAsAction="always" />
+    <item android:id="@+id/action_camera_video"
+        android:title="Play Video" />
+    <item android:id="@+id/action_camera_debug"
+        android:title="Generate Debug Info" />
+
+</menu>
