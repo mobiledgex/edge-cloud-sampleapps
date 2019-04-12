@@ -316,6 +316,15 @@ namespace MexPongGame {
       client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
 
+    void SendRestart()
+    {
+      GameRestart gr = new GameRestart();
+      gr.gameId = gameSession.gameId;
+      gr.balls = new Ball[1];
+      gr.balls[0] = Ball.CopyBall(theBall.GetComponent<BallControl>());
+      client.Send(Messaging<GameRestart>.Serialize(gr));
+    }
+
     // Separate from Update()
     void OnGUI()
     {
@@ -331,6 +340,7 @@ namespace MexPongGame {
         {
           theBall.SendMessage("RestartGame", 0.5f, SendMessageOptions.RequireReceiver);
         }
+        SendRestart();
       }
 
       if (PlayerScore1 == 10)

@@ -55,7 +55,7 @@ wsServer.on('connection', function connection(ws, request) {
   ws.on('message', function(msgStr) {
     //console.log("got a message: <%s>", msgStr);
     gameMessage = JSON.parse(msgStr);
-    console.log("gameMessage: %o", gameMessage);
+    //console.log("gameMessage: %o", gameMessage);
     switch(gameMessage.type) {
       case "scoreEvent":
         var scoreEvent = gameMessage;
@@ -74,7 +74,10 @@ wsServer.on('connection', function connection(ws, request) {
         break;
       case "resign":
         break;
-      case "restart":
+      case "gameRestart":
+        console.log("gameMessage: %o", gameMessage);
+        var gameRestartRequest = gameMessage;
+        gameRestart(gameRestartRequest);
         break;
     }
   });
@@ -179,6 +182,9 @@ function updateScore(uuidPlayer, scoreEvent) {
       }
     }
   });
+
+  // Start the next round in match.
+  nextRound(game);
 }
 
 function updateObject(item) {
@@ -562,5 +568,74 @@ function createMatch(uuidPlayer) {
   console.log("Created a game: " + JSON.stringify(games[gameId]));
   return gameId;
 }
+
+// For this game, the ball just starts in the middle.
+function nextRound(game) {
+  var gameId = game.gameId;
+  if (gameId == null || gameId == undefined) {
+    console.log("Unknown game!")
+    return;
+  }
+  if (game.gameStates.length == 0) {
+    console.log("Not gameState!");
+    return;
+  }
+
+  var idx = game.gameStates.length-1;
+  var gameState = game.gameStates[idx];
+  var ballId = gameState.balls[0].uuid;
+
+  var ball = randomBall(ballId);
+  var nextRound = {
+    type: "nextRound",
+    gameId: game.gameId,
+    balls: [ball]
+  }
+
+  game.players.forEach(function(player) {
+    var connection = getConnectionFromAlias(player);
+    if (connection === undefined) {
+      console.log("XXXXXXXXXXXXX Bad connection!");
+    } else {
+      connection.send(JSON.stringify(nextRound));
+    }
+  });
+}
+
+function gameRestart(gameRestartRequest) {
+  var gameId = gameRestartRequest.gameId;
+  if (gameId == null || gameId == undefined) {
+    console.log("Unknown game!")
+    return;
+  }
+  game = games[gameId];
+  if (game.gameStates.length == 0) {
+    console.log("Not gameState!");
+    return;
+  }
+
+  var idx = game.gameStates.length-1;
+  var gameState = game.gameStates[idx];
+  var ballId = gameState.balls[0].uuid;
+
+  var ball = randomBall(ballId);
+  var gameRestart = {
+    type: "gameRestart",
+    gameId: game.gameId,
+    balls: [ball]
+  }
+
+  // Make sure player belongs...
+
+  game.players.forEach(function(player) {
+    var connection = getConnectionFromAlias(player);
+    if (connection === undefined) {
+      console.log("XXXXXXXXXXXXX Bad connection!");
+    } else {
+      connection.send(JSON.stringify(gameRestart));
+    }
+  });
+}
+
 
 server.listen(3000);
