@@ -58,11 +58,11 @@
             android:configChanges="orientation"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".cv.ImageProcessorActivity"
+            android:name="com.mobiledgex.computervision.OpencvImageProcessorActivity"
             android:label="@string/title_activity_face_detection"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".cv.PoseProcessorActivity"
+            android:name="com.mobiledgex.computervision.PoseProcessorActivity"
             android:label="@string/title_activity_pose_detection"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
