@@ -98,6 +98,10 @@ public class FaceProcessorFragment extends Fragment {
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     // TODO: Copy/paste the onOptionsItemSelected code to define menu selection actions.
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return false;
+    }
 
     protected void toggleViews() {
         if(prefShowFullLatency) {
@@ -127,13 +131,13 @@ public class FaceProcessorFragment extends Fragment {
         }
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: Copy/paste the getStatsText code to return actual stat values.
     /**
      * Return statistics from the latency measurements.
      * @return
      */
     public String getStatsText() {
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        // TODO: Copy/paste the getStatsText code to return actual stat values.
         return "TODO";
     }
 }
