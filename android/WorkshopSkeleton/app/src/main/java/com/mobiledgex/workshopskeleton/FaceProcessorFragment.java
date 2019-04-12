@@ -36,7 +36,6 @@ public class FaceProcessorFragment extends Fragment {
     private TextView mStdNet;
     private TextView mStatusText;
     private Toolbar mCameraToolbar;
-    private Menu mOptionsMenu;
     private boolean prefShowFullLatency;
     private boolean prefShowNetLatency;
     private boolean prefShowStdDev;
@@ -85,7 +84,6 @@ public class FaceProcessorFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         Log.i(TAG, "onCreateOptionsMenu");
-        mOptionsMenu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.face_detection_menu, menu);
     }
