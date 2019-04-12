@@ -1,10 +1,15 @@
 package com.mobiledgex.workshopskeleton;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -18,12 +23,20 @@ import android.view.MenuItem;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.maps.android.SphericalUtil;
 
 // Matching Engine API:
@@ -36,6 +49,8 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "MainActivity";
+    private static final int RC_SIGN_IN = 1;
+    public static final int RC_STATS = 2;
     private MatchingEngine matchingEngine;
     private String someText = null;
     private AppClient.FindCloudletReply mClosestCloudlet;
@@ -57,6 +72,11 @@ public class MainActivity extends AppCompatActivity
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
     private ProgressBar progressBar;
+    private String mClosestCloudletHostName;
+
+    private GoogleSignInClient mGoogleSignInClient;
+    private MenuItem signInMenuItem;
+    private MenuItem signOutMenuItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +125,32 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        // Check for existing Google Sign In account, if the user is already signed in
+        // the GoogleSignInAccount will be non-null.
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+
+        signInMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signin);
+        signOutMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signout);
+
+        if(account != null) {
+            //This means we're already signed in.
+            signInMenuItem.setVisible(false);
+            signOutMenuItem.setVisible(true);
+        } else {
+            signInMenuItem.setVisible(true);
+            signOutMenuItem.setVisible(false);
+        }
+
     }
 
     @Override
@@ -158,9 +204,25 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_face_detection) {
             // Handle the camera action
-            someText = "TODO: Add Face Detection activity";
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            Intent intent = new Intent(this, FaceProcessorActivity.class);
+
+            if(mClosestCloudlet != null) {
+                intent.putExtra("CLOSEST_CLOUDLET_HOSTNAME", mClosestCloudletHostName);
+            }
+            startActivity(intent);
+        } else if (id == R.id.nav_google_signin) {
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        } else if (id == R.id.nav_google_signout) {
+            mGoogleSignInClient.signOut()
+                    .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Toast.makeText(MainActivity.this, "Sign out successful.", Toast.LENGTH_LONG).show();
+                            signInMenuItem.setVisible(true);
+                            signOutMenuItem.setVisible(false);
+                        }
+                    });
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -212,6 +274,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+
     public boolean findCloudlet() throws ExecutionException, InterruptedException {
         //(Blocking call, or use findCloudletFuture):
         Location location = new Location("MEX");
@@ -255,26 +318,87 @@ public class MainActivity extends AppCompatActivity
         distanceTv.setText(String.format("%.2f", distance)+" km");
         //Extract cloudlet name from FQDN
         String[] parts = mClosestCloudlet.getFQDN().split("\\.");
-        cloudletNameTv.setText(parts[1]);
-        List<Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
-        String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Public Path: '%s'}";
+        cloudletNameTv.setText(parts[0]);
+
+        //Find FQDNPrefix from Port structure.
+        String FQDNPrefix = "";
+        List<distributed_match_engine.Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
+        String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
         for (Appcommon.AppPort aPort : ports) {
-            portNumberTv.setText(""+aPort.getPublicPort());
+            FQDNPrefix = aPort.getFQDNPrefix();
             Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                     aPort.getProto().getNumber(),
+                    aPort.getFQDNPrefix(),
                     aPort.getInternalPort(),
                     aPort.getPublicPort(),
                     aPort.getPublicPath()));
         }
+        // Build full hostname.
+        mClosestCloudletHostName = FQDNPrefix+mClosestCloudlet.getFQDN();
 
         // TODO: Copy/paste the output of this log into a terminal to test latency.
-        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudlet.getFQDN());
+        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostName);
 
         return true;
     }
 
     public void showErrorMsg(String msg) {
         Snackbar.make(findViewById(android.R.id.content), msg, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i(TAG, "onActivityResult requestCode="+requestCode+" resultCode="+resultCode+" data="+data);
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            // The Task returned from this call is always completed, no need to attach a listener.
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleSignInResult(task);
+        } else if (requestCode == RC_STATS && resultCode == RESULT_OK) {
+            //Get preference
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean showDialog = prefs.getBoolean("fd_show_latency_stats_dialog", false);
+            if(!showDialog) {
+                Log.d(TAG, "Preference is to not show latency stats dialog");
+                return;
+            }
+
+            String stats = data.getExtras().getString("STATS");
+            // The TextView to show your Text
+            TextView showText = new TextView(MainActivity.this);
+            showText.setText(stats);
+            showText.setTextIsSelectable(true);
+            int horzPadding = (int) (25 * getResources().getDisplayMetrics().density);
+            showText.setPadding(horzPadding, 0,horzPadding,0);
+            new AlertDialog.Builder(MainActivity.this)
+                    .setView(showText)
+                    .setTitle("Stats")
+                    .setCancelable(true)
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
+
+    }
+
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            // Signed in successfully, show authenticated UI.
+            signInMenuItem.setVisible(false);
+            signOutMenuItem.setVisible(true);
+            Toast.makeText(MainActivity.this, "Sign in successful. Welcome, "+account.getDisplayName(), Toast.LENGTH_LONG).show();
+        } catch (ApiException e) {
+            // The ApiException status code indicates the detailed failure reason.
+            // Please refer to the GoogleSignInStatusCodes class reference for more information.
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Error")
+                    .setMessage("signInResult:failed code=" + e.getStatusCode())
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
     }
 
 }
