@@ -31,7 +31,7 @@
             android:icon="@drawable/ic_menu_camera"
             android:title="Face Recognition" />
         <item
-            android:id="@+id/nav_camera"
+            android:id="@+id/nav_face_detection"
             android:icon="@drawable/ic_menu_camera"
             android:title="Face Detection" />
         <item
