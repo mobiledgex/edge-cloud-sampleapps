@@ -127,13 +127,13 @@ public class FaceProcessorFragment extends Fragment {
         }
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    // TODO: Copy/paste the getStatsText code return actual stat values.
     /**
      * Return statistics from the latency measurements.
      * @return
      */
     public String getStatsText() {
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        // TODO: Copy/paste the getStatsText code to return actual stat values.
         return "TODO";
     }
 }
