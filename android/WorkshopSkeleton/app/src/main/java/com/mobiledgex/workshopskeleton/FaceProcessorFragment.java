@@ -36,9 +36,6 @@ public class FaceProcessorFragment extends Fragment {
     private TextView mStdNet;
     private TextView mStatusText;
     private Toolbar mCameraToolbar;
-    private boolean prefShowFullLatency;
-    private boolean prefShowNetLatency;
-    private boolean prefShowStdDev;
 
     public static FaceProcessorFragment newInstance() {
         return new FaceProcessorFragment();
@@ -102,31 +99,8 @@ public class FaceProcessorFragment extends Fragment {
     }
 
     protected void toggleViews() {
-        if(prefShowFullLatency) {
-            mLatencyFull.setVisibility(View.VISIBLE);
-        } else {
-            mLatencyFull.setVisibility(View.INVISIBLE);
-            mStdFull.setVisibility(View.GONE);
-            mStdNet.setVisibility(View.GONE);
-        }
-        if(prefShowNetLatency) {
-            mLatencyNet.setVisibility(View.VISIBLE);
-            mStdNet.setVisibility(View.VISIBLE);
-        } else {
-            mLatencyNet.setVisibility(View.INVISIBLE);
-            mStdNet.setVisibility(View.GONE);
-        }
-        if(prefShowStdDev) {
-            if(prefShowNetLatency) {
-                mStdFull.setVisibility(View.VISIBLE);
-            }
-            if(prefShowNetLatency) {
-                mStdNet.setVisibility(View.VISIBLE);
-            }
-        } else {
-            mStdFull.setVisibility(View.GONE);
-            mStdNet.setVisibility(View.GONE);
-        }
+        //We are overriding the this method just so the superclass version doesn't try to toggle
+        //the visibility of a widget we don't have in our layout.
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
