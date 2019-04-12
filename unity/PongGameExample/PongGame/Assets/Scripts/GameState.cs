@@ -110,6 +110,19 @@ namespace MexPongGame
   }
 
   [DataContract]
+  public class NextRound
+  {
+    [DataMember]
+    public string type = "nextRound";
+
+    [DataMember]
+    public string gameId;
+
+    [DataMember]
+    public Ball[] balls;
+  }
+
+  [DataContract]
   public class GameRestart
   {
     [DataMember]

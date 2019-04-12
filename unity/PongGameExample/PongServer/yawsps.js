@@ -162,7 +162,7 @@ function updateScore(uuidPlayer, scoreEvent) {
       game.playerScore2 = scoreEvent.playerScore2;
       break;
     default:
-      console.log("Thy game is Pong?")
+      console.log("Thy game is Pong?");
   }
 
   console.log("Server sees scores {P1: %d, P2: %d}", game.playerScore1, game.playerScore2)

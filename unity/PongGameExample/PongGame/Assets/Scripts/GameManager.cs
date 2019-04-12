@@ -396,8 +396,12 @@ namespace MexPongGame {
 
         case "resign":
           break;
+
+        case "nextRound":
+          NextRound nr = Messaging<NextRound>.Deserialize(message);
+          StartNextRound(nr);
+          break;
         case "gameRestart":
-          // {"type": "restart", "source": "server"}
           GameRestart gr = Messaging<GameRestart>.Deserialize(message);
           RestartGame(gr);
           break;
@@ -741,6 +745,27 @@ namespace MexPongGame {
       return true;
     }
 
+    bool StartNextRound(NextRound nr)
+    {
+      clog("Start next round for game, gameId: " + nr.gameId);
+      if (nr.gameId != gameSession.gameId)
+      {
+        return false;
+      }
+      gameSession.status = STATUS.INGAME;
+
+      // The ball position and velocity is chosen at random by server, and sent out to players.
+      // For now, just trust it.
+      BallControl bc = theBall.GetComponent<BallControl>();
+      bc.setPosition(new Position(Vector2.zero));
+      bc.setVelocity(new Velocity(Vector2.zero));
+      // Not correct. FIXME:
+      Vector2 startingForce = new Vector2(nr.balls[0].velocity.x, nr.balls[0].velocity.y);
+      bc.rb2d.AddForce(startingForce);
+
+      return false;
+    }
+
     bool RestartGame(GameRestart gr)
     {
       clog("Restarting game, gameId: " + gr.gameId);
@@ -761,6 +786,7 @@ namespace MexPongGame {
       // For now, just trust it.
       BallControl bc = theBall.GetComponent<BallControl>();
       bc.setPosition(new Position(Vector2.zero));
+      bc.setVelocity(new Velocity(Vector2.zero));
       // Not correct. FIXME:
       Vector2 startingForce = new Vector2(gr.balls[0].velocity.x, gr.balls[0].velocity.y);
       bc.rb2d.AddForce(startingForce);
