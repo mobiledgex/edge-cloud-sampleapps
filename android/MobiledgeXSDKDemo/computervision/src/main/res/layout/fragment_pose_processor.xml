@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000"
-    tools:context=".cv.ImageProcessorActivity">
+    tools:context=".ImageProcessorActivity">
 
     <FrameLayout
         android:id="@+id/child_camera_fragment_container"
@@ -21,7 +21,6 @@
         android:layout_gravity="center" />
 
     <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical" >
@@ -44,6 +43,16 @@
             android:id="@+id/relativeLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/statusTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/cloudStatsLayout"
+                android:layout_centerHorizontal="true"
+                android:text=""
+                android:textColor="@android:color/white"
+                android:textSize="22sp" />
 
             <TextView
                 android:id="@+id/full_latency"

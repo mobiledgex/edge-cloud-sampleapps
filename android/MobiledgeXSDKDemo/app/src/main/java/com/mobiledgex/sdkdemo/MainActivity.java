@@ -65,12 +65,12 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.mobiledgex.computervision.OpencvImageProcessorActivity;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
-import com.mobiledgex.sdkdemo.cv.ImageProcessorActivity;
-import com.mobiledgex.sdkdemo.cv.ImageProcessorFragment;
+import com.mobiledgex.computervision.ImageProcessorFragment;
 import com.mobiledgex.computervision.ImageSender;
-import com.mobiledgex.sdkdemo.cv.PoseProcessorActivity;
+import com.mobiledgex.computervision.PoseProcessorActivity;
 import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
 
 import org.json.JSONException;
@@ -395,13 +395,13 @@ public class MainActivity extends AppCompatActivity
             return true;
         } else if (id == R.id.nav_face_detection) {
             // Start the face detection Activity
-            Intent intent = new Intent(this, ImageProcessorActivity.class);
+            Intent intent = new Intent(this, OpencvImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_face_recognition) {
             // Start the face recognition Activity
-            Intent intent = new Intent(this, ImageProcessorActivity.class);
+            Intent intent = new Intent(this, OpencvImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_FACE_RECOGNITION, true);
             intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);

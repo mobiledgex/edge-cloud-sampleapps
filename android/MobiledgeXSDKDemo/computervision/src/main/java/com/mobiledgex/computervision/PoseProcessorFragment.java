@@ -1,4 +1,4 @@
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -17,14 +17,6 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-import com.mobiledgex.computervision.Camera2BasicFragment;
-import com.mobiledgex.computervision.ImageProviderInterface;
-import com.mobiledgex.computervision.ImageSender;
-import com.mobiledgex.computervision.ImageServerInterface;
-import com.mobiledgex.computervision.PoseRenderer;
-import com.mobiledgex.computervision.RollingAverage;
-import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
 
@@ -193,6 +185,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         mLatencyNet = view.findViewById(R.id.network_latency);
         mStdFull = view.findViewById(R.id.full_std_dev);
         mStdNet = view.findViewById(R.id.network_std_dev);
+        mStatusText = view.findViewById(R.id.statusTextView);
         mPoseRenderer = view.findViewById(R.id.poseSkeleton);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -221,10 +214,14 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         //Remove these menu items.
         menu.findItem(R.id.action_camera_training).setVisible(false);
         menu.findItem(R.id.action_camera_training_guest).setVisible(false);
+        menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
+        menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
 
         menu.findItem(R.id.action_benchmark_edge).setVisible(false);
         menu.findItem(R.id.action_benchmark_local).setVisible(false);
         menu.findItem(R.id.action_benchmark_submenu).setVisible(false);
+
+
     }
 
     @Override

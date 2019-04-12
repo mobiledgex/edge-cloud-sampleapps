@@ -23,59 +23,6 @@
     <string name="preference_net_switching_allowed_title">Network Switching Enabled</string>
     <string name="preference_net_switching_allowed_summary">Wifi to Cell network switching</string>
 
-    <!-- Strings for Face Detection -->
-    <string name="title_activity_face_detection">Face Detection</string>
-    <string name="title_activity_face_recognition">Face Recognition</string>
-    <string name="title_activity_pose_detection">Pose Detection</string>
-    <string name="preference_fd_front_camera">fd_front_camera</string>
-    <string name="preference_fd_local_proc">fd_local_proc</string>
-    <string name="preference_fd_local_proc_title">Local processing</string>
-    <string name="preference_fd_local_proc_summary">Include tracking via local processing</string>
-    <string name="preference_fd_multi_face">fd_multi_face</string>
-    <string name="preference_fd_multi_face_title">Multi-face</string>
-    <string name="preference_fd_multi_face_summary">Track multiple faces</string>
-    <string name="preference_fd_show_full_latency">fd_show_full_latency</string>
-    <string name="preference_fd_show_full_latency_title">Show full process latency</string>
-    <string name="preference_fd_show_full_latency_summary">Measures image upload, face detection, results being returned.</string>
-    <string name="preference_fd_show_net_latency">fd_show_net_latency</string>
-    <string name="preference_fd_show_net_latency_title">Show network latency</string>
-    <string name="preference_fd_show_net_latency_summary">Measures only network latency.</string>
-    <string name="preference_fd_show_stddev">fd_show_stddev</string>
-    <string name="preference_fd_show_stddev_title">Show Stddev</string>
-    <string name="preference_fd_show_stddev_summary">Standard deviation</string>
-    <string name="preference_fd_use_rolling_avg">fd_use_rolling_avg</string>
-    <string name="preference_fd_use_rolling_avg_title">Use Rolling Average</string>
-    <string name="preference_fd_use_rolling_avg_summary">Show individual measurements or rolling average</string>
-    <string name="preference_fd_host_training">fd_host_training</string>
-    <string name="preference_fd_host_cloud">fd_host_cloud</string>
-    <string name="preference_fd_host_cloud_title">Cloud Server</string>
-    <string name="preference_fd_host_cloud_summary">Enter a custom IP or hostname.</string>
-    <string name="preference_fd_host_edge">fd_host_edge</string>
-    <string name="preference_fd_host_edge_title">Edge Server</string>
-    <string name="preference_fd_host_edge_summary">Enter a custom IP or hostname.</string>
-    <string name="preference_fd_reset_both_hosts">fd_reset_both_hosts</string>
-    <string name="preference_fd_reset_both_hosts_title">Reset hosts to default.</string>
-    <string name="preference_fd_reset_both_hosts_message">Are you sure?</string>
-    <string name="preference_fd_legacy_camera">fd_legacy_camera</string>
-    <string name="preference_fd_legacy_camera_title">Legacy Camera</string>
-    <string name="preference_fd_legacy_camera_summary">Camera handling for older devices</string>
-    <string name="preference_fd_show_latency_stats_dialog">fd_show_latency_stats_dialog</string>
-    <string name="preference_fd_show_latency_stats_dialog_title">Show Latency Stats after session</string>
-    <string name="preference_fd_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
-    <string-array name="pref_fd_reset_both_hosts_choices">
-        <item>Yes. Reset hosts to default.</item>
-        <item>No. Retain current values.</item>
-    </string-array>
-    <string name="fd_latency_method">fd_latency_method</string>
-    <string name="train_guest_start">Start</string>
-    <string name="train_guest_title">Guest Name</string>
-    <string name="train_guest_message">Enter the guest name, then face recognition training will begin.</string>
-    <string name="delete_guest_message">Enter the guest name to delete training data from server.</string>
-    <string name="sign_in_required_title">Sign-in required.</string>
-    <string name="sign_in_required_message">Return to main menu and choose \"Sign in with Google\".</string>
-    <string name="verify_delete_title">Delete Training Data</string>
-    <string name="verify_delete_message">Are you sure you want to delete your face training data from the server?</string>
-
     <!-- Strings related to first-use screen -->
     <string name="why">Why?</string>
     <string name="needed_permissions_text">We need these permissions to make everything work:</string>
@@ -101,7 +48,6 @@
     <string name="action_about">About</string>
     <string name="preference_speed_test_settings">Speed Test Settings</string>
     <string name="preference_general_settings">General Settings</string>
-    <string name="preference_fd_settings">Computer Vision Settings</string>
 
     <!-- Settings for Speed Test -->
     <string name="pref_title_download_size">Download Size</string>

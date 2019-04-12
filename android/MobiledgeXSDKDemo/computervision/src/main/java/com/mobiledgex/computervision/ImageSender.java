@@ -55,7 +55,7 @@ public class ImageSender {
     private Handler mHandler;
 
     //Variables for latency test
-    private LatencyTestMethod mLatencyTestMethod = LatencyTestMethod.ping;
+    private LatencyTestMethod mLatencyTestMethod = LatencyTestMethod.socket;
     private final int mSocketTimeout = 3000;
 
     private GoogleSignInAccount mAccount;

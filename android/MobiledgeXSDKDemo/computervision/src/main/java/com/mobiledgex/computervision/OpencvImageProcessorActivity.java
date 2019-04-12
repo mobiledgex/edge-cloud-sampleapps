@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,9 +22,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.WindowManager;
 
-import com.mobiledgex.sdkdemo.R;
-
-public class ImageProcessorActivity extends AppCompatActivity {
+public class OpencvImageProcessorActivity extends AppCompatActivity {
 
     private OpencvImageProcessorFragment imageProcessorFragment;
 

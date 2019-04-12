@@ -8,7 +8,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.mobiledgex.sdkdemo"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode 39
         versionName "1.0"
@@ -76,8 +76,6 @@ dependencies {
     implementation 'fr.bmartel:jspeedtest:1.32.1'
     implementation 'com.android.volley:volley:1.1.1'
     // Required for local unit tests (JUnit 4 framework)
-    implementation project(':opencv')
-
     implementation 'javax.annotation:javax.annotation-api:1.2'
     implementation project(path: ':computervision')
 

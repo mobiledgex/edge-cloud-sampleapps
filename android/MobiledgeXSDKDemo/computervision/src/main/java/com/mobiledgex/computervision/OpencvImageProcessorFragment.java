@@ -1,4 +1,4 @@
-package com.mobiledgex.sdkdemo.cv;
+package com.mobiledgex.computervision;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -6,11 +6,6 @@ import android.graphics.Rect;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-
-import com.mobiledgex.computervision.ImageSender;
-import com.mobiledgex.computervision.ImageServerInterface;
-import com.mobiledgex.computervision.RollingAverage;
-import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
 import org.opencv.android.BaseLoaderCallback;
