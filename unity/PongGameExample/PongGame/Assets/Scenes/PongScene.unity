@@ -1095,7 +1095,7 @@ GameObject:
   - component: {fileID: 1776239910}
   - component: {fileID: 1776239909}
   m_Layer: 0
-  m_Name: New Text
+  m_Name: PlayerName Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1125,12 +1125,12 @@ TextMesh:
   m_GameObject: {fileID: 1776239907}
   m_Text: Player2
   m_OffsetZ: 0
-  m_CharacterSize: 1
+  m_CharacterSize: 0.3
   m_LineSpacing: 1
-  m_Anchor: 0
+  m_Anchor: 2
   m_Alignment: 0
   m_TabSize: 4
-  m_FontSize: 0
+  m_FontSize: 60
   m_FontStyle: 0
   m_RichText: 1
   m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
@@ -1186,7 +1186,7 @@ GameObject:
   - component: {fileID: 1879483823}
   - component: {fileID: 1879483822}
   m_Layer: 0
-  m_Name: New Text
+  m_Name: PlayerName Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1216,12 +1216,12 @@ TextMesh:
   m_GameObject: {fileID: 1879483820}
   m_Text: Player1
   m_OffsetZ: 0
-  m_CharacterSize: 1
+  m_CharacterSize: 0.3
   m_LineSpacing: 1
-  m_Anchor: 0
+  m_Anchor: 2
   m_Alignment: 0
   m_TabSize: 4
-  m_FontSize: 0
+  m_FontSize: 60
   m_FontStyle: 0
   m_RichText: 1
   m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}

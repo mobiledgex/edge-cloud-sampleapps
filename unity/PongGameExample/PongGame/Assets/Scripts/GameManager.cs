@@ -386,7 +386,7 @@ namespace MexPongGame {
 
         case "resign":
           break;
-        case "restart":
+        case "gameRestart":
           // {"type": "restart", "source": "server"}
           GameRestart gr = Messaging<GameRestart>.Deserialize(message);
           RestartGame(gr);
@@ -419,8 +419,8 @@ namespace MexPongGame {
         gs.balls[0].position = moveItem.position;
         gs.balls[0].velocity = moveItem.velocity;
         var bc = theBall.GetComponent<BallControl>();
-        bc.setPosition(gs.balls[0].position);
-        bc.setVelocity(gs.balls[0].velocity);
+        //bc.setPosition(gs.balls[0].position);
+        //bc.setVelocity(gs.balls[0].velocity);
 
         UpdateBallGhost(moveItem);
       }
@@ -747,10 +747,13 @@ namespace MexPongGame {
       gameSession.currentGs.sequence = 0;
       gameSession.status = STATUS.INGAME;
 
-      // The server has to restart the ball, in some random direction so relality starts
-      // at some kind of common point to resync against.
-
-      
+      // The ball position and velocity is chosen at random by server, and sent out to players.
+      // For now, just trust it.
+      BallControl bc = theBall.GetComponent<BallControl>();
+      bc.setPosition(new Position(Vector2.zero));
+      // Not correct. FIXME:
+      Vector2 startingForce = new Vector2(gr.balls[0].velocity.x, gr.balls[0].velocity.y);
+      bc.rb2d.AddForce(startingForce);
 
       return false;
     }

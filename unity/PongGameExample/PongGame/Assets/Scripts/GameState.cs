@@ -117,6 +117,9 @@ namespace MexPongGame
 
     [DataMember]
     public string gameId;
+
+    [DataMember]
+    public Ball[] balls;
   }
 
   // On start of game, ever player is assigned player1 (0) or player2 (1) and a user id.

@@ -18,7 +18,7 @@ namespace MexPongGame
     {
       theBall = GameObject.FindGameObjectWithTag("Ball");
       rb2d = GetComponent<Rigidbody2D>();
-      Invoke("GoBall", 2);
+      //Invoke("GoBall", 2);
     }
 
     // Update is called once per frame
@@ -51,7 +51,7 @@ namespace MexPongGame
     void RestartGame()
     {
       ResetBall();
-      Invoke("GoBall", 1);
+      //Invoke("GoBall", 1);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

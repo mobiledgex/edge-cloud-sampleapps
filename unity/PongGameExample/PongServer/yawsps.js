@@ -413,6 +413,24 @@ function newGameState(gameId, serverGameState,
 	return gameState;
 }
 
+function randRange(min, max) {
+  return (Math.random() * (max - min)) + min
+}
+
+function randomBall(ballId) {
+  var rand = randRange(-1, 1);
+  var updown = randRange(-1, 1);
+  if (rand < 0) {
+    var velocity = { x: 20, y: updown * 15}
+  } else {
+    var velocity = { x: -20, y: updown * 15}
+  }
+  var position = { x: 0, y: 0 }
+  ball = {uuid: ballId, position: position, velocity: velocity}
+
+  return ball;
+}
+
 function copyBall(ball) {
   //console.log("Cloning Ball Data: " + JSON.stringify(ball))
   return {
@@ -529,6 +547,17 @@ function createMatch(uuidPlayer) {
   // Assign player side (0)
   connection.send(JSON.stringify(sendGameState));
   otherConnection.send(JSON.stringify(sendGameState));
+
+  // GameState is actually ignored right now.
+  // Send the ball off in a uniform location with a reset (in case there's a pre-game...)
+  var ball = randomBall(ballId);
+  var restartGame = {
+    type: "gameRestart",
+    gameId: gameId,
+    balls: [ball]
+  }
+  connection.send(JSON.stringify(restartGame));
+  otherConnection.send(JSON.stringify(restartGame));
 
   console.log("Created a game: " + JSON.stringify(games[gameId]));
   return gameId;
