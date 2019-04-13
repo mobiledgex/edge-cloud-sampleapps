@@ -162,6 +162,9 @@ namespace MexPongGame
   public class MoveEvent
   {
     [DataMember]
+    public ulong sequence;
+
+    [DataMember]
     public string type = "moveEvent";
 
     [DataMember]
@@ -169,6 +172,35 @@ namespace MexPongGame
 
     [DataMember]
     public string uuid;
+
+    [DataMember]
+    public string gameId;
+
+    [DataMember]
+    public Position position;
+
+    [DataMember]
+    public Velocity velocity;
+  }
+
+  // Generic position and velocity, with uuid.
+  [DataContract]
+  public class ContactEvent
+  {
+    [DataMember]
+    public ulong sequence;
+
+    [DataMember]
+    public string type = "contactEvent";
+
+    [DataMember]
+    public string objectType;
+
+    [DataMember]
+    public string uuid;
+
+    [DataMember]
+    public string playeruuid;
 
     [DataMember]
     public string gameId;
@@ -191,7 +223,7 @@ namespace MexPongGame
     public string source;
 
     [DataMember]
-    public uint sequence;
+    public ulong sequence;
 
     [DataMember]
     public string gameId;
@@ -359,6 +391,12 @@ namespace MexPongGame
       y = p.y;
     }
 
+    public Position(Vector3 p)
+    {
+      x = p.x;
+      y = p.y;
+    }
+
     public Position(Position p)
     {
       x = p.x;
@@ -376,6 +414,12 @@ namespace MexPongGame
     public float y = 0;
 
     public Velocity(Vector2 v)
+    {
+      x = v.x;
+      y = v.y;
+    }
+
+    public Velocity(Vector3 v)
     {
       x = v.x;
       y = v.y;

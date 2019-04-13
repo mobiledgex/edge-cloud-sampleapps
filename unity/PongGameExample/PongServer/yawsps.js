@@ -463,9 +463,9 @@ function randomBall(ballId) {
   var rand = randRange(-1, 1);
   var updown = randRange(-1, 1);
   if (rand < 0) {
-    var velocity = { x: 20, y: updown * 15}
+    var velocity = { x: 3, y: updown * 2}
   } else {
-    var velocity = { x: -20, y: updown * 15}
+    var velocity = { x: -3, y: updown * 2}
   }
   var position = { x: 0, y: 0 }
   ball = {uuid: ballId, position: position, velocity: velocity}

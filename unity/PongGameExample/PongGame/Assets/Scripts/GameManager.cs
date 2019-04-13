@@ -761,7 +761,9 @@ namespace MexPongGame {
       bc.setVelocity(new Velocity(Vector2.zero));
       // Not correct. FIXME:
       Vector2 startingForce = new Vector2(nr.balls[0].velocity.x, nr.balls[0].velocity.y);
-      bc.rb2d.AddForce(startingForce);
+      // Not deterministic?
+      //bc.rb2d.AddForce(startingForce);
+      bc.setVelocity(nr.balls[0].velocity);
 
       return false;
     }
@@ -789,7 +791,11 @@ namespace MexPongGame {
       bc.setVelocity(new Velocity(Vector2.zero));
       // Not correct. FIXME:
       Vector2 startingForce = new Vector2(gr.balls[0].velocity.x, gr.balls[0].velocity.y);
-      bc.rb2d.AddForce(startingForce);
+
+      // Not deterministic?
+      //bc.rb2d.AddForce(startingForce);
+
+      bc.setVelocity(gr.balls[0].velocity);
 
       return false;
     }

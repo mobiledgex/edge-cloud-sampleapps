@@ -12,11 +12,13 @@ namespace MexPongGame
     public string uuid;
     public Rigidbody2D rb2d;
     GameObject theBall;
+    GameObject gameManager;
 
     // Start is called before the first frame update
     void Start()
     {
       theBall = GameObject.FindGameObjectWithTag("Ball");
+      gameManager = GameObject.FindGameObjectWithTag("GameManager");
       rb2d = GetComponent<Rigidbody2D>();
       //Invoke("GoBall", 2);
     }
@@ -56,6 +58,11 @@ namespace MexPongGame
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+      if (collision.collider.CompareTag("BallGhost") || collision.collider.CompareTag("Ball"))
+      {
+        return;
+      }
+
       if (collision.collider.CompareTag("Player"))
       {
         Vector2 vel;
@@ -63,6 +70,11 @@ namespace MexPongGame
         vel.x = rb2d.velocity.x;
         vel.y = (rb2d.velocity.y / 2f) + (collision.collider.attachedRigidbody.velocity.y / 2.5f);
         rb2d.velocity = vel;
+
+        var gm = gameManager.GetComponent<GameManager>();
+        PlayerControls c = collision.gameObject.GetComponent<PlayerControls>();
+
+        //gm.SendContactEvent(this, c.uuid);
       }
     }
 
