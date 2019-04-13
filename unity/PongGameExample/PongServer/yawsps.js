@@ -65,8 +65,9 @@ wsServer.on('connection', function connection(ws, request) {
         var moveEvent = gameMessage;
         updateObject(moveEvent);
         break;
-      case "collisionEvent":
-        // Like a move event, but wall collision related.
+      case "contactEvent":
+        var contactEvent = gameMessage;
+        updateContactEvent(contactEvent);
         break;
       case "gameState":
         var gameState = gameMessage;
@@ -187,6 +188,32 @@ function updateScore(uuidPlayer, scoreEvent) {
   nextRound(game);
 }
 
+function updateContactEvent(item) { //
+  var game = games[item.gameId];
+
+  // Only ball contact events:
+  if (item.objectType == "Ball") {
+    console.log("XXXX Ball collision event to update: %o", item)
+    var last = game.gameStates.length - 1;
+    var gs = game.gameStates[last];
+    gs.balls.forEach(function(ball) {
+      if (ball.uuid == item.uuid) {
+        ball.position = item.position;
+        ball.velocity = item.velocity;
+      }
+    });
+    // Pure echo, if non-matching player.
+    if (SIMULATELAGTIMEINMS > 0) {
+      // Network lag simulation:
+      setTimeout(function(){
+        updateClients(game, item);
+      }, SIMULATELAGTIMEINMS);
+    } else {
+      updateClients(game, item);
+    }
+  }
+}
+
 function updateObject(item) {
   var game = games[item.gameId];
 
@@ -197,12 +224,21 @@ function updateObject(item) {
     //console.log("XXXX Game to update: %o", game)
     var last = game.gameStates.length - 1;
     var gs = game.gameStates[last];
+    ++gs.sequence;
+
+    if (item.sequence > gs.sequence+5) {
+      // it's old.
+      //console.log("Rejecting old events: " + item.sequence)
+      //return;
+    }
+
     gs.balls.forEach(function(ball) {
       if (ball.uuid == item.uuid) {
         ball.position = item.position;
         ball.velocity = item.velocity;
       }
     });
+    item.sequence = gs.sequence;
     // Pure echo.
     if (SIMULATELAGTIMEINMS > 0) {
       // Network lag simulation:
@@ -330,7 +366,7 @@ function updateGameStates(alias, playerGameState) {
 
 }
 
-// JSON dictionary...
+// dictionary...
 function newEmptyGameState(gameId, uuidPlayer, uuidOtherPlayer) {
   var gameState = {}
   gameState.type = "gameState";
@@ -515,7 +551,7 @@ function createMatch(uuidPlayer) {
   lobby.delete(uuidOtherPlayer);
 
   if (uuidOtherPlayer !== undefined)
-  var otherConnection = getConnectionFromAlias(uuidOtherPlayer);
+    var otherConnection = getConnectionFromAlias(uuidOtherPlayer);
   if (otherConnection == undefined) {
     console.log("Other player is not connected: " + uuidOtherPlayer);
     return null;
@@ -545,7 +581,7 @@ function createMatch(uuidPlayer) {
   // push this gameState to the clients to initialize their game.
   var ballId = gameState['balls'][0].uuid;
   connection.send(JSON.stringify({type: "gameJoin", gameId: gameId, ballId: ballId, side: 0, uuidOtherPlayer: uuidOtherPlayer}));
-  otherConnection.send(JSON.stringify({type: "gameJoin", gameId: gameId, side: 1, uuidOtherPlayer: uuidPlayer}));
+  otherConnection.send(JSON.stringify({type: "gameJoin", gameId: gameId, ballId: ballId, side: 1, uuidOtherPlayer: uuidPlayer}));
 
   // Start the game. Frist game is at sequence 0.
   var sendGameState = games[gameId].gameStates[0];
@@ -591,6 +627,7 @@ function nextRound(game) {
     gameId: game.gameId,
     balls: [ball]
   }
+  gameState.sequence = 0;
 
   game.players.forEach(function(player) {
     var connection = getConnectionFromAlias(player);
@@ -616,6 +653,7 @@ function gameRestart(gameRestartRequest) {
 
   var idx = game.gameStates.length-1;
   var gameState = game.gameStates[idx];
+  gameState.sequence = 0;
   var ballId = gameState.balls[0].uuid;
 
   var ball = randomBall(ballId);
