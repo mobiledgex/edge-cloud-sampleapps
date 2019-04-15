@@ -74,7 +74,9 @@ namespace MexPongGame
         var gm = gameManager.GetComponent<GameManager>();
         PlayerControls c = collision.gameObject.GetComponent<PlayerControls>();
 
-        //gm.SendContactEvent(this, c.uuid);
+
+
+        gm.SendContactEvent(c, this, collision);
       }
     }
 

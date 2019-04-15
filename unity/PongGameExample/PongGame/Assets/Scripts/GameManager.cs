@@ -31,6 +31,7 @@ namespace MexPongGame {
 
     public int side;
     public string uuidOtherPlayer;
+    public string lastUuidPing = null;
 
     public GameState currentGs;
 
@@ -122,6 +123,10 @@ namespace MexPongGame {
     async void Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
+      if (client == null)
+      {
+        return;
+      }
       var cqueue = client.receiveQueue;
       string msg;
       while (cqueue.TryPeek(out msg))
@@ -272,6 +277,7 @@ namespace MexPongGame {
       MoveEvent moveEvent = new MoveEvent
       {
         uuid = bc.uuid,
+        playeruuid = gameSession.uuidPlayer,
         gameId = gameSession.gameId,
         objectType = "Ball",
         position = new Position(ball.position),
@@ -307,6 +313,7 @@ namespace MexPongGame {
       MoveEvent moveEvent = new MoveEvent
       {
         uuid = selected.uuid,
+        playeruuid = selected.uuid,
         gameId = gameSession.gameId,
         objectType = "Player",
         position = new Position(selected.position),
@@ -314,6 +321,22 @@ namespace MexPongGame {
       };
 
       client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+    }
+
+    public void SendContactEvent(PlayerControls c, BallControl b, Collision2D collision)
+    {
+      // If the contact is actually the other player
+      ContactEvent ce = new ContactEvent
+      {
+        sequence = gameSession.currentGs.sequence,
+        objectType = "Ball",
+        uuid = c.uuid,
+        playeruuid = gameSession.uuidPlayer, // Sender source of this event.
+        gameId = gameSession.gameId,
+        position = new Position(b.rb2d.position),
+        velocity = new Velocity(b.rb2d.velocity)
+      };
+      client.Send(Messaging<ContactEvent>.Serialize(ce));
     }
 
     void SendRestart()
@@ -393,7 +416,10 @@ namespace MexPongGame {
           GameState serverGs = Messaging<GameState>.Deserialize(message);
           //UpdateLocalGame(serverGs);
           break;
-
+        case "contactEvent":
+          ContactEvent ce = Messaging<ContactEvent>.Deserialize(message);
+          HandleContactEvent(ce);
+          break;
         case "resign":
           break;
 
@@ -427,16 +453,26 @@ namespace MexPongGame {
       //Debug.Log("moveItem: " + moveItem.uuid);
       var gs = gameSession.currentGs;
 
-      // blind update: single ball.
       if (moveItem.uuid == gs.balls[0].uuid)
       {
-        gs.balls[0].position = moveItem.position;
-        gs.balls[0].velocity = moveItem.velocity;
-        var bc = theBall.GetComponent<BallControl>();
-        //bc.setPosition(gs.balls[0].position);
-        //bc.setVelocity(gs.balls[0].velocity);
+        // If the source is the other player, and that's the last contact,
+        // update local ball.
+        if (gameSession.lastUuidPing == gameSession.uuidOtherPlayer &&
+            moveItem.playeruuid == gameSession.uuidOtherPlayer)
+        {
+          // Other player...
+          var bc = theBall.GetComponent<BallControl>();
 
-        UpdateBallGhost(moveItem);
+          gs.balls[0].position = moveItem.position;
+          gs.balls[0].velocity = moveItem.velocity;
+          bc.setPosition(gs.balls[0].position);
+          bc.setVelocity(gs.balls[0].velocity);
+
+        }
+        else // Self echo.
+        {
+          UpdateBallGhost(moveItem);
+        }
       }
 
       if (moveItem.uuid == gameSession.uuidPlayer)
@@ -500,6 +536,39 @@ namespace MexPongGame {
         }
         
       }
+      return true;
+    }
+
+    bool HandleContactEvent(ContactEvent ce)
+    {
+      // This is an event everyone should (try) to agree on, even if the simulation diverges.
+      // 1) It's the latest event.
+      // 2) The other player has already observed this on their game simulation.
+      BallControl bc = theBall.GetComponent<BallControl>();
+
+      if (bc.uuid != gameSession.currentGs.balls[0].uuid)
+      {
+        clog("Ball UUID is unknown! Contact event unknown.");
+        return false;
+      }
+
+      if (ce.playeruuid == gameSession.uuidOtherPlayer)
+      {
+        clog("Matching local ball to remote player event: " + ce.playeruuid);
+        bc.setPosition(ce.position);
+        bc.setVelocity(ce.velocity);
+        gameSession.lastUuidPing = gameSession.uuidOtherPlayer;
+      }
+      else if(ce.playeruuid == gameSession.uuidPlayer)
+      {
+        clog("Updating ghost ball (once) to server version: " + ce.velocity);
+        // Self echo, just update server ghost.
+        var gbc = ghostBall.GetComponent<BallControl>();
+        gbc.setPosition(ce.position);
+        gbc.setVelocity(ce.velocity);
+        gameSession.lastUuidPing = gameSession.uuidPlayer;
+      }
+
       return true;
     }
 

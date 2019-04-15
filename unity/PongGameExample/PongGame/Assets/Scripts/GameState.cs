@@ -174,6 +174,9 @@ namespace MexPongGame
     public string uuid;
 
     [DataMember]
+    public string playeruuid; // Source of this info.
+
+    [DataMember]
     public string gameId;
 
     [DataMember]
