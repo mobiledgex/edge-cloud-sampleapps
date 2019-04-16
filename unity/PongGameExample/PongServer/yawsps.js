@@ -7,6 +7,15 @@ var util = require('util')
 const server = http.createServer();
 const wsServer = new WebSocket.Server({ noServer: true });
 
+
+// Server instance level variables:
+const SIMULATELAGTIMEINMS = 0; // In milliseconds.
+var connectedClients = {};
+var games = {};
+var lobby = new Map(); // Mob Map.
+
+var nameMap = {};
+
 // HTTP Server ==> WebSocket upgrade handling:
 server.on('upgrade', function upgrade(request, socket, head) {
   const pathname = request.url
@@ -23,6 +32,8 @@ server.on('upgrade', function upgrade(request, socket, head) {
 
 // Websocket connection handler:
 wsServer.on('connection', function connection(ws, request) {
+
+  // Connection level variables:
   var uuidPlayer = uuidv4();
   var playerKey = "";
 
@@ -96,6 +107,9 @@ wsServer.on('connection', function connection(ws, request) {
       console.log("Players: %o", game.players);
       for (var i = 0; i < game.players.length; i++) {
         var player = game.players[i];
+        if (nameMap[player] === undefined) {
+          continue;
+        }
         if (player != uuidPlayer) {
           console.log("re-adding: " + player)
           lobby.set(player, 1); // kick back to lobby
@@ -107,16 +121,7 @@ wsServer.on('connection', function connection(ws, request) {
   });
 });
 
-
-// We'll need some way to do sessions to reconnect, and match them up with "activity"
-const SIMULATELAGTIMEINMS = 0; // In milliseconds.
-var connectedClients = {};
-var games = {};
-var lobby = new Map(); // Mob Map.
-
-var nameMap = {};
-
-// Attach broadcaster, to all clients. No broadcast by default?
+// Attach broadcaster, to all clients. No broadcast by default.
 var count = 0;
 wsServer.broadcast = function(data) {
   // This client set is retrivable by session.
@@ -168,7 +173,6 @@ function updateScore(uuidPlayer, scoreEvent) {
 
   console.log("Server sees scores {P1: %d, P2: %d}", game.playerScore1, game.playerScore2)
 
-
   // Update other player(s) of new score:
   game.players.forEach(function(player) {
     if (uuidPlayer != player) { // No need to send to the originator.
@@ -188,12 +192,12 @@ function updateScore(uuidPlayer, scoreEvent) {
   nextRound(game);
 }
 
-function updateContactEvent(item) { //
+function updateContactEvent(item) {
   var game = games[item.gameId];
 
   // Only ball contact events:
   if (item.objectType == "Ball") {
-    console.log("XXXX Ball collision event to update: %o", item)
+    console.log("Ball collision event to update: %o", item)
     var last = game.gameStates.length - 1;
     var gs = game.gameStates[last];
     gs.balls.forEach(function(ball) {
@@ -202,6 +206,9 @@ function updateContactEvent(item) { //
         ball.velocity = item.velocity;
       }
     });
+
+    item.sequence = ++gs.sequence;
+
     // Pure echo, if non-matching player.
     if (SIMULATELAGTIMEINMS > 0) {
       // Network lag simulation:
@@ -225,12 +232,6 @@ function updateObject(item) {
     var last = game.gameStates.length - 1;
     var gs = game.gameStates[last];
     ++gs.sequence;
-
-    if (item.sequence > gs.sequence+5) {
-      // it's old.
-      //console.log("Rejecting old events: " + item.sequence)
-      //return;
-    }
 
     gs.balls.forEach(function(ball) {
       if (ball.uuid == item.uuid) {

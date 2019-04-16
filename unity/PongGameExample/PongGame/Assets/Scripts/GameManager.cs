@@ -414,6 +414,7 @@ namespace MexPongGame {
           break;
         case "gameState":
           GameState serverGs = Messaging<GameState>.Deserialize(message);
+          gameSession.currentGs.sequence = serverGs.sequence;
           //UpdateLocalGame(serverGs);
           break;
         case "contactEvent":
@@ -452,6 +453,12 @@ namespace MexPongGame {
     {
       //Debug.Log("moveItem: " + moveItem.uuid);
       var gs = gameSession.currentGs;
+
+      if (moveItem.sequence < gameSession.currentGs.sequence)
+      {
+        clog("old event.");
+        return false; // Old.
+      }
 
       if (moveItem.uuid == gs.balls[0].uuid)
       {
@@ -821,6 +828,7 @@ namespace MexPongGame {
       {
         return false;
       }
+      gameSession.lastUuidPing = null;
       gameSession.status = STATUS.INGAME;
 
       // The ball position and velocity is chosen at random by server, and sent out to players.
