@@ -59,11 +59,11 @@ namespace MexPongGame {
      */
     MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
-
-    string server = "ws://localhost:3000";
-
-    Task openTask;
-    Task<string> receiveTask;
+    string host = "localhost";
+    int port = 3000;
+    string s = String.Format("At {0}, the temperature is {1}°C.",
+                         DateTime.Now, 20.4);
+    string server = "";
 
     bool isPaused = false;
 
@@ -76,10 +76,11 @@ namespace MexPongGame {
     // Use this for initialization
     async void Start()
     {
-
+      server = "ws://" + host + ":" + port;
       theBall = GameObject.FindGameObjectWithTag("Ball");
       players = GameObject.FindGameObjectsWithTag("Player");
       client = new WsClient();
+      gameSession.currentGs = new GameState();
       gameSession.status = STATUS.LOBBY;
 
       // Create a Mex Paddle (for local user) from the Prefab:
@@ -111,6 +112,7 @@ namespace MexPongGame {
       {
         await client.Connect(new Uri(server));
         clog("Connection to " + server + " status: " + client.isOpen());
+        netTest.sites.Enqueue(new NetTest.HostAndPort{host=host, port=port});
       }
       else
       {
@@ -180,6 +182,7 @@ namespace MexPongGame {
     {
       // For Demo App purposes, it's the TCP app port. Your app may point somewhere else:
       string tcpAppPort = "";
+      NetTest.HostAndPort hostAndPort = null;
 
       clog("Calling DME to register client...");
       bool registered = await integration.Register();
@@ -215,21 +218,25 @@ namespace MexPongGame {
           // AppPorts?
           Debug.Log("On ports: ");
 
-          foreach (AppPort port in reply.ports)
+          foreach (AppPort ap in reply.ports)
           {
-            Debug.Log("Port: proto: " + port.proto + ", prefix: " +
-                port.FQDN_prefix + ", public path: " + port.public_path + ", port: " +
-                port.public_port);
+            Debug.Log("Port: proto: " + ap.proto + ", prefix: " +
+                ap.FQDN_prefix + ", public path: " + ap.public_path + ", port: " +
+                ap.public_port);
 
-            // We're looking for the TCP app port:
-            if (port.proto == LProto.LProtoTCP.ToString())
+            // We're looking for one of the TCP app ports:
+            if (ap.proto == LProto.LProtoTCP.ToString())
             {
-              tcpAppPort = reply.FQDN + ":" + port.public_port;
+              tcpAppPort = reply.FQDN + ":" + ap.public_port;
               // FQDN prefix to append to base FQDN in FindCloudlet response. May be empty.
-              if (port.FQDN_prefix != "")
+              if (ap.FQDN_prefix != "")
               {
-                tcpAppPort = port.FQDN_prefix + tcpAppPort;
+                tcpAppPort = ap.FQDN_prefix + tcpAppPort;
               }
+
+              // Add to test targets.
+              hostAndPort = new NetTest.HostAndPort {  host = ap.FQDN_prefix + reply.FQDN, port = ap.public_port };
+              netTest.sites.Enqueue(hostAndPort);
             }
 
           }
@@ -239,6 +246,7 @@ namespace MexPongGame {
       }
 
       clog("FindCloudlet found: " + tcpAppPort);
+
       return tcpAppPort;
     }
 
@@ -632,7 +640,6 @@ namespace MexPongGame {
       client.Send(Messaging<MessageWrapper>.Serialize(wrapped));
 
       gameSession.currentGs = gameState;
-
 
       return;
     }

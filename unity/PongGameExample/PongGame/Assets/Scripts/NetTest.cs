@@ -63,15 +63,12 @@ public class NetTest
     NetTest nt = new NetTest();
     while (shouldPing)
     {
-      if (!sites.IsEmpty)
+      foreach (HostAndPort site in sites)
       {
-        foreach (HostAndPort site in sites)
-        {
-          UnityEngine.Debug.Log("Pinging: " + site.host + ", port: " + site.port);
-          double elapsed = nt.ConnectAndDisconnect(site.host, site.port);
-          site.lastPingMs = elapsed;
-          UnityEngine.Debug.Log("Round(-ish) trip to host: " + site.host + ", port: " + site.port + ", elapsed: " + elapsed);
-        }
+        UnityEngine.Debug.Log("Pinging: " + site.host + ", port: " + site.port);
+        double elapsed = nt.ConnectAndDisconnect(site.host, site.port);
+        site.lastPingMs = elapsed;
+        UnityEngine.Debug.Log("Round(-ish) trip to host: " + site.host + ", port: " + site.port + ", elapsed: " + elapsed);
       }
       await Task.Delay(5000);
     }
