@@ -58,7 +58,7 @@ namespace MexPongGame
       {
         pos.y = -boundY;
       }
-      rb2d.position = pos;
+      transform.position = pos;
     }
 
     public void setPosition(Position position)
@@ -66,7 +66,7 @@ namespace MexPongGame
       var pos = transform.position;
       pos.x = position.x;
       pos.y = position.y;
-      rb2d.position = pos;
+      transform.position = pos;
     }
 
     public void setVelocity(Velocity velocity)
