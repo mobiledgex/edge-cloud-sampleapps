@@ -75,6 +75,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefUseRollingAvg;
     protected boolean prefLocalProcessing = false;
     protected boolean prefRemoteProcessing = true;
+    protected int prefCameraLensFacingDirection;
     protected ImageSender.CameraMode mCameraMode;
     protected float mServerToDisplayRatioX;
     protected float mServerToDisplayRatioY;
@@ -540,7 +541,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         if (key.equals(prefKeyFrontCamera) || key.equals("ALL")) {
             if(mCamera2BasicFragment != null) {
-                mCamera2BasicFragment.setCameraLensFacingDirection(sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT));
+                prefCameraLensFacingDirection = sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);
+                mCamera2BasicFragment.setCameraLensFacingDirection(prefCameraLensFacingDirection);
             }
         }
         if (key.equals(prefKeyLatencyMethod) || key.equals("ALL")) {
@@ -675,8 +677,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT);
         mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
         mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT);
-        mImageSenderCloud.setCameraMode(mCameraMode);
-        mImageSenderEdge.setCameraMode(mCameraMode);
 
         boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
         if (faceRecognition) {
@@ -688,6 +688,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
+        mImageSenderCloud.setCameraMode(mCameraMode);
+        mImageSenderEdge.setCameraMode(mCameraMode);
 
         //One more call to get preferences for ImageSenders
         onSharedPreferenceChanged(prefs, "ALL");

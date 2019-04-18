@@ -1133,7 +1133,6 @@ public class MainActivity extends AppCompatActivity
             //will activate this "changed" call.
             sharedPreferences.edit().putString(prefKeyResetFdHosts, "XXX_garbage_value").apply();
         }
-
     }
 
     private class FaceServerConnectivityTask extends AsyncTask<String, Void, Boolean> {
