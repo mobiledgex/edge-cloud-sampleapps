@@ -90,6 +90,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         buttonLatencyTest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                latencyMessageTv.setText("");
                 cloudlet.startLatencyTest();
             }
         });

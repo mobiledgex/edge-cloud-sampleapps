@@ -91,6 +91,8 @@ public class MatchingEngineHelper {
             final Activity ctx = (Activity) mContext;
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
             boolean mexAllowed = prefs.getBoolean(mContext.getResources().getString(R.string.preference_mex_location_verification), false);
+            String carrierName = prefs.getString(mContext.getResources().getString(R.string.pref_operator_name), "TDG");
+            Log.i(TAG, "carrierName:" + carrierName);
 
             if(!mexAllowed) {
                 Snackbar snackbar = Snackbar.make(mView, "Enhanced Location not enabled", Snackbar.LENGTH_LONG);
@@ -109,8 +111,8 @@ public class MatchingEngineHelper {
             try {
                 String host = mHostname; // Override host.
                 int port = mMatchingEngine.getPort(); // Keep same port.
-                String carrierName = "TDG";
                 String devName = "MobiledgeX";
+                //Note that carrierName came from preferences above.
                 String appVersion = ""; //SDK will populate this automatically if we pass in "".
                 boolean reportCookie = false;
 

@@ -61,6 +61,7 @@ dependencies {
     implementation 'com.android.support:recyclerview-v7:28.0.0'
     implementation 'com.google.android.gms:play-services-location:16.0.0'
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
+    // For Google Location Services.
     implementation 'com.google.android.gms:play-services-maps:16.1.0'
     implementation 'com.google.maps.android:android-maps-utils:0.5+'
     implementation 'com.google.maps:google-maps-services:0.9.0'
@@ -72,7 +73,6 @@ dependencies {
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
-    // For Google Location Services.
     implementation 'fr.bmartel:jspeedtest:1.32.1'
     implementation 'com.android.volley:volley:1.1.1'
     // Required for local unit tests (JUnit 4 framework)

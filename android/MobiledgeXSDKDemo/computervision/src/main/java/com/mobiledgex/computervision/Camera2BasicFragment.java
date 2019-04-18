@@ -555,8 +555,8 @@ public class Camera2BasicFragment extends Fragment
         return mCameraLensFacingDirection;
     }
 
-    public void setCameraLensFacingDirection(int mCameraLensFacingDirection) {
-        this.mCameraLensFacingDirection = mCameraLensFacingDirection;
+    public void setCameraLensFacingDirection(int cameraLensFacingDirection) {
+        mCameraLensFacingDirection = cameraLensFacingDirection;
     }
 
     private class maxCpuLoop extends AsyncTask<String, Void, String> {
@@ -1685,8 +1685,8 @@ public class Camera2BasicFragment extends Fragment
         return mLegacyCamera;
     }
 
-    public void setLegacyCamera(boolean mLegacyCamera) {
-        this.mLegacyCamera = mLegacyCamera;
+    public void setLegacyCamera(boolean legacyCamera) {
+        mLegacyCamera = legacyCamera;
     }
 
     @Override
