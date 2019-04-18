@@ -263,12 +263,14 @@ def openpose_detect(request):
     # poses2 = np.rint(poses)
 
     # Create a JSON response to be returned in a consistent manner
-    if len(poses) == 0:
+    if isinstance(poses2, np.float32) or len(poses2) == 0:
+        num_poses = 0
         ret = {"success": "false", "server_processing_time": elapsed}
     else:
+        num_poses = len(poses2)
         ret = {"success": "true", "server_processing_time": elapsed, "poses": poses2.tolist()}
 
-    logger.info(prepend_ip("%s ms to detect %d poses: %s" %(elapsed, len(poses), ret), request))
+    logger.info(prepend_ip("%s ms to detect %d poses: %s" %(elapsed, num_poses, ret), request))
     json_ret = json.dumps(ret)
     return HttpResponse(json_ret)
 
