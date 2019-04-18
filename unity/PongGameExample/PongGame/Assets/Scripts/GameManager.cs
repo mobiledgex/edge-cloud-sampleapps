@@ -786,8 +786,8 @@ namespace MexPongGame {
 
       // Match Assignments:
       // Given a side, 0 one is player one (left). 1 other player (right)
-      PlayerControls selected = null;
-      PlayerControls other = null;
+      PlayerControls left = null;
+      PlayerControls right = null;
 
       if (players.Length != 2)
       {
@@ -796,34 +796,42 @@ namespace MexPongGame {
 
       foreach (GameObject g in players)
       {
-        if (selected == null)
+        if (left == null)
         {
-          selected = g.GetComponent<PlayerControls>();
+          left = g.GetComponent<PlayerControls>();
           continue;
         }
 
-        other = g.GetComponent<PlayerControls>();
-        if (other.rb2d.position.x < selected.rb2d.position.x)
+        right = g.GetComponent<PlayerControls>();
+        if (right.transform.position.x < left.transform.position.x)
         {
-          var tmp = selected;
-          selected = other;
-          other = tmp;
+          var tmp = left;
+          left = right;
+          right = tmp;
         }
       }
 
+      Debug.Log("Left sel: " + left.transform.position.x + "Right other: " + right.transform.position.x);
+
       if (gameSession.side == 0)
       {
-        selected.uuid = gameSession.uuidPlayer; // Player 1 assigned in match by server.
-        other.uuid = gameSession.uuidOtherPlayer;
-        gs.players[0] = Player.CopyPlayer(selected);
-        gs.players[1] = Player.CopyPlayer(other);
+        left.uuid = gameSession.uuidPlayer; // Player 1 assigned in match by server.
+        left.ownPlayer = true;
+
+        right.uuid = gameSession.uuidOtherPlayer;
+        gs.players[0] = Player.CopyPlayer(left);
+        gs.players[1] = Player.CopyPlayer(right);
       }
       else if (gameSession.side == 1)
       {
-        other.uuid = gameSession.uuidPlayer; // Player 2 assigned in match by server.
-        selected.uuid = gameSession.uuidOtherPlayer;
-        gs.players[0] = Player.CopyPlayer(other);
-        gs.players[1] = Player.CopyPlayer(selected);
+
+        right.uuid = gameSession.uuidPlayer; // Player 2 assigned in match by server.
+        right.ownPlayer = true;
+
+        left.uuid = gameSession.uuidOtherPlayer;
+
+        gs.players[0] = Player.CopyPlayer(right);
+        gs.players[1] = Player.CopyPlayer(left);
       }
 
       // Assign player state:

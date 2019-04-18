@@ -657,6 +657,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Plugins\dummy.txt" />
+    <None Include="Assets\Scripts\link.xml" />
     <None Include="Packages\com.unity.collab-proxy\Editor\Resources\Styles\CollabHistoryCommon.uss" />
     <None Include="Packages\com.unity.collab-proxy\Editor\Resources\Styles\CollabHistoryDark.uss" />
     <None Include="Packages\com.unity.collab-proxy\Editor\Resources\Styles\CollabHistoryLight.uss" />

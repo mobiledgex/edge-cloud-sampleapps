@@ -18,30 +18,30 @@ namespace MexPongGame
     [DllImport("__Internal")]
     private static extern string _getCurrentCarrierName();
 
-    // Start is called before the first frame update
-    void Start()
-    {
-      string networkOperatorName = GetCurrentCarrierName();
-      Debug.Log("networkOperatorName gotten: [" + networkOperatorName + "]");
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-#if UNITY_ANDROID
+#if UNITY_ANDROID // PC android target builds to through here as well.
   public string GetCurrentCarrierName()
   {
     string networkOperatorName = "";
+    if (Application.platform != RuntimePlatform.Android)
+    {
+      Debug.Log("Not on android device.");
+      return "";
+    }
+
     AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
     AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-    AndroidJavaObject context = activity.Call<AndroidJavaObject>("getApplicationContext");
+    if (activity == null)
+    {
+      Debug.Log("Can't find an activity!");
+      return "";
+    }
+
+      AndroidJavaObject context = activity.Call<AndroidJavaObject>("getApplicationContext");
 
     if (context == null)
     {
-      throw new Exception("Can't find an app context!");
+      Debug.Log("Can't find an app context!");
+      return "";
     }
 
     // Context.TELEPHONY_SERVICE:
@@ -51,7 +51,7 @@ namespace MexPongGame
     if (telManager == null)
     {
       Debug.Log("Can't get telephony manager!");
-      return networkOperatorName = "";
+      return "";
     }
 
     int simState = telManager.Call<int>("getSimState", new object[0]);

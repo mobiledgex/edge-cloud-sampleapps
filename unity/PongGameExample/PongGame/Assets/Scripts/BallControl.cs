@@ -67,8 +67,8 @@ namespace MexPongGame
       {
         Vector2 vel;
 
-        vel.x = rb2d.velocity.x;
-        vel.y = (rb2d.velocity.y / 2f) + (collision.collider.attachedRigidbody.velocity.y / 2.5f);
+        vel.x = rb2d.velocity.x * 1.1f;
+        vel.y = (rb2d.velocity.y / 2f) + (collision.collider.attachedRigidbody.velocity.y / 1.5f);
         rb2d.velocity = vel;
 
         var gm = gameManager.GetComponent<GameManager>();
