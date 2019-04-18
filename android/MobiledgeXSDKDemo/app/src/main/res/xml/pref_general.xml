@@ -15,4 +15,12 @@
         android:summary="@string/pref_summary_dme_hostname"
         android:title="@string/pref_title_dme_hostname" />
 
+    <EditTextPreference
+        android:defaultValue="TDG"
+        android:key="@string/pref_operator_name"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_summary_operator_name"
+        android:title="@string/pref_title_operator_name" />
+
 </PreferenceScreen>
