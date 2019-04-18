@@ -13,9 +13,8 @@ char* convertToCStr(const char* str) {
         return (char*)NULL;
     }
     
-    size_t len = strlen(str);
     char* out = (char*)malloc(strlen(str) + 1);
-    strncpy(out, len, str);
+    strcpy(out, str);
     return out;
 }
 

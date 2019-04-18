@@ -67,7 +67,7 @@ namespace MexPongGame {
 
     bool isPaused = false;
 
-    bool demoServer = true;
+    bool demoServer = false;
     NetTest netTest = new NetTest();
 
     GameObject uiG;
@@ -76,6 +76,8 @@ namespace MexPongGame {
     // Use this for initialization
     async void Start()
     {
+      integration.useDemo = true; // Demo mode DME server to run MEX APIs.
+
       server = "ws://" + host + ":" + port;
       theBall = GameObject.FindGameObjectWithTag("Ball");
       players = GameObject.FindGameObjectsWithTag("Player");
@@ -183,6 +185,10 @@ namespace MexPongGame {
       // For Demo App purposes, it's the TCP app port. Your app may point somewhere else:
       string tcpAppPort = "";
       NetTest.HostAndPort hostAndPort = null;
+
+      string aCarrierName = integration.GetCarrierName();
+      clog("aCarrierName: " + aCarrierName);
+
 
       clog("Calling DME to register client...");
       bool registered = await integration.Register();

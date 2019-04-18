@@ -31,11 +31,17 @@ public class MobiledgeXIntegration
 
   public string host { get; set; } = "mexdemo.dme.mobiledgex.net"; // Demo DME host, with some edge cloudlets.
   public uint port { get; set; } = 38001;
+  public bool useDemo { get; set; } = true;
 
   public MobiledgeXIntegration()
   {
     pIntegration = new PlatformIntegration();
     me = new MatchingEngine();
+  }
+
+  public string GetCarrierName()
+  {
+    return pIntegration.GetCurrentCarrierName();
   }
 
   public async Task<Loc> GetLocationFromDevice()
@@ -58,22 +64,30 @@ public class MobiledgeXIntegration
   // Call once, or when the carrier changes:
   public async Task<bool> Register()
   {
-    RegisterClientRequest req = me.CreateRegisterClientRequest(carrierName, devName, appName, appVers, "" /* developer specific string blob */);
-
     // If MEX is reachable on your SIM card:
     string aCarrierName = pIntegration.GetCurrentCarrierName();
-    string eHost = ""; // Ephemeral DME host (depends on the SIM).
-    if (aCarrierName == "") // There's no host (PC, UnityEditor, etc.)...
+    string eHost; // Ephemeral DME host (depends on the SIM).
+    string eCarrierName;
+    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
       eHost = host;
+      eCarrierName = carrierName;
     }
     else
     {
-      eHost = me.generateDmeBaseUri(aCarrierName);
+      eHost = me.GenerateDmeBaseUri(aCarrierName);
+      eCarrierName = aCarrierName;
     }
+    Debug.Log("DME Host Generated is: " + eHost);
+
+    RegisterClientRequest req = me.CreateRegisterClientRequest(eCarrierName, devName, appName, appVers, "" /* developer specific string blob */);
+    Debug.Log("CarrierName: " + req.CarrierName);
+    Debug.Log("DevName: " + req.DevName);
+    Debug.Log("AppName: " + req.AppName);
+    Debug.Log("AppVers: " + req.AppVers);
 
     // Calling with pre-assigned values for demo DME server, since eHost may not exist for the SIM card.
-    RegisterClientReply reply = await me.RegisterClient(host, port, req);
+    RegisterClientReply reply = await me.RegisterClient(eHost, port, req);
 
     return (reply.Status == ReplyStatus.RS_SUCCESS.ToString());
   }
@@ -87,21 +101,24 @@ public class MobiledgeXIntegration
 
     // If MEX is reachable on your SIM card:
     string aCarrierName = pIntegration.GetCurrentCarrierName();
-    string eHost = ""; // Ephemeral DME host (depends on the SIM).
-    if (aCarrierName == "") // There's no host (PC, UnityEditor, etc.)...
+    string eHost; // Ephemeral DME host (depends on the SIM).
+    string eCarrierName;
+    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
       eHost = host;
+      eCarrierName = carrierName;
     }
     else
     {
-      eHost = me.generateDmeBaseUri(aCarrierName);
+      eHost = me.GenerateDmeBaseUri(aCarrierName);
+      eCarrierName = aCarrierName;
     }
+    Debug.Log("DME Host Generated is: " + eHost);
 
-    FindCloudletRequest req = me.CreateFindCloudletRequest(carrierName, devName, appName, appVers, loc);
+    FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, devName, appName, appVers, loc);
 
     // Calling with pre-assigned values:
-    FindCloudletReply reply = await me.FindCloudlet(host, port, req);
-
+    FindCloudletReply reply = await me.FindCloudlet(eHost, port, req);
 
 
     return reply;
@@ -113,20 +130,23 @@ public class MobiledgeXIntegration
 
     // If MEX is reachable on your SIM card:
     string aCarrierName = pIntegration.GetCurrentCarrierName();
-    string eHost = ""; // Ephemeral DME host (depends on the SIM).
-    if (aCarrierName == "") // There's no host (PC, UnityEditor, etc.)...
+    string eHost; // Ephemeral DME host (depends on the SIM).
+    string eCarrierName;
+    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
       eHost = host;
+      eCarrierName = carrierName;
     }
     else
     {
-      eHost = me.generateDmeBaseUri(aCarrierName);
+      eHost = me.GenerateDmeBaseUri(aCarrierName);
+      eCarrierName = aCarrierName;
     }
 
     // Ask the demo server host (not eHost) to verify it:
-    VerifyLocationRequest req = me.CreateVerifyLocationRequest(carrierName, loc);
+    VerifyLocationRequest req = me.CreateVerifyLocationRequest(eCarrierName, loc);
 
-    VerifyLocationReply reply = await me.VerifyLocation(host, port, req);
+    VerifyLocationReply reply = await me.VerifyLocation(eHost, port, req);
 
     // The return is not binary, but one can decide the particular app's policy
     // on pass or failing the location check. Not being verified or the country
