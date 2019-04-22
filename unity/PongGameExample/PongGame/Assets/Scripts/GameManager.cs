@@ -137,7 +137,7 @@ namespace MexPongGame {
       {
         cqueue.TryDequeue(out msg);
         //Debug.Log("Dequeued this message: " + msg);
-        await HandleMessage(msg);
+        HandleMessage(msg);
       }
 
       if (gameSession.status == STATUS.JOINED)
@@ -401,7 +401,7 @@ namespace MexPongGame {
 
     // Match whatever WebSocket text is sending
     // Consistency: General rule here is that the game state if not timestamped, events may not represent the same time window.
-    async Task HandleMessage(string message)
+    void HandleMessage(string message)
     {
       var msg = MessageWrapper.UnWrapMessage(message);
       // Not quite symetric, but the server is text only.
