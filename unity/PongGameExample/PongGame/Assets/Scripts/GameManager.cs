@@ -124,7 +124,7 @@ namespace MexPongGame {
     }
 
 
-    async void Update()
+    async Task Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
       if (client == null)
@@ -137,7 +137,7 @@ namespace MexPongGame {
       {
         cqueue.TryDequeue(out msg);
         //Debug.Log("Dequeued this message: " + msg);
-        await HandleMessage(msg);
+        HandleMessage(msg);
       }
 
       if (gameSession.status == STATUS.JOINED)
@@ -401,7 +401,7 @@ namespace MexPongGame {
 
     // Match whatever WebSocket text is sending
     // Consistency: General rule here is that the game state if not timestamped, events may not represent the same time window.
-    async Task HandleMessage(string message)
+    void HandleMessage(string message)
     {
       var msg = MessageWrapper.UnWrapMessage(message);
       // Not quite symetric, but the server is text only.
@@ -549,6 +549,7 @@ namespace MexPongGame {
           moveItem.uuid == gameSession.uuidPlayer)
       {
         // Ghost is a variant of the regular player paddle.
+        // There's just one pre-assigned ghost.
         PlayerControls pc = ghostPlayer.GetComponent<PlayerControls>();
         if (pc != null)
         {
