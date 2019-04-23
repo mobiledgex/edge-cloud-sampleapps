@@ -124,7 +124,7 @@ namespace MexPongGame {
     }
 
 
-    async void Update()
+    async Task Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
       if (client == null)
@@ -549,6 +549,7 @@ namespace MexPongGame {
           moveItem.uuid == gameSession.uuidPlayer)
       {
         // Ghost is a variant of the regular player paddle.
+        // There's just one pre-assigned ghost.
         PlayerControls pc = ghostPlayer.GetComponent<PlayerControls>();
         if (pc != null)
         {
