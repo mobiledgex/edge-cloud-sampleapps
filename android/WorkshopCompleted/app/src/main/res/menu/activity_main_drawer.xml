@@ -8,6 +8,16 @@
             android:id="@+id/nav_face_detection"
             android:icon="@drawable/ic_menu_camera"
             android:title="Face Detection" />
+
+        <item
+            android:id="@+id/nav_google_signin"
+            android:icon="@drawable/googleg_color"
+            android:title="Sign in with Google" />
+        <item
+            android:id="@+id/nav_google_signout"
+            android:icon="@drawable/googleg_color"
+            android:title="Sign out" />
+
     </group>
 
 </menu>
