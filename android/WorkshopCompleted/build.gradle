@@ -14,7 +14,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:3.3.2'
         classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.6"
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -24,9 +24,6 @@ buildscript {
 
 allprojects {
     repositories {
-        google()
-        jcenter()
-        mavenLocal()
         maven {
             credentials {
                 // Create these variables in local.properties if you don't have them.
@@ -35,6 +32,9 @@ allprojects {
             }
             url "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
         }
+        mavenLocal()
+        google()
+        jcenter()
     }
 }
 
