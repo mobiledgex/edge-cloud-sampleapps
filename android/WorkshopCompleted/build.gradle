@@ -24,9 +24,6 @@ buildscript {
 
 allprojects {
     repositories {
-        google()
-        jcenter()
-        mavenLocal()
         maven {
             credentials {
                 // Create these variables in local.properties if you don't have them.
@@ -35,6 +32,9 @@ allprojects {
             }
             url "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
         }
+        mavenLocal()
+        google()
+        jcenter()
     }
 }
 

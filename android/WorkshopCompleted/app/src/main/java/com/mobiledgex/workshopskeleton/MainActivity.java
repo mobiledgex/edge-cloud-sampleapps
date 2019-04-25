@@ -2,8 +2,10 @@ package com.mobiledgex.workshopskeleton;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -11,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -26,6 +29,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -352,6 +356,61 @@ public class MainActivity extends AppCompatActivity
 
     public void showErrorMsg(String msg) {
         Snackbar.make(findViewById(android.R.id.content), msg, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i(TAG, "onActivityResult requestCode="+requestCode+" resultCode="+resultCode+" data="+data);
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            // The Task returned from this call is always completed, no need to attach a listener.
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleSignInResult(task);
+        } else if (requestCode == RC_STATS && resultCode == RESULT_OK) {
+            //Get preference
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean showDialog = prefs.getBoolean("fd_show_latency_stats_dialog", false);
+            if(!showDialog) {
+                Log.d(TAG, "Preference is to not show latency stats dialog");
+                return;
+            }
+
+            String stats = data.getExtras().getString("STATS");
+            // The TextView to show your Text
+            TextView showText = new TextView(MainActivity.this);
+            showText.setText(stats);
+            showText.setTextIsSelectable(true);
+            int horzPadding = (int) (25 * getResources().getDisplayMetrics().density);
+            showText.setPadding(horzPadding, 0,horzPadding,0);
+            new AlertDialog.Builder(MainActivity.this)
+                    .setView(showText)
+                    .setTitle("Stats")
+                    .setCancelable(true)
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
+
+    }
+
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            // Signed in successfully, show authenticated UI.
+            signInMenuItem.setVisible(false);
+            signOutMenuItem.setVisible(true);
+            Toast.makeText(MainActivity.this, "Sign in successful. Welcome, "+account.getDisplayName(), Toast.LENGTH_LONG).show();
+        } catch (ApiException e) {
+            // The ApiException status code indicates the detailed failure reason.
+            // Please refer to the GoogleSignInStatusCodes class reference for more information.
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Error")
+                    .setMessage("signInResult:failed code=" + e.getStatusCode())
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
     }
 
 }
