@@ -61,8 +61,6 @@ namespace MexPongGame {
 
     string host = "localhost";
     int port = 3000;
-    string s = String.Format("At {0}, the temperature is {1}°C.",
-                         DateTime.Now, 20.4);
     string server = "";
 
     bool isPaused = false;
