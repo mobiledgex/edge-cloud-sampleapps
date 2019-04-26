@@ -920,7 +920,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Welcome
+  m_Text: Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
 --- !u!222 &1562121425
 CanvasRenderer:
   m_ObjectHideFlags: 0
