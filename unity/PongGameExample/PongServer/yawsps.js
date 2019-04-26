@@ -34,14 +34,14 @@ server.on('upgrade', function upgrade(request, socket, head) {
 wsServer.on('connection', function connection(ws, request) {
 
   // Connection level variables:
-  var uuidPlayer = uuidv4();
-  var playerKey = "";
+  let uuidPlayer = uuidv4();
+  let playerKey = "";
 
   console.log("got a request!");
 
-  var sessionMsg = {};
+  let sessionMsg = {};
   sessionMsg.type = "register";
-  var playerkey = request.headers['sec-websocket-key'];
+  let playerkey = request.headers['sec-websocket-key'];
   sessionMsg.sessionId = playerkey;
   sessionMsg.uuidPlayer = uuidPlayer;
   //console.log("Session Message:" + JSON.stringify(sessionMsg));
@@ -55,12 +55,8 @@ wsServer.on('connection', function connection(ws, request) {
   connectedClients[playerkey] = ws;
 
   // Add to lobby.
-  lobby.set(uuidPlayer, 1);
-
-  var gameId = createMatch(uuidPlayer);
-  if (gameId == null) {
-      // No game to run yet.
-  }
+  let gameId = createMatch(uuidPlayer);
+  console.log("player: " + uuidPlayer + " has gameId: " + gameId);
 
   // Handle all messages from users here. The C# websocket embeds all text in
   ws.on('message', function(msgStr) {
@@ -69,26 +65,26 @@ wsServer.on('connection', function connection(ws, request) {
     //console.log("gameMessage: %o", gameMessage);
     switch(gameMessage.type) {
       case "scoreEvent":
-        var scoreEvent = gameMessage;
+        let scoreEvent = gameMessage;
         updateScore(uuidPlayer, scoreEvent);
         break;
       case "moveEvent":
-        var moveEvent = gameMessage;
+        let moveEvent = gameMessage;
         updateObject(moveEvent);
         break;
       case "contactEvent":
-        var contactEvent = gameMessage;
+        let contactEvent = gameMessage;
         updateContactEvent(contactEvent);
         break;
       case "gameState":
-        var gameState = gameMessage;
+        let gameState = gameMessage;
         updateGameStates(uuidPlayer, gameState);
         break;
       case "resign":
         break;
       case "gameRestart":
         console.log("gameMessage: %o", gameMessage);
-        var gameRestartRequest = gameMessage;
+        let gameRestartRequest = gameMessage;
         gameRestart(gameRestartRequest);
         break;
     }
@@ -102,17 +98,17 @@ wsServer.on('connection', function connection(ws, request) {
     lobby.delete(uuidPlayer);
 
     // Move other player back to lobby:
-    var game = games[gameId];
+    let game = games[gameId];
     if (game !== undefined) {
       console.log("Players: %o", game.players);
-      for (var i = 0; i < game.players.length; i++) {
-        var player = game.players[i];
+      for (let i = 0; i < game.players.length; i++) {
+        let player = game.players[i];
         if (nameMap[player] === undefined) {
           continue;
         }
         if (player != uuidPlayer) {
           console.log("re-adding: " + player)
-          lobby.set(player, 1); // kick back to lobby
+          lobby.set(player, uuidv4()); // kick back to lobby
         }
       }
     }
@@ -125,28 +121,28 @@ wsServer.on('connection', function connection(ws, request) {
 var count = 0;
 wsServer.broadcast = function(data) {
   // This client set is retrivable by session.
-  for(var i in connectedClients)
+  for(let i in connectedClients)
     connectedClients[i].send(data);
 };
 setInterval(function() {
-  var msg = {};
+  let msg = {};
   msg.type = "qotd";
   msg.qotd = "This is madness: " + count++;
   wsServer.broadcast(JSON.stringify(msg));
 }, 10000 );
 
 function updateScore(uuidPlayer, scoreEvent) {
-  var gameId = scoreEvent.gameId;
+  let gameId = scoreEvent.gameId;
   if (gameId == null) {
     return;
   }
 
-  var game = games[gameId];
+  let game = games[gameId];
 
   console.log("ScoreEvent: %o", scoreEvent)
 
   // Check if player matches:
-  var found = false;
+  let found = false;
   game.players.forEach(function(player) {
     if (player == uuidPlayer) {
       found = true;
@@ -176,12 +172,12 @@ function updateScore(uuidPlayer, scoreEvent) {
   // Update other player(s) of new score:
   game.players.forEach(function(player) {
     if (uuidPlayer != player) { // No need to send to the originator.
-      var playerKey = nameMap[player];
+      let playerKey = nameMap[player];
       if (playerKey !== undefined) {
         connection = connectedClients[playerKey];
         if (connection) {
           // Address to uuid of player:
-          var se = {type: "scoreEvent", uuid: player, side: scoreEvent.side, playerScore1: game.playerScore1, playerScore2: game.playerScore2};
+          let se = {type: "scoreEvent", uuid: player, side: scoreEvent.side, playerScore1: game.playerScore1, playerScore2: game.playerScore2};
           connection.send(JSON.stringify(se));
         }
       }
@@ -193,13 +189,13 @@ function updateScore(uuidPlayer, scoreEvent) {
 }
 
 function updateContactEvent(item) {
-  var game = games[item.gameId];
+  let game = games[item.gameId];
 
   // Only ball contact events:
   if (item.objectType == "Ball") {
     console.log("Ball collision event to update: %o", item)
-    var last = game.gameStates.length - 1;
-    var gs = game.gameStates[last];
+    let last = game.gameStates.length - 1;
+    let gs = game.gameStates[last];
     gs.balls.forEach(function(ball) {
       if (ball.uuid == item.uuid) {
         ball.position = item.position;
@@ -222,15 +218,15 @@ function updateContactEvent(item) {
 }
 
 function updateObject(item) {
-  var game = games[item.gameId];
+  let game = games[item.gameId];
 
   // To update an item, you need: item type, item uuid, position, velocity:
   // Echo only, even to self to allow client to check differences.
   if (item.objectType == "Ball") {
     // Keep a copy on the server to inspect...
     //console.log("XXXX Game to update: %o", game)
-    var last = game.gameStates.length - 1;
-    var gs = game.gameStates[last];
+    let last = game.gameStates.length - 1;
+    let gs = game.gameStates[last];
     ++gs.sequence;
 
     gs.balls.forEach(function(ball) {
@@ -266,7 +262,7 @@ function updateObject(item) {
 function updateClients(game, objectToUpdate) {
   game.players.forEach(function(player) {
     // Pure echo (no storage).
-    var playerKey = nameMap[player];
+    let playerKey = nameMap[player];
     if (playerKey !== undefined) {
       connection = connectedClients[playerKey];
       if (connection && connection.readyState === connection.OPEN) {
@@ -282,9 +278,9 @@ function updateClients(game, objectToUpdate) {
 function updateGameStates(alias, playerGameState) {
   console.log("updateGameStates");
 
-  var gameId = playerGameState.gameId;
+  let gameId = playerGameState.gameId;
   console.log("Looking for gameId: %s", gameId);
-  var servergame = games[gameId];
+  let servergame = games[gameId];
 
   if (servergame === undefined) {
     console.log("Game not found: " + servergame);
@@ -293,7 +289,7 @@ function updateGameStates(alias, playerGameState) {
 
   console.log("Player Alias's Game state" + JSON.stringify(playerGameState));
 
-  var currentPlayerIndex = playerIndex(alias, playerGameState);
+  let currentPlayerIndex = playerIndex(alias, playerGameState);
   if (currentPlayerIndex == -1) {
     console.log("Who are you?");
     return;
@@ -306,10 +302,10 @@ function updateGameStates(alias, playerGameState) {
 
   // First 2 are players.
   // Lookup on the server state, who the other player is:
-  var uuidOtherPlayer = ""
-  var otherPlayerIdx = -1;
-  for (var idx = 0; idx < servergame.players.length; idx++) {
-    var anAlias = servergame.players[idx];
+  let uuidOtherPlayer = ""
+  let otherPlayerIdx = -1;
+  for (let idx = 0; idx < servergame.players.length; idx++) {
+    let anAlias = servergame.players[idx];
     if (anAlias != alias) {
       uuidOtherPlayer = anAlias;
       otherPlayerIdx = idx;
@@ -317,8 +313,8 @@ function updateGameStates(alias, playerGameState) {
     }
   }
 
-  var player1Alias = alias;
-  var player2Alias = uuidOtherPlayer;
+  let player1Alias = alias;
+  let player2Alias = uuidOtherPlayer;
   console.log("Player1: " + player1Alias);
   console.log("Player2: " + player2Alias);
 
@@ -342,12 +338,12 @@ function updateGameStates(alias, playerGameState) {
   }
 
   // lookup Gameid to find the last server playerGameState.
-  var last = servergame.gameStates.length - 1;
-  var serverGameState = servergame.gameStates[last];
+  let last = servergame.gameStates.length - 1;
+  let serverGameState = servergame.gameStates[last];
   //console.log("Found Game. Size: %d Last state: %o", servergame['gameStates'].length, JSON.stringify(serverGameState));
 
   // Update Server State:
-  var newServerGameState = newGameState(gameId, serverGameState,
+  let newServerGameState = newGameState(gameId, serverGameState,
                                         alias, playerGameState,
                                         player2Alias, uuidOtherPlayer);
 
@@ -369,7 +365,7 @@ function updateGameStates(alias, playerGameState) {
 
 // dictionary...
 function newEmptyGameState(gameId, uuidPlayer, uuidOtherPlayer) {
-  var gameState = {}
+  let gameState = {}
   gameState.type = "gameState";
   gameState.source = "server";
   gameState.gameId = gameId;
@@ -389,8 +385,8 @@ function newEmptyGameState(gameId, uuidPlayer, uuidOtherPlayer) {
 }
 
 function playerServerIndex(uuidPlayer, servergame) {
-  var idx = -1;
-  for(var i = 0; i < servergame.players.length; i++) {
+  let idx = -1;
+  for(let i = 0; i < servergame.players.length; i++) {
     if (servergame.players[i].uuid == uuidPlayer) {
       idx = i;
       break;
@@ -400,8 +396,8 @@ function playerServerIndex(uuidPlayer, servergame) {
 }
 
 function playerIndex(uuidPlayer, gameState) {
-  var idx = -1;
-  for(var i = 0; i < gameState.players.length; i++) {
+  let idx = -1;
+  for(let i = 0; i < gameState.players.length; i++) {
     if (gameState.players[i].uuid == uuidPlayer) {
       idx = i;
       break;
@@ -415,9 +411,9 @@ function newGameState(gameId, serverGameState,
         uuidOtherPlayer) {
   // Update Server view of the game:
   states = serverGameState.gameStates;
-  var seq = serverGameState.sequence+1;
+  let seq = serverGameState.sequence+1;
 
-  var gameState = {};
+  let gameState = {};
   gameState.type = "gameState";
   gameState.source = "server";
   gameState.gameId = gameId;
@@ -427,20 +423,20 @@ function newGameState(gameId, serverGameState,
   gameState.players = [];
 
   // Latest data is the current player. Server uses player's data.
-  var playerIdx = playerIndex(uuidPlayer, uuidPlayerGameState);
-  var player1 = uuidPlayerGameState.players[playerIdx];
+  let playerIdx = playerIndex(uuidPlayer, uuidPlayerGameState);
+  let player1 = uuidPlayerGameState.players[playerIdx];
   console.log("Player1 (client) index: %d, value: %o", playerIdx, player1);
   if (player1.uuid !== undefined || player.uuid != ""){
-    var cp1 = newPlayer(player1);
+    let cp1 = newPlayer(player1);
     gameState.players.push(cp1);
   }
 
   // Other player is the last known server state.
-  var otherPlayerIdx = playerServerIndex(uuidOtherPlayer, serverGameState);
-  var player2 = serverGameState.players[otherPlayerIdx];
+  let otherPlayerIdx = playerServerIndex(uuidOtherPlayer, serverGameState);
+  let player2 = serverGameState.players[otherPlayerIdx];
   console.log("Player2 (server) index: %d, value: %o, for %s, in %o", otherPlayerIdx, player2, uuidOtherPlayer, serverGameState);
   if (player2.uuid !== undefined || player.uuid != ""){
-    var cp2 = newPlayer(player2);
+    let cp2 = newPlayer(player2);
     gameState.players.push(cp2);
   }
 
@@ -461,14 +457,15 @@ function randRange(min, max) {
 }
 
 function randomBall(ballId) {
-  var rand = randRange(-1, 1);
-  var updown = randRange(-1, 1);
+  let rand = randRange(-1, 1);
+  let updown = randRange(-1, 1);
+  let velocity = null;
   if (rand < 0) {
-    var velocity = { x: 3, y: updown * 2}
+    velocity = { x: 3, y: updown * 2}
   } else {
-    var velocity = { x: -3, y: updown * 2}
+    velocity = { x: -3, y: updown * 2}
   }
-  var position = { x: 0, y: 0 }
+  let position = { x: 0, y: 0 }
   ball = {uuid: ballId, position: position, velocity: velocity}
 
   return ball;
@@ -529,42 +526,61 @@ function getConnectionFromAlias(uuidPlayer) {
   console.log("looking for uuidPlayer connection: " + uuidPlayer);
   console.log("nameMap: %o", nameMap);
   console.log("connections: %o", nameMap);
-  var playerKey = nameMap[uuidPlayer];
-  var connection = connectedClients[playerKey];
+  let playerKey = nameMap[uuidPlayer];
+  let connection = connectedClients[playerKey];
 
   return connection;
 }
 
 function createMatch(uuidPlayer) {
-  if (lobby.size < 2) {
-    return null;
+  let gameId = null;
+  if (lobby.size == 0) {
+    lobby.set(uuidPlayer, uuidv4());
+    console.log("No other players. Created gameId: %s", lobby.get(uuidPlayer));
+    return lobby.get(uuidPlayer);
   }
-
-  // Check for connections to players:
-  console.log("Lobby: %o, %s", lobby, uuidPlayer)
-  var u = lobby.keys().next();
-  if (lobby[uuidPlayer]) {
-    lobby.delete(u.value); // Remove player from lobby.
-  }
+  // Join the lobby.
+  lobby.set(uuidPlayer, uuidv4());
 
   // Pick some other player in lobby:
-  var uuidOtherPlayer = lobby.keys().next().value;
-  lobby.delete(uuidOtherPlayer);
+  let uuidOtherPlayer = lobby.keys().next().value;
+  let joinGameId = null;
+  if (uuidOtherPlayer !== undefined) {
+    joinGameId = lobby.get(uuidOtherPlayer);
+    console.log("GameID of other player to join: " + joinGameId);
+    if (joinGameId === undefined) {
+      console.log("Error. Missing JoinGameID!");
+      return null;
+    }
+    lobby.delete(uuidOtherPlayer);
+  }
 
+  gameId = joinGameId;
+
+  if (gameId === undefined || gameId == null) {
+    console.log("Bad state!");
+    return;
+  }
+  // Take out of lobby for match.
+  lobby.delete(uuidPlayer);
+
+  // Check for connections to players:
+  console.log("Lobby: %o, uuidPlayer: %s, uuidOtherPlayer: %s, gameId: %d", lobby, uuidPlayer, uuidOtherPlayer, gameId)
+
+
+  let otherConnection = null;
   if (uuidOtherPlayer !== undefined)
-    var otherConnection = getConnectionFromAlias(uuidOtherPlayer);
-  if (otherConnection == undefined) {
+    otherConnection = getConnectionFromAlias(uuidOtherPlayer);
+  if (otherConnection === undefined || otherConnection == null) {
     console.log("Other player is not connected: " + uuidOtherPlayer);
     return null;
   }
-  var connection = getConnectionFromAlias(uuidPlayer);
+  let connection = getConnectionFromAlias(uuidPlayer);
 
-  // Great. Create a game with whoever is free in line:
-  var gameId = uuidv4();
   // A game is a pair of players, and a "recording" of all game states until a winner is found.
 
-  var gameState = newEmptyGameState(gameId, uuidPlayer, uuidOtherPlayer);
-  var gameStates = [];
+  let gameState = newEmptyGameState(gameId, uuidPlayer, uuidOtherPlayer);
+  let gameStates = [];
   gameStates.push(gameState);
   games[gameId] = {
     gameId: gameId,
@@ -580,12 +596,12 @@ function createMatch(uuidPlayer) {
   console.log("First GameState: %o", games[gameId].gameStates);
 
   // push this gameState to the clients to initialize their game.
-  var ballId = gameState['balls'][0].uuid;
+  let ballId = gameState['balls'][0].uuid;
   connection.send(JSON.stringify({type: "gameJoin", gameId: gameId, ballId: ballId, side: 0, uuidOtherPlayer: uuidOtherPlayer}));
   otherConnection.send(JSON.stringify({type: "gameJoin", gameId: gameId, ballId: ballId, side: 1, uuidOtherPlayer: uuidPlayer}));
 
   // Start the game. Frist game is at sequence 0.
-  var sendGameState = games[gameId].gameStates[0];
+  let sendGameState = games[gameId].gameStates[0];
 
   // Assign player side (0)
   connection.send(JSON.stringify(sendGameState));
@@ -593,8 +609,8 @@ function createMatch(uuidPlayer) {
 
   // GameState is actually ignored right now.
   // Send the ball off in a uniform location with a reset (in case there's a pre-game...)
-  var ball = randomBall(ballId);
-  var restartGame = {
+  let ball = randomBall(ballId);
+  let restartGame = {
     type: "gameRestart",
     gameId: gameId,
     balls: [ball]
@@ -608,7 +624,7 @@ function createMatch(uuidPlayer) {
 
 // For this game, the ball just starts in the middle.
 function nextRound(game) {
-  var gameId = game.gameId;
+  let gameId = game.gameId;
   if (gameId == null || gameId == undefined) {
     console.log("Unknown game!")
     return;
@@ -618,12 +634,12 @@ function nextRound(game) {
     return;
   }
 
-  var idx = game.gameStates.length-1;
-  var gameState = game.gameStates[idx];
-  var ballId = gameState.balls[0].uuid;
+  let idx = game.gameStates.length-1;
+  let gameState = game.gameStates[idx];
+  let ballId = gameState.balls[0].uuid;
 
-  var ball = randomBall(ballId);
-  var nextRound = {
+  let ball = randomBall(ballId);
+  let nextRound = {
     type: "nextRound",
     gameId: game.gameId,
     balls: [ball]
@@ -631,7 +647,7 @@ function nextRound(game) {
   gameState.sequence = 0;
 
   game.players.forEach(function(player) {
-    var connection = getConnectionFromAlias(player);
+    let connection = getConnectionFromAlias(player);
     if (connection === undefined) {
       console.log("XXXXXXXXXXXXX Bad connection!");
     } else {
@@ -641,7 +657,7 @@ function nextRound(game) {
 }
 
 function gameRestart(gameRestartRequest) {
-  var gameId = gameRestartRequest.gameId;
+  let gameId = gameRestartRequest.gameId;
   if (gameId == null || gameId == undefined) {
     console.log("Unknown game!")
     return;
@@ -652,13 +668,13 @@ function gameRestart(gameRestartRequest) {
     return;
   }
 
-  var idx = game.gameStates.length-1;
-  var gameState = game.gameStates[idx];
+  let idx = game.gameStates.length-1;
+  let gameState = game.gameStates[idx];
   gameState.sequence = 0;
-  var ballId = gameState.balls[0].uuid;
+  let ballId = gameState.balls[0].uuid;
 
-  var ball = randomBall(ballId);
-  var gameRestart = {
+  let ball = randomBall(ballId);
+  let gameRestart = {
     type: "gameRestart",
     gameId: game.gameId,
     balls: [ball]
@@ -667,7 +683,7 @@ function gameRestart(gameRestartRequest) {
   // Make sure player belongs...
 
   game.players.forEach(function(player) {
-    var connection = getConnectionFromAlias(player);
+    let connection = getConnectionFromAlias(player);
     if (connection === undefined) {
       console.log("XXXXXXXXXXXXX Bad connection!");
     } else {
