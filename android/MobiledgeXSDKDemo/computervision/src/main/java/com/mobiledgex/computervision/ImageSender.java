@@ -461,14 +461,38 @@ public class ImageSender {
         mImageServerInterface.updateNetworkStats(cloudletType, rollingAverage);
     }
 
+    /**
+     * Sets the latency test method.
+     * @param latencyTestMethod  Either ping or socket.
+     */
     public void setLatencyTestMethod(LatencyTestMethod latencyTestMethod) {
         Log.i(TAG, "latencyTestMethod="+latencyTestMethod);
         this.mLatencyTestMethod = latencyTestMethod;
     }
 
+    /**
+     * Return statistics information to be displayed in dialog after activity.
+     * @return  The statistics text.
+     */
     public String getStatsText() {
         return mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
                 mLatencyNetOnlyRollingAvg.getStatsText();
+    }
+
+    /**
+     * Returns the hostname.
+     * @return  the hostname
+     */
+    public String getHost() {
+        return mHost;
+    }
+
+    /**
+     * Set the hostname.
+     * @param host  The new hostname to use.
+     */
+    public void setHost(String host) {
+        mHost = host;
     }
 
     /**

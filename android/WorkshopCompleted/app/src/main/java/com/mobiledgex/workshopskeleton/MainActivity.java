@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
     private ProgressBar progressBar;
-    private String mClosestCloudletHostName;
+    private String mClosestCloudletHostname;
 
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
@@ -190,6 +190,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.action_reset) {
+            mClosestCloudlet = null;
+            mClosestCloudletHostname = null;
             carrierNameTv.setText("none");
             appNameTv.setText("none");
             latitudeTv.setText("none");
@@ -217,10 +219,6 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_face_detection) {
             // Handle the camera action
             Intent intent = new Intent(this, FaceProcessorActivity.class);
-
-            if(mClosestCloudlet != null) {
-                intent.putExtra("CLOSEST_CLOUDLET_HOSTNAME", mClosestCloudletHostName);
-            }
             startActivity(intent);
         } else if (id == R.id.nav_google_signin) {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -247,7 +245,7 @@ public class MainActivity extends AppCompatActivity
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
         devName = "MobiledgeX";
-        carrierName = "TDG";
+        carrierName = "TIP";
         appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
@@ -297,15 +295,14 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////
         // TODO: Change these coordinates to where you're actually located.
         // Of course a real app would use GPS to acquire the exact location.
-        location.setLatitude(52.5157236);
-        location.setLongitude(13.2975664);
+        location.setLatitude(37.3382);
+        location.setLongitude(-121.8863);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
         AppClient.FindCloudletRequest findCloudletRequest= matchingEngine.createFindCloudletRequest (ctx,
                 carrierName, location);
-        AppClient.FindCloudletReply mClosestCloudlet = matchingEngine.findCloudlet(findCloudletRequest,
-                host, port, 10000);
+        mClosestCloudlet = matchingEngine.findCloudlet(findCloudletRequest, host, port, 10000);
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         Log.i(TAG, "mClosestCloudlet="+mClosestCloudlet);
@@ -334,22 +331,29 @@ public class MainActivity extends AppCompatActivity
                 mClosestCloudlet.getCloudletLocation().getLongitude());
         double distance = SphericalUtil.computeDistanceBetween(userLatLng, cloudletLatLng)/1000;
         distanceTv.setText(String.format("%.2f", distance)+" km");
+
         //Extract cloudlet name from FQDN
         String[] parts = mClosestCloudlet.getFQDN().split("\\.");
         cloudletNameTv.setText(parts[0]);
-        List<Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
-        String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Public Path: '%s'}";
+
+        //Find FQDNPrefix from Port structure.
+        String FQDNPrefix = "";
+        List<distributed_match_engine.Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
+        String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
         for (Appcommon.AppPort aPort : ports) {
-            portNumberTv.setText(""+aPort.getPublicPort());
+            FQDNPrefix = aPort.getFQDNPrefix();
             Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                     aPort.getProto().getNumber(),
+                    aPort.getFQDNPrefix(),
                     aPort.getInternalPort(),
                     aPort.getPublicPort(),
                     aPort.getPublicPath()));
         }
+        // Build full hostname.
+        mClosestCloudletHostname = FQDNPrefix+mClosestCloudlet.getFQDN();
 
         // TODO: Copy/paste the output of this log into a terminal to test latency.
-        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudlet.getFQDN());
+        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
 
         return true;
     }

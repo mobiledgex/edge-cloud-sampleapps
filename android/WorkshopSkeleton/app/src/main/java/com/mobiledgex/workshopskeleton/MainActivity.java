@@ -178,6 +178,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.action_reset) {
+            mClosestCloudlet = null;
+            mClosestCloudletHostName = null;
             carrierNameTv.setText("none");
             appNameTv.setText("none");
             latitudeTv.setText("none");
@@ -205,10 +207,6 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_face_detection) {
             // Handle the camera action
             Intent intent = new Intent(this, FaceProcessorActivity.class);
-
-            if(mClosestCloudlet != null) {
-                intent.putExtra("CLOSEST_CLOUDLET_HOSTNAME", mClosestCloudletHostName);
-            }
             startActivity(intent);
         } else if (id == R.id.nav_google_signin) {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -235,7 +233,7 @@ public class MainActivity extends AppCompatActivity
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
         devName = "MobiledgeX";
-        carrierName = "TDG";
+        carrierName = "TIP";
 
         //NOTICE: A real app would request permission to enable this.
         MatchingEngine.setMexLocationAllowed(true);
@@ -316,6 +314,7 @@ public class MainActivity extends AppCompatActivity
                 mClosestCloudlet.getCloudletLocation().getLongitude());
         double distance = SphericalUtil.computeDistanceBetween(userLatLng, cloudletLatLng)/1000;
         distanceTv.setText(String.format("%.2f", distance)+" km");
+
         //Extract cloudlet name from FQDN
         String[] parts = mClosestCloudlet.getFQDN().split("\\.");
         cloudletNameTv.setText(parts[0]);
