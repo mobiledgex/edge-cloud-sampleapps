@@ -66,6 +66,10 @@
             android:label="@string/title_activity_pose_detection"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
+            android:name="com.mobiledgex.computervision.SettingsActivity"
+            android:label="@string/title_activity_settings" />
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name=".qoe.QoeMapActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/title_activity_qoe_map">

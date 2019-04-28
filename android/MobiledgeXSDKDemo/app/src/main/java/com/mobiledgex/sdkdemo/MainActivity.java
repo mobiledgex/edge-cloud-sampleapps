@@ -66,6 +66,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.mobiledgex.computervision.OpencvImageProcessorActivity;
+import com.mobiledgex.computervision.PoseProcessorFragment;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.computervision.ImageProcessorFragment;
@@ -365,6 +366,7 @@ public class MainActivity extends AppCompatActivity
             updateLocSimLocation(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
             locationVerified = false;
             locationVerificationAttempted = false;
+            mClosestCloudletHostname = null;
             getCloudlets();
             return true;
         }
@@ -789,6 +791,10 @@ public class MainActivity extends AppCompatActivity
                             .color(COLOR_VERIFIED));
                     //Save the hostname for use by Face Detection Activity.
                     mClosestCloudletHostname = cloudlet.getHostName();
+                    Log.i(TAG, "mClosestCloudletHostname before conversion: "+mClosestCloudletHostname);
+                    mClosestCloudletHostname = mClosestCloudletHostname.replaceAll("mobiledgexsdkdemo-tcp", "facedetectiondemo-tcp");
+                    mClosestCloudletHostname = mClosestCloudletHostname.replaceAll("mobiledgexsdkdemo10", "facedetectiondemo10");
+                    Log.i(TAG, "mClosestCloudletHostname after conversion: "+mClosestCloudletHostname);
                 }
             }
         });
@@ -1054,6 +1060,7 @@ public class MainActivity extends AppCompatActivity
         String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+        String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
         String prefKeyResetFdHosts = getResources().getString(R.string.preference_fd_reset_both_hosts);
 
         if (key.equals(prefKeyAllowMEX)) {
@@ -1127,6 +1134,7 @@ public class MainActivity extends AppCompatActivity
                 Log.i(TAG, "Resetting Face server hosts.");
                 sharedPreferences.edit().putString(prefKeyHostCloud, ImageProcessorFragment.DEF_FACE_HOST_CLOUD).apply();
                 sharedPreferences.edit().putString(prefKeyHostEdge, ImageProcessorFragment.DEF_FACE_HOST_EDGE).apply();
+                sharedPreferences.edit().putString(prefKeyOpenPoseHostEdge, PoseProcessorFragment.DEF_OPENPOSE_HOST_EDGE).apply();
                 Toast.makeText(this, "Face detection hosts reset to default.", Toast.LENGTH_SHORT).show();
             }
             //Always set the value back to something so that either clicking Yes or No in the dialog

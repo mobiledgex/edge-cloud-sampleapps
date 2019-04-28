@@ -15,6 +15,9 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Draws a set of body pose "skeleton" coordinates in multiple colors.
+ */
 public class PoseRenderer extends View {
     private static final String TAG = "PoseRenderer";
     public static final int RADIUS = 18;
@@ -125,13 +128,13 @@ public class PoseRenderer extends View {
                     Log.d(TAG, "indexStart="+indexStart+" indexEnd="+indexEnd);
 
                     JSONArray keypoint1 = pose.getJSONArray(indexStart);
-                    float x1 = (float) keypoint1.getDouble(0) * mServerToDisplayRatioX + mWidthOff;
-                    float y1 = (float) keypoint1.getDouble(1) * mServerToDisplayRatioY + mHeightOff;
+                    float x1 = (float) keypoint1.getDouble(0) * mServerToDisplayRatioX;
+                    float y1 = (float) keypoint1.getDouble(1) * mServerToDisplayRatioY;
                     float score1 = (float) keypoint1.getDouble(2);
 
                     JSONArray keypoint2 = pose.getJSONArray(indexEnd);
-                    float x2 = (float) keypoint2.getDouble(0) * mServerToDisplayRatioX + mWidthOff;
-                    float y2 = (float) keypoint2.getDouble(1) * mServerToDisplayRatioY + mHeightOff;
+                    float x2 = (float) keypoint2.getDouble(0) * mServerToDisplayRatioX;
+                    float y2 = (float) keypoint2.getDouble(1) * mServerToDisplayRatioY;
                     float score2 = (float) keypoint2.getDouble(2);
 
                     if(score1 == 0 || score2 == 0) {
@@ -143,6 +146,13 @@ public class PoseRenderer extends View {
                         x1 = mWidth - x1;
                         x2 = mWidth - x2;
                     }
+
+                    // Only add the offsets after everything else has been calculated.
+                    x1 += mWidthOff;
+                    x2 += mWidthOff;
+                    y1 += mHeightOff;
+                    y2 += mHeightOff;
+
                     canvas.drawLine(x1, y1, x2, y2, paints.get(j));
                     canvas.drawCircle(x1, y1, RADIUS, paints.get(j));
                     canvas.drawCircle(x2, y2, RADIUS, paints.get(j));

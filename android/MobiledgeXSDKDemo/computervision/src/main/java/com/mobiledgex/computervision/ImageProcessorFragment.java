@@ -95,9 +95,14 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected String mHostDetectionEdge;
     private String mHostTraining;
 
-    public static final String EXTRA_FACE_RECOGNITION = "extra_face_recognition";
-    public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "extra_edge_cloudlet_hostname";
+    public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
+    public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
 
+    /**
+     * Return statistics information to be displayed in dialog after activity -- a combination
+     * of the Cloud and Edge stats.
+     * @return  The statistics text.
+     */
     public String getStatsText() {
         return mImageSenderEdge.getStatsText() + "\n\n" +
                 mImageSenderCloud.getStatsText();
@@ -310,6 +315,13 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         });
     }
 
+    /**
+     * Called by the TrainGuestDialog whenever a guest name is entered. This starts training mode or
+     * data removal depending on which request code the dialog was using.
+     *
+     * @param guestName  The name of the guest.
+     * @param requestCode  Determines if the request is to start training, or to remove data.
+     */
     @Override
     public void onSetGuestName(String guestName, int requestCode) {
         Log.i(TAG, "onSetGuestName("+guestName+", "+requestCode+")");
@@ -667,10 +679,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         // Get preferences for everything we've instantiated so far.
         onSharedPreferenceChanged(prefs, "ALL");
 
+        // See if we have an Extra with the closest cloudlet passed in to override the preference.
         Intent intent = getActivity().getIntent();
         String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
         if(edgeCloudletHostname != null) {
-            Log.i(TAG, "Using "+edgeCloudletHostname+" for mHostDetectionEdge.");
+            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
             mHostDetectionEdge = edgeCloudletHostname;
         }
 
@@ -744,4 +757,15 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mCamera2BasicFragment = null;
     }
 
+    public ImageSender getImageSenderEdge() {
+        return mImageSenderEdge;
+    }
+
+    public ImageSender getImageSenderCloud() {
+        return mImageSenderCloud;
+    }
+
+    public ImageSender getImageSenderTraining() {
+        return mImageSenderTraining;
+    }
 }

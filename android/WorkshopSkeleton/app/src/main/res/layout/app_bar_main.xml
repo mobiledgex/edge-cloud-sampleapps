@@ -34,11 +34,22 @@
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
+        android:layout_gravity="top"
+        android:layout_marginEnd="12dp"
         android:text="Click button to register client and find cloudlet"
+        app:layout_anchor="@+id/fab"
+        app:layout_anchorGravity="top|end" />
+
+    <TextView
+        android:id="@+id/textViewCopyright"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved."
+        android:textColor="#999999"
+        android:textSize="12sp"
         app:layout_anchor="@+id/include"
-        app:layout_anchorGravity="bottom|center" />
+        app:layout_anchorGravity="bottom|left" />
 
 </android.support.design.widget.CoordinatorLayout>
