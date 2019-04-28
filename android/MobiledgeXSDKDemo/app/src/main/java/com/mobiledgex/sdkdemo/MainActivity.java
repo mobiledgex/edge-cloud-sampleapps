@@ -411,7 +411,10 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_pose_detection) {
             // Start the pose detection Activity
             Intent intent = new Intent(this, PoseProcessorActivity.class);
-            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
+            //Due to limited GPU availabilty, we don't want to override the default yet.
+            //It's still possible to override the default via preferences.
+            //TODO: Add this back when we have more cloudlets with GPU support.
+//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_qoe_map) {
