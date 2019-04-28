@@ -1,5 +1,6 @@
 package com.mobiledgex.computervision;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -31,6 +32,8 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     private TextView mLatencyNet;
     private TextView mStdFull;
     private TextView mStdNet;
+
+    public static final String DEF_OPENPOSE_HOST_EDGE = "openpose.buckhorn-mexdemo.mobiledgex.net";
 
     public static PoseProcessorFragment newInstance() {
         return new PoseProcessorFragment();
@@ -86,7 +89,9 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
                 }
 
                 boolean mirrored = mCamera2BasicFragment.getCameraLensFacingDirection() ==
-                        CameraCharacteristics.LENS_FACING_FRONT && !mCamera2BasicFragment.isLegacyCamera();
+                        CameraCharacteristics.LENS_FACING_FRONT
+                        && !mCamera2BasicFragment.isLegacyCamera()
+                        && !mCamera2BasicFragment.isVideoMode();
 
                 if(mCamera2BasicFragment.isVideoMode()) {
                     mirrored = false;
@@ -192,9 +197,20 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         prefs.registerOnSharedPreferenceChangeListener(this);
         onSharedPreferenceChanged(prefs, "ALL");
 
-        //TODO: Make this a preference when we have GPU support on multiple servers.
-        String host = "openpose.buckhorn-mexdemo.mobiledgex.net";
-        mImageSenderEdge = new ImageSender(getActivity(),this, CloudletType.EDGE, host, FACE_DETECTION_HOST_PORT);
+        String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
+        mHostDetectionEdge = prefs.getString(prefKeyOpenPoseHostEdge, DEF_OPENPOSE_HOST_EDGE);
+        Log.i(TAG, "prefKeyOpenPoseHostEdge="+prefKeyOpenPoseHostEdge+" mHostDetectionEdge="+mHostDetectionEdge);
+
+        // See if we have an Extra with the closest cloudlet passed in to override the preference.
+        Intent intent = getActivity().getIntent();
+        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
+        Log.i(TAG, "Extra "+EXTRA_EDGE_CLOUDLET_HOSTNAME+"="+edgeCloudletHostname);
+        if(edgeCloudletHostname != null) {
+            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
+            mHostDetectionEdge = edgeCloudletHostname;
+        }
+
+        mImageSenderEdge = new ImageSender(getActivity(),this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
 
         //TODO: Revisit when we have GPU support on multiple servers.
         //The only GPU-enabled server we have doesn't support ping.
@@ -220,7 +236,6 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         menu.findItem(R.id.action_benchmark_edge).setVisible(false);
         menu.findItem(R.id.action_benchmark_local).setVisible(false);
         menu.findItem(R.id.action_benchmark_submenu).setVisible(false);
-
 
     }
 

@@ -87,6 +87,10 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Provides normalized image frames (rotated and scaled) from the front or rear camera,
+ * in portrait or landscape mode. Can also provide frames from an included video file.
+ */
 public class Camera2BasicFragment extends Fragment
         implements View.OnClickListener {
 
