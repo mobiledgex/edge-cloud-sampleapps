@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity
     private String carrierName;
     private String appName;
     private String devName;
+    private String appVersion;
 
     private TextView cloudletNameTv;
     private TextView appNameTv;
@@ -234,6 +235,7 @@ public class MainActivity extends AppCompatActivity
         appName = "MobiledgeX SDK Demo";
         devName = "MobiledgeX";
         carrierName = "TIP";
+        appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
         MatchingEngine.setMexLocationAllowed(true);
