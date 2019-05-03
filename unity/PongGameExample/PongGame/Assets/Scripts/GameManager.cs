@@ -199,17 +199,22 @@ namespace MexPongGame {
 
 
         // Handle reply status:
-        if (reply.status == FindCloudletReply.FindStatus.FIND_NOTFOUND.ToString())
+        bool found = false;
+        switch (reply.status)
         {
-          Debug.Log("FindCloudlet Found no edge cloudlets in range.");
+          case FindCloudletReply.FindStatus.FIND_UNKNOWN:
+            clog("FindCloudlet status unknown. No edge cloudlets.");
+            break;
+          case FindCloudletReply.FindStatus.FIND_NOTFOUND:
+            clog("FindCloudlet Found no edge cloudlets in range.");
+            break;
+          case FindCloudletReply.FindStatus.FIND_FOUND:
+            found = true;
+            break;
 
         }
-        else if (reply.status == FindCloudletReply.FindStatus.FIND_UNKNOWN.ToString())
-        {
-          Debug.Log("FindCloudlet status unknown. No edge cloudlets.");
 
-        }
-        else if (reply.status == FindCloudletReply.FindStatus.FIND_FOUND.ToString())
+        if (found)
         {
           // Edge cloudlets found!
           Debug.Log("Edge cloudlets found!");
@@ -229,7 +234,7 @@ namespace MexPongGame {
                 ap.public_port);
 
             // We're looking for one of the TCP app ports:
-            if (ap.proto == LProto.LProtoTCP.ToString())
+            if (ap.proto == LProto.LProtoTCP)
             {
               tcpAppPort = reply.FQDN + ":" + ap.public_port;
               // FQDN prefix to append to base FQDN in FindCloudlet response. May be empty.
@@ -246,10 +251,8 @@ namespace MexPongGame {
           }
 
         }
-
+        clog("FindCloudlet found: " + tcpAppPort);
       }
-
-      clog("FindCloudlet found: " + tcpAppPort);
 
       return tcpAppPort;
     }
@@ -310,7 +313,7 @@ namespace MexPongGame {
       foreach (GameObject gpc in players)
       {
         PlayerControls pc = gpc.GetComponent<PlayerControls>();
-        if (pc.uuid == gameSession.uuidPlayer)
+        if (pc.ownPlayer)
         {
           selected = Player.CopyPlayer(pc);
           gsPlayers[idx++] = selected;
@@ -818,6 +821,7 @@ namespace MexPongGame {
         left.ownPlayer = true;
 
         right.uuid = gameSession.uuidOtherPlayer;
+        right.ownPlayer = false;
         gs.players[0] = Player.CopyPlayer(left);
         gs.players[1] = Player.CopyPlayer(right);
       }
@@ -828,6 +832,7 @@ namespace MexPongGame {
         right.ownPlayer = true;
 
         left.uuid = gameSession.uuidOtherPlayer;
+        left.ownPlayer = false;
 
         gs.players[0] = Player.CopyPlayer(right);
         gs.players[1] = Player.CopyPlayer(left);
