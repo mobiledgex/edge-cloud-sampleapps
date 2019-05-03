@@ -89,7 +89,7 @@ public class MobiledgeXIntegration
     // Calling with pre-assigned values for demo DME server, since eHost may not exist for the SIM card.
     RegisterClientReply reply = await me.RegisterClient(eHost, port, req);
 
-    return (reply.Status == ReplyStatus.RS_SUCCESS.ToString());
+    return (reply.Status == ReplyStatus.RS_SUCCESS);
   }
 
   public async Task<FindCloudletReply> FindCloudlet()
@@ -152,20 +152,19 @@ public class MobiledgeXIntegration
     // on pass or failing the location check. Not being verified or the country
     // not matching at all is on such policy decision:
 
-    // Tower Status:
-    if (reply.gps_location_status == VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MISMATCH.ToString() ||
-        reply.gps_location_status == VerifyLocationReply.GPS_Location_Status.LOC_ERROR_UNAUTHORIZED.ToString() ||
-        reply.gps_location_status == VerifyLocationReply.GPS_Location_Status.LOC_ERROR_OTHER.ToString() ||
-        reply.gps_location_status == VerifyLocationReply.GPS_Location_Status.LOC_UNKNOWN.ToString()
-      )
-    {
-      return false;
+    // GPS and Tower Status:
+    switch (reply.gps_location_status) {
+      case VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MISMATCH:
+      case VerifyLocationReply.GPS_Location_Status.LOC_ERROR_UNAUTHORIZED:
+      case VerifyLocationReply.GPS_Location_Status.LOC_ERROR_OTHER:
+      case VerifyLocationReply.GPS_Location_Status.LOC_UNKNOWN:
+        return false;
     }
 
-    // So far so good. Is the tower correct?
-    if (reply.tower_status == VerifyLocationReply.Tower_Status.NOT_CONNECTED_TO_SPECIFIED_TOWER.ToString() ||
-        reply.tower_status == VerifyLocationReply.Tower_Status.TOWER_UNKNOWN.ToString()) {
-      return false;
+    switch (reply.tower_status) {
+      case VerifyLocationReply.Tower_Status.NOT_CONNECTED_TO_SPECIFIED_TOWER:
+      case VerifyLocationReply.Tower_Status.TOWER_UNKNOWN:
+        return false;
     }
 
     // Distance? A negative value means no verification was done.
