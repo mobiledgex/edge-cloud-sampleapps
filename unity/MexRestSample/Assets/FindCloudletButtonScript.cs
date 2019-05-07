@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
@@ -100,7 +100,7 @@ public class FindCloudletButtonScript : MonoBehaviour
                     "Protocol: " + appPort.proto +
                     ", internal_port: " + appPort.internal_port +
                     ", public_port: " + appPort.public_port +
-                    ", public_path: " + appPort.public_path +
+                    ", path_prefix: " + appPort.path_prefix +
                     ", FQDN_prefix: " + appPort.FQDN_prefix
             );
           }
