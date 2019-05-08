@@ -230,7 +230,7 @@ namespace MexPongGame {
           foreach (AppPort ap in reply.ports)
           {
             Debug.Log("Port: proto: " + ap.proto + ", prefix: " +
-                ap.FQDN_prefix + ", public path: " + ap.public_path + ", port: " +
+                ap.FQDN_prefix + ", path_prefix: " + ap.path_prefix + ", port: " +
                 ap.public_port);
 
             // We're looking for one of the TCP app ports:
