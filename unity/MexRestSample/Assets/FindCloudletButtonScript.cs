@@ -69,11 +69,11 @@ public class FindCloudletButtonScript : MonoBehaviour
       reply = await dme.FindCloudlet(mexSample.host, mexSample.port, findCloudletRequest);
       statusContainer.Post("FindCloudlet Reply status: " + reply.status);
     }
-    catch (Exception e)
+    catch (System.Net.WebException we)
     {
-      Console.WriteLine(e.StackTrace);
-      statusContainer.Post("Exception: " + e.ToString());
-      statusContainer.Post(e.StackTrace);
+      Console.WriteLine(we.StackTrace);
+      statusContainer.Post(we.Source + ", WebException: " + we.Message);
+      statusContainer.Post(we.StackTrace);
     }
     finally
     {

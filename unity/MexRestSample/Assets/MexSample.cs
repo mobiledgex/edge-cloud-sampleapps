@@ -10,7 +10,7 @@ using DistributedMatchEngine;
 
 public class MexSample : MonoBehaviour
 {
-  public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
+  public string carrierName { get; set; } = "tdg"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
   public string devName { get; set; } = "MobiledgeX";
   public string appName { get; set; } = "MobiledgeX SDK Demo";
   public string appVers { get; set; } = "1.0";
@@ -136,11 +136,11 @@ public class MexSample : MonoBehaviour
       statusContainer.Post("Token Exception: " + itste.ToString());
       statusContainer.Post(itste.StackTrace);
     }
-    catch (Exception e)
+    catch (System.Net.WebException we)
     {
-      Console.WriteLine(e.StackTrace);
-      statusContainer.Post("Exception: " + e.ToString());
-      statusContainer.Post(e.StackTrace);
+      Console.WriteLine(we.StackTrace);
+      statusContainer.Post(we.Source + "WebException: " + we.Message);
+      statusContainer.Post(we.StackTrace);
     }
   }
 

@@ -62,11 +62,11 @@ public class RegisterClientButtonScript : MonoBehaviour
         ok = true;
       }
     }
-    catch (Exception e)
+    catch (System.Net.WebException we)
     {
-      Console.WriteLine(e.StackTrace);
-      statusContainer.Post("Exception: " + e.ToString());
-      statusContainer.Post(e.StackTrace);
+      Console.WriteLine(we.StackTrace);
+      statusContainer.Post(we.Source + ", WebException: " + we.Message);
+      statusContainer.Post(we.StackTrace);
     }
     finally
     {
