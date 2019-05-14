@@ -53,7 +53,7 @@ public class RegisterClientButtonScript : MonoBehaviour
 
       // the dme object stores the session tokens, so the only thing to do here is
       // inspect parts of the JSON registration status and retry:
-      if (!reply.Status.Equals(ReplyStatus.RS_SUCCESS.ToString()))
+      if (reply.Status != ReplyStatus.RS_SUCCESS)
       {
         statusContainer.Post("RegisterClient did not succeed!");
       }
@@ -62,11 +62,11 @@ public class RegisterClientButtonScript : MonoBehaviour
         ok = true;
       }
     }
-    catch (Exception e)
+    catch (System.Net.WebException we)
     {
-      Console.WriteLine(e.StackTrace);
-      statusContainer.Post("Exception: " + e.ToString());
-      statusContainer.Post(e.StackTrace);
+      Console.WriteLine(we.StackTrace);
+      statusContainer.Post(we.Source + ", WebException: " + we.Message);
+      statusContainer.Post(we.StackTrace);
     }
     finally
     {
