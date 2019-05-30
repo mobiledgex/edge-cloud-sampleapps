@@ -20,10 +20,11 @@ import java.util.List;
  */
 public class PoseRenderer extends View {
     private static final String TAG = "PoseRenderer";
-    public static final int RADIUS = 18;
-    public static final int STROKE_WIDTH = 15;
+    public static final int DEFAULT_JOINT_RADIUS = 18;
+    public static final int DEFAULT_STROKE_WIDTH = 15;
+    private int mJointRadius = DEFAULT_JOINT_RADIUS;
+    private int mStrokeWidth = DEFAULT_STROKE_WIDTH;
     private JSONArray mPoses;
-    private Paint mPaint;
     private int mWidth;
     private int mHeight;
     private int mWidthOff;
@@ -57,19 +58,20 @@ public class PoseRenderer extends View {
 
     public PoseRenderer(Context context) {
         super(context);
-        init(context);
+        init();
     }
 
     public PoseRenderer(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init();
     }
 
-    private void init(Context context) {
+    private void init() {
+        paints.clear();
         for(int i = 0; i < colors.length; i++) {
-            mPaint = new Paint();
+            Paint mPaint = new Paint();
             mPaint.setColor(Color.parseColor(colors[i]));
-            mPaint.setStrokeWidth(STROKE_WIDTH);
+            mPaint.setStrokeWidth(mStrokeWidth);
             mPaint.setStyle(Paint.Style.FILL);
             paints.add(mPaint);
         }
@@ -154,13 +156,32 @@ public class PoseRenderer extends View {
                     y2 += mHeightOff;
 
                     canvas.drawLine(x1, y1, x2, y2, paints.get(j));
-                    canvas.drawCircle(x1, y1, RADIUS, paints.get(j));
-                    canvas.drawCircle(x2, y2, RADIUS, paints.get(j));
+                    canvas.drawCircle(x1, y1, mJointRadius, paints.get(j));
+                    canvas.drawCircle(x2, y2, mJointRadius, paints.get(j));
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+    }
+
+    /**
+     * Set the joing radius used for drawing the pose skeleton.
+     *
+     * @param jointRadius
+     */
+    public void setJointRadius(int jointRadius) {
+        mJointRadius = jointRadius;
+    }
+
+    /**
+     * Set the stroke width for drawing the pose skeleton.
+     *
+     * @param strokeWidth
+     */
+    public void setStrokeWidth(int strokeWidth) {
+        mStrokeWidth = strokeWidth;
+        init();
     }
 }

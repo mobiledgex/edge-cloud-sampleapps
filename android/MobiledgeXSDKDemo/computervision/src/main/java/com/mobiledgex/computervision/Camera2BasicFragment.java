@@ -951,8 +951,10 @@ public class Camera2BasicFragment extends Fragment
                         = manager.getCameraCharacteristics(cameraId);
 
                 // Only set up the camera we have currently selected.
+                // Unless the device only has 1 camera, then select it always.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing != mCameraLensFacingDirection) {
+                if (facing != null && facing != mCameraLensFacingDirection
+                        && manager.getCameraIdList().length != 1) {
                     continue;
                 }
 

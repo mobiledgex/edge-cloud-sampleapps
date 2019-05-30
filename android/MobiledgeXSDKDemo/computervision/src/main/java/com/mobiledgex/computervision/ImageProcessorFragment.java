@@ -44,6 +44,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         TrainGuestDialog.TrainGuestDialogListener {
 
     private static final String TAG = "ImageProcessorFragment";
+    public static final String EXTRA_FACE_STROKE_WIDTH = "EXTRA_FACE_STROKE_WIDTH";
 
     protected Camera2BasicFragment mCamera2BasicFragment;
     protected Menu mOptionsMenu;
@@ -686,6 +687,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
             mHostDetectionEdge = edgeCloudletHostname;
         }
+
+        // Check for other optional parameters
+        int strokeWidth = intent.getIntExtra(EXTRA_FACE_STROKE_WIDTH, FaceBoxRenderer.DEFAULT_STROKE_WIDTH);
+        mCloudFaceBoxRenderer.setStrokeWidth(strokeWidth);
+        mEdgeFaceBoxRenderer.setStrokeWidth(strokeWidth);
+        mLocalFaceBoxRenderer.setStrokeWidth(strokeWidth);
 
         mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT);
         mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
