@@ -20,7 +20,8 @@ import org.json.JSONException;
  */
 public class FaceBoxRenderer extends View {
     private static final String TAG = "FaceBoxRender";
-    private static final int STROKE_WIDTH = 10;
+    public static final int DEFAULT_STROKE_WIDTH = 10;
+    private int mStrokeWidth = DEFAULT_STROKE_WIDTH;
     private boolean mMirrored;
     private boolean mMultiFace;
     private int mWidth;
@@ -57,7 +58,7 @@ public class FaceBoxRenderer extends View {
     private void init(Context context) {
         mPaint = new Paint();
         mPaint.setColor(Color.BLUE);
-        mPaint.setStrokeWidth(STROKE_WIDTH);
+        mPaint.setStrokeWidth(mStrokeWidth);
         mPaint.setStyle(Paint.Style.STROKE);
         mTextPaint = new Paint();
         mTextPaint.setTextSize(mTextSize);
@@ -221,5 +222,14 @@ public class FaceBoxRenderer extends View {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Set the stroke width for drawing the pose skeleton.
+     *
+     * @param strokeWidth
+     */
+    public void setStrokeWidth(int strokeWidth) {
+        mStrokeWidth = strokeWidth;
     }
 }

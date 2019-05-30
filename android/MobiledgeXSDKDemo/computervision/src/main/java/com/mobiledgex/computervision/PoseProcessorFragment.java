@@ -26,6 +26,8 @@ import java.text.DecimalFormat;
 public class PoseProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
     private static final String TAG = "PoseProcessorFragment";
+    public static final String EXTRA_POSE_STROKE_WIDTH = "EXTRA_POSE_STROKE_WIDTH";
+    public static final String EXTRA_POSE_JOINT_RADIUS = "EXTRA_POSE_JOINT_RADIUS";
     private PoseRenderer mPoseRenderer;
 
     private TextView mLatencyFull;
@@ -33,7 +35,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     private TextView mStdFull;
     private TextView mStdNet;
 
-    public static final String DEF_OPENPOSE_HOST_EDGE = "openpose.buckhorn-mexdemo.mobiledgex.net";
+    public static final String DEF_OPENPOSE_HOST_EDGE = "openpose.chicago-packet.mobiledgex.net";
 
     public static PoseProcessorFragment newInstance() {
         return new PoseProcessorFragment();
@@ -209,6 +211,12 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
             Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
             mHostDetectionEdge = edgeCloudletHostname;
         }
+        
+        // Check for other optional parameters
+        int strokeWidth = intent.getIntExtra(EXTRA_POSE_STROKE_WIDTH, PoseRenderer.DEFAULT_STROKE_WIDTH);
+        int jointRadius = intent.getIntExtra(EXTRA_POSE_JOINT_RADIUS, PoseRenderer.DEFAULT_JOINT_RADIUS);
+        mPoseRenderer.setStrokeWidth(strokeWidth);
+        mPoseRenderer.setJointRadius(jointRadius);
 
         mImageSenderEdge = new ImageSender(getActivity(),this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
 
