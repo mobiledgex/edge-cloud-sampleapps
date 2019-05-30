@@ -88,8 +88,8 @@ import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_C
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
-import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MATCH;
-import static distributed_match_engine.AppClient.VerifyLocationReply.GPS_Location_Status.LOC_VERIFIED;
+import static distributed_match_engine.AppClient.VerifyLocationReply.GPSLocationStatus.LOC_ROAMING_COUNTRY_MATCH;
+import static distributed_match_engine.AppClient.VerifyLocationReply.GPSLocationStatus.LOC_VERIFIED;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -683,7 +683,7 @@ public class MainActivity extends AppCompatActivity
      * @param status  GPS_Location_Status to determine success, fail, or caution
      * @param gpsLocationAccuracyKM  location accuracy, the location is verified to
      */
-    public void onVerifyLocation(final AppClient.VerifyLocationReply.GPS_Location_Status status,
+    public void onVerifyLocation(final AppClient.VerifyLocationReply.GPSLocationStatus status,
                                  final double gpsLocationAccuracyKM) {
         locationVerificationAttempted = true;
         mGpsLocationAccuracyKM = gpsLocationAccuracyKM;
@@ -840,21 +840,21 @@ public class MainActivity extends AppCompatActivity
                     //TODO: What if there is more than 1 appInstance in the list?
                     //There shouldn't be since we use all of appName, appVer, and devName in the
                     //request. There should only be a single match.
-                    String uri = appInstances.get(0).getFQDN();
+                    String uri = appInstances.get(0).getFqdn();
                     String appName = appInstances.get(0).getAppName();
                     String FQDNPrefix = "";
                     int publicPort = 7777;
                     List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
-                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
+                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
                     for (Appcommon.AppPort aPort : ports) {
-                        FQDNPrefix = aPort.getFQDNPrefix();
+                        FQDNPrefix = aPort.getFqdnPrefix();
                         publicPort = aPort.getPublicPort();
                         Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                                     aPort.getProto().getNumber(),
-                                    aPort.getFQDNPrefix(),
+                                    aPort.getFqdnPrefix(),
                                     aPort.getInternalPort(),
                                     aPort.getPublicPort(),
-                                    aPort.getPublicPath()));
+                                    aPort.getPathPrefix()));
                     }
                     double distance = cloudletLocation.getDistance();
                     LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());

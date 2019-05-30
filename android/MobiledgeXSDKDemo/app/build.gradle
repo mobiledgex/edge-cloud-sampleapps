@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 
-def grpcVersion = '1.13.1'
+def grpcVersion = '1.20.0'
 
 android {
     archivesBaseName = "MobiledgeXSDKDemo"

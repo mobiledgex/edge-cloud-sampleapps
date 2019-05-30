@@ -200,7 +200,7 @@ public class MatchingEngineHelper {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     host, port, 10000);
             Log.i(TAG, "cloudletList.getStatus()="+cloudletList.getStatus());
-            if (cloudletList.getStatus() != AppClient.AppInstListReply.AI_Status.AI_SUCCESS) {
+            if (cloudletList.getStatus() != AppClient.AppInstListReply.AIStatus.AI_SUCCESS) {
                 someText = "Cannot create AppInstListRequest object. Status="+cloudletList.getStatus()+"\n";
                 Log.e(TAG, someText);
                 Snackbar.make(mView, someText, Snackbar.LENGTH_LONG).show();
@@ -232,7 +232,7 @@ public class MatchingEngineHelper {
                 Snackbar.make(mView, someText, Snackbar.LENGTH_LONG).show();
                 return false;
             }
-            Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFQDN());
+            Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFqdn());
             if (mMatchingEngineResultsInterface != null) {
                 mMatchingEngineResultsInterface.onFindCloudlet(mClosestCloudlet);
             }
@@ -254,11 +254,11 @@ public class MatchingEngineHelper {
                     mMatchingEngine.verifyLocation(verifyRequest, host, port, 10000);
             someText = "[Location Verified: Tower: " + verifiedLocation.getTowerStatus() +
                     ", GPS LocationStatus: " + verifiedLocation.getGpsLocationStatus() +
-                    ", Location Accuracy: " + verifiedLocation.getGPSLocationAccuracyKM() + " ]\n";
+                    ", Location Accuracy: " + verifiedLocation.getGpsLocationAccuracyKm() + " ]\n";
 
             if (mMatchingEngineResultsInterface != null) {
                 mMatchingEngineResultsInterface.onVerifyLocation(verifiedLocation.getGpsLocationStatus(),
-                        verifiedLocation.getGPSLocationAccuracyKM());
+                        verifiedLocation.getGpsLocationAccuracyKm());
             }
         } else {
             someText = "Cannot create VerifyLocationRequest object.\n";
