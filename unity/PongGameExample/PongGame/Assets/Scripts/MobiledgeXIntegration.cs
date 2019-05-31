@@ -81,15 +81,15 @@ public class MobiledgeXIntegration
     Debug.Log("DME Host Generated is: " + eHost);
 
     RegisterClientRequest req = me.CreateRegisterClientRequest(eCarrierName, devName, appName, appVers, "" /* developer specific string blob */);
-    Debug.Log("CarrierName: " + req.CarrierName);
-    Debug.Log("DevName: " + req.DevName);
-    Debug.Log("AppName: " + req.AppName);
-    Debug.Log("AppVers: " + req.AppVers);
+    Debug.Log("CarrierName: " + req.carrier_name);
+    Debug.Log("DevName: " + req.dev_name);
+    Debug.Log("AppName: " + req.app_name);
+    Debug.Log("AppVers: " + req.app_vers);
 
     // Calling with pre-assigned values for demo DME server, since eHost may not exist for the SIM card.
     RegisterClientReply reply = await me.RegisterClient(eHost, port, req);
 
-    return (reply.Status == ReplyStatus.RS_SUCCESS);
+    return (reply.status == ReplyStatus.RS_SUCCESS);
   }
 
   public async Task<FindCloudletReply> FindCloudlet()
@@ -154,27 +154,27 @@ public class MobiledgeXIntegration
 
     // GPS and Tower Status:
     switch (reply.gps_location_status) {
-      case VerifyLocationReply.GPS_Location_Status.LOC_ROAMING_COUNTRY_MISMATCH:
-      case VerifyLocationReply.GPS_Location_Status.LOC_ERROR_UNAUTHORIZED:
-      case VerifyLocationReply.GPS_Location_Status.LOC_ERROR_OTHER:
-      case VerifyLocationReply.GPS_Location_Status.LOC_UNKNOWN:
+      case VerifyLocationReply.GPSLocationStatus.LOC_ROAMING_COUNTRY_MISMATCH:
+      case VerifyLocationReply.GPSLocationStatus.LOC_ERROR_UNAUTHORIZED:
+      case VerifyLocationReply.GPSLocationStatus.LOC_ERROR_OTHER:
+      case VerifyLocationReply.GPSLocationStatus.LOC_UNKNOWN:
         return false;
     }
 
     switch (reply.tower_status) {
-      case VerifyLocationReply.Tower_Status.NOT_CONNECTED_TO_SPECIFIED_TOWER:
-      case VerifyLocationReply.Tower_Status.TOWER_UNKNOWN:
+      case VerifyLocationReply.TowerStatus.NOT_CONNECTED_TO_SPECIFIED_TOWER:
+      case VerifyLocationReply.TowerStatus.TOWER_UNKNOWN:
         return false;
     }
 
     // Distance? A negative value means no verification was done.
-    if (reply.GPS_Location_Accuracy_KM < 0f)
+    if (reply.gps_location_accuracy_km < 0f)
     {
       return false;
     }
 
     // A per app policy decision might be 0.5 km, or 25km, or 100km:
-    if (reply.GPS_Location_Accuracy_KM < 100f)
+    if (reply.gps_location_accuracy_km < 100f)
     {
       return true;
     }

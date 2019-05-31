@@ -53,7 +53,7 @@ public class RegisterClientButtonScript : MonoBehaviour
 
       // the dme object stores the session tokens, so the only thing to do here is
       // inspect parts of the JSON registration status and retry:
-      if (reply.Status != ReplyStatus.RS_SUCCESS)
+      if (reply.status != ReplyStatus.RS_SUCCESS)
       {
         statusContainer.Post("RegisterClient did not succeed!");
       }
@@ -73,9 +73,9 @@ public class RegisterClientButtonScript : MonoBehaviour
       if (reply != null) {
         statusContainer.Post(
             "RegisterClient Button results:" +
-            " Status: " + reply.Status +
-            " SessionCookie: " + reply.SessionCookie +
-            " TokenServerURI: " + reply.TokenServerURI
+            " Status: " + reply.status +
+            " SessionCookie: " + reply.session_cookie +
+            " TokenServerURI: " + reply.token_server_uri
             );
       }
     }

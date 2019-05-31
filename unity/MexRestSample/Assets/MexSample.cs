@@ -84,7 +84,7 @@ public class MexSample : MonoBehaviour
       {
         statusContainer.Post("Weird, RegisterClient create is null");
       }
-      statusContainer.Post("RegisterClient: AppName" + registerClientRequest.AppName);
+      statusContainer.Post("RegisterClient: app_name" + registerClientRequest.app_name);
 
       serializer.WriteObject(ms, registerClientRequest);
 
@@ -95,9 +95,9 @@ public class MexSample : MonoBehaviour
       statusContainer.Post(" RegisterClient to host: " + host + ", port: " + port);
 
       var registerClientReply = await dme.RegisterClient(host, port, registerClientRequest);
-      Console.WriteLine("Reply: Session Cookie: " + registerClientReply.SessionCookie);
+      Console.WriteLine("Reply: Session Cookie: " + registerClientReply.session_cookie);
 
-      statusContainer.Post("RegisterClient TokenServerURI: " + registerClientReply.TokenServerURI);
+      statusContainer.Post("RegisterClient token_server_uri: " + registerClientReply.token_server_uri);
 
       // Do Verify and FindCloudlet in parallel tasks:
 
@@ -126,7 +126,7 @@ public class MexSample : MonoBehaviour
       //statusContainer.Post("VerifyLocation Status: " + verifyLocationReply.gps_location_status);
 
       var getLocationReply = await getLocationTask;
-      var carrierLocation = getLocationReply.NetworkLocation;
+      var carrierLocation = getLocationReply.network_location;
       Console.WriteLine("GetLocationReply: longitude: " + carrierLocation.longitude + ", latitude: " + carrierLocation.latitude);
       statusContainer.Post("GetLocationReply: longitude: " + carrierLocation.longitude + ", latitude: " + carrierLocation.latitude);
     }
