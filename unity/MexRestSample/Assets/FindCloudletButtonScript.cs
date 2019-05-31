@@ -84,7 +84,7 @@ public class FindCloudletButtonScript : MonoBehaviour
         serializer.WriteObject(ms, reply);
         string jsonStr = Util.StreamToString(ms);
 
-        statusContainer.Post("GPS Cloudlet location: " + jsonStr + ", FQDN: " + reply.FQDN);
+        statusContainer.Post("GPS Cloudlet location: " + jsonStr + ", fqdn: " + reply.fqdn);
 
         // The list of registered edge cloudlets that the app can use:
         if (reply.ports.Length == 0)
@@ -101,7 +101,7 @@ public class FindCloudletButtonScript : MonoBehaviour
                     ", internal_port: " + appPort.internal_port +
                     ", public_port: " + appPort.public_port +
                     ", path_prefix: " + appPort.path_prefix +
-                    ", FQDN_prefix: " + appPort.FQDN_prefix
+                    ", fqdn_prefix: " + appPort.fqdn_prefix
             );
           }
         }
