@@ -12,42 +12,27 @@ import imghdr
 import struct
 import logging
 
-# Depending on whether this file is loaded directly, or imported from another
-# file, the following import is handled differently
-try:
-    from .facedetector import FaceDetector
-except:
-    from facedetector import FaceDetector
-
-try:
-    from .faceRecognizer import FaceRecognizer
-except:
-    from faceRecognizer import FaceRecognizer
+opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'ping_rtt'}
 
 logger = logging.getLogger(__name__)
-
-myFaceDetector = FaceDetector()
-
-myFaceRecognizer = FaceRecognizer()
-logger.info("Created myFaceRecognizer")
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         logger.info("handle() for %s" %threading.current_thread())
         while True:
-            logger.info("while True for %s" %threading.current_thread())
+            logger.debug("while True for %s" %threading.current_thread())
             opcode, data = self.recv_one_message(self.request)
             if opcode == None:
-                logger.info("Connection closed for %s" %threading.current_thread())
+                logger.info("Opcode=None. Connection closed for %s" %threading.current_thread())
                 break;
 
-            if opcode == 'ping_rtt':
-                logger.info("Opcode: %s" %opcode)
+            logger.info("Opcode: %s len(data)=%d %s" %(opcode, len(data), threading.current_thread()))
+
+            if opcode == 4: #'ping_rtt':
                 ret = {"success": "pong"}
-            elif opcode == 'face_det':
-                logger.info("Opcode: %s" %opcode)
-                logger.info("len(data)=%d %s" %(len(data), threading.current_thread()))
+
+            elif opcode == 1: #'face_det':
                 now = time.time()
                 image = imread(io.BytesIO(data))
                 rects = myFaceDetector.detect_faces(image)
@@ -56,8 +41,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     ret = {"success": "false", "server_processing_time": elapsed}
                 else:
                     ret = {"success": "true", "server_processing_time": elapsed, "rects": rects.tolist()}
-            elif opcode == 'face_rec':
-                logger.info("Opcode: %s" %opcode)
+
+            elif opcode == 2: #'face_rec':
                 now = time.time()
                 image = imread(io.BytesIO(data))
                 predicted_img, subject, confidence, rect = myFaceRecognizer.predict(image)
@@ -72,34 +57,65 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     if confidence >= 105:
                         subject = "Unknown"
                     ret = {"success": "true", "subject": subject, "confidence":"%.3f" %confidence, "server_processing_time": elapsed, "rect": rect2}
-                logger.info("Returning: %s" %(ret))
 
-            elif opcode == 'pose_det':
-                logger.info("Opcode: %s" %opcode)
+            elif opcode == 3: #'pose_det':
+                if myOpenPose == None:
+                    error = "OpenPose not supported"
+                    logger.error(error)
+                    ret = {"success": "false", "error": error, "server_processing_time": 0}
+                else:
+                    now = time.time()
+                    image = imread(io.BytesIO(data))
+                    logger.debug("Performing pose detection process")
+                    start = time.time()
+                    datum = myOpenPose.Datum()
+                    datum.cvInputData = image
+                    myOpWrapper.emplaceAndPop([datum])
+                    poses = datum.poseKeypoints
+                    # Return the human pose poses, i.e., a [#people x #poses x 3]-dimensional numpy object with the poses of all the people on that image
+                    elapsed = "%.3f" %((time.time() - start)*1000)
+                    poses2 = np.around(poses, decimals=6)
+                    # poses2 = np.rint(poses)
+
+                    # Create a JSON response to be returned in a consistent manner
+                    if isinstance(poses2, np.float32) or len(poses2) == 0:
+                        num_poses = 0
+                        ret = {"success": "false", "server_processing_time": elapsed}
+                    else:
+                        num_poses = len(poses2)
+                        ret = {"success": "true", "server_processing_time": elapsed, "poses": poses2.tolist()}
+
             else:
-                logger.info("Unsupported opcode: %s" %opcode)
-                continue
+                error = "Unsupported opcode: %s" %opcode
+                logger.error(error)
+                ret = {"success": "false", "error": error, "server_processing_time": 0}
 
             response = bytes(json.dumps(ret), "utf-8")
-            logger.info("%s wrote: %s" %(self.client_address[0], response))
+            length = len(response)
+            self.request.sendall(struct.pack('!I', length))
             self.request.sendall(response)
+            # self.request.flush()
+            logger.info("Wrote %d bytes to %s: %s" %(length, self.client_address[0], response))
 
     def recv_one_message(self, sock):
-        opcodebuf = self.recvall(sock, 8)
-        logger.info("recv_one_message opcodebuf=%s" %opcodebuf)
+        """
+        Decode the byte stream:
+        4 bytes (integer) - opcode
+        4 bytes (integer) - length (x) of image data
+        x bytes - image data
+        """
+        opcodebuf = self.recvall(sock, 4)
+        logger.debug("recv_one_message opcodebuf=%s" %opcodebuf)
         if opcodebuf == None:
             return None, None
-        opcode, = struct.unpack('!8s', opcodebuf)
-        opcode = str(opcode, "utf-8")
-        logger.info("recv_one_message opcode=%s" %opcode)
-        if opcode == 'ping_rtt':
-            return opcode, None
+        opcode, = struct.unpack('!I', opcodebuf)
+        logger.debug("recv_one_message opcode=%s" %opcode)
         lengthbuf = self.recvall(sock, 4)
-        logger.info("recv_one_message lengthbuf=%s" %lengthbuf)
+        logger.debug("recv_one_message lengthbuf=%s" %lengthbuf)
         if lengthbuf == None:
             return None, None
         length, = struct.unpack('!I', lengthbuf)
-        logger.info("recv_one_message length=%d" %length)
+        logger.debug("recv_one_message length=%d" %length)
         return opcode, self.recvall(sock, length)
 
     def recvall(self, sock, count):
@@ -113,6 +129,18 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
+
+    def setFaceDetector(self, faceDetector):
+        global myFaceDetector
+        myFaceDetector = faceDetector
+    def setFaceRecognizer(self, faceRecognizer):
+        global myFaceRecognizer
+        myFaceRecognizer = faceRecognizer
+    def setOpenPose(self, openPose, opWrapper):
+        global myOpenPose
+        myOpenPose = openPose
+        global myOpWrapper
+        myOpWrapper = opWrapper
 
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 8011
