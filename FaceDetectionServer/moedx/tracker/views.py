@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from facial_detection.facedetector import FaceDetector
 from facial_detection.faceRecognizer import FaceRecognizer
-from tracker.apps import myFaceRecognizer, myOpenPose, opWrapper
+from tracker.apps import myFaceRecognizer, myOpenPose, myOpWrapper
 from tracker.models import CentralizedTraining
 from django.http import HttpResponse, HttpResponseBadRequest
 
@@ -251,11 +251,11 @@ def openpose_detect(request):
 
     image = imread(io.BytesIO(image))
 
-    logger.debug(prepend_ip("Performing detection process", request))
+    logger.debug(prepend_ip("Performing pose detection process", request))
     start = time.time()
     datum = myOpenPose.Datum()
     datum.cvInputData = image
-    opWrapper.emplaceAndPop([datum])
+    myOpWrapper.emplaceAndPop([datum])
     poses = datum.poseKeypoints
     # Return the human pose poses, i.e., a [#people x #poses x 3]-dimensional numpy object with the poses of all the people on that image
     elapsed = "%.3f" %((time.time() - start)*1000)
