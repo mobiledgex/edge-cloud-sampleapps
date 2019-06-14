@@ -16,6 +16,16 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.xuhao.didi.core.iocore.interfaces.IPulseSendable;
+import com.xuhao.didi.core.iocore.interfaces.ISendable;
+import com.xuhao.didi.core.pojo.OriginalData;
+import com.xuhao.didi.socket.client.impl.client.action.ActionDispatcher;
+import com.xuhao.didi.socket.client.sdk.OkSocket;
+import com.xuhao.didi.socket.client.sdk.client.ConnectionInfo;
+import com.xuhao.didi.socket.client.sdk.client.OkSocketOptions;
+import com.xuhao.didi.socket.client.sdk.client.action.SocketActionAdapter;
+import com.xuhao.didi.socket.client.sdk.client.connection.IConnectionManager;
+import com.xuhao.didi.socket.client.sdk.client.connection.NoneReconnect;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +38,7 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -42,6 +53,7 @@ public class ImageSender {
 
     private String mHost;
     private int mPort;
+    private int mPersistentTcpPort;
     private RollingAverage mLatencyFullProcessRollingAvg;
     private RollingAverage mLatencyNetOnlyRollingAvg;
     private int mTrainingCount;
@@ -50,7 +62,7 @@ public class ImageSender {
     private boolean mDoNetLatency = true;
     private final int mRollingAvgSize = 100;
     private CameraMode mCameraMode;
-    private String djangoUrl = "/detector/detect/";
+    private String mDjangoUrl = "/detector/detect/";
     private ImageServerInterface.CloudletType mCloudLetType;
     private Handler mHandler;
 
@@ -60,6 +72,19 @@ public class ImageSender {
 
     private GoogleSignInAccount mAccount;
     private String mGuestName = "";
+
+    private static ConnectionMode connectionMode = ConnectionMode.REST;
+    private IConnectionManager mManager;
+    private OkSocketOptions mOkOptions;
+    private ConnectionInfo mInfo;
+    private long mStartTime;
+    private int mOpcode;
+
+    public enum ConnectionMode {
+        REST,
+        PERSISTENT_TCP,
+        QUIC
+    }
 
     public enum LatencyTestMethod {
         ping,
@@ -75,10 +100,13 @@ public class ImageSender {
         POSE_DETECTION
     }
 
-    public ImageSender(Activity activity, ImageServerInterface imageServerInterface, ImageServerInterface.CloudletType cloudLetType, String host, int port) {
+    public ImageSender(final Activity activity, ImageServerInterface imageServerInterface,
+                       ImageServerInterface.CloudletType cloudLetType, String host, int port,
+                       int persistentTcpPort) {
         mCloudLetType = cloudLetType;
         mHost = host;
         mPort = port;
+        mPersistentTcpPort = persistentTcpPort;
 
         mImageServerInterface = imageServerInterface;
 
@@ -95,8 +123,19 @@ public class ImageSender {
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
 
+        HandlerThread handlerThreadPersistentTcp = new HandlerThread("PersistentTcp"+cloudLetType);
+        handlerThreadPersistentTcp.start();
+
         // Instantiate the RequestQueue.
         mRequestQueue = Volley.newRequestQueue(activity);
+
+        Log.i(TAG, "connectionMode="+ connectionMode);
+
+        if(connectionMode == ConnectionMode.PERSISTENT_TCP
+                && mCloudLetType != ImageServerInterface.CloudletType.PUBLIC) {
+            initManager();
+            mManager.connect();
+        }
     }
 
     public void setGuestName(String guestName) {
@@ -107,20 +146,25 @@ public class ImageSender {
     public void setCameraMode(CameraMode mode) {
         mCameraMode = mode;
         if(mode == CameraMode.FACE_DETECTION) {
-            djangoUrl = "/detector/detect/";
+            mOpcode = 1;
+            mDjangoUrl = "/detector/detect/";
         } else if (mode == CameraMode.FACE_RECOGNITION){
-            djangoUrl = "/recognizer/predict/";
+            mOpcode = 2;
+            mDjangoUrl = "/recognizer/predict/";
         } else if (mode == CameraMode.FACE_TRAINING) {
-            djangoUrl = "/trainer/add/";
+            mOpcode = 0;
+            mDjangoUrl = "/trainer/add/";
             mTrainingCount = 0;
         } else if (mode == CameraMode.FACE_UPDATING_SERVER) {
-            djangoUrl = "/trainer/predict/";
+            mOpcode = 0;
+            mDjangoUrl = "/trainer/predict/";
         } else if (mode == CameraMode.POSE_DETECTION){
-            djangoUrl = "/openpose/detect/";
+            mOpcode = 3;
+            mDjangoUrl = "/openpose/detect/";
         } else {
             Log.e(TAG, "Invalid CameraMode: "+mode);
         }
-        Log.i(TAG, "setCameraMode("+mCameraMode+") djangoUrl="+djangoUrl+" "+mCloudLetType+" host="+mHost);
+        Log.i(TAG, "setCameraMode("+mCameraMode+") mOpcode="+mOpcode+" mDjangoUrl="+ mDjangoUrl +" "+mCloudLetType+" host="+mHost);
     }
 
     public void setDoNetLatency(boolean doNetLatency) {
@@ -165,6 +209,7 @@ public class ImageSender {
         if(mBusy) {
             return;
         }
+
         // Get a lock for the busy
         mBusy = true;
         if(mDoNetLatency) {
@@ -180,77 +225,90 @@ public class ImageSender {
         bitmap.compress(Bitmap.CompressFormat.JPEG, 67, byteStream);
         //TODO: Add preferences for quality and to allow lossless Bitmap.CompressFormat.PNG
 
-        byte[] bytes = byteStream.toByteArray();
-        String encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
+        final byte[] bytes = byteStream.toByteArray();
+        Log.d(TAG, mCloudLetType+" bytes.length="+bytes.length);
 
-        final String requestBody = encoded;
-        String url = "http://"+ mHost +":"+mPort + djangoUrl;
-        Log.i(TAG, "url="+url+" length: "+requestBody.length());
+        mStartTime = System.nanoTime();
 
-        final long startTime = System.nanoTime();
+        // Depending on the connection mode, choose the appropriate way to send the image
+        // data to the server.
+        if(connectionMode == ConnectionMode.PERSISTENT_TCP) {
+            mManager.send(new TcpImageData(mOpcode, bytes));
 
-        // Request a byte response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, mCloudLetType +" sendImage response="+response);
-                        long endTime = System.nanoTime();
-                        mBusy = false;
-                        mLatency = endTime - startTime;
-                        mLatencyFullProcessRollingAvg.add(mLatency);
-                        mImageServerInterface.updateFullProcessStats(mCloudLetType, mLatencyFullProcessRollingAvg);
-                        Log.i(TAG, mCloudLetType +" mCameraMode="+mCameraMode+" mLatency="+(mLatency /1000000.0));
-                        try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            JSONArray rects;
-                            String subject = null;
-                            if(jsonObject.getBoolean("success")) {
-                                if(mCameraMode == CameraMode.POSE_DETECTION) {
-                                    JSONArray poses = jsonObject.getJSONArray("poses");
-                                    mImageServerInterface.updateOverlay(mCloudLetType, poses, null);
-                                }  else {
-                                    if (jsonObject.has("subject")) {
-                                        //This means it was from recognition mode
-                                        subject = jsonObject.getString("subject");
-                                        JSONArray rect = jsonObject.getJSONArray("rect");
-                                        rects = new JSONArray();
-                                        rects.put(rect);
-                                    } else {
-                                        //Default is from detection mode
-                                        rects = jsonObject.getJSONArray("rects");
-                                    }
-                                    mImageServerInterface.updateOverlay(mCloudLetType, rects, subject);
-                                }
+        } else if(connectionMode == ConnectionMode.REST) {
+            final String requestBody = Base64.encodeToString(bytes, Base64.DEFAULT);
+            String url = "http://"+ mHost +":"+mPort + mDjangoUrl;
+            Log.i(TAG, "url="+url+" length: "+requestBody.length());
 
-                                if(mCameraMode == CameraMode.FACE_TRAINING) {
-                                    mTrainingCount++;
-                                    Log.i(TAG, mCloudLetType +" mTrainingCount="+ mTrainingCount);
-                                    mImageServerInterface.updateTrainingProgress(mTrainingCount, mCameraMode);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+            // Request a byte response from the provided URL.
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            Log.d(TAG, mCloudLetType + " sendImage response=" + response);
+                            long endTime = System.nanoTime();
+                            mBusy = false;
+                            mLatency = endTime - mStartTime;
+                            handleResponse(response, mLatency);
                         }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    mBusy = false;
+                    Log.e(TAG, "sendImage received error=" + error);
+                }
+            }) {
+
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String, String> params = getUserParams();
+                    params.put("image", requestBody);
+                    return params;
+                }
+            };
+
+            // Add the request to the RequestQueue.
+            mRequestQueue.add(stringRequest);
+        } else {
+            Log.e(TAG, "Unknown communication mode:"+ connectionMode);
+        }
+    }
+
+    private void handleResponse(String response, long latency) {
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            JSONArray rects;
+            String subject = null;
+            if (jsonObject.getBoolean("success")) {
+                if (mCameraMode == CameraMode.POSE_DETECTION) {
+                    JSONArray poses = jsonObject.getJSONArray("poses");
+                    mImageServerInterface.updateOverlay(mCloudLetType, poses, null);
+                } else {
+                    if (jsonObject.has("subject")) {
+                        //This means it was from recognition mode
+                        subject = jsonObject.getString("subject");
+                        JSONArray rect = jsonObject.getJSONArray("rect");
+                        rects = new JSONArray();
+                        rects.put(rect);
+                    } else {
+                        //Default is from detection mode
+                        rects = jsonObject.getJSONArray("rects");
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                mBusy = false;
-                Log.e(TAG, "sendImage received error="+error);
-            }
-        }) {
+                    mImageServerInterface.updateOverlay(mCloudLetType, rects, subject);
+                }
 
-            @Override
-            protected Map<String,String> getParams(){
-                Map<String, String> params = getUserParams();
-                params.put("image", requestBody);
-                return params;
+                if (mCameraMode == CameraMode.FACE_TRAINING) {
+                    mTrainingCount++;
+                    Log.i(TAG, mCloudLetType + " mTrainingCount=" + mTrainingCount);
+                    mImageServerInterface.updateTrainingProgress(mTrainingCount, mCameraMode);
+                }
             }
-        };
-
-        // Add the request to the RequestQueue.
-        mRequestQueue.add(stringRequest);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        mLatencyFullProcessRollingAvg.add(latency);
+        mImageServerInterface.updateFullProcessStats(mCloudLetType, mLatencyFullProcessRollingAvg);
+        Log.i(TAG, mCloudLetType + " mCameraMode=" + mCameraMode + " mLatency=" + (mLatency / 1000000.0));
     }
 
     /**
@@ -404,6 +462,8 @@ public class ImageSender {
      */
     private void doSinglePing(String host, RollingAverage rollingAverage, ImageServerInterface.CloudletType cloudletType) {
         long latency = 0;
+        Log.i("BDA", "doSinglePing mLatencyTestMethod="+mLatencyTestMethod+" cloudletType="+cloudletType);
+
         if(mLatencyTestMethod.equals(LatencyTestMethod.ping)) {
             try {
                 String pingCommand = "/system/bin/ping -c 1 " + host;
@@ -471,12 +531,23 @@ public class ImageSender {
     }
 
     /**
+     * Sets the connection mode.
+     * @param connectionMode  Either REST or PERSISTENT_TCP.
+     */
+    public static void setConnectionMode(ConnectionMode connectionMode) {
+        Log.i(TAG, "setConnectionMode("+connectionMode+")");
+        ImageSender.connectionMode = connectionMode;
+    }
+
+    /**
      * Return statistics information to be displayed in dialog after activity.
      * @return  The statistics text.
      */
     public String getStatsText() {
-        return mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
+        String statsText = mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
                 mLatencyNetOnlyRollingAvg.getStatsText();
+        Log.i(TAG, "getStatsText\n"+statsText);
+        return statsText;
     }
 
     /**
@@ -519,4 +590,74 @@ public class ImageSender {
         }
     }
 
+    /**
+     * Initialize the OkSocket connection manager.
+     */
+    private void initManager() {
+        final Handler handler = new Handler();
+        mInfo = new ConnectionInfo(mHost, mPersistentTcpPort);
+        mOkOptions = new OkSocketOptions.Builder()
+                .setReconnectionManager(new NoneReconnect())
+                .setConnectTimeoutSecond(10)
+                .setCallbackThreadModeToken(new OkSocketOptions.ThreadModeToken() {
+                    @Override
+                    public void handleCallbackEvent(ActionDispatcher.ActionRunnable runnable) {
+                        handler.post(runnable);
+                    }
+                })
+                .build();
+        mManager = OkSocket.open(mInfo).option(mOkOptions);
+        mManager.registerReceiver(adapter);
+    }
+
+    /**
+     * This adapter is used to listen for OkSocket events.
+     */
+    private SocketActionAdapter adapter = new SocketActionAdapter() {
+        String TAG = "SocketActionAdapter";
+
+        @Override
+        public void onSocketConnectionSuccess(ConnectionInfo info, String action) {
+            Log.i(TAG, "info="+info+" action="+action);
+        }
+
+        @Override
+        public void onSocketDisconnection(ConnectionInfo info, String action, Exception e) {
+            if (e != null) {
+                Log.e(TAG, "Disconnected with exception:" + e.getMessage());
+            } else {
+                Log.i(TAG, "Disconnect Manually");
+            }
+        }
+
+        @Override
+        public void onSocketConnectionFailed(ConnectionInfo info, String action, Exception e) {
+            if (e != null) {
+                Log.e(TAG, "Connecting Failed with exception:" + e.getMessage());
+            } else {
+                Log.e(TAG, "Connecting Failed");
+            }
+        }
+
+        @Override
+        public void onSocketReadResponse(ConnectionInfo info, String action, OriginalData data) {
+            String response = new String(data.getBodyBytes(), Charset.forName("utf-8"));
+            Log.i(TAG, "onSocketReadResponse="+response);
+            long endTime = System.nanoTime();
+            mBusy = false;
+            mLatency = endTime - mStartTime;
+            handleResponse(response, mLatency);
+        }
+
+        @Override
+        public void onSocketWriteResponse(ConnectionInfo info, String action, ISendable data) {
+            String str = new String(data.parse(), Charset.forName("utf-8"));
+        }
+
+        @Override
+        public void onPulseSend(ConnectionInfo info, IPulseSendable data) {
+            String str = new String(data.parse(), Charset.forName("utf-8"));
+            Log.i(TAG, "onPulseSend="+str);
+        }
+    };
 }
