@@ -119,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--directory", required=False, help="Directory containing image files to send.")
     parser.add_argument("-e", "--endpoint", required=True, help="Endpoint of web service to call (e.g. /detector/detect/, /recognizer/predict/, /openpose/detect/)")
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
-    parser.add_argument("-t", "--threads", type=int, default=1, help="Number of concurent execution threads.")
+    parser.add_argument("-t", "--threads", type=int, default=1, help="Number of concurrent execution threads.")
     parser.add_argument("-p", "--port", type=int, default=8008, help="Port number")
     parser.add_argument("-j", "--json-params", required=False, help='Extra parameters to include with image. Ex: {subject":"Max Door", "owner":"Bruce Armstrong}')
     parser.add_argument("--show-responses", action='store_true', help="Show responses.")
