@@ -274,6 +274,13 @@ public class ImageSender {
         }
     }
 
+    /**
+     * Both the persistent TCP server and the REST server will return results in the same JSON
+     * format. This method parses the results and updates the UI with the returned values.
+     *
+     * @param response
+     * @param latency
+     */
     private void handleResponse(String response, long latency) {
         try {
             JSONObject jsonObject = new JSONObject(response);
@@ -462,7 +469,7 @@ public class ImageSender {
      */
     private void doSinglePing(String host, RollingAverage rollingAverage, ImageServerInterface.CloudletType cloudletType) {
         long latency = 0;
-        Log.i("BDA", "doSinglePing mLatencyTestMethod="+mLatencyTestMethod+" cloudletType="+cloudletType);
+        Log.d(TAG, "doSinglePing mLatencyTestMethod="+mLatencyTestMethod+" cloudletType="+cloudletType);
 
         if(mLatencyTestMethod.equals(LatencyTestMethod.ping)) {
             try {
