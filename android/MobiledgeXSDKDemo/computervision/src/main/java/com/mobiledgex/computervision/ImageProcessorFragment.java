@@ -82,9 +82,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected float mServerToDisplayRatioY;
     protected boolean mBenchmarkActive;
     private String defaultLatencyMethod = "socket";
+    private String defaultConnectionMode = "REST";
 
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
+    protected static final int PERSISTENT_TCP_PORT = 8011;
     public static final String DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net";
     public static final String DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net";
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
@@ -527,6 +529,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             return;
         }
         String prefKeyLatencyMethod = getResources().getString(R.string.fd_latency_method);
+        String prefKeyConnectionMode = getResources().getString(R.string.preference_fd_connection_mode);
         String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
         String prefKeyLegacyCamera = getResources().getString(R.string.preference_fd_legacy_camera);
         String prefKeyMultiFace = getResources().getString(R.string.preference_fd_multi_face);
@@ -567,6 +570,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             if(mImageSenderEdge != null) {
                 mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString));
             }
+        }
+        if (key.equals(prefKeyConnectionMode) || key.equals("ALL")) {
+            String connectionModeString = sharedPreferences.getString(prefKeyConnectionMode, defaultConnectionMode);
+            Log.i(TAG, "connectionMode=" + connectionModeString+" mImageSenderCloud="+mImageSenderCloud);
+            ImageSender.setConnectionMode(ImageSender.ConnectionMode.valueOf(connectionModeString));
         }
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
@@ -694,9 +702,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mEdgeFaceBoxRenderer.setStrokeWidth(strokeWidth);
         mLocalFaceBoxRenderer.setStrokeWidth(strokeWidth);
 
-        mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT);
-        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
-        mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT);
+        mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
+        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
+        mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT, PERSISTENT_TCP_PORT);
 
         boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
         if (faceRecognition) {

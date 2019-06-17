@@ -218,7 +218,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         mPoseRenderer.setStrokeWidth(strokeWidth);
         mPoseRenderer.setJointRadius(jointRadius);
 
-        mImageSenderEdge = new ImageSender(getActivity(),this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT);
+        mImageSenderEdge = new ImageSender(getActivity(),this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
 
         //TODO: Revisit when we have GPU support on multiple servers.
         //The only GPU-enabled server we have doesn't support ping.
