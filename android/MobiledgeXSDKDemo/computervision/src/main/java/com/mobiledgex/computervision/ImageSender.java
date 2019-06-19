@@ -233,6 +233,10 @@ public class ImageSender {
         // Depending on the connection mode, choose the appropriate way to send the image
         // data to the server.
         if(connectionMode == ConnectionMode.PERSISTENT_TCP) {
+            if(mManager == null) {
+                Log.w(TAG, "ConnectionManager not initialized yet.");
+                return;
+            }
             mManager.send(new TcpImageData(mOpcode, bytes));
 
         } else if(connectionMode == ConnectionMode.REST) {
