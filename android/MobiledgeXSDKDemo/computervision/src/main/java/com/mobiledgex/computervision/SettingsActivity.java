@@ -170,8 +170,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            getPreferenceScreen().removeAll();
-            addPreferencesFromResource(R.xml.pref_face_detection);
+            // Reinitialize this screen of preferences, since values may have changed.
+            // If an NPE occurs because the PreferenceManager has gone away,
+            // there's no need for any action. Just don't crash the app.
+            try {
+                getPreferenceScreen().removeAll();
+                addPreferencesFromResource(R.xml.pref_face_detection);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
