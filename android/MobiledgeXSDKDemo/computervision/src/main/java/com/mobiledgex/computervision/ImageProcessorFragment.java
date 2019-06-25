@@ -237,6 +237,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mProgressText.setText("Collecting images... "+progress+"/"+ImageSender.TRAINING_COUNT_TARGET);
             if(trainingCount >= ImageSender.TRAINING_COUNT_TARGET) {
                 mImageSenderTraining.trainerTrain();
+                mProgressBarTraining.setIndeterminate(true);
+                mProgressText.setText("Updating server...");
             }
 
         } else if(mode == ImageSender.CameraMode.FACE_UPDATING_SERVER) {
@@ -249,6 +251,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mProgressBarTraining.setVisibility(View.GONE);
             mProgressText.setVisibility(View.GONE);
             guestTrainingMenuUncheck();
+            mCameraMode = ImageSender.CameraMode.FACE_RECOGNITION;
         }
     }
 
@@ -573,8 +576,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         if (key.equals(prefKeyConnectionMode) || key.equals("ALL")) {
             String connectionModeString = sharedPreferences.getString(prefKeyConnectionMode, defaultConnectionMode);
-            Log.i(TAG, "connectionMode=" + connectionModeString+" mImageSenderCloud="+mImageSenderCloud);
-            ImageSender.setConnectionMode(ImageSender.ConnectionMode.valueOf(connectionModeString));
+            Log.i(TAG, "connectionMode=" + connectionModeString+" mImageSenderEdge="+mImageSenderEdge+" mImageSenderCloud="+mImageSenderCloud);
+            ImageSender.setPreferencesConnectionMode(ImageSender.ConnectionMode.valueOf(connectionModeString), mImageSenderEdge, mImageSenderCloud);
         }
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
