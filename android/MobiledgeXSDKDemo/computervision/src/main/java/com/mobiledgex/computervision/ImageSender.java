@@ -73,7 +73,8 @@ public class ImageSender {
     private GoogleSignInAccount mAccount;
     private String mGuestName = "";
 
-    private static ConnectionMode connectionMode = ConnectionMode.REST;
+    private static ConnectionMode preferencesConnectionMode = ConnectionMode.REST;
+    private ConnectionMode mConnectionMode;
     private IConnectionManager mManager;
     private OkSocketOptions mOkOptions;
     private ConnectionInfo mInfo;
@@ -129,10 +130,15 @@ public class ImageSender {
         // Instantiate the RequestQueue.
         mRequestQueue = Volley.newRequestQueue(activity);
 
-        Log.i(TAG, "connectionMode="+ connectionMode);
+        Log.i(TAG, "preferencesConnectionMode="+ preferencesConnectionMode);
+        if(mCloudLetType == ImageServerInterface.CloudletType.PUBLIC) {
+            // The Face Training server only supports REST.
+            mConnectionMode = ConnectionMode.REST;
+        } else {
+            mConnectionMode = preferencesConnectionMode;
+        }
 
-        if(connectionMode == ConnectionMode.PERSISTENT_TCP
-                && mCloudLetType != ImageServerInterface.CloudletType.PUBLIC) {
+        if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
             initManager();
             mManager.connect();
         }
@@ -232,14 +238,19 @@ public class ImageSender {
 
         // Depending on the connection mode, choose the appropriate way to send the image
         // data to the server.
-        if(connectionMode == ConnectionMode.PERSISTENT_TCP) {
+        if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
             if(mManager == null) {
-                Log.w(TAG, "ConnectionManager not initialized yet.");
+                // The value may have been changed after starting the activity.
+                Log.w(TAG, "ConnectionManager not initialized yet. Initializing now.");
+                initManager();
+                mManager.connect();
+                // Try again next image frame that's received.
+                mBusy = false;
                 return;
             }
             mManager.send(new TcpImageData(mOpcode, bytes));
 
-        } else if(connectionMode == ConnectionMode.REST) {
+        } else if(mConnectionMode == ConnectionMode.REST) {
             final String requestBody = Base64.encodeToString(bytes, Base64.DEFAULT);
             String url = "http://"+ mHost +":"+mPort + mDjangoUrl;
             Log.i(TAG, "url="+url+" length: "+requestBody.length());
@@ -274,7 +285,7 @@ public class ImageSender {
             // Add the request to the RequestQueue.
             mRequestQueue.add(stringRequest);
         } else {
-            Log.e(TAG, "Unknown communication mode:"+ connectionMode);
+            Log.e(TAG, "Unknown communication mode:"+ mConnectionMode);
         }
     }
 
@@ -319,7 +330,7 @@ public class ImageSender {
         }
         mLatencyFullProcessRollingAvg.add(latency);
         mImageServerInterface.updateFullProcessStats(mCloudLetType, mLatencyFullProcessRollingAvg);
-        Log.i(TAG, mCloudLetType + " mCameraMode=" + mCameraMode + " mLatency=" + (mLatency / 1000000.0));
+        Log.i(TAG, mCloudLetType + " mCameraMode=" + mCameraMode + " mLatency=" + (mLatency / 1000000.0)+" mHost="+mHost);
     }
 
     /**
@@ -542,12 +553,21 @@ public class ImageSender {
     }
 
     /**
-     * Sets the connection mode.
-     * @param connectionMode  Either REST or PERSISTENT_TCP.
+     * Sets the static preferencesConnectionMode for the class, and if any non-null instances are
+     * included, sets the mConnectionMode for each.
+     *
+     * @param preferencesConnectionMode  Either REST or PERSISTENT_TCP.
+     * @param imageSenders Any ImageSender instances to set the instance variable value on.
      */
-    public static void setConnectionMode(ConnectionMode connectionMode) {
-        Log.i(TAG, "setConnectionMode("+connectionMode+")");
-        ImageSender.connectionMode = connectionMode;
+    public static void setPreferencesConnectionMode(ConnectionMode preferencesConnectionMode, ImageSender... imageSenders) {
+        Log.i(TAG, "setPreferencesConnectionMode("+ preferencesConnectionMode +")");
+        ImageSender.preferencesConnectionMode = preferencesConnectionMode;
+        for(ImageSender imageSender: imageSenders) {
+            Log.i(TAG, "setPreferencesConnectionMode imageSender="+imageSender);
+            if(imageSender != null) {
+                imageSender.mConnectionMode = preferencesConnectionMode;
+            }
+        }
     }
 
     /**
@@ -648,6 +668,7 @@ public class ImageSender {
             } else {
                 Log.e(TAG, "Connecting Failed");
             }
+            mBusy = false; //So we'll try to connect next image frame that's received.
         }
 
         @Override
