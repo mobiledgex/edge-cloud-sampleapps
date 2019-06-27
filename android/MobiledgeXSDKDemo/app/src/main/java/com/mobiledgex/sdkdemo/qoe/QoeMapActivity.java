@@ -44,8 +44,6 @@ import com.google.maps.model.DirectionsRoute;
 import com.google.maps.model.DirectionsStep;
 import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.TravelMode;
-import com.mobiledgex.matchingengine.MexKeyStoreException;
-import com.mobiledgex.matchingengine.MexTrustStoreException;
 import com.mobiledgex.sdkdemo.R;
 
 import java.io.IOException;
@@ -54,11 +52,9 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -528,6 +524,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     @Override
     public void onStop() {
         Log.i(TAG, "onStop()");
+        unregisterReceiver(mBroadcastReceiver);
         try {
             mPredictiveQosClient.shutdown();
         } catch (InterruptedException e) {
