@@ -6,8 +6,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
+import android.telephony.SubscriptionInfo;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -15,6 +17,7 @@ import android.widget.Toast;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import distributed_match_engine.AppClient;
@@ -100,11 +103,44 @@ public class MatchingEngineHelper {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(mContext, SettingsActivity.class);
+                        intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.LocationSettingsFragment.class.getName() );
+                        intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
                         mContext.startActivity(intent);
                     }
                 });
                 snackbar.show();
                 return null;
+            }
+
+            // In a real Edge-enabled app, if no carrierName, or active Subscription networks,
+            // the app should use the public cloud instead.
+            // For this demo app, we may want to test over wifi, which we can allow by disabling
+            // the "Network Switching Enabled" preference.
+            boolean netSwitchingAllowed = prefs.getBoolean(mContext.getResources().getString(R.string.preference_net_switching_allowed), false);
+            if(netSwitchingAllowed) {
+                boolean carrierNameFound = false;
+                List<SubscriptionInfo> subList = mMatchingEngine.getActiveSubscriptionInfoList();
+                if (subList != null && subList.size() > 0) {
+                    for (SubscriptionInfo info : subList) {
+                        if (info.getCarrierName().length() > 0) {
+                            carrierNameFound = true;
+                        }
+                    }
+                }
+                if(!carrierNameFound) {
+                    Snackbar snackbar = Snackbar.make(mView, "No valid SIM card. Disable \"Network Switching Enabled\" to continue.", Snackbar.LENGTH_LONG);
+                    snackbar.setAction("Settings", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(mContext, SettingsActivity.class);
+                            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.LocationSettingsFragment.class.getName() );
+                            intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
+                            mContext.startActivity(intent);
+                        }
+                    });
+                    snackbar.show();
+                    return null;
+                }
             }
 
             // Create a request:
