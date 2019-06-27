@@ -575,7 +575,10 @@ public class ImageSender {
      * @return  The statistics text.
      */
     public String getStatsText() {
-        String statsText = mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
+        String statsText = mHost+ "\n" +
+                "Connection mode="+mConnectionMode + "\n" +
+                "Latency test method="+mLatencyTestMethod+"\n\n" +
+                mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
                 mLatencyNetOnlyRollingAvg.getStatsText();
         Log.i(TAG, "getStatsText\n"+statsText);
         return statsText;

@@ -22,7 +22,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
     private RequestPermissions mRpUtil;
     private AppCompatActivity self;
     private SharedPreferences prefs;
-    private String prefKeyAllowMEX;
+    private String prefKeyAllowMatchingEngineLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +32,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
         mRpUtil = new RequestPermissions();
         self = this;
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
+        prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
 
         TextView devLocationWhy = findViewById(R.id.permission_location_device_why);
         devLocationWhy.setOnClickListener(new View.OnClickListener() {
@@ -69,10 +69,10 @@ public class FirstTimeUseActivity extends AppCompatActivity {
                                 menu in order to opt-out (though does not need to go there for opt-in).
                                 */
                                 Log.i(TAG, "OK Clicked. Automatic opt-in");
-                                prefs.edit().putBoolean(prefKeyAllowMEX, true).apply();
-                                boolean mexLocationAllowed = prefs.getBoolean(prefKeyAllowMEX, false);
+                                prefs.edit().putBoolean(prefKeyAllowMatchingEngineLocation, true).apply();
+                                boolean matchingEngineLocationAllowed = prefs.getBoolean(prefKeyAllowMatchingEngineLocation, false);
 
-                                Log.d(TAG, "mexLocationallowed: " + mexLocationAllowed);
+                                Log.d(TAG, "matchingEngineLocationAllowed: " + matchingEngineLocationAllowed);
 
                                 dialogInterface.dismiss();
                             }
@@ -104,12 +104,12 @@ public class FirstTimeUseActivity extends AppCompatActivity {
     }
 
     private boolean shouldFinish(Activity activity) {
-        final String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
-        boolean mexLocationAllowed = prefs.getBoolean(prefKeyAllowMEX, false);
+        final String prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
+        boolean mobiledgeXLocationAllowed = prefs.getBoolean(prefKeyAllowMatchingEngineLocation, false);
 
-        Log.d(TAG, "mexLocationallowed: " + mexLocationAllowed);
+        Log.d(TAG, "mobiledgeXLocationAllowed: " + mobiledgeXLocationAllowed);
         Log.d(TAG, "Needs More Permissions: " + mRpUtil.getNeededPermissions(self).size());
-        if (mexLocationAllowed &&
+        if (mobiledgeXLocationAllowed &&
             (mRpUtil.getNeededPermissions(activity).size() == 0)) {
 
             // Nothing to ask for. Close FirstTimeUseActivity.
@@ -123,7 +123,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
         if (mRpUtil.getNeededPermissions(appCompatActivity).size() > 0) {
             mRpUtil.requestMultiplePermissions(appCompatActivity);
         }
-        if (!prefs.getBoolean(prefKeyAllowMEX, false)) {
+        if (!prefs.getBoolean(prefKeyAllowMatchingEngineLocation, false)) {
             new EnhancedLocationDialog().show(appCompatActivity.getSupportFragmentManager(), "dialog");
         }
     }

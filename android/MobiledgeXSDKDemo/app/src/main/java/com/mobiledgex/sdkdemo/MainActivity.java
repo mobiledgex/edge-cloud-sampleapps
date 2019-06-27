@@ -65,13 +65,13 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.mobiledgex.computervision.ImageProcessorFragment;
+import com.mobiledgex.computervision.ImageSender;
 import com.mobiledgex.computervision.OpencvImageProcessorActivity;
+import com.mobiledgex.computervision.PoseProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorFragment;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
-import com.mobiledgex.computervision.ImageProcessorFragment;
-import com.mobiledgex.computervision.ImageSender;
-import com.mobiledgex.computervision.PoseProcessorActivity;
 import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
 
 import org.json.JSONException;
@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivity
     private RequestPermissions mRpUtil;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest mLocationRequest;
+    private SupportMapFragment mMapFragment;
     private boolean mDoLocationUpdates;
 
     private boolean gpsInitialized = false;
@@ -142,9 +143,16 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "onCreate()");
 
         /**
-         * MatchEngine APIs require special user approved permissions to READ_PHONE_STATE and
+         * MatchingEngine APIs require special user approved permissions to READ_PHONE_STATE and
          * one of the following:
-         * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION. This creates a dialog, if needed.
+         * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION.
+         *
+         * The example RequestPermissions utility creates a UI dialog, if needed.
+         *
+         * You can do this anywhere, MainApplication.onActivityResumed(), or a subset of permissions
+         * onResume() on each Activity.
+         *
+         * Permissions must exist prior to API usage to avoid SecurityExceptions.
          */
         mRpUtil = new RequestPermissions();
 
@@ -188,30 +196,20 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mMapFragment.getMapAsync(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         mHostname = prefs.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
         Log.i(TAG, "mHostname="+mHostname);
 
-        mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mapFragment.getView());
-        mMatchingEngineHelper.setMatchingEngineResultsListener(this);
-
-        boolean networkSwitchingAllowed = prefs.getBoolean(getResources()
-                        .getString(R.string.preference_net_switching_allowed),false);
-        Log.i(TAG, "networkSwitchingAllowed="+networkSwitchingAllowed);
-        mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(networkSwitchingAllowed);
-//        mMatchingEngineHelper.getMatchingEngine().setSSLEnabled(false);
-
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // Restore mex location preference, defaulting to false:
-        boolean mexLocationAllowed = prefs.getBoolean(getResources()
-                        .getString(R.string.preference_mex_location_verification),
+        // Restore MatchingEngine location preference, defaulting to false:
+        boolean matchingEngineLocationAllowed = prefs.getBoolean(getResources()
+                        .getString(R.string.preference_matching_engine_location_verification),
                 false);
-        MatchingEngine.setMexLocationAllowed(mexLocationAllowed);
+        MatchingEngine.setMatchingEngineLocationAllowed(matchingEngineLocationAllowed);
 
         // Watch allowed preference:
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -278,17 +276,11 @@ public class MainActivity extends AppCompatActivity
      */
     private void matchingEngineRequest(MatchingEngineHelper.RequestType reqType) {
         Log.i(TAG, "matchingEngineRequest("+reqType+") mLastKnownLocation="+mLastKnownLocation);
-        // As of Android 23, permissions can be asked for while the app is still running.
-        if (mRpUtil.getNeededPermissions(this).size() > 0) {
-            mRpUtil.requestMultiplePermissions(this);
-            return;
-        }
         if(mLastKnownLocation == null) {
             startLocationUpdates();
             Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
             return;
         }
-//        getCloudletList();
         mMatchingEngineHelper.doRequestInBackground(reqType, mLocationForMatching);
     }
 
@@ -418,6 +410,13 @@ public class MainActivity extends AppCompatActivity
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_qoe_map) {
+            // One of the dependencies used in the PQoE activity requires API level of 26 or higher.
+            if (android.os.Build.VERSION.SDK_INT < 26) {
+                Toast.makeText(MainActivity.this,
+                        "Predictive QoE not supported on this version of Android",
+                        Toast.LENGTH_LONG).show();
+                return true;
+            }
             // Start the face PQoE Activity
             Intent intent = new Intent(this, QoeMapActivity.class);
             startActivity(intent);
@@ -494,7 +493,7 @@ public class MainActivity extends AppCompatActivity
                     public void onResponse(String response) {
                         Log.i(TAG, "updateLocSimLocation response="+response);
                         if(response.startsWith("Location DB Updated OK")) {
-                            mLocationInSimulator = new Location("MEX_Loc_Sim");
+                            mLocationInSimulator = new Location("MobiledgeX_Loc_Sim");
                             mLocationInSimulator.setLatitude(lat);
                             mLocationInSimulator.setLongitude(lng);
                         }
@@ -612,7 +611,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                Location location = new Location("MEX");
+                Location location = new Location("MobiledgeX_Loc_Sim");
                 location.setLatitude(spoofLatLng.latitude);
                 location.setLongitude(spoofLatLng.longitude);
                 // If the simulator location has been updated, use that as the starting location for
@@ -1019,7 +1018,7 @@ public class MainActivity extends AppCompatActivity
             TextView showText = new TextView(MainActivity.this);
             showText.setText(stats);
             showText.setTextIsSelectable(true);
-            int horzPadding = (int) (25 * getResources().getDisplayMetrics().density);
+            int horzPadding = (int) (15 * getResources().getDisplayMetrics().density);
             showText.setPadding(horzPadding, 0,horzPadding,0);
             new AlertDialog.Builder(MainActivity.this)
                     .setView(showText)
@@ -1053,7 +1052,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Log.d(TAG, "onSharedPreferenceChanged("+key+")");
-        String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
+        String prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
         String prefKeyAllowNetSwitch = getResources().getString(R.string.preference_net_switching_allowed);
         String prefKeyDownloadType = getResources().getString(R.string.download_type);
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
@@ -1066,16 +1065,18 @@ public class MainActivity extends AppCompatActivity
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
         String prefKeyResetFdHosts = getResources().getString(R.string.preference_fd_reset_both_hosts);
 
-        if (key.equals(prefKeyAllowMEX)) {
-            boolean mexLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMEX, false);
-            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mexLocationAllowed);
-            MatchingEngine.setMexLocationAllowed(mexLocationAllowed);
+        if (key.equals(prefKeyAllowMatchingEngineLocation)) {
+            boolean matchingEngineLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMatchingEngineLocation, false);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+matchingEngineLocationAllowed);
+            MatchingEngine.setMatchingEngineLocationAllowed(matchingEngineLocationAllowed);
         }
 
         if (key.equals(prefKeyAllowNetSwitch)) {
             boolean netSwitchingAllowed = sharedPreferences.getBoolean(prefKeyAllowNetSwitch, false);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+netSwitchingAllowed);
-            mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(netSwitchingAllowed);
+            if(mMatchingEngineHelper != null) {
+                mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(netSwitchingAllowed);
+            }
         }
 
         if (key.equals(prefKeyLatencyMethod)) {
@@ -1093,7 +1094,9 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyDmeHostname)) {
             mHostname = sharedPreferences.getString(prefKeyDmeHostname, "mexdemo.dme.mobiledgex.net");
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mHostname);
-            mMatchingEngineHelper.setHostname(mHostname);
+            if(mMatchingEngineHelper != null) {
+                mMatchingEngineHelper.setHostname(mHostname);
+            }
             //Clear list so we don't show old cloudlets as transparent
             CloudletListHolder.getSingleton().getCloudletList().clear();
             getCloudlets();
@@ -1184,11 +1187,37 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
-        Log.i(TAG, "onResume() mDoLocationUpdates="+mDoLocationUpdates);
+        Log.i(TAG, "onResume() mDoLocationUpdates="+mDoLocationUpdates+
+                " mMatchingEngineHelper="+mMatchingEngineHelper);
+
+        // Check permissions here, as the user has the ability to change them on the fly through
+        // system settings.
+        if (mRpUtil.getNeededPermissions(this).size() > 0) {
+            // Opens a UI. When it returns, onResume() is called again.
+            mRpUtil.requestMultiplePermissions(this);
+            return;
+        }
+
+        if (mMatchingEngineHelper == null) {
+            // Permissions available. Create a MobiledgeX MatchingEngineHelper instance (could also use Application wide instance).
+            initMatchingEngineHelper();
+        }
 
         if (mDoLocationUpdates) {
             startLocationUpdates();
         }
+    }
+
+    public void initMatchingEngineHelper() {
+        Log.i(TAG, "initMatchingEngineHelper()");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mHostname = prefs.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
+        boolean networkSwitchingAllowed = prefs.getBoolean(getResources()
+                .getString(R.string.preference_net_switching_allowed),false);
+        Log.i(TAG, "mHostname="+mHostname+" networkSwitchingAllowed="+networkSwitchingAllowed);
+        mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mMapFragment.getView());
+        mMatchingEngineHelper.setMatchingEngineResultsListener(this);
+        mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(networkSwitchingAllowed);
     }
 
     @Override
@@ -1200,14 +1229,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putBoolean(MatchingEngine.MEX_LOCATION_PERMISSION, MatchingEngine.isMexLocationAllowed());
+        savedInstanceState.putBoolean(MatchingEngine.MATCHING_ENGINE_LOCATION_PERMISSION, MatchingEngine.isMatchingEngineLocationAllowed());
     }
 
     @Override
     public void onRestoreInstanceState(Bundle restoreInstanceState) {
         super.onRestoreInstanceState(restoreInstanceState);
         if (restoreInstanceState != null) {
-            MatchingEngine.setMexLocationAllowed(restoreInstanceState.getBoolean(MatchingEngine.MEX_LOCATION_PERMISSION));
+            MatchingEngine.setMatchingEngineLocationAllowed(restoreInstanceState.getBoolean(MatchingEngine.MATCHING_ENGINE_LOCATION_PERMISSION));
         }
     }
 
