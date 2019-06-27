@@ -90,11 +90,11 @@ public class MatchingEngineHelper {
             }
             final Activity ctx = (Activity) mContext;
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
-            boolean mexAllowed = prefs.getBoolean(mContext.getResources().getString(R.string.preference_mex_location_verification), false);
+            boolean locationVerificationAllowed = prefs.getBoolean(mContext.getResources().getString(R.string.preference_matching_engine_location_verification), false);
             String carrierName = prefs.getString(mContext.getResources().getString(R.string.pref_operator_name), "TDG");
             Log.i(TAG, "carrierName:" + carrierName);
 
-            if(!mexAllowed) {
+            if(!locationVerificationAllowed) {
                 Snackbar snackbar = Snackbar.make(mView, "Enhanced Location not enabled", Snackbar.LENGTH_LONG);
                 snackbar.setAction("Settings", new View.OnClickListener() {
                     @Override
