@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity
     private static final int RC_SIGN_IN = 1;
     public static final int RC_STATS = 2;
     private MatchingEngine matchingEngine;
+    private RequestPermissions mRpUtil;
     private String someText = null;
     private AppClient.FindCloudletReply mClosestCloudlet;
     private Activity ctx;
@@ -80,8 +81,6 @@ public class MainActivity extends AppCompatActivity
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
     private MenuItem signOutMenuItem;
-
-    RequestPermissions mRpUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,7 +161,10 @@ public class MainActivity extends AppCompatActivity
          * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION. This creates a dialog, if needed.
          */
         mRpUtil = new RequestPermissions();
-
+        if (mRpUtil.getNeededPermissions(this).size() > 0) {
+            mRpUtil.requestMultiplePermissions(this);
+            return;
+        }
     }
 
     @Override
@@ -249,7 +251,7 @@ public class MainActivity extends AppCompatActivity
         appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
-        MatchingEngine.setMexLocationAllowed(true);
+        MatchingEngine.setMatchingEngineLocationAllowed(true);
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
@@ -318,14 +320,14 @@ public class MainActivity extends AppCompatActivity
             showErrorMsg(someText);
             return false;
         }
-        Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFQDN());
+        Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFqdn());
         checkboxCloudletFound.setChecked(true);
         checkboxCloudletFound.setText(R.string.cloudlet_found);
 
         // Populate cloudlet details.
         latitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLatitude());
         longitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLongitude());
-        fqdnTv.setText(mClosestCloudlet.getFQDN());
+        fqdnTv.setText(mClosestCloudlet.getFqdn());
         LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         LatLng cloudletLatLng = new LatLng(mClosestCloudlet.getCloudletLocation().getLatitude(),
                 mClosestCloudlet.getCloudletLocation().getLongitude());
@@ -333,24 +335,24 @@ public class MainActivity extends AppCompatActivity
         distanceTv.setText(String.format("%.2f", distance)+" km");
 
         //Extract cloudlet name from FQDN
-        String[] parts = mClosestCloudlet.getFQDN().split("\\.");
+        String[] parts = mClosestCloudlet.getFqdn().split("\\.");
         cloudletNameTv.setText(parts[0]);
 
-        //Find FQDNPrefix from Port structure.
-        String FQDNPrefix = "";
+        //Find FqdnPrefix from Port structure.
+        String FqdnPrefix = "";
         List<distributed_match_engine.Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
-        String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
+        String appPortFormat = "{Protocol: %d, FqdnPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
         for (Appcommon.AppPort aPort : ports) {
-            FQDNPrefix = aPort.getFQDNPrefix();
+            FqdnPrefix = aPort.getFqdnPrefix();
             Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                     aPort.getProto().getNumber(),
-                    aPort.getFQDNPrefix(),
+                    aPort.getFqdnPrefix(),
                     aPort.getInternalPort(),
                     aPort.getPublicPort(),
-                    aPort.getPublicPath()));
+                    aPort.getPathPrefix()));
         }
         // Build full hostname.
-        mClosestCloudletHostname = FQDNPrefix+mClosestCloudlet.getFQDN();
+        mClosestCloudletHostname = FqdnPrefix+mClosestCloudlet.getFqdn();
 
         // TODO: Copy/paste the output of this log into a terminal to test latency.
         Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
