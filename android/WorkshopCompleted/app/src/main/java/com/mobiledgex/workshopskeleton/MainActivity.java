@@ -156,15 +156,18 @@ public class MainActivity extends AppCompatActivity
         }
 
         /**
-         * MatchEngine APIs require special user approved permissions to READ_PHONE_STATE and
+         * MatchingEngine APIs require special user approved permissions to READ_PHONE_STATE and
          * one of the following:
-         * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION. This creates a dialog, if needed.
+         * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION.
+         *
+         * The RequestPermissions utility creates a UI dialog, if needed.
+         *
+         * You can do this anywhere, MainApplication.onActivityResumed(), or a subset of permissions
+         * onResume() on each Activity.
+         *
+         * Permissions must exist prior to API usage to avoid SecurityExceptions.
          */
         mRpUtil = new RequestPermissions();
-        if (mRpUtil.getNeededPermissions(this).size() > 0) {
-            mRpUtil.requestMultiplePermissions(this);
-            return;
-        }
     }
 
     @Override
@@ -419,4 +422,15 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Check permissions here, as the user has the ability to change them on the fly through
+        // system settings.
+        if (mRpUtil.getNeededPermissions(this).size() > 0) {
+            // Opens a UI. When it returns, onResume() is called again.
+            mRpUtil.requestMultiplePermissions(this);
+            return;
+        }
+    }
 }
