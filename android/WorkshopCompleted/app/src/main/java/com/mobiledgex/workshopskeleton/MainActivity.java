@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.NetworkOnMainThreadException;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -37,6 +39,7 @@ import com.google.maps.android.SphericalUtil;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -258,7 +261,7 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-        matchingEngine = new MatchingEngine(ctx);
+        //matchingEngine = new MatchingEngine(ctx);
         host = "mexdemo.dme.mobiledgex.net"; // Override host.
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
@@ -302,6 +305,8 @@ public class MainActivity extends AppCompatActivity
         // Of course a real app would use GPS to acquire the exact location.
         location.setLatitude(37.3382);
         location.setLongitude(-121.8863);
+
+        doRequestInBackground(location);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
@@ -425,12 +430,51 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        matchingEngine = new MatchingEngine(ctx);
+        matchingEngine.setNetworkSwitchingEnabled(true);
         // Check permissions here, as the user has the ability to change them on the fly through
         // system settings.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
             // Opens a UI. When it returns, onResume() is called again.
             mRpUtil.requestMultiplePermissions(this);
             return;
+        }
+    }
+
+
+    public void doRequestInBackground (Location loc) {
+        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
+    }
+
+    public class BackgroundRequest extends AsyncTask<Object, Void, Void> {
+        @Override
+        protected Void doInBackground(Object... params) {
+            try {
+                verifyLocation((Location) params[0]);
+            } catch (InterruptedException | IOException | ExecutionException e) {
+                Log.e(TAG, "Exception");
+            }
+            return null;
+        }
+    }
+
+
+    private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException{
+        AppClient.VerifyLocationRequest verifyLocationRequest = matchingEngine.createVerifyLocationRequest(ctx, carrierName, loc);
+        if (verifyLocationRequest != null) {
+            try {
+                AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
+                Log.i(TAG, "[Location Verified: Tower: " + verifyLocationReply.getTowerStatus() +
+                        ", GPS LocationStatus: " + verifyLocationReply.getGpsLocationStatus() +
+                        ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() + " ]\n");
+                return true;
+            } catch(NetworkOnMainThreadException ne) {
+                Log.e(TAG, "Network thread exception");
+                return false;
+            }
+        } else {
+            Log.e(TAG, "Cannot verify location");
+            return false;
         }
     }
 }
