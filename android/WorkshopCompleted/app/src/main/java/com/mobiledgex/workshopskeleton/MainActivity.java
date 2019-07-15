@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity
     private TextView longitudeTv;
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
+    private CheckBox checkboxLocationVerified;
     private ProgressBar progressBar;
     private String mClosestCloudletHostname;
 
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity
         longitudeTv = findViewById(R.id.longitude);
         checkboxRegistered = findViewById(R.id.checkBoxRegistered);
         checkboxCloudletFound = findViewById(R.id.checkBoxCloudletFound);
+        checkboxLocationVerified = findViewById(R.id.checkBoxLocationVerified);
         progressBar = findViewById(R.id.progressBar);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -212,6 +214,8 @@ public class MainActivity extends AppCompatActivity
             checkboxRegistered.setText(R.string.client_registered_question);
             checkboxCloudletFound.setChecked(false);
             checkboxCloudletFound.setText(R.string.cloudlet_found_question);
+            checkboxLocationVerified.setChecked(false);
+            checkboxLocationVerified.setText(R.string.location_verified_question);
             return true;
         }
 
@@ -261,7 +265,6 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-        //matchingEngine = new MatchingEngine(ctx);
         host = "mexdemo.dme.mobiledgex.net"; // Override host.
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
@@ -368,6 +371,30 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
+        AppClient.VerifyLocationRequest verifyLocationRequest = matchingEngine.createVerifyLocationRequest(ctx, carrierName, loc);
+        if (verifyLocationRequest != null) {
+            try {
+                AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
+                Log.i(TAG, "[Location Verified: Tower: " + verifyLocationReply.getTowerStatus() +
+                        ", GPS LocationStatus: " + verifyLocationReply.getGpsLocationStatus() +
+                        ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() + " ]\n");
+                return true;
+            } catch(NetworkOnMainThreadException ne) {
+                Log.e(TAG, "Network thread exception");
+                return false;
+            }
+        } else {
+            Log.e(TAG, "Cannot verify location");
+            return false;
+        }
+    }
+
+    private void verifyLocationInBackground(Location loc) {
+        // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
+        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
+    }
+
     public void showErrorMsg(String msg) {
         Snackbar.make(findViewById(android.R.id.content), msg, Snackbar.LENGTH_LONG).show();
     }
@@ -441,40 +468,27 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
-    private void verifyLocationInBackground(Location loc) {
-        // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
-        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
-    }
-
-    public class BackgroundRequest extends AsyncTask<Object, Void, Void> {
+    public class BackgroundRequest extends AsyncTask<Location, Void, Boolean> {
         @Override
-        protected Void doInBackground(Object... params) {
+        protected Boolean doInBackground(Location... params) {
             try {
-                verifyLocation((Location) params[0]);
+                if(verifyLocation(params[0])){
+                    return true;
+                }else{
+                    return false;
+                }
             } catch (InterruptedException | IOException | ExecutionException e) {
                 Log.e(TAG, "Exception");
-            }
-            return null;
-        }
-    }
-
-    private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
-        AppClient.VerifyLocationRequest verifyLocationRequest = matchingEngine.createVerifyLocationRequest(ctx, carrierName, loc);
-        if (verifyLocationRequest != null) {
-            try {
-                AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
-                Log.i(TAG, "[Location Verified: Tower: " + verifyLocationReply.getTowerStatus() +
-                        ", GPS LocationStatus: " + verifyLocationReply.getGpsLocationStatus() +
-                        ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() + " ]\n");
-                return true;
-            } catch(NetworkOnMainThreadException ne) {
-                Log.e(TAG, "Network thread exception");
                 return false;
             }
-        } else {
-            Log.e(TAG, "Cannot verify location");
-            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean locationVerified) {
+            if(locationVerified){
+                checkboxLocationVerified.setChecked(true);
+                checkboxLocationVerified.setText(R.string.location_verified);
+            }
         }
     }
 }

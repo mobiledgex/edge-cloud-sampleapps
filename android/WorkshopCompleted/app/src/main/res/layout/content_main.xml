@@ -61,6 +61,26 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <CheckBox
+                android:id="@+id/checkBoxLocationVerified"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:text="@string/location_verified_question"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="5dip">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="App Name:"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
