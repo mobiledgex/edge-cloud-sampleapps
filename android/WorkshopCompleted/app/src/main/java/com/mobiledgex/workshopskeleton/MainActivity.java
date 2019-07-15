@@ -306,7 +306,7 @@ public class MainActivity extends AppCompatActivity
         location.setLatitude(37.3382);
         location.setLongitude(-121.8863);
 
-        doRequestInBackground(location);
+        verifyLocationInBackground(location);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
@@ -442,7 +442,8 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    public void doRequestInBackground (Location loc) {
+    private void verifyLocationInBackground(Location loc) {
+        // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
         new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
     }
 
@@ -458,8 +459,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
-    private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException{
+    private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
         AppClient.VerifyLocationRequest verifyLocationRequest = matchingEngine.createVerifyLocationRequest(ctx, carrierName, loc);
         if (verifyLocationRequest != null) {
             try {
