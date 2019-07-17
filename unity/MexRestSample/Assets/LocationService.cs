@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -117,7 +117,8 @@ public class LocationService : MonoBehaviour
     double remainder = timeInMilliseconds - seconds;
 
     nanos = (int)(remainder * 1e9);
-    ts = new DistributedMatchEngine.Timestamp { seconds = seconds, nanos = nanos };
+    // NOTE: GRPC's REST interface expects string for all UInt64 proto types.
+    ts = new DistributedMatchEngine.Timestamp { seconds = seconds.ToString(), nanos = nanos }; 
     return ts;
   }
 
