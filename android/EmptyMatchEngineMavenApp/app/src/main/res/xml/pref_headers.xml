@@ -3,6 +3,6 @@
     <header
         android:fragment="com.mobiledgex.emptymatchengineapp.SettingsActivity$LocationSettingsFragment"
         android:icon="@android:drawable/ic_menu_compass"
-        android:title="@string/preference_mex_location_verification_summary"/>
+        android:title="@string/preference_matching_engine_location_verification_summary"/>
 
 </preference-headers>
