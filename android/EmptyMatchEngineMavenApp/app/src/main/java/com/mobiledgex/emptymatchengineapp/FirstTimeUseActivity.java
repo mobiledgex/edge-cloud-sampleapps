@@ -32,7 +32,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
         mRpUtil = new RequestPermissions();
         self = this;
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
+        prefKeyAllowMEX = getResources().getString(R.string.preference_matching_engine_location_verification);
 
         TextView devLocationWhy = findViewById(R.id.permission_location_device_why);
         devLocationWhy.setOnClickListener(new View.OnClickListener() {
@@ -92,7 +92,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
     }
 
     private boolean shouldFinish(Activity activity) {
-        final String prefKeyAllowMEX = getResources().getString(R.string.preference_mex_location_verification);
+        final String prefKeyAllowMEX = getResources().getString(R.string.preference_matching_engine_location_verification);
         boolean mexLocationAllowed = prefs.getBoolean(prefKeyAllowMEX, false);
 
         Log.d(TAG, "mexLocationallowed: " + mexLocationAllowed);
