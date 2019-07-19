@@ -142,10 +142,12 @@ if __name__ == "__main__":
             thread.start()
 
     elif args.directory != None:
+        valid_extensions = ('jpg','jpeg', 'png')
         files = os.listdir(args.directory)
         for file in files:
             print("file=%s" %file)
-            if file.startswith("."):
+            if not file.endswith(valid_extensions):
+                print("Skipping %s" %file)
                 continue
             for i in range(args.threads):
                 rc = RequestClient()
