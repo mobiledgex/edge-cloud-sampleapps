@@ -10,7 +10,9 @@
     <string name="action_reset">Reset</string>
     <string name="cloudlet_found_question">Cloudlet Found?</string>
     <string name="client_registered_question">Client Registered?</string>
+    <string name="location_verified_question">Location Verified?</string>
     <string name="cloudlet_found">Cloudlet Found</string>
     <string name="client_registered">Client Registered</string>
+    <string name="location_verified">Location Verified</string>
 
 </resources>
