@@ -309,8 +309,6 @@ public class MainActivity extends AppCompatActivity
         location.setLatitude(37.3382);
         location.setLongitude(-121.8863);
 
-        verifyLocationInBackground(location);
-
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
         AppClient.FindCloudletRequest findCloudletRequest= matchingEngine.createFindCloudletRequest (ctx,
@@ -367,6 +365,8 @@ public class MainActivity extends AppCompatActivity
 
         // TODO: Copy/paste the output of this log into a terminal to test latency.
         Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
+
+        verifyLocationInBackground(location);
 
         return true;
     }
