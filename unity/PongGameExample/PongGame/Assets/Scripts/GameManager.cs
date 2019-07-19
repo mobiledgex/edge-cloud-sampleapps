@@ -60,6 +60,7 @@ namespace MexPongGame {
     MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
     string host = "localhost";
+    string localServerHost = "10.227.66.55"; // Local server hack. Override for dev demo use.
     int port = 3000;
     string server = "";
 
@@ -72,9 +73,15 @@ namespace MexPongGame {
     public Text uiConsole;
 
     // Use this for initialization
-    async void Start()
+    async Task Start()
     {
-      integration.useDemo = true; // Demo mode DME server to run MEX APIs.
+      integration.useDemo = true; // Demo mode DME server to run MobiledgeX APIs.
+      // Use local server, by IP. This must be started before use:
+      Uri edgeCloudletUri = null;
+      if (demoServer)
+      {
+        host = localServerHost;
+      }
 
       server = "ws://" + host + ":" + port;
       theBall = GameObject.FindGameObjectWithTag("Ball");
@@ -94,10 +101,14 @@ namespace MexPongGame {
       uiConsole.text = "Registering to DME: ";
       string edgeCloudletStr = await RegisterAndFindCloudlet();
       clog("Found Cloudlet from DME result: " + edgeCloudletStr);
-      Uri edgeCloudletUri = null;
-      if (edgeCloudletStr != null)
+
+      if (edgeCloudletStr != null && edgeCloudletStr != "")
       {
         edgeCloudletUri = new Uri("ws://" + edgeCloudletStr);
+      }
+      else if (demoServer == true && edgeCloudletStr == "")
+      {
+        edgeCloudletUri = new Uri(server);
       }
 
       // This might be inside the update loop. Re-register client and check periodically.
@@ -122,7 +133,7 @@ namespace MexPongGame {
     }
 
 
-    async Task Update()
+    void Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
       if (client == null)
@@ -636,7 +647,7 @@ namespace MexPongGame {
       return gameState;
     }
 
-    async void UpdateServer()
+    void UpdateServer()
     {
       GameState gameState = GatherGameState();
       gameState.type = "gameState";
