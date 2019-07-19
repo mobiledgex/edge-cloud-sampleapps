@@ -73,7 +73,7 @@ namespace MexPongGame {
     public Text uiConsole;
 
     // Use this for initialization
-    async void Start()
+    async Task Start()
     {
       integration.useDemo = true; // Demo mode DME server to run MEX APIs.
 
@@ -128,7 +128,7 @@ namespace MexPongGame {
     }
 
 
-    async Task Update()
+    void Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
       if (client == null)
@@ -642,7 +642,7 @@ namespace MexPongGame {
       return gameState;
     }
 
-    async void UpdateServer()
+    void UpdateServer()
     {
       GameState gameState = GatherGameState();
       gameState.type = "gameState";
