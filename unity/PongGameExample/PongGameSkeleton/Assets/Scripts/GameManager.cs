@@ -60,6 +60,7 @@ namespace MexPongGame {
     MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
     string host = "localhost";
+    string localServerHost = "10.227.66.55"; // Local server hack. Override for dev demo use.
     int port = 3000;
     string server = "";
 
@@ -72,7 +73,7 @@ namespace MexPongGame {
     public Text uiConsole;
 
     // Use this for initialization
-    async void Start()
+    async Task Start()
     {
       integration.useDemo = true; // Demo mode DME server to run MEX APIs.
 
@@ -95,9 +96,14 @@ namespace MexPongGame {
       string edgeCloudletStr = await RegisterAndFindCloudlet();
       clog("Found Cloudlet from DME result: " + edgeCloudletStr);
       Uri edgeCloudletUri = null;
-      if (edgeCloudletStr != null)
+
+      if (edgeCloudletStr != null && edgeCloudletStr != "")
       {
         edgeCloudletUri = new Uri("ws://" + edgeCloudletStr);
+      }
+      else if (demoServer == true && edgeCloudletStr == "")
+      {
+        edgeCloudletUri = new Uri(server);
       }
 
       // This might be inside the update loop. Re-register client and check periodically.
@@ -122,7 +128,7 @@ namespace MexPongGame {
     }
 
 
-    async Task Update()
+    void Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
       if (client == null)
@@ -223,28 +229,28 @@ namespace MexPongGame {
           Debug.Log("GPS location: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
 
           // Where is the URI for this app specific edge enabled cloud server:
-          Debug.Log("FQDN: " + reply.FQDN);
+          Debug.Log("FQDN: " + reply.fqdn);
           // AppPorts?
           Debug.Log("On ports: ");
 
           foreach (AppPort ap in reply.ports)
           {
             Debug.Log("Port: proto: " + ap.proto + ", prefix: " +
-                ap.FQDN_prefix + ", public path: " + ap.public_path + ", port: " +
+                ap.fqdn_prefix + ", public path prefix: " + ap.path_prefix + ", port: " +
                 ap.public_port);
 
             // We're looking for one of the TCP app ports:
-            if (ap.proto == LProto.LProtoTCP)
+            if (ap.proto == LProto.L_PROTO_TCP)
             {
-              tcpAppPort = reply.FQDN + ":" + ap.public_port;
+              tcpAppPort = reply.fqdn + ":" + ap.public_port;
               // FQDN prefix to append to base FQDN in FindCloudlet response. May be empty.
-              if (ap.FQDN_prefix != "")
+              if (ap.fqdn_prefix != "")
               {
-                tcpAppPort = ap.FQDN_prefix + tcpAppPort;
+                tcpAppPort = ap.fqdn_prefix + tcpAppPort;
               }
 
               // Add to test targets.
-              hostAndPort = new NetTest.HostAndPort {  host = ap.FQDN_prefix + reply.FQDN, port = ap.public_port };
+              hostAndPort = new NetTest.HostAndPort {  host = ap.fqdn_prefix + reply.fqdn, port = ap.public_port };
               netTest.sites.Enqueue(hostAndPort);
             }
 
@@ -636,7 +642,7 @@ namespace MexPongGame {
       return gameState;
     }
 
-    async void UpdateServer()
+    void UpdateServer()
     {
       GameState gameState = GatherGameState();
       gameState.type = "gameState";

@@ -107,16 +107,16 @@ public class LocationService : MonoBehaviour
     return ConvertUnityLocationToDMELoc(locationInfo);
   }
 
-  public static DistributedMatchEngine.Timestamp ConvertTimestamp(double timeInMilliseconds)
+  public static DistributedMatchEngine.Timestamp ConvertTimestamp(double timeInSeconds)
   {
     DistributedMatchEngine.Timestamp ts;
 
     int nanos;
-    long seconds = (int)timeInMilliseconds; // Truncate.
-    double remainder = timeInMilliseconds - seconds;
+    long sec = (long)(timeInSeconds); // Truncate.
+    double remainder = timeInSeconds - (double)sec;
 
     nanos = (int)(remainder * 1e9);
-    ts = new DistributedMatchEngine.Timestamp { seconds = seconds, nanos = nanos };
+    ts = new DistributedMatchEngine.Timestamp { seconds = sec.ToString(), nanos = nanos };
     return ts;
   }
 
