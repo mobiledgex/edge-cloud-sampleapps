@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity
     public static final int RC_STATS = 2;
     private MatchingEngine matchingEngine;
     private RequestPermissions mRpUtil;
-    private String someText = null;
+    private String statusText = null;
     private AppClient.FindCloudletReply mClosestCloudlet;
     private Activity ctx;
     private String host;
@@ -121,8 +121,8 @@ public class MainActivity extends AppCompatActivity
                     }
                 } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException e) {
                     e.printStackTrace();
-                    someText = "Registration Failed. Exception="+e.getLocalizedMessage();
-                    showErrorMsg(someText);
+                    statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
+                    showErrorMsg(statusText);
                 }
             }
         });
@@ -274,9 +274,9 @@ public class MainActivity extends AppCompatActivity
         /////////////////////////////////////////////////////////////////////////////////////
 
         if(matchingEngine == null) {
-            someText = "registerClient call is not successfully coded. Search for TODO in code.";
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "registerClient call is not successfully coded. Search for TODO in code.";
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
 
@@ -284,9 +284,9 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "registerStatus.getStatus()="+registerStatus.getStatus());
 
         if (registerStatus.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
-            someText = "Registration Failed. Error: " + registerStatus.getStatus();
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "Registration Failed. Error: " + registerStatus.getStatus();
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
 
@@ -309,8 +309,6 @@ public class MainActivity extends AppCompatActivity
         location.setLatitude(37.3382);
         location.setLongitude(-121.8863);
 
-        verifyLocationInBackground(location);
-
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
         AppClient.FindCloudletRequest findCloudletRequest= matchingEngine.createFindCloudletRequest (ctx,
@@ -320,15 +318,15 @@ public class MainActivity extends AppCompatActivity
 
         Log.i(TAG, "mClosestCloudlet="+mClosestCloudlet);
         if(mClosestCloudlet == null) {
-            someText = "findCloudlet call is not successfully coded. Search for TODO in code.";
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "findCloudlet call is not successfully coded. Search for TODO in code.";
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
         if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
-            someText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
         Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFqdn());
@@ -367,6 +365,8 @@ public class MainActivity extends AppCompatActivity
 
         // TODO: Copy/paste the output of this log into a terminal to test latency.
         Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
+
+        verifyLocationInBackground(location);
 
         return true;
     }
@@ -472,9 +472,9 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Boolean doInBackground(Location... params) {
             try {
-                if(verifyLocation(params[0])){
+                if (verifyLocation(params[0])) {
                     return true;
-                }else{
+                } else {
                     return false;
                 }
             } catch (InterruptedException | IOException | ExecutionException e) {
@@ -485,7 +485,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Boolean locationVerified) {
-            if(locationVerified){
+            if (locationVerified) {
                 checkboxLocationVerified.setChecked(true);
                 checkboxLocationVerified.setText(R.string.location_verified);
             }
