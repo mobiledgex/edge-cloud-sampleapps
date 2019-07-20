@@ -477,10 +477,18 @@ public class MainActivity extends AppCompatActivity
                 } else {
                     return false;
                 }
-            } catch (InterruptedException | IOException | ExecutionException e) {
-                Log.e(TAG, "Exception");
-                return false;
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            } catch (IOException ioe) {
+                statusText = ioe.getMessage();
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
+            } catch (ExecutionException ee) {
+                statusText = ee.getMessage();
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
             }
+            return false;
         }
 
         @Override
