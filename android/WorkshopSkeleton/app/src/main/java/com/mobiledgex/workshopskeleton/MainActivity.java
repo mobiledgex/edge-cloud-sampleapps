@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.NetworkOnMainThreadException;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -25,6 +27,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -45,7 +48,6 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 
-
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity
     private static final int RC_SIGN_IN = 1;
     public static final int RC_STATS = 2;
     private MatchingEngine matchingEngine;
-    private String someText = null;
+    private String statusText = null;
     private AppClient.FindCloudletReply mClosestCloudlet;
     private Activity ctx;
     private String host;
@@ -73,6 +75,7 @@ public class MainActivity extends AppCompatActivity
     private TextView longitudeTv;
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
+    private CheckBox checkboxLocationVerified;
     private ProgressBar progressBar;
     private String mClosestCloudletHostName;
 
@@ -98,6 +101,7 @@ public class MainActivity extends AppCompatActivity
         longitudeTv = findViewById(R.id.longitude);
         checkboxRegistered = findViewById(R.id.checkBoxRegistered);
         checkboxCloudletFound = findViewById(R.id.checkBoxCloudletFound);
+        checkboxLocationVerified = findViewById(R.id.checkBoxLocationVerified);
         progressBar = findViewById(R.id.progressBar);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -114,8 +118,8 @@ public class MainActivity extends AppCompatActivity
                     }
                 } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException e) {
                     e.printStackTrace();
-                    someText = "Registration Failed. Exception="+e.getLocalizedMessage();
-                    showErrorMsg(someText);
+                    statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
+                    showErrorMsg(statusText);
                 }
             }
         });
@@ -152,7 +156,6 @@ public class MainActivity extends AppCompatActivity
             signInMenuItem.setVisible(true);
             signOutMenuItem.setVisible(false);
         }
-
     }
 
     @Override
@@ -194,6 +197,8 @@ public class MainActivity extends AppCompatActivity
             checkboxRegistered.setText(R.string.client_registered_question);
             checkboxCloudletFound.setChecked(false);
             checkboxCloudletFound.setText(R.string.cloudlet_found_question);
+            checkboxLocationVerified.setChecked(false);
+            checkboxLocationVerified.setText(R.string.location_verified_question);
             return true;
         }
 
@@ -249,9 +254,9 @@ public class MainActivity extends AppCompatActivity
         /////////////////////////////////////////////////////////////////////////////////////
 
         if(matchingEngine == null) {
-            someText = "registerClient call is not successfully coded. Search for TODO in code.";
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "registerClient call is not successfully coded. Search for TODO in code.";
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
 
@@ -259,9 +264,9 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "registerStatus.getStatus()="+registerStatus.getStatus());
 
         if (registerStatus.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
-            someText = "Registration Failed. Error: " + registerStatus.getStatus();
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "Registration Failed. Error: " + registerStatus.getStatus();
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
 
@@ -293,15 +298,15 @@ public class MainActivity extends AppCompatActivity
 
         Log.i(TAG, "mClosestCloudlet="+mClosestCloudlet);
         if(mClosestCloudlet == null) {
-            someText = "findCloudlet call is not successfully coded. Search for TODO in code.";
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "findCloudlet call is not successfully coded. Search for TODO in code.";
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
         if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
-            someText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
-            Log.e(TAG, someText);
-            showErrorMsg(someText);
+            statusText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
+            Log.e(TAG, statusText);
+            showErrorMsg(statusText);
             return false;
         }
         Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFqdn());
@@ -341,7 +346,21 @@ public class MainActivity extends AppCompatActivity
         // TODO: Copy/paste the output of this log into a terminal to test latency.
         Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostName);
 
+        verifyLocationInBackground(location);
+
         return true;
+    }
+
+    private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        // TODO: Copy/paste the code to verify location.
+        return false;
+        ////////////////////////////////////////////////////////////////////////////////////////////
+    }
+
+    private void verifyLocationInBackground(Location loc) {
+        // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
+        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
     }
 
     public void showErrorMsg(String msg) {
@@ -403,4 +422,45 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // TODO: Add code to allow user to choose permissions during use of the app.
+    }
+
+    public class BackgroundRequest extends AsyncTask<Location, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Location... params) {
+            try {
+                if (verifyLocation(params[0])) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            } catch (IOException ioe) {
+                statusText = ioe.getMessage();
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
+            } catch (ExecutionException ee) {
+                statusText = ee.getMessage();
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean locationVerified) {
+            if (locationVerified) {
+                checkboxLocationVerified.setChecked(true);
+                checkboxLocationVerified.setText(R.string.location_verified);
+            } else {
+                statusText = "verifyLocation call is not successfully coded. Search for TODO in code.";
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
+            }
+        }
+    }
 }
