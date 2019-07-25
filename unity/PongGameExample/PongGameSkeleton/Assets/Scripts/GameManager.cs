@@ -110,7 +110,7 @@ namespace MexPongGame {
       bool verifiedLocation = await integration.VerifyLocation();
 
       // Decide what to do with location status.
-      Debug.Log("VerifiedLocation: " + verifiedLocation);
+      clog("VerifiedLocation: " + verifiedLocation);
 
       // For the non-demo server case:
       clog("Connecting to WebSocket Server...");
@@ -160,7 +160,7 @@ namespace MexPongGame {
 
     void clog(string msg)
     {
-      uiConsole.text = msg;
+      uiConsole.text += msg + "\n";
       Debug.Log(msg);
     }
 
@@ -223,10 +223,10 @@ namespace MexPongGame {
         if (found)
         {
           // Edge cloudlets found!
-          Debug.Log("Edge cloudlets found!");
+          clog("Edge cloudlets found!");
 
           // Where is this app specific edge enabled cloud server:
-          Debug.Log("GPS location: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
+          clog("GPS location: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
 
           // Where is the URI for this app specific edge enabled cloud server:
           Debug.Log("FQDN: " + reply.fqdn);
