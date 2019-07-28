@@ -68,7 +68,7 @@ namespace MexPongGame {
 
     bool isPaused = false;
 
-    bool demoServer = true;
+    bool demoServer = false;
     NetTest netTest = new NetTest();
 
     GameObject uiG;
