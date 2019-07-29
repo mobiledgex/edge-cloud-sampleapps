@@ -1,7 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
-
-def grpcVersion = '1.20.0'
+apply plugin: 'com.jfrog.artifactory'
 
 android {
     archivesBaseName = "MobiledgeXSDKDemo"
@@ -69,7 +68,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation "com.mobiledgex:matchingengine:${project.matchingengineVersion}"
+    implementation "com.mobiledgex:matchingengine:${matchingengineVersion}"
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
