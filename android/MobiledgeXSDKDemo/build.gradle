@@ -1,6 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-project.ext.matchingengineVersion = "1.4.4"
+project.ext.matchingengineVersion = "1.4.7"
+project.ext.grpcVersion = '1.20.0'
 
 //
 buildscript {
@@ -13,6 +14,9 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.4.0'
         classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.8"
 
+        // JFrog Artifactory:
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:latest.release"
+
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -20,10 +24,12 @@ buildscript {
 
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
-def nexusUser = properties.getProperty("nexus.user")
-def nexusPassword = properties.getProperty("nexus.password")
+def artifactory_user = properties.getProperty("artifactory_user")
+def artifactory_password = properties.getProperty("artifactory_password")
 
 allprojects {
+    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'maven-publish'
     repositories {
         google()
         jcenter()
@@ -31,17 +37,39 @@ allprojects {
         maven {
             credentials {
                 // Create these variables in local.properties if you don't have them.
-                username nexusUser
-                password nexusPassword
+                username artifactory_user
+                password artifactory_password
             }
-            def version = project.matchingengineVersion
-            def releasesRepoUrl = "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
-            def snapshotsRepoUrl = "https://registry.mobiledgex.net/nexus/content/repositories/snapshots/"
-            url = version.endsWith('SNAP') ? snapshotsRepoUrl : releasesRepoUrl
+            url = "https://artifactory.mobiledgex.net/maven-releases/"
         }
     }
 }
 
+artifactory {
+    contextUrl = "https://artifactory.mobiledgex.net/"
+    publish {
+        repository {
+            repoKey = 'maven-releases' // The Artifactory repository key to publish to
+            username = "${artifactory_user}" // The publisher user name
+            password = "${artifactory_password}" // The publisher password
+            // This is an optional section for configuring Ivy publication (when publishIvy = true).
+            ivy {
+                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
+                artifactLayout = '[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]'
+                mavenCompatible = true //Convert any dots in an [organization] layout value to path separators, similar to Maven's groupId-to-path conversion. True if not specified
+            }
+        }
+        defaults {
+            // Reference to Gradle publications defined in the build script.
+            // This is how we tell the Artifactory Plugin which artifacts should be
+            // published to Artifactory.
+            publishArtifacts = true
+            // Properties to be attached to the published artifacts.
+            properties = ['qa.level': 'basic', 'dev.team' : 'core']
+            publishPom = true // Publish generated POM files to Artifactory (true by default)
+        }
+    }
+}
 
 task clean(type: Delete) {
     delete rootProject.buildDir
