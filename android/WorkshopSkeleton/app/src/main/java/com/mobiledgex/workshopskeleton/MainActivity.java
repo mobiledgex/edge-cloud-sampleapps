@@ -368,7 +368,6 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////////////////////////////////////
     }
 
-
     private void verifyLocationInBackground(Location loc) {
         // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
         new VerifyLocBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
@@ -378,6 +377,10 @@ public class MainActivity extends AppCompatActivity
         // Creates new BackgroundRequest object which will call getQoSPositionKpi to run on background thread
         new QoSPosBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: Copy/paste the code to get list of gps locations
+    ////////////////////////////////////////////////////////////////////////////////////////////
 
     public void showErrorMsg(String msg) {
         Snackbar.make(findViewById(android.R.id.content), msg, Snackbar.LENGTH_LONG).show();
