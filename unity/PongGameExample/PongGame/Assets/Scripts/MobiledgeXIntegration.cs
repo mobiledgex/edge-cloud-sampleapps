@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.Serialization.Json; using System.IO;
 using UnityEngine;
 
 using MexPongGame;
@@ -183,4 +184,34 @@ public class MobiledgeXIntegration
     return false;
   }
 
+    private List<QosPosition> createListOfPositions(Loc loc, float direction_degrees, double totalDistanceKm, double increment)
+    {
+        var req = new List<QosPosition>();
+        long positionid = 1;
+        Loc lastLocation = loc;
+
+        var firstQosPostion = new QosPosition
+        {
+            positionid = positionid.ToString(),
+            gps_location = lastLocation
+        };
+
+        req.Add(firstQosPostion);
+        double kmPerDegreeLat = 110.57; //at the Equator     double kmPerDegreeLong = 111.32; //at the Equator     double addLatitude = Mathf.Sin(direction_degrees) * increment / kmPerDegreeLat;
+        double addLongitude = Mathf.Cos(direction_degrees) * increment / kmPerDegreeLong;
+        for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionid++)
+        {
+            Loc next = lastLocation;
+            var np = new QosPosition
+            {
+                positionid = positionid.ToString(),
+                gps_location = next
+            };
+            req.Add(np);             next.longitude += addLongitude;             next.latitude += addLatitude;
+            lastLocation = next;
+        }         return req;
+    }      public async Task<bool> GetQosPositionKpi()
+    {         Loc loc = await GetLocationFromDevice();          string aCarrierName = pIntegration.GetCurrentCarrierName();         string eHost; // Ephemeral DME host (depends on the SIM).         string eCarrierName;         if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
+        {             eHost = host;             eCarrierName = carrierName;         }         else         {             eHost = me.GenerateDmeBaseUri(aCarrierName);             eCarrierName = aCarrierName;         }          List<QosPosition> positions = createListOfPositions(loc, 45, 200, 1);          QosPositionKpiRequest req = me.CreateQosPositionKpiRequest(positions);          QosPositionKpiStreamReply reply = await me.GetQosPositionKpi(eHost, port, req);          if (reply.result == null || reply.error != null)         {             Debug.Log("Reply result missing: " + reply);             return false;         }         else         {             Debug.Log("Result: " + reply.result);             DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionResult));             MemoryStream ms = new MemoryStream();             foreach (QosPositionResult qpr in reply.result.position_results)             {                 ms.Position = 0;                 serializer.WriteObject(ms, qpr);                 string jsonStr = Util.StreamToString(ms);                 Debug.Log("QosPositionResult: " + jsonStr);             }         }          return true;
+    }
 }
