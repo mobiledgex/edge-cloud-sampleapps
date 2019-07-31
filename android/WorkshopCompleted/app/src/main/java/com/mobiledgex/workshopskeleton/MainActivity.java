@@ -36,16 +36,20 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.maps.android.SphericalUtil;
+import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
+import java.net.HttpRetryException;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
+import distributed_match_engine.LocOuterClass;
 
 // Matching Engine API:
 
@@ -368,6 +372,8 @@ public class MainActivity extends AppCompatActivity
 
         verifyLocationInBackground(location);
 
+        getQoSPositionKpiInBackground(location);
+
         return true;
     }
 
@@ -385,14 +391,84 @@ public class MainActivity extends AppCompatActivity
                 return false;
             }
         } else {
-            Log.e(TAG, "Cannot verify location");
+            Log.e(TAG, "Verify Location request is null");
             return false;
         }
     }
 
+    private boolean getQoSPositionKpi(LocOuterClass.Loc loc) throws InterruptedException, ExecutionException{
+        List<AppClient.QosPosition> requests = createPositionList(loc, 45, 200, 1);
+        if (requests.isEmpty()) {
+            Log.e(TAG, "No items added to the position list");
+            return false;
+        }
+        AppClient.QosPositionKpiRequest qosPositionKpiRequest = matchingEngine.createQoSKPIRequest(requests);
+        if(qosPositionKpiRequest != null) {
+            try {
+                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionKpiRequest, host, port, 10000);
+                if (!qosPositionKpiReplies.hasNext()) {
+                    Log.e(TAG, "Replies is empty");
+                    return false;
+                }
+                while (qosPositionKpiReplies.hasNext()) {
+                    Log.i(TAG, "Position results are " + qosPositionKpiReplies.next().getPositionResultsList());
+                }
+                return true;
+            } catch (NetworkOnMainThreadException ne) {
+                Log.e(TAG, "Network thread exception");
+                return false;
+            }
+        } else {
+            Log.e(TAG, "QoS request is null");
+            return false;
+        }
+    }
+
+
     private void verifyLocationInBackground(Location loc) {
         // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
-        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
+        new VerifyLocBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
+    }
+
+    private void getQoSPositionKpiInBackground(Location loc) {
+        // Creates new BackgroundRequest object which will call getQoSPositionKpi to run on background thread
+        new QoSPosBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
+    }
+
+    private List<AppClient.QosPosition> createPositionList(LocOuterClass.Loc loc, double direction_degrees, double totalDistanceKm, double increment) {
+        List<AppClient.QosPosition> positions = new ArrayList<>();
+        long positionId = 1;
+
+        AppClient.QosPosition firstPosition = AppClient.QosPosition.newBuilder()
+                .setPositionid(positionId)
+                .setGpsLocation(loc)
+                .build();
+        positions.add(firstPosition);
+
+        LocOuterClass.Loc lastLocation = LocOuterClass.Loc.newBuilder()
+                .setLongitude(loc.getLongitude())
+                .setLatitude(loc.getLatitude())
+                .build();
+
+        double kmPerDegreeLat = 110.57; //at Equator
+        double kmPerDegreeLong = 111.32; //at Equator
+        double addLatitude = (Math.sin(direction_degrees) * increment)/kmPerDegreeLat;
+        double addLongitude = (Math.cos(direction_degrees) * increment)/kmPerDegreeLong;
+        for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionId++) {
+            LocOuterClass.Loc next = LocOuterClass.Loc.newBuilder()
+                    .setLongitude(lastLocation.getLongitude() + addLongitude)
+                    .setLatitude(lastLocation.getLatitude() + addLatitude)
+                    .build();
+            AppClient.QosPosition nextPosition = AppClient.QosPosition.newBuilder()
+                    .setPositionid(positionId)
+                    .setGpsLocation(next)
+                    .build();
+
+            positions.add(nextPosition);
+            Log.i(TAG, "Latitude is " + nextPosition.getGpsLocation().getLatitude() + " and Longitude is " + nextPosition.getGpsLocation().getLongitude());
+            lastLocation = next;
+        }
+        return positions;
     }
 
     public void showErrorMsg(String msg) {
@@ -468,11 +544,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public class BackgroundRequest extends AsyncTask<Location, Void, Boolean> {
+    public class VerifyLocBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
         @Override
-        protected Boolean doInBackground(Location... params) {
+        protected Boolean doInBackground(Object... params) {
             try {
-                if (verifyLocation(params[0])) {
+                if (verifyLocation((Location) params[0])) {
                     return true;
                 } else {
                     return false;
@@ -497,6 +573,31 @@ public class MainActivity extends AppCompatActivity
                 checkboxLocationVerified.setChecked(true);
                 checkboxLocationVerified.setText(R.string.location_verified);
             }
+        }
+    }
+
+    public class QoSPosBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Object... params) {
+            Location location = (Location) params[0];
+            LocOuterClass.Loc loc = LocOuterClass.Loc.newBuilder()
+                    .setLongitude(location.getLongitude())
+                    .setLatitude(location.getLatitude())
+                    .build();
+
+            try {
+                if (getQoSPositionKpi(loc)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            } catch (ExecutionException ee) {
+                statusText = ee.getMessage();
+                Log.e(TAG, statusText);
+            }
+            return false;
         }
     }
 }
