@@ -47,6 +47,7 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
+import distributed_match_engine.LocOuterClass;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -348,6 +349,8 @@ public class MainActivity extends AppCompatActivity
 
         verifyLocationInBackground(location);
 
+        getQoSPositionKpiInBackground(location);
+
         return true;
     }
 
@@ -358,9 +361,22 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////////////////////////////////////
     }
 
+    private boolean getQoSPositionKpi(LocOuterClass.Loc loc) throws InterruptedException, ExecutionException {
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        // TODO: Copy/paste the code to get QoS of gps locations.
+        return false;
+        ////////////////////////////////////////////////////////////////////////////////////////////
+    }
+
+
     private void verifyLocationInBackground(Location loc) {
         // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
-        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
+        new VerifyLocBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
+    }
+
+    private void getQoSPositionKpiInBackground(Location loc) {
+        // Creates new BackgroundRequest object which will call getQoSPositionKpi to run on background thread
+        new QoSPosBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
     }
 
     public void showErrorMsg(String msg) {
@@ -428,7 +444,7 @@ public class MainActivity extends AppCompatActivity
         // TODO: Add code to allow user to choose permissions during use of the app.
     }
 
-    public class BackgroundRequest extends AsyncTask<Location, Void, Boolean> {
+    public class VerifyLocBackgroundRequest extends AsyncTask<Location, Void, Boolean> {
         @Override
         protected Boolean doInBackground(Location... params) {
             try {
@@ -458,6 +474,40 @@ public class MainActivity extends AppCompatActivity
                 checkboxLocationVerified.setText(R.string.location_verified);
             } else {
                 statusText = "verifyLocation call is not successfully coded. Search for TODO in code.";
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
+            }
+        }
+    }
+
+    public class QoSPosBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Object... params) {
+            Location location = (Location) params[0];
+            LocOuterClass.Loc loc = LocOuterClass.Loc.newBuilder()
+                    .setLongitude(location.getLongitude())
+                    .setLatitude(location.getLatitude())
+                    .build();
+
+            try {
+                if (getQoSPositionKpi(loc)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            } catch (ExecutionException ee) {
+                statusText = ee.getMessage();
+                Log.e(TAG, statusText);
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean gotQoSPositions) {
+            if (!gotQoSPositions) {
+                statusText = "qosPositionKpi call is not successfully coded. Search for TODO in code.";
                 Log.e(TAG, statusText);
                 showErrorMsg(statusText);
             }
