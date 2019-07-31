@@ -81,5 +81,11 @@ public class MobiledgeXIntegration
     Debug.Log("VerifyLocation is NOT IMPLEMENTED");
     return false;
   }
+  
+  public async Task<bool> GetQosPositionKpi()
+  {
+    Debug.Log("GetQoSPositionKpi is NOT IMPLEMENTED");
+    return false;     
+  }
 
 }
