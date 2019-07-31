@@ -3,7 +3,7 @@ const WebSocket = require('ws');
 // FIXME: This test client does not use FindCloudlet to get this URL.
 //var server = 'ws://ponggamehackathonapp-tcp.mobiledgexponggamehackathonapp10.bonn-mexdemo.tdg.mobiledgex.net:3000';
 //var server = 'ws://ponggamehackathonapp-tcp.mobiledgexponggamehackathonapp10.bonn-mexdemo.tdg.mobiledgex.net:3000';
-var server = "ws://localhost:3000";
+var server = "ws://localhost:3000/?roomid=testroom01";
 var ws = new WebSocket(server);
 ws.onopen = function(){
   console.log('Connected to %s!', server);

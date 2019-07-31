@@ -551,6 +551,8 @@ function getConnectionFromAlias(uuidPlayer) {
 function createOrJoinMatch(uuidPlayer, roomId) {
   console.log("Player %s looking for room with roomID %s", uuidPlayer, roomId);
   gameId = roomId;
+  // TODO: gameId = roomId + "-" + uuidv4(); This requires reworking the code flow.
+
   if (gameId === undefined || gameId == null) {
     console.log("Bad state!");
     return;
