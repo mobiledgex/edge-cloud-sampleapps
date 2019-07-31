@@ -1,5 +1,6 @@
 const http = require('http');
 const WebSocket = require('ws');
+const url = require('url');
 
 const uuidv4 = require('uuid/v4');
 const util = require('util')
@@ -12,14 +13,14 @@ const wsServer = new WebSocket.Server({ noServer: true });
 const SIMULATELAGTIMEINMS = 0; // In milliseconds.
 var connectedClients = {};
 var games = {};
-var lobby = new Map(); // Mob Map.
-
 var nameMap = {};
 
 // HTTP Server ==> WebSocket upgrade handling:
 server.on('upgrade', function upgrade(request, socket, head) {
-  const pathname = request.url
-
+  console.log('upgrade http to wss: url='+request.url);
+  var parsedUrl = url.parse(request.url, true, true);
+  const pathname = parsedUrl.pathname
+  console.log("pathname="+pathname);
   if (pathname === '/') {
     wsServer.handleUpgrade(request, socket, head, function done(ws) {
       wsServer.emit('connection', ws, request);
@@ -38,9 +39,16 @@ wsServer.on('connection', function connection(ws, request) {
   let playerKey = "";
 
   console.log("got a request!");
+  var parsedUrl = url.parse(request.url, true, true);
+  //roomid value is passed as a query parameter in the URL.
+  //Example: ws://localhost:3000/?roomid=GamerX
+  let roomId = parsedUrl.query.roomid
+  console.log("roomId="+roomId);
 
   let sessionMsg = {};
   sessionMsg.type = "register";
+  console.log("request.headers="+JSON.stringify(request.headers));
+  console.log("request.url="+request.url);
   let playerkey = request.headers['sec-websocket-key'];
   sessionMsg.sessionId = playerkey;
   sessionMsg.uuidPlayer = uuidPlayer;
@@ -54,8 +62,7 @@ wsServer.on('connection', function connection(ws, request) {
   // Update websocket connections:
   connectedClients[playerkey] = ws;
 
-  // Add to lobby.
-  let gameId = createMatch(uuidPlayer);
+  let gameId = createOrJoinMatch(uuidPlayer, roomId);
   console.log("player: " + uuidPlayer + " has gameId: " + gameId);
 
   // Handle all messages from users here. The C# websocket embeds all text in
@@ -95,11 +102,10 @@ wsServer.on('connection', function connection(ws, request) {
     console.log("Disconnecting user: " + uuidPlayer);
     delete nameMap[uuidPlayer];
     delete connectedClients[playerKey];
-    lobby.delete(uuidPlayer);
 
-    // Move other player back to lobby:
+    // Move other player back to waiting state:
     let game = games[gameId];
-    if (game !== undefined) {
+    if (game !== undefined && game.players !== undefined) {
       console.log("Players: %o", game.players);
       for (let i = 0; i < game.players.length; i++) {
         let player = game.players[i];
@@ -107,13 +113,19 @@ wsServer.on('connection', function connection(ws, request) {
           continue;
         }
         if (player != uuidPlayer) {
-          console.log("re-adding: " + player)
-          lobby.set(player, uuidv4()); // kick back to lobby
+          console.log("Moving " + player + " to waiting state.");
+          // Replace the running game with the simplified "waiting state" version.
+          games[gameId] = {gameId: gameId, player1: player};
+          let connection = getConnectionFromAlias(player);
+          let message = "Other player left game '" + gameId + "'. Waiting for second player...";
+          console.log(message);
+          connection.send(JSON.stringify({type: "notification", notificationText: message}));
+          connection.send(JSON.stringify({type: "resign"}));
         }
       }
     }
     console.log("Player %s disconnected.", uuidPlayer);
-    //console.log("Connection NameMap: %o, connectedClients: %o, lobby: %o", nameMap, Object.keys(connectedClients), lobby);
+    //console.log("Connection NameMap: %o, connectedClients: %o, nameMap, Object.keys(connectedClients));
   });
 });
 
@@ -219,6 +231,10 @@ function updateContactEvent(item) {
 
 function updateObject(item) {
   let game = games[item.gameId];
+  if (game.gameStates == null) {
+    // console.log("updateObject received for non-running game");
+    return;
+  }
 
   // To update an item, you need: item type, item uuid, position, velocity:
   // Echo only, even to self to allow client to check differences.
@@ -296,7 +312,7 @@ function updateGameStates(alias, playerGameState) {
   }
 
   if (playerGameState.currentPlayer != alias) {
-  console.log("You are not you!");
+    console.log("You are not you!");
     return;
   }
 
@@ -532,41 +548,38 @@ function getConnectionFromAlias(uuidPlayer) {
   return connection;
 }
 
-function createMatch(uuidPlayer) {
-  let gameId = null;
-  if (lobby.size == 0) {
-    lobby.set(uuidPlayer, uuidv4());
-    console.log("No other players. Created gameId: %s", lobby.get(uuidPlayer));
-    return lobby.get(uuidPlayer);
-  }
-  // Join the lobby.
-  lobby.set(uuidPlayer, uuidv4());
-
-  // Pick some other player in lobby:
-  let uuidOtherPlayer = lobby.keys().next().value;
-  let joinGameId = null;
-  if (uuidOtherPlayer !== undefined) {
-    joinGameId = lobby.get(uuidOtherPlayer);
-    console.log("GameID of other player to join: " + joinGameId);
-    if (joinGameId === undefined) {
-      console.log("Error. Missing JoinGameID!");
-      return null;
-    }
-    lobby.delete(uuidOtherPlayer);
-  }
-
-  gameId = joinGameId;
+function createOrJoinMatch(uuidPlayer, roomId) {
+  console.log("Player %s looking for room with roomID %s", uuidPlayer, roomId);
+  gameId = roomId;
+  // TODO: gameId = roomId + "-" + uuidv4(); This requires reworking the code flow.
 
   if (gameId === undefined || gameId == null) {
     console.log("Bad state!");
     return;
   }
-  // Take out of lobby for match.
-  lobby.delete(uuidPlayer);
+
+  let connection = getConnectionFromAlias(uuidPlayer);
+  game = games[gameId];
+  if(game == null) {
+    // Create a simplified instance of the game object to hold the gameId and the playerId
+    games[gameId] = {gameId: gameId, player1: uuidPlayer};
+    let message = "Created game '" + gameId + "'. Waiting for second player...";
+    console.log(message);
+    connection.send(JSON.stringify({type: "notification", notificationText: message}));
+    return gameId;
+  }
+
+  uuidOtherPlayer = games[gameId].player1;
+  console.log("Room already exists. uuidOtherPlayer="+uuidOtherPlayer);
+  if(games[gameId].player2 != null) {
+    let message = "Room " + gameId + " is already full.";
+    console.log(message);
+    connection.send(JSON.stringify({type: "notification", notificationText: message}));
+    return;
+  }
 
   // Check for connections to players:
-  console.log("Lobby: %o, uuidPlayer: %s, uuidOtherPlayer: %s, gameId: %d", lobby, uuidPlayer, uuidOtherPlayer, gameId)
-
+  console.log("uuidPlayer: %s, uuidOtherPlayer: %s, gameId: %d", uuidPlayer, uuidOtherPlayer, gameId)
 
   let otherConnection = null;
   if (uuidOtherPlayer !== undefined)
@@ -575,7 +588,6 @@ function createMatch(uuidPlayer) {
     console.log("Other player is not connected: " + uuidOtherPlayer);
     return null;
   }
-  let connection = getConnectionFromAlias(uuidPlayer);
 
   // A game is a pair of players, and a "recording" of all game states until a winner is found.
 
@@ -585,9 +597,9 @@ function createMatch(uuidPlayer) {
   games[gameId] = {
     gameId: gameId,
     sequence: 0,
-    players: [uuidPlayer, uuidOtherPlayer],
-    player1: uuidPlayer,
-    player2: uuidOtherPlayer,
+    players: [uuidOtherPlayer, uuidPlayer],
+    player1: uuidOtherPlayer,
+    player2: uuidPlayer,
     playerScore1: 0,
     playerScore2: 0,
     gameStates: gameStates
@@ -694,3 +706,4 @@ function gameRestart(gameRestartRequest) {
 
 
 server.listen(3000);
+console.log("Listening for player connections on port 3000");

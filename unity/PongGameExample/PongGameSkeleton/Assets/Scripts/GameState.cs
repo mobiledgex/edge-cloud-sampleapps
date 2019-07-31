@@ -78,6 +78,26 @@ namespace MexPongGame
   }
 
   [DataContract]
+  public class Notification
+  {
+    [DataMember]
+    public string type = "notification";
+
+    [DataMember]
+    public string notificationText;
+  }
+
+  [DataContract]
+  public class GameResign
+  {
+    [DataMember]
+    public string type = "gameResign";
+
+    [DataMember]
+    public string gameId;
+  }
+
+  [DataContract]
   public class GameRegister
   {
     [DataMember]

@@ -55,14 +55,16 @@ namespace MexPongGame {
 
     /**
      * MobiledgeX Integration: thin example encapsulation outside Pong for ease
-     * of viewing.    
+     * of viewing.
      */
     MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
     string host = "localhost";
-    string localServerHost = "10.227.66.55"; // Local server hack. Override for dev demo use.
+    string localServerHost = "192.168.1.81"; // Local server hack. Override and set demoServer=true for dev demo use.
     int port = 3000;
     string server = "";
+    string queryParams = "";
+    string edgeCloudletStr = "";
 
     bool isPaused = false;
 
@@ -71,13 +73,13 @@ namespace MexPongGame {
 
     GameObject uiG;
     public Text uiConsole;
+    public InputField roomIdInput;
 
     // Use this for initialization
     async Task Start()
     {
       integration.useDemo = true; // Demo mode DME server to run MobiledgeX APIs.
       // Use local server, by IP. This must be started before use:
-      Uri edgeCloudletUri = null;
       if (demoServer)
       {
         host = localServerHost;
@@ -97,41 +99,53 @@ namespace MexPongGame {
       uiG = GameObject.FindGameObjectWithTag("UIConsole");
       uiConsole = uiG.GetComponent<Text>();
 
+      // Attach a listener to the Room ID input field.
+      roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
+      roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
+
       // Register and find cloudlet:
       uiConsole.text = "Registering to DME: ";
-      string edgeCloudletStr = await RegisterAndFindCloudlet();
+      edgeCloudletStr = await RegisterAndFindCloudlet();
       clog("Found Cloudlet from DME result: " + edgeCloudletStr);
-
-      if (edgeCloudletStr != null && edgeCloudletStr != "")
-      {
-        edgeCloudletUri = new Uri("ws://" + edgeCloudletStr);
-      }
-      else if (demoServer == true && edgeCloudletStr == "")
-      {
-        edgeCloudletUri = new Uri(server);
-      }
 
       // This might be inside the update loop. Re-register client and check periodically.
       bool verifiedLocation = await integration.VerifyLocation();
 
       // Decide what to do with location status.
       Debug.Log("VerifiedLocation: " + verifiedLocation);
+    }
 
-      // For the non-demo server case:
-      clog("Connecting to WebSocket Server...");
+    // This method is called when the user has finished editing the Room ID InputField.
+    async void ConnectToServerWithRoomId(string roomId)
+    {
+      if(roomId == "")
+      {
+        clog("You must enter a room ID. Please try again.");
+        return;
+      }
+      Uri edgeCloudletUri = null;
+      clog("Connecting to WebSocket Server with roomId="+roomId+"...");
+      clog("demoServer="+demoServer+" host="+host+" edgeCloudletStr="+edgeCloudletStr);
+      queryParams = "?roomid="+roomId;
       if (demoServer)
       {
-        await client.Connect(new Uri(server));
-        clog("Connection to " + server + " status: " + client.isOpen());
+        server = "ws://" + host + ":" + port;
+        edgeCloudletUri = new Uri(server + queryParams);
+        await client.Connect(edgeCloudletUri);
         netTest.sites.Enqueue(new NetTest.HostAndPort{host=host, port=port});
       }
       else
       {
+        if(edgeCloudletStr == "")
+        {
+          clog("No edgeCloudletUri received yet. Please try again.");
+          return;
+        }
+        edgeCloudletUri = new Uri("ws://" + edgeCloudletStr + queryParams);
         await client.Connect(edgeCloudletUri);
-        clog("Connection to " + edgeCloudletStr + " status: " + client.isOpen());
       }
+      clog("Connection to " + edgeCloudletUri + " status: " + client.isOpen());
     }
-
 
     void Update()
     {
@@ -421,6 +435,10 @@ namespace MexPongGame {
       {
         case "qotd":
           break;
+        case "notification":
+          Notification notification = Messaging<Notification>.Deserialize(message);
+          clog(notification.notificationText);
+          break;
         case "register":
           GameRegister register = Messaging<GameRegister>.Deserialize(message);
           gameSession.sessionId = register.sessionId;
@@ -448,8 +466,10 @@ namespace MexPongGame {
           HandleContactEvent(ce);
           break;
         case "resign":
+          GameResign resign = Messaging<GameResign>.Deserialize(message);
+          theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+          ghostBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
           break;
-
         case "nextRound":
           NextRound nr = Messaging<NextRound>.Deserialize(message);
           StartNextRound(nr);
@@ -568,7 +588,7 @@ namespace MexPongGame {
           pc.setPosition(moveItem.position);
           pc.setVelocity(moveItem.velocity);
         }
-        
+
       }
       return true;
     }
