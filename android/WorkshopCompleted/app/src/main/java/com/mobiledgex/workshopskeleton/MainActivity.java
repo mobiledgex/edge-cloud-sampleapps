@@ -450,8 +450,10 @@ public class MainActivity extends AppCompatActivity
                 .setLatitude(loc.getLatitude())
                 .build();
 
-        double addLatitude = Math.sin(direction_degrees) * increment;
-        double addLongitude = Math.cos(direction_degrees) * increment;
+        double kmPerDegreeLat = 110.57; //at Equator
+        double kmPerDegreeLong = 111.32; //at Equator
+        double addLatitude = (Math.sin(direction_degrees) * increment)/kmPerDegreeLat;
+        double addLongitude = (Math.cos(direction_degrees) * increment)/kmPerDegreeLong;
         for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionId++) {
             LocOuterClass.Loc next = LocOuterClass.Loc.newBuilder()
                     .setLongitude(lastLocation.getLongitude() + addLongitude)
