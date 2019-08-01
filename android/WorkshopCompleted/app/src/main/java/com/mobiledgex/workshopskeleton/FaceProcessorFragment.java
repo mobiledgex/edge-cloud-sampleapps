@@ -86,7 +86,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         /////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to define an ImageSender
         String host = mHostDetectionEdge; //The default from the base class.
-        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, host, FACE_DETECTION_HOST_PORT);
+        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, host, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.FACE_DETECTION);
         mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
         mCameraToolbar.setTitle("Face Detection");

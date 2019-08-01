@@ -1,6 +1,9 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'com.jfrog.artifactory'
 
 def grpcVersion = '1.20.0'
+
 
 android {
     compileSdkVersion 28
@@ -35,13 +38,13 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
 
     // Matching Engine SDK
-    implementation 'com.mobiledgex:matchingengine:1.4.4'
+    implementation 'com.mobiledgex:matchingengine:1.4.7'
 
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
 
     // MobiledgeX Computer Vision library
-    implementation 'com.mobiledgex:computervision:1.0.4'
+    implementation 'com.mobiledgex:computervision:1.0.5'
     implementation 'com.android.volley:volley:1.1.1'
 }
