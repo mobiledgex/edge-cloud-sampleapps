@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.Serialization.Json;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -112,7 +114,27 @@ namespace MexPongGame {
       bool verifiedLocation = await integration.VerifyLocation();
 
       // Decide what to do with location status.
-      Debug.Log("VerifiedLocation: " + verifiedLocation);
+      clog("VerifiedLocation: " + verifiedLocation);
+
+      //QosPositions of various gps locations
+      QosPositionKpiStreamReply reply = await integration.GetQosPositionKpi(); 
+      if (reply.result == null || reply.error != null)
+      {
+        clog("Reply result missing: " + reply);
+      }
+      else
+      {
+        clog("Result: " + reply.result);
+        DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionResult));
+        MemoryStream ms = new MemoryStream();
+        foreach (QosPositionResult qpr in reply.result.position_results)
+        {
+            ms.Position = 0;
+            serializer.WriteObject(ms, qpr);
+            string jsonStr = Util.StreamToString(ms);
+            clog("QosPositionResult: " + jsonStr);
+        }
+      }
     }
 
     // This method is called when the user has finished editing the Room ID InputField.

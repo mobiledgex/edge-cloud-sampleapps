@@ -182,5 +182,60 @@ public class MobiledgeXIntegration
     // Too far for this app.
     return false;
   }
+  
+  private List<QosPosition> createListOfPositions(Loc loc, float direction_degrees, double totalDistanceKm, double increment)
+  {
+    var req = new List<QosPosition>();
+    long positionid = 1;
+    Loc lastLocation = loc;
+    
+    var firstQosPostion = new QosPosition
+    {
+        positionid = positionid.ToString(),
+        gps_location = lastLocation
+    };
+    
+    req.Add(firstQosPostion);
+    
+    double kmPerDegreeLat = 110.57; //at the Equator     double kmPerDegreeLong = 111.32; //at the Equator     double addLatitude = Mathf.Sin(direction_degrees) * increment / kmPerDegreeLat;
+    double addLongitude = Mathf.Cos(direction_degrees) * increment / kmPerDegreeLong;
+    for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionid++)
+    {
+        Loc next = lastLocation;
+        var np = new QosPosition
+        {
+            positionid = positionid.ToString(),
+            gps_location = next
+        };
+        req.Add(np);
+        next.longitude += addLongitude;
+        next.latitude += addLatitude;
+        lastLocation = next;
+    }
+    return req;
+  }
+  
+  public async Task<QosPositionKpiStreamReply> GetQosPositionKpi()
+  {
+    Loc loc = await GetLocationFromDevice();
+    
+    string aCarrierName = pIntegration.GetCurrentCarrierName();
+    string eHost; // Ephemeral DME host (depends on the SIM).
+    string eCarrierName;
+    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
+    {
+        eHost = host;
+        eCarrierName = carrierName;
+    }
+    else
+    {
+        eHost = me.GenerateDmeBaseUri(aCarrierName);
+        eCarrierName = aCarrierName;
+    }
 
+    List<QosPosition> positions = createListOfPositions(loc, 45, 200, 1);
+    QosPositionKpiRequest req = me.CreateQosPositionKpiRequest(positions);
+    QosPositionKpiStreamReply reply = await me.GetQosPositionKpi(eHost, port, req);
+    return reply;
+  }
 }

@@ -123,6 +123,9 @@ namespace MexPongGame {
 
       // Decide what to do with location status.
       Debug.Log("VerifiedLocation: " + verifiedLocation);
+      
+      bool gotQosPosition = await integration.GetQosPositionKpi();
+      Debug.Log("GetQosPositionKpi: " + gotQosPosition);
     }
 
     // This method is called when the user has finished editing the Room ID InputField.
