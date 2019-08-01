@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Serialization.Json; using System.IO;
 using UnityEngine;
 
 using MexPongGame;
@@ -216,7 +215,7 @@ public class MobiledgeXIntegration
     return req;
   }
   
-  public async Task<bool> GetQosPositionKpi()
+  public async Task<QosPositionKpiStreamReply> GetQosPositionKpi()
   {
     Loc loc = await GetLocationFromDevice();
     
@@ -237,24 +236,6 @@ public class MobiledgeXIntegration
     List<QosPosition> positions = createListOfPositions(loc, 45, 200, 1);
     QosPositionKpiRequest req = me.CreateQosPositionKpiRequest(positions);
     QosPositionKpiStreamReply reply = await me.GetQosPositionKpi(eHost, port, req);
-    
-    if (reply.result == null || reply.error != null)
-    {
-        Debug.Log("Reply result missing: " + reply);
-        return false;
-    }
-    else
-    {
-        Debug.Log("Result: " + reply.result);
-        DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionResult));
-        MemoryStream ms = new MemoryStream();
-        foreach (QosPositionResult qpr in reply.result.position_results)
-        {
-            ms.Position = 0;
-            serializer.WriteObject(ms, qpr);
-            string jsonStr = Util.StreamToString(ms);
-            Debug.Log("QosPositionResult: " + jsonStr);
-        }     }
-    return true;
+    return reply;
   }
 }
