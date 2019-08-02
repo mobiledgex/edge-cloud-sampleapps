@@ -3,8 +3,8 @@
 // TODO: Copy/paste the code to connect with MobiledgeX Maven repository.
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
-def nexusUser = properties.getProperty("nexus.user")
-def nexusPassword = properties.getProperty("nexus.password")
+def artifactory_user = properties.getProperty("artifactory_user")
+def artifactory_password = properties.getProperty("artifactory_password")
 
 buildscript {
 
@@ -17,24 +17,29 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.4.2'
         classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.6"
 
+        // JFrog Artifactory:
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:latest.release"
+
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
 }
 
 allprojects {
+    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'maven-publish'
     repositories {
+        google()
+        jcenter()
+        mavenLocal()
         maven {
             credentials {
                 // Create these variables in local.properties if you don't have them.
-                username nexusUser
-                password nexusPassword
+                username artifactory_user
+                password artifactory_password
             }
-            url "https://registry.mobiledgex.net/nexus/content/repositories/releases/"
+            url = "https://artifactory.mobiledgex.net/maven-releases/"
         }
-        mavenLocal()
-        google()
-        jcenter()
     }
 }
 
