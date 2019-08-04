@@ -1244,14 +1244,6 @@ public class MainActivity extends AppCompatActivity
 
     public void initMatchingEngineHelper() {
         Log.i(TAG, "initMatchingEngineHelper()");
-//        //Populate the necessary variables from preferences.
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-//        onSharedPreferenceChanged(prefs, getResources().getString(R.string.dme_hostname));
-//        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_operator_name));
-//        onSharedPreferenceChanged(prefs, getResources().getString(R.string.preference_net_switching_allowed));
-
-//        boolean networkSwitchingAllowed = prefs.getBoolean(getResources()
-//                .getString(R.string.preference_net_switching_allowed),false);
         Log.i(TAG, "mHostname="+mHostname+" networkSwitchingAllowed="+mNetworkSwitchingAllowed+" mCarrierName="+mCarrierName);
         mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mCarrierName , mMapFragment.getView());
         mMatchingEngineHelper.setMatchingEngineResultsListener(this);
