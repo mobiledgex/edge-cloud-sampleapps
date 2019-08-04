@@ -12,18 +12,24 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.mobiledgex.matchingengine.MatchingEngine;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 import dt.qos.predictive.HealthCheckRequest;
 import dt.qos.predictive.HealthCheckResponse;
@@ -51,7 +57,6 @@ public class PredictiveQosClient {
 
     private final ManagedChannel channel;
     private final Context mContext;
-    private MatchingEngine mMatchingEngine;
     private GoogleMap mGoogleMap;
 
     private int routeWidth = 20;
@@ -63,7 +68,6 @@ public class PredictiveQosClient {
         Log.i(TAG, "onMarkerDragEnd()");
 
         mContext = context;
-        mMatchingEngine = new MatchingEngine(context);
         String serverBksFileName = CERT_SERVER_BKS;
         String clientKeyPairFileName = CERT_CLIENT_P12;
         char[] serverBksPassword = "".toCharArray();
@@ -73,9 +77,46 @@ public class PredictiveQosClient {
         // the connection parameters, and enable TLS with the included certs/keys.
         channel = OkHttpChannelBuilder
                 .forAddress(host, port)
-                .sslSocketFactory(mMatchingEngine.getMutualAuthSSLSocketFactoryInstance(serverBksFileName,
+                .sslSocketFactory(getMutualAuthSSLSocketFactoryInstance(serverBksFileName,
                         clientKeyPairFileName, serverBksPassword, clientKeyPairPassword))
                 .build();
+    }
+
+    /**
+     * This method creates an SSL Socket Factory using a server certificate Key Store in .bks
+     * (Bouncy Castle) format, and a client cert/key pair in .p12 (pkcs12) format.
+     *
+     * @param serverBksFileName  Server certificate Key Store in .bks format.
+     * @param clientKeyPairFileName  Client cert/key pair in .p12 format.
+     * @param serverBksPassword  Password for server certificate Key Store.
+     * @param clientKeyPairPassword  Password for client cert/key pair.
+     * @return  The MutualAuthSSLSocketFactory instance.
+     */
+    private SSLSocketFactory getMutualAuthSSLSocketFactoryInstance(String serverBksFileName,
+                                                                  String clientKeyPairFileName,
+                                                                  char[] serverBksPassword,
+                                                                  char[] clientKeyPairPassword)
+            throws IOException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException,
+            CertificateException, UnrecoverableKeyException {
+
+        SSLSocketFactory mMutualAuthSocketFactory;
+        KeyStore trustStore = KeyStore.getInstance("bks");
+        trustStore.load(mContext.getAssets().open(serverBksFileName), serverBksPassword);
+
+        KeyStore keyStore = KeyStore.getInstance("pkcs12");
+        keyStore.load(null, null);
+        keyStore.load(mContext.getAssets().open(clientKeyPairFileName), clientKeyPairPassword);
+
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
+        trustManagerFactory.init(trustStore);
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("X509");
+        keyManagerFactory.init(keyStore, null);
+
+        SSLContext ctx  = SSLContext.getInstance("TLS");
+        ctx.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new SecureRandom());
+        mMutualAuthSocketFactory = ctx.getSocketFactory();
+
+        return mMutualAuthSocketFactory;
     }
 
     public void shutdown() throws InterruptedException {
