@@ -106,8 +106,8 @@
     <string name="pref_operator_name">pref_operator</string>
     <string name="pref_title_operator_name">Operator</string>
     <string name="pref_summary_operator_name">The operator or carrier name</string>
-    <string name="pref_title_dme_hostname">DME Selection</string>
-    <string name="pref_summary_dme_hostname">Select Demo or GDDT Integration environment</string>
+    <string name="pref_title_dme_hostname">Region Selection</string>
+    <string name="pref_summary_dme_hostname">Select region to display</string>
     <string name="dme_hostname">dme_hostname</string>
     <string name="pref_summary_latency_method">Select socket connection or ICMP ping</string>
     <string name="pref_summary_latency_packets">Number of times to repeat latency test</string>
@@ -115,13 +115,9 @@
     <string name="pref_summary_download_size">Number of Megabytes to download for speed test</string>
     <string-array name="pref_dme_hostname_titles">
         <item>Demo (mexdemo)</item>
-        <item>DT LocAPI Integration (gddt2)</item>
-        <item>Automation Testing (automationbuckhorn)</item>
     </string-array>
     <string-array name="pref_dme_hostname_values">
-        <item>mexdemo.dme.mobiledgex.net</item>
-        <item>gddt2.dme.mobiledgex.net</item>
-        <item>automationbuckhorn.dme.mobiledgex.net</item>
+        <item>mexdemo.dme.mobiledgex.net:50051</item>
     </string-array>
     <string name="title_activity_qoe_map">Predictive QoE</string>
     <string name="map_type">Map Type</string>
