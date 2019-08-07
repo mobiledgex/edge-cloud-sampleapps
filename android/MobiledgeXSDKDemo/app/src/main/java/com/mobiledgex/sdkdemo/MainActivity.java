@@ -80,6 +80,8 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
@@ -110,7 +112,11 @@ public class MainActivity extends AppCompatActivity
 
     private static final int RC_SIGN_IN = 1;
     public static final int RC_STATS = 2;
+    public static final String DEFAULT_DME_HOSTNAME = "mexdemo.dme.mobiledgex.net";
+    public static final String DEFAULT_CARRIER_NAME = "TDG";
     private String mHostname;
+    private String mCarrierName;
+    private boolean mNetworkSwitchingAllowed;
 
     private GoogleMap mGoogleMap;
     private MatchingEngineHelper mMatchingEngineHelper;
@@ -136,6 +142,7 @@ public class MainActivity extends AppCompatActivity
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
     private MenuItem signOutMenuItem;
+    private AlertDialog mAlertDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -199,20 +206,14 @@ public class MainActivity extends AppCompatActivity
         mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMapFragment.getMapAsync(this);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        mHostname = prefs.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
-        Log.i(TAG, "mHostname="+mHostname);
-
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Restore MatchingEngine location preference, defaulting to false:
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean matchingEngineLocationAllowed = prefs.getBoolean(getResources()
                         .getString(R.string.preference_matching_engine_location_verification),
                 false);
         MatchingEngine.setMatchingEngineLocationAllowed(matchingEngineLocationAllowed);
-
-        // Watch allowed preference:
-        prefs.registerOnSharedPreferenceChangeListener(this);
 
         // Client side FusedLocation updates.
         mDoLocationUpdates = true;
@@ -232,6 +233,7 @@ public class MainActivity extends AppCompatActivity
                 matchingEngineRequest(REQ_FIND_CLOUDLET);
             }
         });
+
         boolean allowFindBeforeVerify = prefs.getBoolean(getResources().getString(R.string.preference_allow_find_before_verify), true);
         fabFindCloudlets.setEnabled(allowFindBeforeVerify);
 
@@ -244,17 +246,16 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
-        String prefKeyDownloadType = getResources().getString(R.string.download_type);
-        String prefKeyDownloadSize = getResources().getString(R.string.download_size);
-        String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
-        String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
-        String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.dme_hostname));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_operator_name));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_type));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_method));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_autostart));
 
-        onSharedPreferenceChanged(prefs, prefKeyDownloadType);
-        onSharedPreferenceChanged(prefs, prefKeyDownloadSize);
-        onSharedPreferenceChanged(prefs, prefKeyNumPackets);
-        onSharedPreferenceChanged(prefs, prefKeyLatencyMethod);
-        onSharedPreferenceChanged(prefs, prefKeyLatencyAutoStart);
+        // Watch for any updated preferences:
+        prefs.registerOnSharedPreferenceChangeListener(this);
     }
 
     /**
@@ -600,7 +601,7 @@ public class MainActivity extends AppCompatActivity
         String updateSimText = "Update location in GPS database";
         final CharSequence[] charSequence;
         //Only allow updating location simulator on the demo environment
-        if(mHostname.equals("mexdemo.dme.mobiledgex.net")) {
+        if(mHostname.equals(DEFAULT_DME_HOSTNAME)) {
             charSequence = new CharSequence[] {spoofText, updateSimText};
         } else {
             charSequence = new CharSequence[] {spoofText};
@@ -698,7 +699,7 @@ public class MainActivity extends AppCompatActivity
 
                 mUserLocationMarker.hideInfoWindow();
                 // We handle this differently for the demo environment, than in real life.
-                if(mHostname.equals("mexdemo.dme.mobiledgex.net")) {
+                if(mHostname.equals(DEFAULT_DME_HOSTNAME)) {
                     if(status == LOC_VERIFIED) {
                         fabFindCloudlets.setEnabled(true);
                         mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
@@ -818,12 +819,19 @@ public class MainActivity extends AppCompatActivity
                 ArrayMap<String, Cloudlet> tempCloudlets = new ArrayMap<>();
                 LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
+                // If you get an empty list because you have changed Region, but not yet Operator
+                // (or vice versa), and then you set a proper combination that does return a list,
+                // we don't want the dialog from the previous attempt to still be hanging around.
+                if(mAlertDialog != null) {
+                    mAlertDialog.dismiss();
+                }
+
                 if(cloudletList.getCloudletsList().size() == 0) {
-                    new AlertDialog.Builder(MainActivity.this)
+                    AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Error")
                             .setMessage("No cloudlets available.\nContact MobiledgeX support.")
-                            .setPositiveButton("OK", null)
-                            .show();
+                            .setPositiveButton("OK", null);
+                    mAlertDialog = dialogBuilder.show();
                 }
 
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -1060,6 +1068,7 @@ public class MainActivity extends AppCompatActivity
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
         String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
+        String prefKeyOperatorName = getResources().getString(R.string.pref_operator_name);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
@@ -1072,10 +1081,10 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (key.equals(prefKeyAllowNetSwitch)) {
-            boolean netSwitchingAllowed = sharedPreferences.getBoolean(prefKeyAllowNetSwitch, false);
-            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+netSwitchingAllowed);
+            mNetworkSwitchingAllowed = sharedPreferences.getBoolean(prefKeyAllowNetSwitch, false);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mNetworkSwitchingAllowed);
             if(mMatchingEngineHelper != null) {
-                mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(netSwitchingAllowed);
+                mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(mNetworkSwitchingAllowed);
             }
         }
 
@@ -1092,14 +1101,39 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (key.equals(prefKeyDmeHostname)) {
-            mHostname = sharedPreferences.getString(prefKeyDmeHostname, "mexdemo.dme.mobiledgex.net");
-            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mHostname);
+            String hostAndPort = sharedPreferences.getString(prefKeyDmeHostname, DEFAULT_DME_HOSTNAME);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+hostAndPort);
+
+            //Value is in this format: mexdemo.dme.mobiledgex.net:50051
+            String domainAndPortRegex = "^(((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}):\\d+$";
+            Pattern domainAndPortPattern = Pattern.compile(domainAndPortRegex);
+            Matcher matcher = domainAndPortPattern.matcher(hostAndPort);
+            if(matcher.find()) {
+                mHostname = matcher.group(1);
+            } else {
+                String message = "Invalid DME hostname and port: "+hostAndPort+" Default value will be used.";
+                Log.e(TAG, message);
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                mHostname = DEFAULT_DME_HOSTNAME;
+            }
+            Log.i(TAG, "mHostname from preferences: "+mHostname);
             if(mMatchingEngineHelper != null) {
                 mMatchingEngineHelper.setHostname(mHostname);
+                //Clear list so we don't show old cloudlets as transparent
+                CloudletListHolder.getSingleton().getCloudletList().clear();
+                getCloudlets();
             }
-            //Clear list so we don't show old cloudlets as transparent
-            CloudletListHolder.getSingleton().getCloudletList().clear();
-            getCloudlets();
+        }
+
+        if (key.equals(prefKeyOperatorName)) {
+            mCarrierName = sharedPreferences.getString(prefKeyOperatorName, DEFAULT_CARRIER_NAME);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mCarrierName);
+            if(mMatchingEngineHelper != null) {
+                mMatchingEngineHelper.setCarrierName(mCarrierName);
+                //Clear list so we don't show old cloudlets as transparent
+                CloudletListHolder.getSingleton().getCloudletList().clear();
+                getCloudlets();
+            }
         }
 
         if (key.equals(prefKeyDownloadType)) {
@@ -1210,14 +1244,10 @@ public class MainActivity extends AppCompatActivity
 
     public void initMatchingEngineHelper() {
         Log.i(TAG, "initMatchingEngineHelper()");
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        mHostname = prefs.getString(getResources().getString(R.string.dme_hostname), "mexdemo.dme.mobiledgex.net");
-        boolean networkSwitchingAllowed = prefs.getBoolean(getResources()
-                .getString(R.string.preference_net_switching_allowed),false);
-        Log.i(TAG, "mHostname="+mHostname+" networkSwitchingAllowed="+networkSwitchingAllowed);
-        mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mMapFragment.getView());
+        Log.i(TAG, "mHostname="+mHostname+" networkSwitchingAllowed="+mNetworkSwitchingAllowed+" mCarrierName="+mCarrierName);
+        mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mCarrierName , mMapFragment.getView());
         mMatchingEngineHelper.setMatchingEngineResultsListener(this);
-        mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(networkSwitchingAllowed);
+        mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(mNetworkSwitchingAllowed);
     }
 
     @Override

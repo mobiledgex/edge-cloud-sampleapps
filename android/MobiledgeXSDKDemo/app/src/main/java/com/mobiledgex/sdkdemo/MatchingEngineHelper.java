@@ -35,6 +35,7 @@ public class MatchingEngineHelper {
     private MatchingEngine mMatchingEngine;
     private String someText = null;
     private String mHostname;
+    private String mCarrierName;
 
     /**
      * Possible actions to perform with the matching engine.
@@ -47,11 +48,12 @@ public class MatchingEngineHelper {
         REQ_DO_ALL
     }
 
-    public MatchingEngineHelper(Context context, String hostname, View view) {
-        Log.i(TAG, "MatchingEngineHelper mHostname="+hostname);
+    public MatchingEngineHelper(Context context, String hostname, String carrierName, View view) {
+        Log.i(TAG, "MatchingEngineHelper mHostname="+hostname+" mCarrierName="+carrierName);
         mContext = context;
         mView = view;
         mHostname = hostname;
+        mCarrierName = carrierName;
         mMatchingEngine = new MatchingEngine(mContext);
     }
 
@@ -94,8 +96,7 @@ public class MatchingEngineHelper {
             final Activity ctx = (Activity) mContext;
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
             boolean locationVerificationAllowed = prefs.getBoolean(mContext.getResources().getString(R.string.preference_matching_engine_location_verification), false);
-            String carrierName = prefs.getString(mContext.getResources().getString(R.string.pref_operator_name), "TDG");
-            Log.i(TAG, "carrierName:" + carrierName);
+            Log.i(TAG, "carrierName:" + mCarrierName);
 
             if(!locationVerificationAllowed) {
                 Snackbar snackbar = Snackbar.make(mView, "Enhanced Location not enabled", Snackbar.LENGTH_LONG);
@@ -148,7 +149,7 @@ public class MatchingEngineHelper {
                 String host = mHostname; // Override host.
                 int port = mMatchingEngine.getPort(); // Keep same port.
                 String devName = "MobiledgeX";
-                //Note that carrierName came from preferences above.
+                //Note that mCarrierName came from preferences in MainActivity.
                 String appVersion = ""; //SDK will populate this automatically if we pass in "".
                 boolean reportCookie = false;
 
@@ -157,34 +158,34 @@ public class MatchingEngineHelper {
                 }
                 Log.i(TAG, "mHost:" + host);
 
-                if (!registerClient(ctx, host, port, devName, appVersion, carrierName, reportCookie)) {
+                if (!registerClient(ctx, host, port, devName, appVersion, mCarrierName, reportCookie)) {
                     return null;
                 }
 
                 switch (reqType) {
                     case REQ_VERIFY_LOCATION:
-                        verifyLocation(location, ctx, host, port, carrierName);
+                        verifyLocation(location, ctx, host, port, mCarrierName);
                         break;
 
                     case REQ_FIND_CLOUDLET:
-                        findCloudlet(location, ctx, host, port, carrierName);
+                        findCloudlet(location, ctx, host, port, mCarrierName);
                         break;
 
                     case REQ_GET_CLOUDLETS:
-                        getAppInstList(location, ctx, host, port, carrierName);
+                        getAppInstList(location, ctx, host, port, mCarrierName);
                         break;
 
                     case REQ_DO_ALL:
                         //In this case, we do all actions in order as long as each one is successful.
-                        if(!getAppInstList(location, ctx, host, port, carrierName)) {
+                        if(!getAppInstList(location, ctx, host, port, mCarrierName)) {
                             Log.e(TAG, "getAppInstList failed. aborting REQ_DO_ALL");
                             return null;
                         }
-                        if(!verifyLocation(location, ctx, host, port, carrierName)) {
+                        if(!verifyLocation(location, ctx, host, port, mCarrierName)) {
                             Log.e(TAG, "verifyLocation failed. aborting REQ_DO_ALL");
                             return null;
                         }
-                        if(!findCloudlet(location, ctx, host, port, carrierName)) {
+                        if(!findCloudlet(location, ctx, host, port, mCarrierName)) {
                             Log.e(TAG, "findCloudlet failed. aborting REQ_DO_ALL");
                             return null;
                         }
@@ -351,5 +352,9 @@ public class MatchingEngineHelper {
 
     public void setHostname(String mHostname) {
         this.mHostname = mHostname;
+    }
+
+    public void setCarrierName(String carrierName) {
+        mCarrierName = carrierName;
     }
 }

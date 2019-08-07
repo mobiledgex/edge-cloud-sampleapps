@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -12,9 +13,25 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.preference.PreferenceScreen;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
+import android.util.Log;
 import android.view.MenuItem;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,6 +46,7 @@ import java.util.List;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends AppCompatPreferenceActivity {
+    private static final String TAG = "SettingsActivity";
 
     /**
      * A preference value change listener that updates the preference's summary
@@ -197,6 +215,52 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
             setHasOptionsMenu(true);
+
+            // Instantiate the RequestQueue.
+            RequestQueue queue = Volley.newRequestQueue(getActivity());
+            String url = "http://dme-inventory.mobiledgex.net/dme-list.html";
+
+            // Request a string response from the provided URL.
+            // If the dme-inventory request fails, or can't be parsed, the DME list will retain the
+            // default values from the preferences XML.
+            StringRequest stringRequest = new StringRequest(url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            Log.i(TAG, "dme-inventory response="+response);
+                            try {
+                                List<String> listNames = new ArrayList<String>();
+                                List<String> listAddresses = new ArrayList<String>();
+                                JSONArray jsonArray = new JSONArray(response);
+                                Log.d(TAG, "jsonArray="+jsonArray);
+                                for(int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                    String name = jsonObject.getString("name");
+                                    String address = jsonObject.getString("address");
+                                    listNames.add(name);
+                                    listAddresses.add(address);
+                                    Log.d(TAG, "name="+name+" address="+address);
+                                }
+                                CharSequence[] charSequenceNames = listNames.toArray(new CharSequence[listNames.size()]);
+                                CharSequence[] charSequenceAddresses = listAddresses.toArray(new CharSequence[listAddresses.size()]);
+                                String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
+                                PreferenceScreen screen = getPreferenceScreen();
+                                ListPreference dmeListPref = (ListPreference) screen.findPreference(prefKeyDmeHostname);
+                                dmeListPref.setEntries(charSequenceNames);
+                                dmeListPref.setEntryValues(charSequenceAddresses);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.e(TAG, "That didn't work! error="+error);
+                }
+            });
+
+            // Add the request to the RequestQueue.
+            queue.add(stringRequest);
         }
 
         @Override
