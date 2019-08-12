@@ -2,6 +2,7 @@ package com.mobiledgex.computervision;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Base64;
@@ -16,16 +17,6 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.xuhao.didi.core.iocore.interfaces.IPulseSendable;
-import com.xuhao.didi.core.iocore.interfaces.ISendable;
-import com.xuhao.didi.core.pojo.OriginalData;
-import com.xuhao.didi.socket.client.impl.client.action.ActionDispatcher;
-import com.xuhao.didi.socket.client.sdk.OkSocket;
-import com.xuhao.didi.socket.client.sdk.client.ConnectionInfo;
-import com.xuhao.didi.socket.client.sdk.client.OkSocketOptions;
-import com.xuhao.didi.socket.client.sdk.client.action.SocketActionAdapter;
-import com.xuhao.didi.socket.client.sdk.client.connection.IConnectionManager;
-import com.xuhao.didi.socket.client.sdk.client.connection.NoneReconnect;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +29,8 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -75,9 +67,8 @@ public class ImageSender {
 
     private static ConnectionMode preferencesConnectionMode = ConnectionMode.REST;
     private ConnectionMode mConnectionMode;
-    private IConnectionManager mManager;
-    private OkSocketOptions mOkOptions;
-    private ConnectionInfo mInfo;
+    private SocketClientTcp mSocketClientTcp;
+
     private long mStartTime;
     private int mOpcode;
 
@@ -139,8 +130,41 @@ public class ImageSender {
         }
 
         if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
-            initManager();
-            mManager.connect();
+            initTcpSocketConnection();
+        }
+    }
+
+    private void initTcpSocketConnection() {
+        mSocketClientTcp = null;
+        // connect to the server
+        ConnectTask connectTask = new ConnectTask();
+        connectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+    }
+
+    /*receive the message from server with asyncTask*/
+    public class ConnectTask extends AsyncTask<String,String,Void> {
+        @Override
+        protected Void doInBackground(String... message) {
+            mSocketClientTcp = new SocketClientTcp(mHost, mPersistentTcpPort,
+                    new SocketClientTcp.OnMessageReceived() {
+                @Override
+                public void messageReceived(String message) {
+                    try {
+                        if(message!=null) {
+                            long endTime = System.nanoTime();
+                            mBusy = false;
+                            mLatency = endTime - mStartTime;
+                            handleResponse(message, mLatency);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            Log.i(TAG, "mSocketClientTcp="+ mSocketClientTcp);
+            mSocketClientTcp.run();
+            return null;
         }
     }
 
@@ -239,16 +263,22 @@ public class ImageSender {
         // Depending on the connection mode, choose the appropriate way to send the image
         // data to the server.
         if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
-            if(mManager == null) {
+            if(mSocketClientTcp == null) {
                 // The value may have been changed after starting the activity.
                 Log.w(TAG, "ConnectionManager not initialized yet. Initializing now.");
-                initManager();
-                mManager.connect();
+                initTcpSocketConnection();
                 // Try again next image frame that's received.
                 mBusy = false;
                 return;
             }
-            mManager.send(new TcpImageData(mOpcode, bytes));
+            //Build the byte array according to the server's parsing rules
+            //package header fixed length + opcode length + payload length
+            ByteBuffer bb = ByteBuffer.allocate(4 + 4 + bytes.length);
+            bb.order(ByteOrder.BIG_ENDIAN);
+            bb.putInt(mOpcode);
+            bb.putInt(bytes.length);
+            bb.put(bytes);
+            mSocketClientTcp.write(bb.array());
 
         } else if(mConnectionMode == ConnectionMode.REST) {
             final String requestBody = Base64.encodeToString(bytes, Base64.DEFAULT);
@@ -623,76 +653,4 @@ public class ImageSender {
             return false;
         }
     }
-
-    /**
-     * Initialize the OkSocket connection manager.
-     */
-    private void initManager() {
-        final Handler handler = new Handler();
-        mInfo = new ConnectionInfo(mHost, mPersistentTcpPort);
-        mOkOptions = new OkSocketOptions.Builder()
-                .setReconnectionManager(new NoneReconnect())
-                .setConnectTimeoutSecond(10)
-                .setCallbackThreadModeToken(new OkSocketOptions.ThreadModeToken() {
-                    @Override
-                    public void handleCallbackEvent(ActionDispatcher.ActionRunnable runnable) {
-                        handler.post(runnable);
-                    }
-                })
-                .build();
-        mManager = OkSocket.open(mInfo).option(mOkOptions);
-        mManager.registerReceiver(adapter);
-    }
-
-    /**
-     * This adapter is used to listen for OkSocket events.
-     */
-    private SocketActionAdapter adapter = new SocketActionAdapter() {
-        String TAG = "SocketActionAdapter";
-
-        @Override
-        public void onSocketConnectionSuccess(ConnectionInfo info, String action) {
-            Log.i(TAG, "info="+info+" action="+action);
-        }
-
-        @Override
-        public void onSocketDisconnection(ConnectionInfo info, String action, Exception e) {
-            if (e != null) {
-                Log.e(TAG, "Disconnected with exception:" + e.getMessage());
-            } else {
-                Log.i(TAG, "Disconnect Manually");
-            }
-        }
-
-        @Override
-        public void onSocketConnectionFailed(ConnectionInfo info, String action, Exception e) {
-            if (e != null) {
-                Log.e(TAG, "Connecting Failed with exception:" + e.getMessage());
-            } else {
-                Log.e(TAG, "Connecting Failed");
-            }
-            mBusy = false; //So we'll try to connect next image frame that's received.
-        }
-
-        @Override
-        public void onSocketReadResponse(ConnectionInfo info, String action, OriginalData data) {
-            String response = new String(data.getBodyBytes(), Charset.forName("utf-8"));
-            Log.i(TAG, "onSocketReadResponse="+response);
-            long endTime = System.nanoTime();
-            mBusy = false;
-            mLatency = endTime - mStartTime;
-            handleResponse(response, mLatency);
-        }
-
-        @Override
-        public void onSocketWriteResponse(ConnectionInfo info, String action, ISendable data) {
-            String str = new String(data.parse(), Charset.forName("utf-8"));
-        }
-
-        @Override
-        public void onPulseSend(ConnectionInfo info, IPulseSendable data) {
-            String str = new String(data.parse(), Charset.forName("utf-8"));
-            Log.i(TAG, "onPulseSend="+str);
-        }
-    };
 }

@@ -37,7 +37,7 @@
         android:key="@string/preference_fd_local_proc"
         android:title="@string/preference_fd_local_proc_title"
         android:summary="@string/preference_fd_local_proc_summary"
-        android:defaultValue="true" />
+        android:defaultValue="false" />
     <SwitchPreference
         android:key="@string/preference_fd_show_full_latency"
         android:title="@string/preference_fd_show_full_latency_title"
