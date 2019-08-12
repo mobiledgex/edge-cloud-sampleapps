@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 import android.util.Log;
@@ -113,6 +114,24 @@ public class SocketClientTcp {
             e.printStackTrace();
         }
 
+    }
+
+    /**
+     * Encodes the byte stream into the format required by the computer vision server, and sends
+     * it over the socket.
+     *
+     * @param opcode  Opcode to send to the server.
+     * @param bytes  The raw bytes of the image to be sent.
+     */
+    public void send(int opcode, byte[] bytes) {
+        //Build the byte array according to the server's parsing rules
+        //package header fixed length + opcode length + payload length
+        ByteBuffer bb = ByteBuffer.allocate(4 + 4 + bytes.length);
+        bb.order(ByteOrder.BIG_ENDIAN);
+        bb.putInt(opcode);
+        bb.putInt(bytes.length);
+        bb.put(bytes);
+        write(bb.array());
     }
 
     /**

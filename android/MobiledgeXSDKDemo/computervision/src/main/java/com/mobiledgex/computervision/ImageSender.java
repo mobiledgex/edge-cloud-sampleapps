@@ -271,14 +271,7 @@ public class ImageSender {
                 mBusy = false;
                 return;
             }
-            //Build the byte array according to the server's parsing rules
-            //package header fixed length + opcode length + payload length
-            ByteBuffer bb = ByteBuffer.allocate(4 + 4 + bytes.length);
-            bb.order(ByteOrder.BIG_ENDIAN);
-            bb.putInt(mOpcode);
-            bb.putInt(bytes.length);
-            bb.put(bytes);
-            mSocketClientTcp.write(bb.array());
+            mSocketClientTcp.send(mOpcode, bytes);
 
         } else if(mConnectionMode == ConnectionMode.REST) {
             final String requestBody = Base64.encodeToString(bytes, Base64.DEFAULT);
