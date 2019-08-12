@@ -265,7 +265,7 @@ public class ImageSender {
         if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
             if(mSocketClientTcp == null) {
                 // The value may have been changed after starting the activity.
-                Log.w(TAG, "ConnectionManager not initialized yet. Initializing now.");
+                Log.w(TAG, "mSocketClientTcp not initialized yet. Initializing now.");
                 initTcpSocketConnection();
                 // Try again next image frame that's received.
                 mBusy = false;
