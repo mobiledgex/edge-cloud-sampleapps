@@ -1101,7 +1101,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (key.equals(prefKeyDmeHostname)) {
-            String hostAndPort = sharedPreferences.getString(prefKeyDmeHostname, DEFAULT_DME_HOSTNAME);
+            String hostAndPort = sharedPreferences.getString(prefKeyDmeHostname, DEFAULT_DME_HOSTNAME+":"+"50051");
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+hostAndPort);
 
             //Value is in this format: mexdemo.dme.mobiledgex.net:50051
