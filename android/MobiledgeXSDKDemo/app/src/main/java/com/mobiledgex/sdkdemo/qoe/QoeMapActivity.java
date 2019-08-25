@@ -666,7 +666,6 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 // Using "if" instead avoids waiting for the duplicate data and redrawing unnecessarily.
                 if (responseIterator.hasNext()) {
                     AppClient.QosPositionKpiReply aR = responseIterator.next();
-                    String csv = "";
                     for (int i = 0; i < aR.getPositionResultsCount(); i++) {
                         AppClient.QosPositionKpiResult result = aR.getPositionResults(i);
                         Log.i(TAG, i+" dluserthroughput_avg="+result.getDluserthroughputAvg()+" uluserthroughput_avg="+result.getUluserthroughputAvg());
@@ -674,14 +673,8 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         points.add(new ColoredPoint(coords, result.getDluserthroughputAvg(), result.getUluserthroughputAvg()));
                         Calendar cal = Calendar.getInstance(TimeZone.getDefault());
                         cal.setTimeInMillis(result.getGpsLocation().getTimestamp().getSeconds() * 1000L);
-                        csv += DateFormat.format("HH:mm:ss,MM/dd/yyyy", cal).toString()
-                                + "," + result.getGpsLocation().getLatitude()
-                                + "," + result.getGpsLocation().getLongitude() + "\n";
                     }
                     total += aR.getPositionResultsCount();
-                    System.out.println("==========================");
-                    System.out.println(csv);
-                    System.out.println("==========================");
 
                     //We've got a list of points. Draw the results.
                     runOnUiThread(new Runnable(){
