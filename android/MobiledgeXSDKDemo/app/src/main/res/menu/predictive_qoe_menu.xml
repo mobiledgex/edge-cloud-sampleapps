@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/pqoe_map_mode"
+    <item android:title="@string/pqoe_point_mode"
         android:id="@+id/action_pqoe_map_mode">
         <menu>
             <group>
@@ -8,12 +8,12 @@
                     android:id="@+id/action_pqoe_mode_route"
                     android:checkable="true"
                     android:onClick="onModeGroupItemClick"
-                    android:title="@string/pqoe_route_mode" />
+                    android:title="@string/pqoe_route_point_mode" />
                 <item
                     android:id="@+id/action_pqoe_mode_grid"
                     android:checkable="true"
                     android:onClick="onModeGroupItemClick"
-                    android:title="@string/pqoe_grid_mode" />
+                    android:title="@string/pqoe_grid_point_mode" />
             </group>
         </menu>
     </item>
@@ -48,4 +48,9 @@
             </group>
         </menu>
     </item>
+    <item
+        android:id="@+id/action_load_test_data"
+        android:onClick="onTestDataItemClick"
+        android:title="@string/pqoe_load_test_data" />
+
 </menu>

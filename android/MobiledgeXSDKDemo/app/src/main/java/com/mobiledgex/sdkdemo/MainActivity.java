@@ -420,6 +420,9 @@ public class MainActivity extends AppCompatActivity
             }
             // Start the face PQoE Activity
             Intent intent = new Intent(this, QoeMapActivity.class);
+            Log.i(TAG, "mHostname="+mHostname);
+            intent.putExtra(QoeMapActivity.EXTRA_HOSTNAME, mHostname);
+            intent.putExtra(QoeMapActivity.EXTRA_CARRIER_NAME, mCarrierName);
             startActivity(intent);
             return true;
         } else if (id == R.id.nav_google_signin) {
