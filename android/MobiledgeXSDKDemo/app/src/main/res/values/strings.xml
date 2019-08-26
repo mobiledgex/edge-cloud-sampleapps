@@ -119,11 +119,12 @@
     <string-array name="pref_dme_hostname_values">
         <item>mexdemo.dme.mobiledgex.net:50051</item>
     </string-array>
-    <string name="title_activity_qoe_map">Predictive QoE</string>
+    <string name="title_activity_qoe_map">Predictive QoS</string>
     <string name="map_type">Map Type</string>
-    <string name="pqoe_map_mode">Mode</string>
-    <string name="pqoe_route_mode">Route Mode</string>
-    <string name="pqoe_grid_mode">Grid Mode</string>
+    <string name="pqoe_point_mode">Point Mode</string>
+    <string name="pqoe_load_test_data">Load Test Data</string>
+    <string name="pqoe_route_point_mode">Route Mode</string>
+    <string name="pqoe_grid_point_mode">Grid Mode</string>
     <string name="pqoe_map_type_normal">Normal</string>
     <string name="pqoe_map_type_satellite">Satellite</string>
     <string name="pqoe_map_type_terrain">Terrain</string>
