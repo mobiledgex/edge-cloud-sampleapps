@@ -14,9 +14,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -45,7 +47,8 @@ public class MatchingEngineHelper {
         REQ_VERIFY_LOCATION,
         REQ_FIND_CLOUDLET,
         REQ_GET_CLOUDLETS,
-        REQ_DO_ALL
+        REQ_DO_ALL,
+        REQ_GET_QOS
     }
 
     public MatchingEngineHelper(Context context, String hostname, String carrierName, View view) {
@@ -72,6 +75,10 @@ public class MatchingEngineHelper {
         new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, RequestType.REQ_DO_ALL, location);
     }
 
+    public void registerClientInBackground() {
+        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, RequestType.REQ_REGISTER_CLIENT, null);
+    }
+
     /**
      * This method does a single matching engine action in the background, determined by the
      * reqType parameter. {@link RequestType}
@@ -83,16 +90,17 @@ public class MatchingEngineHelper {
         new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, reqType, location);
     }
 
+    public void doQosRequestInBackground (ArrayList<AppClient.QosPosition> kpiPositions) {
+        Location dummyLocation = new Location("Dummy");
+        new BackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, RequestType.REQ_GET_QOS, dummyLocation, kpiPositions);
+    }
+
     public class BackgroundRequest extends AsyncTask<Object, Void, Void> {
         @Override
         protected Void doInBackground(Object... params) {
             RequestType reqType = (RequestType) params[0];
             Location location = (Location) params[1];
-            Log.i(TAG, "BackgroundRequest reqType="+reqType+" location="+location);
-            if(location == null) {
-                Log.w(TAG, "location is null. Aborting.");
-                return null;
-            }
+            Log.i(TAG, "BackgroundRequest reqType="+reqType);
             final Activity ctx = (Activity) mContext;
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
             boolean locationVerificationAllowed = prefs.getBoolean(mContext.getResources().getString(R.string.preference_matching_engine_location_verification), false);
@@ -155,6 +163,12 @@ public class MatchingEngineHelper {
 
                 if(reqType == RequestType.REQ_REGISTER_CLIENT) {
                     reportCookie = true;
+                } else {
+                    // For all other cases, we must have a location.
+                    if(location == null) {
+                        Log.w(TAG, "location is null. Aborting.");
+                        return null;
+                    }
                 }
                 Log.i(TAG, "mHost:" + host);
 
@@ -163,6 +177,10 @@ public class MatchingEngineHelper {
                 }
 
                 switch (reqType) {
+                    case REQ_REGISTER_CLIENT:
+                        //Register already occurred above. Do nothing.
+                        break;
+
                     case REQ_VERIFY_LOCATION:
                         verifyLocation(location, ctx, host, port, mCarrierName);
                         break;
@@ -189,6 +207,11 @@ public class MatchingEngineHelper {
                             Log.e(TAG, "findCloudlet failed. aborting REQ_DO_ALL");
                             return null;
                         }
+                        break;
+
+                    case REQ_GET_QOS:
+                        ArrayList<AppClient.QosPosition> positions = (ArrayList<AppClient.QosPosition>) params[2];
+                        getQosPositionKpi(positions, host, port);
                         break;
 
                     default:
@@ -223,7 +246,9 @@ public class MatchingEngineHelper {
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
         if(reportCookie) {
             Log.i(TAG, "REQ_REGISTER_CLIENT only.");
-            mMatchingEngineResultsInterface.onRegister(registerStatus.getSessionCookie());
+            if(mMatchingEngineResultsInterface != null) {
+                mMatchingEngineResultsInterface.onRegister(registerStatus.getSessionCookie());
+            }
         }
         return true;
     }
@@ -302,6 +327,24 @@ public class MatchingEngineHelper {
             Log.e(TAG, someText);
             Snackbar.make(mView, someText, Snackbar.LENGTH_LONG).show();
             return false;
+        }
+        return true;
+    }
+
+    private boolean getQosPositionKpi(ArrayList<AppClient.QosPosition> positions, String host, int port) throws ExecutionException, InterruptedException {
+
+        Log.i(TAG, "me="+mMatchingEngine+" host="+host+" port="+port);
+        AppClient.QosPositionRequest request = mMatchingEngine.createQoSPositionRequest(positions);
+        ChannelIterator<AppClient.QosPositionKpiReply> responseIterator = mMatchingEngine.getQosPositionKpi(request,
+                host, port, 10000);
+        // A stream of QosPositionKpiReply(s), with a non-stream block of responses.
+        long total = 0;
+        while (responseIterator.hasNext()) {
+            AppClient.QosPositionKpiReply aR = responseIterator.next();
+            for (int i = 0; i < aR.getPositionResultsCount(); i++) {
+                Log.i(TAG, aR.getPositionResults(i).toString());
+            }
+            total += aR.getPositionResultsCount();
         }
         return true;
     }

@@ -1,0 +1,3318 @@
+{
+  "data": [
+    {
+      "positionid": "1",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 46.80183792114258,
+      "dluserthroughput_max": 121.8304214477539,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 15.100863456726074,
+      "uluserthroughput_max": 44.41387176513672,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "2",
+      "dluserthroughput_min": 1.3856650590896606,
+      "dluserthroughput_avg": 86.03118896484375,
+      "dluserthroughput_max": 170.6767120361328,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.271739959716797,
+      "uluserthroughput_max": 58.0920524597168,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "3",
+      "dluserthroughput_min": 1.3856650590896606,
+      "dluserthroughput_avg": 86.03118896484375,
+      "dluserthroughput_max": 170.6767120361328,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.271739959716797,
+      "uluserthroughput_max": 58.0920524597168,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "4",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 43.90890121459961,
+      "dluserthroughput_max": 99.07288360595703,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 13.26004409790039,
+      "uluserthroughput_max": 40.96772766113281,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "5",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 68.37664794921875,
+      "dluserthroughput_max": 152.75450134277344,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 15.766443252563477,
+      "uluserthroughput_max": 51.41197204589844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "6",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 68.37664794921875,
+      "dluserthroughput_max": 152.75450134277344,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 15.766443252563477,
+      "uluserthroughput_max": 51.41197204589844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "7",
+      "dluserthroughput_min": 3.8561065196990967,
+      "dluserthroughput_avg": 87.02339172363281,
+      "dluserthroughput_max": 170.190673828125,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 19.373882293701172,
+      "uluserthroughput_max": 51.934898376464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "8",
+      "dluserthroughput_min": 3.8561065196990967,
+      "dluserthroughput_avg": 87.02339172363281,
+      "dluserthroughput_max": 170.190673828125,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 19.373882293701172,
+      "uluserthroughput_max": 51.934898376464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "9",
+      "dluserthroughput_min": 3.8561065196990967,
+      "dluserthroughput_avg": 87.02339172363281,
+      "dluserthroughput_max": 170.190673828125,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 19.373882293701172,
+      "uluserthroughput_max": 51.934898376464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "10",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 59.50395965576172,
+      "dluserthroughput_max": 144.34056091308594,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.497966766357422,
+      "uluserthroughput_max": 47.10397720336914,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "11",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 29.822261810302734,
+      "dluserthroughput_max": 152.68133544921875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.095386505126953,
+      "uluserthroughput_max": 52.982059478759766,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "12",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 29.822261810302734,
+      "dluserthroughput_max": 152.68133544921875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.095386505126953,
+      "uluserthroughput_max": 52.982059478759766,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "13",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 29.822261810302734,
+      "dluserthroughput_max": 152.68133544921875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.095386505126953,
+      "uluserthroughput_max": 52.982059478759766,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "14",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 39.07219314575195,
+      "dluserthroughput_max": 164.7205352783203,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 19.876056671142578,
+      "uluserthroughput_max": 51.52980041503906,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "15",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 34.104331970214844,
+      "dluserthroughput_max": 153.04904174804688,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.08829689025879,
+      "uluserthroughput_max": 53.59303283691406,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "16",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.95000457763672,
+      "dluserthroughput_max": 170.40185546875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.430686950683594,
+      "uluserthroughput_max": 52.43477249145508,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "17",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 63.39118957519531,
+      "dluserthroughput_max": 185.10589599609375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 23.634416580200195,
+      "uluserthroughput_max": 55.49327850341797,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "18",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 37.99018859863281,
+      "dluserthroughput_max": 163.13145446777344,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.674293518066406,
+      "uluserthroughput_max": 54.098182678222656,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "19",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "20",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "21",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "22",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "23",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "24",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "25",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "26",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "27",
+      "dluserthroughput_min": 8.039774894714355,
+      "dluserthroughput_avg": 92.93718719482422,
+      "dluserthroughput_max": 177.8345947265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.900360107421875,
+      "uluserthroughput_max": 54.813804626464844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "28",
+      "dluserthroughput_min": 23.732603073120117,
+      "dluserthroughput_avg": 93.26310729980469,
+      "dluserthroughput_max": 162.79360961914062,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 23.85392951965332,
+      "uluserthroughput_max": 53.01632308959961,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "29",
+      "dluserthroughput_min": 23.732603073120117,
+      "dluserthroughput_avg": 93.26310729980469,
+      "dluserthroughput_max": 162.79360961914062,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 23.85392951965332,
+      "uluserthroughput_max": 53.01632308959961,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "30",
+      "dluserthroughput_min": 23.732603073120117,
+      "dluserthroughput_avg": 93.26310729980469,
+      "dluserthroughput_max": 162.79360961914062,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 23.85392951965332,
+      "uluserthroughput_max": 53.01632308959961,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "31",
+      "dluserthroughput_min": 21.85570526123047,
+      "dluserthroughput_avg": 96.067626953125,
+      "dluserthroughput_max": 170.27955627441406,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 29.818490982055664,
+      "uluserthroughput_max": 60.199588775634766,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "32",
+      "dluserthroughput_min": 29.34012794494629,
+      "dluserthroughput_avg": 114.81781005859375,
+      "dluserthroughput_max": 200.2954864501953,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 29.19573402404785,
+      "uluserthroughput_max": 60.08082580566406,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "33",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "34",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "35",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "36",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "37",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "38",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "39",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "40",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "41",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "42",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "43",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "44",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "45",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "46",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "47",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "48",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "49",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "50",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "51",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "52",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "53",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "54",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "55",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "56",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "57",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "58",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "59",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "60",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "61",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "62",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "63",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "64",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "65",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "66",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "67",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "68",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "69",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "70",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "71",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "72",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "73",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "74",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "75",
+      "dluserthroughput_min": 20.120878219604492,
+      "dluserthroughput_avg": 93.40058898925781,
+      "dluserthroughput_max": 166.6802978515625,
+      "uluserthroughput_min": 0.625071108341217,
+      "uluserthroughput_avg": 27.504743576049805,
+      "uluserthroughput_max": 54.38441467285156,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "76",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 53.075748443603516,
+      "dluserthroughput_max": 178.25294494628906,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.474294662475586,
+      "uluserthroughput_max": 53.53591537475586,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "77",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 80.43724822998047,
+      "dluserthroughput_max": 164.37403869628906,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 32.35808181762695,
+      "uluserthroughput_max": 65.23609161376953,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "78",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 80.43724822998047,
+      "dluserthroughput_max": 164.37403869628906,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 32.35808181762695,
+      "uluserthroughput_max": 65.23609161376953,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "79",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 72.36266326904297,
+      "dluserthroughput_max": 191.18194580078125,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 25.139955520629883,
+      "uluserthroughput_max": 58.396121978759766,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "80",
+      "dluserthroughput_min": 9.100626945495605,
+      "dluserthroughput_avg": 96.66024017333984,
+      "dluserthroughput_max": 184.2198486328125,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.667518615722656,
+      "uluserthroughput_max": 51.602378845214844,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "81",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 32.760738372802734,
+      "dluserthroughput_max": 156.80752563476562,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.80741310119629,
+      "uluserthroughput_max": 52.397010803222656,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "82",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 31.042896270751953,
+      "dluserthroughput_max": 158.5465545654297,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.1897029876709,
+      "uluserthroughput_max": 52.051517486572266,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "83",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 36.11650466918945,
+      "dluserthroughput_max": 162.17340087890625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 18.85222625732422,
+      "uluserthroughput_max": 49.19013595581055,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "84",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 31.969703674316406,
+      "dluserthroughput_max": 163.21487426757812,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.68231201171875,
+      "uluserthroughput_max": 54.4168701171875,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "85",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 41.35003662109375,
+      "dluserthroughput_max": 117.15048217773438,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.53513526916504,
+      "uluserthroughput_max": 49.15140151977539,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "86",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 41.35003662109375,
+      "dluserthroughput_max": 117.15048217773438,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.53513526916504,
+      "uluserthroughput_max": 49.15140151977539,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "87",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 74.85613250732422,
+      "dluserthroughput_max": 165.3001708984375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.521194458007812,
+      "uluserthroughput_max": 56.72486877441406,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "88",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 74.85613250732422,
+      "dluserthroughput_max": 165.3001708984375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.521194458007812,
+      "uluserthroughput_max": 56.72486877441406,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "89",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 74.85613250732422,
+      "dluserthroughput_max": 165.3001708984375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.521194458007812,
+      "uluserthroughput_max": 56.72486877441406,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "90",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 74.85613250732422,
+      "dluserthroughput_max": 165.3001708984375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.521194458007812,
+      "uluserthroughput_max": 56.72486877441406,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "91",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 34.013702392578125,
+      "dluserthroughput_max": 165.5274658203125,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 24.686464309692383,
+      "uluserthroughput_max": 56.38823699951172,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "92",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 29.54393196105957,
+      "dluserthroughput_max": 152.6630401611328,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.619403839111328,
+      "uluserthroughput_max": 52.971622467041016,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "93",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 30.101139068603516,
+      "dluserthroughput_max": 159.54470825195312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.684045791625977,
+      "uluserthroughput_max": 53.04541778564453,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "94",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 30.101139068603516,
+      "dluserthroughput_max": 159.54470825195312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.684045791625977,
+      "uluserthroughput_max": 53.04541778564453,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "95",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 27.958009719848633,
+      "dluserthroughput_max": 145.00892639160156,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.292156219482422,
+      "uluserthroughput_max": 51.7884635925293,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "96",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 32.86390686035156,
+      "dluserthroughput_max": 96.91720581054688,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 12.904919624328613,
+      "uluserthroughput_max": 39.420799255371094,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "97",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 39.045570373535156,
+      "dluserthroughput_max": 158.5214385986328,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 14.132357597351074,
+      "uluserthroughput_max": 41.11862564086914,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "98",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 31.347511291503906,
+      "dluserthroughput_max": 156.54953002929688,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 19.403480529785156,
+      "uluserthroughput_max": 50.174217224121094,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "99",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 72.23406982421875,
+      "dluserthroughput_max": 159.11801147460938,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.161396026611328,
+      "uluserthroughput_max": 56.323875427246094,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "100",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 72.23406982421875,
+      "dluserthroughput_max": 159.11801147460938,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.161396026611328,
+      "uluserthroughput_max": 56.323875427246094,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "101",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 30.599367141723633,
+      "dluserthroughput_max": 154.15017700195312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.827693939208984,
+      "uluserthroughput_max": 50.98457717895508,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "102",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.38133239746094,
+      "dluserthroughput_max": 170.98785400390625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.6554012298584,
+      "uluserthroughput_max": 52.06410598754883,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "103",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.38133239746094,
+      "dluserthroughput_max": 170.98785400390625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.6554012298584,
+      "uluserthroughput_max": 52.06410598754883,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "104",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.38133239746094,
+      "dluserthroughput_max": 170.98785400390625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.6554012298584,
+      "uluserthroughput_max": 52.06410598754883,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "105",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 44.281063079833984,
+      "dluserthroughput_max": 176.96609497070312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.586872100830078,
+      "uluserthroughput_max": 53.405853271484375,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "106",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 44.281063079833984,
+      "dluserthroughput_max": 176.96609497070312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.586872100830078,
+      "uluserthroughput_max": 53.405853271484375,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "107",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 44.281063079833984,
+      "dluserthroughput_max": 176.96609497070312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.586872100830078,
+      "uluserthroughput_max": 53.405853271484375,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "108",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 67.4474868774414,
+      "dluserthroughput_max": 138.7616424560547,
+      "uluserthroughput_min": 2.0435476303100586,
+      "uluserthroughput_avg": 28.96637535095215,
+      "uluserthroughput_max": 55.88920211791992,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "109",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.18348693847656,
+      "dluserthroughput_max": 168.28890991210938,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 16.316993713378906,
+      "uluserthroughput_max": 45.859954833984375,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "110",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.18348693847656,
+      "dluserthroughput_max": 168.28890991210938,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 16.316993713378906,
+      "uluserthroughput_max": 45.859954833984375,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "111",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 32.126033782958984,
+      "dluserthroughput_max": 160.16847229003906,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.396297454833984,
+      "uluserthroughput_max": 56.347808837890625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "112",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 32.126033782958984,
+      "dluserthroughput_max": 160.16847229003906,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.396297454833984,
+      "uluserthroughput_max": 56.347808837890625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "113",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 31.217121124267578,
+      "dluserthroughput_max": 157.34056091308594,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 18.239492416381836,
+      "uluserthroughput_max": 48.12360763549805,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "114",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 20.781431198120117,
+      "dluserthroughput_max": 77.14724731445312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 18.12455940246582,
+      "uluserthroughput_max": 44.926761627197266,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "115",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 20.781431198120117,
+      "dluserthroughput_max": 77.14724731445312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 18.12455940246582,
+      "uluserthroughput_max": 44.926761627197266,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "116",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 20.781431198120117,
+      "dluserthroughput_max": 77.14724731445312,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 18.12455940246582,
+      "uluserthroughput_max": 44.926761627197266,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "117",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 41.18052291870117,
+      "dluserthroughput_max": 139.56744384765625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.118045806884766,
+      "uluserthroughput_max": 46.15928649902344,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "118",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 41.18052291870117,
+      "dluserthroughput_max": 139.56744384765625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.118045806884766,
+      "uluserthroughput_max": 46.15928649902344,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "119",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 33.08460235595703,
+      "dluserthroughput_max": 158.83082580566406,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 23.11117172241211,
+      "uluserthroughput_max": 56.9288330078125,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "120",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 26.18690299987793,
+      "dluserthroughput_max": 150.32278442382812,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 23.11117172241211,
+      "uluserthroughput_max": 55.45860290527344,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "121",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 26.18690299987793,
+      "dluserthroughput_max": 150.32278442382812,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 23.11117172241211,
+      "uluserthroughput_max": 55.45860290527344,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "122",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 23.051284790039062,
+      "dluserthroughput_max": 129.84716796875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.99388885498047,
+      "uluserthroughput_max": 54.51084518432617,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "123",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 23.051284790039062,
+      "dluserthroughput_max": 129.84716796875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.99388885498047,
+      "uluserthroughput_max": 54.51084518432617,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "124",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 20.519641876220703,
+      "dluserthroughput_max": 85.33612823486328,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.118934631347656,
+      "uluserthroughput_max": 49.29440689086914,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "125",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 20.519641876220703,
+      "dluserthroughput_max": 85.33612823486328,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.118934631347656,
+      "uluserthroughput_max": 49.29440689086914,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "126",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 20.519641876220703,
+      "dluserthroughput_max": 85.33612823486328,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.118934631347656,
+      "uluserthroughput_max": 49.29440689086914,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "127",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 31.13468360900879,
+      "dluserthroughput_max": 163.283447265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.53142547607422,
+      "uluserthroughput_max": 47.83441162109375,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "128",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 31.13468360900879,
+      "dluserthroughput_max": 163.283447265625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.53142547607422,
+      "uluserthroughput_max": 47.83441162109375,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "129",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 49.45207977294922,
+      "dluserthroughput_max": 172.56541442871094,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.761611938476562,
+      "uluserthroughput_max": 52.23785400390625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "130",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 49.45207977294922,
+      "dluserthroughput_max": 172.56541442871094,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.761611938476562,
+      "uluserthroughput_max": 52.23785400390625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "131",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 35.06157684326172,
+      "dluserthroughput_max": 157.0744171142578,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.181732177734375,
+      "uluserthroughput_max": 51.022335052490234,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "132",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 35.06157684326172,
+      "dluserthroughput_max": 157.0744171142578,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.181732177734375,
+      "uluserthroughput_max": 51.022335052490234,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "133",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 35.06157684326172,
+      "dluserthroughput_max": 157.0744171142578,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.181732177734375,
+      "uluserthroughput_max": 51.022335052490234,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "134",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.90821838378906,
+      "dluserthroughput_max": 169.74252319335938,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.139524459838867,
+      "uluserthroughput_max": 51.06908416748047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "135",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.90821838378906,
+      "dluserthroughput_max": 169.74252319335938,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.139524459838867,
+      "uluserthroughput_max": 51.06908416748047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "136",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.305572509765625,
+      "dluserthroughput_max": 131.80067443847656,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.5858211517334,
+      "uluserthroughput_max": 54.17176818847656,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "137",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.305572509765625,
+      "dluserthroughput_max": 131.80067443847656,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.5858211517334,
+      "uluserthroughput_max": 54.17176818847656,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "138",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "139",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "140",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "141",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "142",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "143",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "144",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "145",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "146",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "147",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "148",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "149",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "150",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "151",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "152",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "153",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "154",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "155",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "156",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 42.7332878112793,
+      "dluserthroughput_max": 153.3240203857422,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.78227424621582,
+      "uluserthroughput_max": 47.30649948120117,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "157",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 73.08194732666016,
+      "dluserthroughput_max": 147.5420684814453,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 16.77593421936035,
+      "uluserthroughput_max": 45.36693572998047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "158",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 73.08194732666016,
+      "dluserthroughput_max": 147.5420684814453,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 16.77593421936035,
+      "uluserthroughput_max": 45.36693572998047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "159",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 73.08194732666016,
+      "dluserthroughput_max": 147.5420684814453,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 16.77593421936035,
+      "uluserthroughput_max": 45.36693572998047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "160",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.27866744995117,
+      "dluserthroughput_max": 169.79241943359375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.999713897705078,
+      "uluserthroughput_max": 53.63641357421875,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "161",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.27866744995117,
+      "dluserthroughput_max": 169.79241943359375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.999713897705078,
+      "uluserthroughput_max": 53.63641357421875,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "162",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.27866744995117,
+      "dluserthroughput_max": 169.79241943359375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.999713897705078,
+      "uluserthroughput_max": 53.63641357421875,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "163",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.27866744995117,
+      "dluserthroughput_max": 169.79241943359375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.999713897705078,
+      "uluserthroughput_max": 53.63641357421875,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "164",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.27866744995117,
+      "dluserthroughput_max": 169.79241943359375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.999713897705078,
+      "uluserthroughput_max": 53.63641357421875,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "165",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 38.27866744995117,
+      "dluserthroughput_max": 169.79241943359375,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 21.999713897705078,
+      "uluserthroughput_max": 53.63641357421875,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "166",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 39.384822845458984,
+      "dluserthroughput_max": 166.75543212890625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.652965545654297,
+      "uluserthroughput_max": 51.70775604248047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "167",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 39.384822845458984,
+      "dluserthroughput_max": 166.75543212890625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.652965545654297,
+      "uluserthroughput_max": 51.70775604248047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "168",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 39.384822845458984,
+      "dluserthroughput_max": 166.75543212890625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.652965545654297,
+      "uluserthroughput_max": 51.70775604248047,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "169",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.240684509277344,
+      "dluserthroughput_max": 168.78831481933594,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 15.824487686157227,
+      "uluserthroughput_max": 43.30718994140625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "170",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.240684509277344,
+      "dluserthroughput_max": 168.78831481933594,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 15.824487686157227,
+      "uluserthroughput_max": 43.30718994140625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "171",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.240684509277344,
+      "dluserthroughput_max": 168.78831481933594,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 15.824487686157227,
+      "uluserthroughput_max": 43.30718994140625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "172",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 52.240684509277344,
+      "dluserthroughput_max": 168.78831481933594,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 15.824487686157227,
+      "uluserthroughput_max": 43.30718994140625,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "173",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 57.08502197265625,
+      "dluserthroughput_max": 184.0373077392578,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.635889053344727,
+      "uluserthroughput_max": 45.88227081298828,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "174",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 71.35679626464844,
+      "dluserthroughput_max": 148.05682373046875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.376596450805664,
+      "uluserthroughput_max": 49.641292572021484,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "175",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 71.35679626464844,
+      "dluserthroughput_max": 148.05682373046875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.376596450805664,
+      "uluserthroughput_max": 49.641292572021484,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "176",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 39.530826568603516,
+      "dluserthroughput_max": 159.3016357421875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 18.41571807861328,
+      "uluserthroughput_max": 46.197296142578125,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "177",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 39.530826568603516,
+      "dluserthroughput_max": 159.3016357421875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 18.41571807861328,
+      "uluserthroughput_max": 46.197296142578125,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "178",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 60.22276306152344,
+      "dluserthroughput_max": 186.92828369140625,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 14.955351829528809,
+      "uluserthroughput_max": 42.660160064697266,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "179",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 46.12823486328125,
+      "dluserthroughput_max": 164.83157348632812,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 20.97003936767578,
+      "uluserthroughput_max": 48.5346794128418,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "180",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 60.89606857299805,
+      "dluserthroughput_max": 177.26760864257812,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 22.41423988342285,
+      "uluserthroughput_max": 48.33951950073242,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "181",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 62.981361389160156,
+      "dluserthroughput_max": 142.66912841796875,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 19.835556030273438,
+      "uluserthroughput_max": 50.68017578125,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "182",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 37.135581970214844,
+      "dluserthroughput_max": 153.7403106689453,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.277462005615234,
+      "uluserthroughput_max": 44.70036697387695,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "183",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 37.135581970214844,
+      "dluserthroughput_max": 153.7403106689453,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 17.277462005615234,
+      "uluserthroughput_max": 44.70036697387695,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    },
+    {
+      "positionid": "184",
+      "dluserthroughput_min": 0,
+      "dluserthroughput_avg": 64.15768432617188,
+      "dluserthroughput_max": 135.74098205566406,
+      "uluserthroughput_min": 0,
+      "uluserthroughput_avg": 14.915926933288574,
+      "uluserthroughput_max": 50.53287887573242,
+      "latency_min": 1.0760040283203125,
+      "latency_avg": 29.74193572998047,
+      "latency_max": 59.407867431640625
+    }
+  ],
+  "requests": [
+    {
+      "positionid": 1,
+      "latitude": 48.08754,
+      "longitude": 11.35015,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 2,
+      "latitude": 48.08785,
+      "longitude": 11.35056,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 3,
+      "latitude": 48.08788,
+      "longitude": 11.3506,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 4,
+      "latitude": 48.08821,
+      "longitude": 11.35098,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 5,
+      "latitude": 48.08884,
+      "longitude": 11.35165,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 6,
+      "latitude": 48.08892,
+      "longitude": 11.35175,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 7,
+      "latitude": 48.08899,
+      "longitude": 11.35183,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 8,
+      "latitude": 48.08912,
+      "longitude": 11.35199,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 9,
+      "latitude": 48.08923,
+      "longitude": 11.35215,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 10,
+      "latitude": 48.08978,
+      "longitude": 11.35298,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 11,
+      "latitude": 48.09061,
+      "longitude": 11.35421,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 12,
+      "latitude": 48.09068,
+      "longitude": 11.35431,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 13,
+      "latitude": 48.09081,
+      "longitude": 11.35453,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 14,
+      "latitude": 48.09089,
+      "longitude": 11.35468,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 15,
+      "latitude": 48.09101,
+      "longitude": 11.35494,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 16,
+      "latitude": 48.0914,
+      "longitude": 11.35606,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 17,
+      "latitude": 48.09162,
+      "longitude": 11.3567,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 18,
+      "latitude": 48.09215,
+      "longitude": 11.35816,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 19,
+      "latitude": 48.09248,
+      "longitude": 11.35894,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 20,
+      "latitude": 48.09246,
+      "longitude": 11.35898,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 21,
+      "latitude": 48.09245,
+      "longitude": 11.35901,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 22,
+      "latitude": 48.09245,
+      "longitude": 11.35904,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 23,
+      "latitude": 48.09245,
+      "longitude": 11.35908,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 24,
+      "latitude": 48.09245,
+      "longitude": 11.3591,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 25,
+      "latitude": 48.09246,
+      "longitude": 11.35914,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 26,
+      "latitude": 48.09248,
+      "longitude": 11.35918,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 27,
+      "latitude": 48.0925,
+      "longitude": 11.3592,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 28,
+      "latitude": 48.09252,
+      "longitude": 11.35922,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 29,
+      "latitude": 48.09254,
+      "longitude": 11.35923,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 30,
+      "latitude": 48.09257,
+      "longitude": 11.35924,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 31,
+      "latitude": 48.09317,
+      "longitude": 11.36111,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 32,
+      "latitude": 48.09337,
+      "longitude": 11.36175,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 33,
+      "latitude": 48.09447,
+      "longitude": 11.36514,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 34,
+      "latitude": 48.09446,
+      "longitude": 11.36514,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 35,
+      "latitude": 48.09446,
+      "longitude": 11.36515,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 36,
+      "latitude": 48.09445,
+      "longitude": 11.36516,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 37,
+      "latitude": 48.09444,
+      "longitude": 11.36517,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 38,
+      "latitude": 48.09444,
+      "longitude": 11.36518,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 39,
+      "latitude": 48.09443,
+      "longitude": 11.36519,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 40,
+      "latitude": 48.09443,
+      "longitude": 11.3652,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 41,
+      "latitude": 48.09442,
+      "longitude": 11.36521,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 42,
+      "latitude": 48.09442,
+      "longitude": 11.36522,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 43,
+      "latitude": 48.09442,
+      "longitude": 11.36523,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 44,
+      "latitude": 48.09442,
+      "longitude": 11.36524,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 45,
+      "latitude": 48.09442,
+      "longitude": 11.36525,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 46,
+      "latitude": 48.09441,
+      "longitude": 11.36526,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 47,
+      "latitude": 48.09441,
+      "longitude": 11.36527,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 48,
+      "latitude": 48.09441,
+      "longitude": 11.36528,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 49,
+      "latitude": 48.09441,
+      "longitude": 11.36529,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 50,
+      "latitude": 48.09441,
+      "longitude": 11.3653,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 51,
+      "latitude": 48.09442,
+      "longitude": 11.36531,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 52,
+      "latitude": 48.09442,
+      "longitude": 11.36532,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 53,
+      "latitude": 48.09442,
+      "longitude": 11.36533,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 54,
+      "latitude": 48.09442,
+      "longitude": 11.36534,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 55,
+      "latitude": 48.09443,
+      "longitude": 11.36536,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 56,
+      "latitude": 48.09443,
+      "longitude": 11.36537,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 57,
+      "latitude": 48.09443,
+      "longitude": 11.36538,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 58,
+      "latitude": 48.09444,
+      "longitude": 11.36539,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 59,
+      "latitude": 48.09445,
+      "longitude": 11.3654,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 60,
+      "latitude": 48.09445,
+      "longitude": 11.36541,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 61,
+      "latitude": 48.09446,
+      "longitude": 11.36542,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 62,
+      "latitude": 48.09447,
+      "longitude": 11.36543,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 63,
+      "latitude": 48.09448,
+      "longitude": 11.36543,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 64,
+      "latitude": 48.09448,
+      "longitude": 11.36544,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 65,
+      "latitude": 48.09449,
+      "longitude": 11.36544,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 66,
+      "latitude": 48.0945,
+      "longitude": 11.36545,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 67,
+      "latitude": 48.09451,
+      "longitude": 11.36545,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 68,
+      "latitude": 48.09452,
+      "longitude": 11.36545,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 69,
+      "latitude": 48.09453,
+      "longitude": 11.36545,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 70,
+      "latitude": 48.09454,
+      "longitude": 11.36545,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 71,
+      "latitude": 48.09455,
+      "longitude": 11.36545,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 72,
+      "latitude": 48.09456,
+      "longitude": 11.36545,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 73,
+      "latitude": 48.09456,
+      "longitude": 11.36544,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 74,
+      "latitude": 48.09457,
+      "longitude": 11.36544,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 75,
+      "latitude": 48.09458,
+      "longitude": 11.36544,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 76,
+      "latitude": 48.09501,
+      "longitude": 11.3668,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 77,
+      "latitude": 48.09509,
+      "longitude": 11.367,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 78,
+      "latitude": 48.0951,
+      "longitude": 11.36704,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 79,
+      "latitude": 48.09557,
+      "longitude": 11.36872,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 80,
+      "latitude": 48.09559,
+      "longitude": 11.36878,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 81,
+      "latitude": 48.09631,
+      "longitude": 11.37098,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 82,
+      "latitude": 48.09648,
+      "longitude": 11.37152,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 83,
+      "latitude": 48.09661,
+      "longitude": 11.37192,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 84,
+      "latitude": 48.09698,
+      "longitude": 11.37304,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 85,
+      "latitude": 48.09712,
+      "longitude": 11.37337,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 86,
+      "latitude": 48.09722,
+      "longitude": 11.37362,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 87,
+      "latitude": 48.09734,
+      "longitude": 11.37387,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 88,
+      "latitude": 48.09743,
+      "longitude": 11.37403,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 89,
+      "latitude": 48.09752,
+      "longitude": 11.3742,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 90,
+      "latitude": 48.09757,
+      "longitude": 11.3743,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 91,
+      "latitude": 48.09767,
+      "longitude": 11.37454,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 92,
+      "latitude": 48.09789,
+      "longitude": 11.37501,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 93,
+      "latitude": 48.098,
+      "longitude": 11.37521,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 94,
+      "latitude": 48.09812,
+      "longitude": 11.37542,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 95,
+      "latitude": 48.09842,
+      "longitude": 11.37596,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 96,
+      "latitude": 48.0988,
+      "longitude": 11.37667,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 97,
+      "latitude": 48.09911,
+      "longitude": 11.37724,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 98,
+      "latitude": 48.0996,
+      "longitude": 11.37813,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 99,
+      "latitude": 48.09971,
+      "longitude": 11.37833,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 100,
+      "latitude": 48.09973,
+      "longitude": 11.37837,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 101,
+      "latitude": 48.09993,
+      "longitude": 11.3788,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 102,
+      "latitude": 48.1,
+      "longitude": 11.37895,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 103,
+      "latitude": 48.10009,
+      "longitude": 11.37923,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 104,
+      "latitude": 48.10017,
+      "longitude": 11.37949,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 105,
+      "latitude": 48.10018,
+      "longitude": 11.37956,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 106,
+      "latitude": 48.10023,
+      "longitude": 11.37974,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 107,
+      "latitude": 48.10024,
+      "longitude": 11.37976,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 108,
+      "latitude": 48.10045,
+      "longitude": 11.38078,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 109,
+      "latitude": 48.10053,
+      "longitude": 11.38116,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 110,
+      "latitude": 48.10059,
+      "longitude": 11.38141,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 111,
+      "latitude": 48.10066,
+      "longitude": 11.38167,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 112,
+      "latitude": 48.10072,
+      "longitude": 11.3819,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 113,
+      "latitude": 48.10087,
+      "longitude": 11.38257,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 114,
+      "latitude": 48.10092,
+      "longitude": 11.38282,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 115,
+      "latitude": 48.10095,
+      "longitude": 11.38301,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 116,
+      "latitude": 48.10098,
+      "longitude": 11.38323,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 117,
+      "latitude": 48.101,
+      "longitude": 11.38344,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 118,
+      "latitude": 48.10103,
+      "longitude": 11.38369,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 119,
+      "latitude": 48.10105,
+      "longitude": 11.3838,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 120,
+      "latitude": 48.10114,
+      "longitude": 11.3848,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 121,
+      "latitude": 48.10115,
+      "longitude": 11.38486,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 122,
+      "latitude": 48.10124,
+      "longitude": 11.38592,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 123,
+      "latitude": 48.1013,
+      "longitude": 11.38647,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 124,
+      "latitude": 48.10138,
+      "longitude": 11.38717,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 125,
+      "latitude": 48.10138,
+      "longitude": 11.3872,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 126,
+      "latitude": 48.10143,
+      "longitude": 11.38768,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 127,
+      "latitude": 48.10146,
+      "longitude": 11.38798,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 128,
+      "latitude": 48.10146,
+      "longitude": 11.38821,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 129,
+      "latitude": 48.10145,
+      "longitude": 11.38848,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 130,
+      "latitude": 48.10143,
+      "longitude": 11.3886,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 131,
+      "latitude": 48.10136,
+      "longitude": 11.38908,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 132,
+      "latitude": 48.10133,
+      "longitude": 11.38928,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 133,
+      "latitude": 48.10131,
+      "longitude": 11.38944,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 134,
+      "latitude": 48.10126,
+      "longitude": 11.38991,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 135,
+      "latitude": 48.10123,
+      "longitude": 11.39027,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 136,
+      "latitude": 48.10122,
+      "longitude": 11.39036,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 137,
+      "latitude": 48.10121,
+      "longitude": 11.39047,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 138,
+      "latitude": 48.10118,
+      "longitude": 11.391,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 139,
+      "latitude": 48.10119,
+      "longitude": 11.39104,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 140,
+      "latitude": 48.10119,
+      "longitude": 11.39108,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 141,
+      "latitude": 48.1012,
+      "longitude": 11.39111,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 142,
+      "latitude": 48.10121,
+      "longitude": 11.39114,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 143,
+      "latitude": 48.10122,
+      "longitude": 11.39117,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 144,
+      "latitude": 48.10123,
+      "longitude": 11.3912,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 145,
+      "latitude": 48.10123,
+      "longitude": 11.39122,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 146,
+      "latitude": 48.10124,
+      "longitude": 11.39127,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 147,
+      "latitude": 48.10124,
+      "longitude": 11.39127,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 148,
+      "latitude": 48.10121,
+      "longitude": 11.39129,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 149,
+      "latitude": 48.10119,
+      "longitude": 11.39132,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 150,
+      "latitude": 48.10119,
+      "longitude": 11.39133,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 151,
+      "latitude": 48.10118,
+      "longitude": 11.39135,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 152,
+      "latitude": 48.10117,
+      "longitude": 11.39138,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 153,
+      "latitude": 48.10116,
+      "longitude": 11.39142,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 154,
+      "latitude": 48.10115,
+      "longitude": 11.39144,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 155,
+      "latitude": 48.10115,
+      "longitude": 11.39147,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 156,
+      "latitude": 48.10115,
+      "longitude": 11.39156,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 157,
+      "latitude": 48.10121,
+      "longitude": 11.39239,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 158,
+      "latitude": 48.10122,
+      "longitude": 11.39273,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 159,
+      "latitude": 48.10123,
+      "longitude": 11.39284,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 160,
+      "latitude": 48.10123,
+      "longitude": 11.3929,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 161,
+      "latitude": 48.10123,
+      "longitude": 11.39297,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 162,
+      "latitude": 48.10123,
+      "longitude": 11.39316,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 163,
+      "latitude": 48.10122,
+      "longitude": 11.39325,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 164,
+      "latitude": 48.10122,
+      "longitude": 11.39334,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 165,
+      "latitude": 48.10121,
+      "longitude": 11.39346,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 166,
+      "latitude": 48.1012,
+      "longitude": 11.39358,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 167,
+      "latitude": 48.10117,
+      "longitude": 11.39379,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 168,
+      "latitude": 48.10116,
+      "longitude": 11.39386,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 169,
+      "latitude": 48.10094,
+      "longitude": 11.39498,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 170,
+      "latitude": 48.10094,
+      "longitude": 11.39499,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 171,
+      "latitude": 48.10091,
+      "longitude": 11.39517,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 172,
+      "latitude": 48.10089,
+      "longitude": 11.39529,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 173,
+      "latitude": 48.10086,
+      "longitude": 11.39561,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 174,
+      "latitude": 48.10082,
+      "longitude": 11.39626,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 175,
+      "latitude": 48.10079,
+      "longitude": 11.39657,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 176,
+      "latitude": 48.10076,
+      "longitude": 11.39686,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 177,
+      "latitude": 48.1007,
+      "longitude": 11.39715,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 178,
+      "latitude": 48.10056,
+      "longitude": 11.39769,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 179,
+      "latitude": 48.10041,
+      "longitude": 11.39826,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 180,
+      "latitude": 48.10039,
+      "longitude": 11.39835,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 181,
+      "latitude": 48.10033,
+      "longitude": 11.39861,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 182,
+      "latitude": 48.10019,
+      "longitude": 11.39929,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 183,
+      "latitude": 48.10015,
+      "longitude": 11.39949,
+      "timestamp": 1566781829.166
+    },
+    {
+      "positionid": 184,
+      "latitude": 48.10001,
+      "longitude": 11.4,
+      "timestamp": 1566781829.166
+    }
+  ]
+}
