@@ -82,18 +82,18 @@ def detector_detect(request):
     logger.debug(prepend_ip("Request received: %s" %request, request))
     if request.method != 'POST':
         return HttpResponseBadRequest("Must send frame as a POST")
-    if request.content_type == 'image/png': 
+    if request.content_type == "image/png" or request.content_type == "image/jpeg": 
         if request.body == "":
             return HttpResponseBadRequest("No image data")
         image = request.body
-        save_debug_image(image, request)
-    elif request.content_type == 'application/x-www-form-urlencoded':
+        save_debug_image(image, request) 
+    elif request.content_type == "application/x-www-form-urlencoded":
         if request.POST.get("image", "") == "":
             return HttpResponseBadRequest("Missing 'image' parameter")
         image = base64.b64decode(request.POST.get("image"))
         save_debug_image(image, request)     
     else:
-        return HttpResponseBadRequest("Content-Type must be 'image/png' or 'application/x-www-urlencoded'")
+        return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', or 'application/x-www-urlencoded'")
 
     logger.debug(prepend_ip("Performing detection process", request))
     start = time.time()
