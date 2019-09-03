@@ -1,5 +1,6 @@
 package com.mobiledgex.sdkdemo.qoe;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
@@ -8,16 +9,20 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.graphics.ColorUtils;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.TableLayout;
@@ -31,8 +36,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -63,9 +66,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
@@ -86,6 +91,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     public static final double[] DL_THRESHOLDS = {0, 35, 45, 55, 74, 100, Double.POSITIVE_INFINITY};
     public static final double[] UL_THRESHOLDS = {0, 0.04, 0.12, 0.4, 2, 4, Double.POSITIVE_INFINITY};
     public static final int GRID_POINT_ALPHA = 128;
+    private static final int READ_REQUEST_CODE = 42;
     private String mHostname;
     private GoogleMap mMap;
     private int routeWidth = 20;
@@ -224,7 +230,11 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         mCalendar.set(year, month, dayOfMonth);
         buttonDate.setText(dateFormat.format(mCalendar.getTime()));
-        routeBetweenPoints(originLatLng, destinationLatLng);
+        if(mPointMode == pointMode.ROUTE) {
+            routeBetweenPoints(originLatLng, destinationLatLng);
+        } else if (mPointMode == pointMode.GRID) {
+            collectGridData();
+        }
     }
 
     @Override
@@ -241,7 +251,11 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mCalendar.set(mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH),
                 mCalendar.get(Calendar.DAY_OF_MONTH), hourOfDay, minute);
         buttonTime.setText(timeFormat.format(mCalendar.getTime()));
-        routeBetweenPoints(originLatLng, destinationLatLng);
+        if(mPointMode == pointMode.ROUTE) {
+            routeBetweenPoints(originLatLng, destinationLatLng);
+        } else if (mPointMode == pointMode.GRID) {
+            collectGridData();
+        }
     }
 
     @Override
@@ -308,7 +322,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     public void onTestDataItemClick(MenuItem item) {
-        loadTestData();
+        loadTestDataJson();
     }
 
     private void setCustomMapStyle(GoogleMap googleMap, int mapStyleResource) {
@@ -352,6 +366,72 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     /**
+     * Open a "file chooser" UI to select a file.
+     */
+    public void selectCsvFile(MenuItem item) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+    /**
+     * Use a WebView in a AlertDialog to display HTML help file for the CSV file format.
+     */
+    public void showCsvFileHelp(MenuItem item) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            InputStream is = getAssets().open("csv_file_help.html");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8 ));
+            String str;
+            while ((str = br.readLine()) != null) {
+                sb.append(str);
+            }
+            String htmlData = sb.toString();
+
+            // The WebView to show out HTML.
+            WebView webView = new WebView(QoeMapActivity.this);
+            webView.loadData(htmlData, "text/html; charset=UTF-8",null);
+            new AlertDialog.Builder(QoeMapActivity.this)
+                    .setView(webView)
+                    .setCancelable(true)
+                    .setPositiveButton("OK", null)
+                    .show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode,
+                                 Intent resultData) {
+
+        // The ACTION_OPEN_DOCUMENT intent was sent with the request code
+        // READ_REQUEST_CODE. If the request code seen here doesn't match, it's the
+        // response to some other intent, and the code below shouldn't run at all.
+
+        if (requestCode == READ_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            // The document selected by the user won't be returned in the intent.
+            // Instead, a URI to that document will be contained in the return intent
+            // provided to this method as a parameter.
+            // Pull that URI using resultData.getData().
+            Uri uri = null;
+            if (resultData != null) {
+                uri = resultData.getData();
+                Log.i(TAG, "Uri: " + uri.toString());
+                try {
+                    readCsvFromUri(uri);
+                } catch (IOException | ParseException e) {
+                    e.printStackTrace();
+                    String message = "Invalid file format: "+e.getLocalizedMessage();
+                    Log.e(TAG, message);
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
+    /**
      * Based on the visible map, builds a list of points on a grid for collecting QOS numbers.
      */
     private void collectGridData() {
@@ -361,15 +441,19 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         double maxLat = bounds.northeast.latitude;
         double minLng = bounds.southwest.longitude;
         double minLat = bounds.southwest.latitude;
+        double width = maxLng - minLng;
+        double height = maxLat - minLat;
+        gridSize = (maxLng - minLng) / 20;
+        double gridSizeH = gridSize * (width / height);
+        Log.i(TAG, "gridSize="+gridSize+" gridSizeH="+gridSizeH);
+
         mMap.clear();
         LocOuterClass.Timestamp timeStamp = getTimestamp();
 
         ArrayList<AppClient.QosPosition> positions = new ArrayList<>();
         requestNum = 0;
         int positionId = 0;
-        gridSize = (maxLng - minLng) / 20;
-        Log.i(TAG, "gridSize="+gridSize);
-        for(double lat = minLat; lat <= maxLat; lat+=gridSize) {
+        for(double lat = minLat; lat <= maxLat; lat+=gridSizeH) {
             for(double lng = minLng; lng <= maxLng; lng+=gridSize) {
                 LatLng latLng = new LatLng(lat, lng);
 
@@ -389,88 +473,6 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         getQoeData(positions, 0, requestNum);
 
         requestNum++;
-    }
-
-    private void loadTestData() {
-        Log.i(TAG, "loadTestData()");
-        originLatLng = null;
-        destinationLatLng = null;
-        mMap.clear();
-        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
-        String testDataJson;
-        try {
-            StringBuilder sb = new StringBuilder();
-            InputStream is = getAssets().open("positions.json");
-            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8 ));
-            String str;
-            while ((str = br.readLine()) != null) {
-                sb.append(str);
-            }
-            testDataJson = sb.toString();
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        try {
-            JSONObject jsonObject = new JSONObject(testDataJson);
-            JSONArray jsonArray = jsonObject.getJSONArray("requests");
-            List<LatLng> path = new ArrayList();
-            ArrayList<AppClient.QosPosition> positions = new ArrayList<>();
-
-            for(int i = 0; i < jsonArray.length(); i++) {
-                JSONObject position = jsonArray.getJSONObject(i);
-                double lat = position.getDouble("latitude");
-                double lng = position.getDouble("longitude");
-                double seconds = position.getDouble("timestamp");
-                int positionId = position.getInt("positionid");
-                distributed_match_engine.LocOuterClass.Timestamp timeStamp = LocOuterClass.Timestamp.newBuilder()
-                        .setSeconds((long) seconds)
-                        .build();
-                LatLng latLng = new LatLng(lat, lng);
-                path.add(latLng);
-                boundsBuilder.include(latLng);
-
-                LocOuterClass.Loc loc = LocOuterClass.Loc.newBuilder()
-                        .setLatitude((float) latLng.latitude)
-                        .setLongitude((float) latLng.longitude)
-                        .setTimestamp(timeStamp).build();
-                AppClient.QosPosition np = AppClient.QosPosition.newBuilder()
-                        .setPositionid(positionId)
-                        .setGpsLocation(loc)
-                        .build();
-                positions.add(np);
-
-                if(originLatLng == null) {
-                    originLatLng = latLng;
-                }
-                destinationLatLng = latLng;
-            }
-            int routeNum = 0;
-            getQoeData(positions, routeNum, requestNum);
-
-            //Draw the polyline
-            if (path.size() > 0) {
-                PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(5);
-                mMap.addPolyline(opts);
-            }
-
-            startMarker = mMap.addMarker(new MarkerOptions().position(originLatLng).title("Start of route"));
-            startMarker.setDraggable(true);
-            endMarker = mMap.addMarker(new MarkerOptions().position(destinationLatLng).title("End of route"));
-            endMarker.setDraggable(true);
-
-            LatLngBounds bounds = boundsBuilder.build();
-            int width = getResources().getDisplayMetrics().widthPixels;
-            int height = getResources().getDisplayMetrics().heightPixels;
-            int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
-            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
-            mMap.animateCamera(cu);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -562,6 +564,193 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
         mMap.animateCamera(cu);
 
+    }
+
+    /**
+     * This method reads a JSON file that has been copy/pasted from the Network trace window of
+     * Chrome's Developer Tools when opening https://predictive-qos.t-systems-service.com/.
+     */
+    private void loadTestDataJson() {
+        Log.i(TAG, "loadTestDataJson()");
+        originLatLng = null;
+        destinationLatLng = null;
+        mMap.clear();
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        String testDataJson;
+        try {
+            StringBuilder sb = new StringBuilder();
+            InputStream is = getAssets().open("positions.json");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8 ));
+            String str;
+            while ((str = br.readLine()) != null) {
+                sb.append(str);
+            }
+            testDataJson = sb.toString();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        try {
+            JSONObject jsonObject = new JSONObject(testDataJson);
+            JSONArray jsonArray = jsonObject.getJSONArray("requests");
+            List<LatLng> path = new ArrayList();
+            ArrayList<AppClient.QosPosition> positions = new ArrayList<>();
+
+            for(int i = 0; i < jsonArray.length(); i++) {
+                JSONObject position = jsonArray.getJSONObject(i);
+                double lat = position.getDouble("latitude");
+                double lng = position.getDouble("longitude");
+                double seconds = position.getDouble("timestamp");
+                int positionId = position.getInt("positionid");
+
+                long now = System.currentTimeMillis();
+                if(seconds < now) {
+                    seconds = now;
+                }
+
+                distributed_match_engine.LocOuterClass.Timestamp timeStamp = LocOuterClass.Timestamp.newBuilder()
+                        .setSeconds((long) seconds)
+                        .build();
+                LatLng latLng = new LatLng(lat, lng);
+                path.add(latLng);
+                boundsBuilder.include(latLng);
+
+                LocOuterClass.Loc loc = LocOuterClass.Loc.newBuilder()
+                        .setLatitude((float) latLng.latitude)
+                        .setLongitude((float) latLng.longitude)
+                        .setTimestamp(timeStamp).build();
+                AppClient.QosPosition np = AppClient.QosPosition.newBuilder()
+                        .setPositionid(positionId)
+                        .setGpsLocation(loc)
+                        .build();
+                positions.add(np);
+
+                if(originLatLng == null) {
+                    originLatLng = latLng;
+                }
+                destinationLatLng = latLng;
+            }
+            int routeNum = 0;
+            getQoeData(positions, routeNum, requestNum);
+
+            //Draw the polyline
+            if (path.size() > 0) {
+                PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(5);
+                mMap.addPolyline(opts);
+            }
+
+            startMarker = mMap.addMarker(new MarkerOptions().position(originLatLng).title("Start of route"));
+            startMarker.setDraggable(true);
+            endMarker = mMap.addMarker(new MarkerOptions().position(destinationLatLng).title("End of route"));
+            endMarker.setDraggable(true);
+
+            LatLngBounds bounds = boundsBuilder.build();
+            int width = getResources().getDisplayMetrics().widthPixels;
+            int height = getResources().getDisplayMetrics().heightPixels;
+            int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
+            mMap.animateCamera(cu);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Creates route data by reading a CSV file.
+     * File format matches that used by DT's web UI at https://predictive-qos.t-systems-service.com/
+     *
+     * @param uri
+     * @throws IOException
+     */
+    private void readCsvFromUri(Uri uri) throws IOException, ParseException {
+        originLatLng = null;
+        destinationLatLng = null;
+        mMap.clear();
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        List<LatLng> path = new ArrayList();
+        ArrayList<AppClient.QosPosition> positions = new ArrayList<>();
+
+        InputStream inputStream = getContentResolver().openInputStream(uri);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                inputStream));
+        String line;
+        int positionId = 0;
+        while ((line = reader.readLine()) != null) {
+            // CSV format:
+            // Time, Date, Latitude, Longitude
+            String[] values = line.split(",");
+            if(values.length != 4) {
+                throw new RuntimeException("Invalid file format. Line contains " + values.length
+                        + " elements, but should contain 4.");
+            }
+            // Check if this line is the header. If so, skip it.
+            if(values[0].equals("Time")) {
+                continue;
+            }
+
+            String time = values[0];
+            String date = values[1];
+            String latitude = values[2];
+            String longitude = values[3];
+            SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            Date dateTime = format.parse(date + " " + time);
+            long seconds = dateTime.getTime() / 1000;
+            double lat = Double.parseDouble(latitude);
+            double lng = Double.parseDouble(longitude);
+
+            long now = System.currentTimeMillis();
+            if(seconds < now) {
+                seconds = now;
+            }
+
+            distributed_match_engine.LocOuterClass.Timestamp timeStamp = LocOuterClass.Timestamp.newBuilder()
+                    .setSeconds((long) seconds)
+                    .build();
+            LatLng latLng = new LatLng(lat, lng);
+            path.add(latLng);
+            boundsBuilder.include(latLng);
+
+            LocOuterClass.Loc loc = LocOuterClass.Loc.newBuilder()
+                    .setLatitude((float) latLng.latitude)
+                    .setLongitude((float) latLng.longitude)
+                    .setTimestamp(timeStamp).build();
+            AppClient.QosPosition np = AppClient.QosPosition.newBuilder()
+                    .setPositionid(positionId)
+                    .setGpsLocation(loc)
+                    .build();
+            positions.add(np);
+
+            if(originLatLng == null) {
+                originLatLng = latLng;
+            }
+            destinationLatLng = latLng;
+            positionId++;
+        }
+        int routeNum = 0;
+        getQoeData(positions, routeNum, requestNum);
+
+        //Draw the polyline
+        if (path.size() > 0) {
+            PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(5);
+            mMap.addPolyline(opts);
+        }
+
+        startMarker = mMap.addMarker(new MarkerOptions().position(originLatLng).title("Start of route"));
+        startMarker.setDraggable(true);
+        endMarker = mMap.addMarker(new MarkerOptions().position(destinationLatLng).title("End of route"));
+        endMarker.setDraggable(true);
+
+        LatLngBounds bounds = boundsBuilder.build();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
+        mMap.animateCamera(cu);
+
+        inputStream.close();
     }
 
     /**
@@ -668,7 +857,6 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     AppClient.QosPositionKpiReply aR = responseIterator.next();
                     for (int i = 0; i < aR.getPositionResultsCount(); i++) {
                         AppClient.QosPositionKpiResult result = aR.getPositionResults(i);
-                        Log.i(TAG, i+" dluserthroughput_avg="+result.getDluserthroughputAvg()+" uluserthroughput_avg="+result.getUluserthroughputAvg());
                         LatLng coords = new LatLng(result.getGpsLocation().getLatitude(), result.getGpsLocation().getLongitude());
                         points.add(new ColoredPoint(coords, result.getDluserthroughputAvg(), result.getUluserthroughputAvg()));
                         Calendar cal = Calendar.getInstance(TimeZone.getDefault());
@@ -729,9 +917,23 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     @Override
+    public void onPause() {
+        Log.i(TAG, "onPause()");
+        unregisterReceiver(mBroadcastReceiver);
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        Log.i(TAG, "onResume()");
+        registerReceiver(mBroadcastReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
+        super.onResume();
+    }
+
+    @Override
     public void onStop() {
         Log.i(TAG, "onStop()");
-        unregisterReceiver(mBroadcastReceiver);
+//        unregisterReceiver(mBroadcastReceiver);
         super.onStop();
     }
 

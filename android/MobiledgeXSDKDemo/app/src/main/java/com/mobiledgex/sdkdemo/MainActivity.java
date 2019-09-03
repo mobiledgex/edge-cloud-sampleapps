@@ -172,6 +172,7 @@ public class MainActivity extends AppCompatActivity
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
+//                .requestIdToken()
                 .build();
 
         // Build a GoogleSignInClient with the options specified by gso.
@@ -186,6 +187,7 @@ public class MainActivity extends AppCompatActivity
 
         if(account != null) {
             //This means we're already signed in.
+            Log.i(TAG, "Email="+account.getEmail()+" ServerAuthCode="+account.getServerAuthCode()+" DisplayName="+account.getDisplayName());
             signInMenuItem.setVisible(false);
             signOutMenuItem.setVisible(true);
         } else {
@@ -1047,6 +1049,8 @@ public class MainActivity extends AppCompatActivity
             // Signed in successfully, show authenticated UI.
             signInMenuItem.setVisible(false);
             signOutMenuItem.setVisible(true);
+            Log.i(TAG, "Email="+account.getEmail()+" IdToken()="+account.getIdToken()+" ServerAuthCode="+account.getServerAuthCode()+" DisplayName="+account.getDisplayName());
+
             Toast.makeText(MainActivity.this, "Sign in successful. Welcome, "+account.getDisplayName(), Toast.LENGTH_LONG).show();
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.

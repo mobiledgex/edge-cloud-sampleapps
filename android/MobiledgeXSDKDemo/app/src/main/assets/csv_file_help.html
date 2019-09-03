@@ -1,0 +1,27 @@
+<h2>CSV File Format</h2>
+<p>The CSV file uses comma (',') as separator and needs to have the following format:</p>
+<table border="1" width="100%">
+    <thead>
+    <tr>
+        <th>Time</th>
+        <th>Date</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>19:36:23</td>
+        <td>7/26/2018</td>
+        <td>48.167466</td>
+        <td>11.345</td>
+    </tr>
+    </tbody>
+</table>
+<p>While Longitude and Latitude have to be of type float (with '.' separator).</p>
+<ol>
+    <li>The application will send a request to the API for each point to get the information about the network performance.</li>
+    <li>The application will connect each consecutive point (to draw the according polyline).</li>
+    <li>Each point will receive a score to determine its color.</li>
+    <li>The polylines will be drawn.</li>
+</ol>

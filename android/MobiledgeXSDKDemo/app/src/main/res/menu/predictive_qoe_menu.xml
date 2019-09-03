@@ -48,9 +48,19 @@
             </group>
         </menu>
     </item>
-    <item
-        android:id="@+id/action_load_test_data"
-        android:onClick="onTestDataItemClick"
-        android:title="@string/pqoe_load_test_data" />
+    <item android:title="@string/pqoe_csv_file">
+        <menu>
+            <group>
+                <item
+                    android:id="@+id/action_csv_file_load"
+                    android:onClick="selectCsvFile"
+                    android:title="@string/pqoe_csv_file_load" />
+                <item
+                    android:id="@+id/action_csv_file_help"
+                    android:onClick="showCsvFileHelp"
+                    android:title="@string/pqoe_csv_file_help" />
+            </group>
+        </menu>
+    </item>
 
 </menu>
