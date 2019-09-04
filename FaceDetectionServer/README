@@ -1,0 +1,9 @@
+To run the server manually:
+
+virtualenv env -ppython3
+source env/bin/activate
+pip install -r requirements.txt
+cd moedx/
+python manage.py makemigrations tracker
+python manage.py migrate
+gunicorn moedx.wsgi:application --bind 0.0.0.0:8008

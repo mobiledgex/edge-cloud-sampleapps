@@ -25,7 +25,8 @@ class TrackerConfig(AppConfig):
         global myOpWrapper
         supportOpenPose = False
 
-        sys.path.append('/openpose/build/python')
+        # This assumes openpose has been built from source and installed with "make install".
+        sys.path.append('/usr/local/python')
         try:
             from openpose import pyopenpose as myOpenPose
             supportOpenPose = True
