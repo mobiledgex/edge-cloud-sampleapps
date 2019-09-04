@@ -184,7 +184,11 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
                     latencyMinTv.setText(formatValue(0) + " ms");
                 }
                 if(cloudlet.isPingFailed()) {
-                    latencyMessageTv.setText("Ping failed");
+                    if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
+                        latencyMessageTv.setText("Ping failed");
+                    } else if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
+                        latencyMessageTv.setText("Socket test failed");
+                    }
                 }
                 latencyAvgTv.setText(formatValue(cloudlet.getLatencyAvg())+" ms");
                 latencyMaxTv.setText(formatValue(cloudlet.getLatencyMax())+" ms");

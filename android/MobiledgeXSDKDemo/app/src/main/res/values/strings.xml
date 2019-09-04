@@ -122,7 +122,9 @@
     <string name="title_activity_qoe_map">Predictive QoS</string>
     <string name="map_type">Map Type</string>
     <string name="pqoe_point_mode">Point Mode</string>
-    <string name="pqoe_load_test_data">Load Test Data</string>
+    <string name="pqoe_csv_file">CSV File</string>
+    <string name="pqoe_csv_file_load">Load CSV File</string>
+    <string name="pqoe_csv_file_help">CSV File Help</string>
     <string name="pqoe_route_point_mode">Route Mode</string>
     <string name="pqoe_grid_point_mode">Grid Mode</string>
     <string name="pqoe_map_type_normal">Normal</string>
