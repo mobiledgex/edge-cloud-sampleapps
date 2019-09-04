@@ -128,11 +128,11 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Intent intent = getIntent();
         mHostname = intent.getStringExtra(EXTRA_HOSTNAME);
         Log.i(TAG, "mHostname="+mHostname);
-        if(mHostname == null) {
+        if (mHostname == null) {
             mHostname = MainActivity.DEFAULT_DME_HOSTNAME;
         }
         String carrierName = intent.getStringExtra(EXTRA_CARRIER_NAME);
-        if(carrierName == null) {
+        if (carrierName == null) {
             carrierName = MainActivity.DEFAULT_CARRIER_NAME;
         }
 
@@ -143,7 +143,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         // Build Legend Table View programmatically, based on colors and speed description values.
         TableLayout tl = findViewById(R.id.table_layout_legend);
         tl.removeAllViews();
-        for(int i = COLORS.length - 1; i >=0 ; i--) {
+        for (int i = COLORS.length - 1; i >=0 ; i--) {
             String color = COLORS[i];
             TableRow tr = new TableRow(this);
             tr.setLayoutParams(new TableRow.LayoutParams());
@@ -161,7 +161,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         buttonDate = findViewById(R.id.buttonDate);
         buttonTime = findViewById(R.id.buttonTime);
         //Set Date and Time buttons to current
-        if(DateFormat.is24HourFormat(this)) {
+        if (DateFormat.is24HourFormat(this)) {
             timeFormat = new SimpleDateFormat("HH:mm:00");
             dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:00");
         } else {
@@ -179,7 +179,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             @Override
             public void onReceive(Context ctx, Intent intent) {
                 if (intent.getAction().compareTo(Intent.ACTION_TIME_TICK) == 0) {
-                    if(mCalendar.getTimeInMillis() < System.currentTimeMillis()) {
+                    if (mCalendar.getTimeInMillis() < System.currentTimeMillis()) {
                         mCalendar = Calendar.getInstance(TimeZone.getDefault());
                         buttonTime.setText(timeFormat.format(mCalendar.getTime()));
                     }
@@ -222,7 +222,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         //Make sure date/time is not in the past.
         Calendar newCal = (Calendar) mCalendar.clone();
         newCal.set(year, month, dayOfMonth);
-        if(newCal.getTimeInMillis() < System.currentTimeMillis()) {
+        if (newCal.getTimeInMillis() < System.currentTimeMillis()) {
             String message = "Error: "+dateTimeFormat.format(newCal.getTime())+" is in the past";
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
             return;
@@ -230,7 +230,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         mCalendar.set(year, month, dayOfMonth);
         buttonDate.setText(dateFormat.format(mCalendar.getTime()));
-        if(mPointMode == pointMode.ROUTE) {
+        if (mPointMode == pointMode.ROUTE) {
             routeBetweenPoints(originLatLng, destinationLatLng);
         } else if (mPointMode == pointMode.GRID) {
             collectGridData();
@@ -243,7 +243,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Calendar newCal = (Calendar) mCalendar.clone();
         newCal.set(mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH),
                 mCalendar.get(Calendar.DAY_OF_MONTH), hourOfDay, minute);
-        if(newCal.getTimeInMillis() < System.currentTimeMillis()) {
+        if (newCal.getTimeInMillis() < System.currentTimeMillis()) {
             String message = "Error: "+dateTimeFormat.format(newCal.getTime())+" is in the past";
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
             return;
@@ -251,7 +251,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mCalendar.set(mCalendar.get(Calendar.YEAR), mCalendar.get(Calendar.MONTH),
                 mCalendar.get(Calendar.DAY_OF_MONTH), hourOfDay, minute);
         buttonTime.setText(timeFormat.format(mCalendar.getTime()));
-        if(mPointMode == pointMode.ROUTE) {
+        if (mPointMode == pointMode.ROUTE) {
             routeBetweenPoints(originLatLng, destinationLatLng);
         } else if (mPointMode == pointMode.GRID) {
             collectGridData();
@@ -305,17 +305,17 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
             setCustomMapStyle(mMap, R.raw.map_style_default);
-        } else if(item.getItemId() == R.id.action_pqoe_map_type_silver) {
+        } else if (item.getItemId() == R.id.action_pqoe_map_type_silver) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
             setCustomMapStyle(mMap, R.raw.map_style_silver);
-        } else if(item.getItemId() == R.id.action_pqoe_map_type_satellite) {
+        } else if (item.getItemId() == R.id.action_pqoe_map_type_satellite) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        } else if(item.getItemId() == R.id.action_pqoe_map_type_hybrid) {
+        } else if (item.getItemId() == R.id.action_pqoe_map_type_hybrid) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        } else if(item.getItemId() == R.id.action_pqoe_map_type_terrain) {
+        } else if (item.getItemId() == R.id.action_pqoe_map_type_terrain) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
         }
@@ -453,8 +453,8 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         ArrayList<AppClient.QosPosition> positions = new ArrayList<>();
         requestNum = 0;
         int positionId = 0;
-        for(double lat = minLat; lat <= maxLat; lat+=gridSizeH) {
-            for(double lng = minLng; lng <= maxLng; lng+=gridSize) {
+        for (double lat = minLat; lat <= maxLat; lat+=gridSizeH) {
+            for (double lng = minLng; lng <= maxLng; lng+=gridSize) {
                 LatLng latLng = new LatLng(lat, lng);
 
                 LocOuterClass.Loc loc = LocOuterClass.Loc.newBuilder()
@@ -507,7 +507,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     .destination(new com.google.maps.model.LatLng(startLatLng.latitude, startLatLng.longitude))
                     .await();
 
-            if(calculatedRoutes == null || calculatedRoutes.routes.length == 0) {
+            if (calculatedRoutes == null || calculatedRoutes.routes.length == 0) {
                 Log.w(TAG, "calculatedRoutes has no content");
                 return;
             }
@@ -515,13 +515,13 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             //Loop through legs and steps to get encoded polylines of each step
             int routeNum = 0;
-            for(DirectionsRoute route: calculatedRoutes.routes) {
+            for (DirectionsRoute route: calculatedRoutes.routes) {
                 int positionId = 0;
                 List<LatLng> path = new ArrayList();
                 ArrayList<AppClient.QosPosition> positions = new ArrayList<>();
 
                 if (route.legs !=null) {
-                    for(int i=0; i<route.legs.length; i++) {
+                    for (int i=0; i<route.legs.length; i++) {
                         DirectionsLeg leg = route.legs[i];
                         if (leg.steps != null) {
                             for (int j=0; j<leg.steps.length;j++) {
@@ -598,7 +598,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             List<LatLng> path = new ArrayList();
             ArrayList<AppClient.QosPosition> positions = new ArrayList<>();
 
-            for(int i = 0; i < jsonArray.length(); i++) {
+            for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject position = jsonArray.getJSONObject(i);
                 double lat = position.getDouble("latitude");
                 double lng = position.getDouble("longitude");
@@ -606,7 +606,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 int positionId = position.getInt("positionid");
 
                 long now = System.currentTimeMillis();
-                if(seconds < now) {
+                if (seconds < now) {
                     seconds = now;
                 }
 
@@ -627,7 +627,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         .build();
                 positions.add(np);
 
-                if(originLatLng == null) {
+                if (originLatLng == null) {
                     originLatLng = latLng;
                 }
                 destinationLatLng = latLng;
@@ -682,12 +682,12 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             // CSV format:
             // Time, Date, Latitude, Longitude
             String[] values = line.split(",");
-            if(values.length != 4) {
+            if (values.length != 4) {
                 throw new RuntimeException("Invalid file format. Line contains " + values.length
                         + " elements, but should contain 4.");
             }
             // Check if this line is the header. If so, skip it.
-            if(values[0].equals("Time")) {
+            if (values[0].equals("Time")) {
                 continue;
             }
 
@@ -702,7 +702,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             double lng = Double.parseDouble(longitude);
 
             long now = System.currentTimeMillis();
-            if(seconds < now) {
+            if (seconds < now) {
                 seconds = now;
             }
 
@@ -723,7 +723,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     .build();
             positions.add(np);
 
-            if(originLatLng == null) {
+            if (originLatLng == null) {
                 originLatLng = latLng;
             }
             destinationLatLng = latLng;
@@ -762,7 +762,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private LocOuterClass.Timestamp getTimestamp() {
         long seconds = System.currentTimeMillis()/1000+60; // Request data for 1 minute from now.
         //If we have picked a date or time in the future, use that instead.
-        if(mCalendar.getTimeInMillis()/1000 > seconds) {
+        if (mCalendar.getTimeInMillis()/1000 > seconds) {
             seconds = mCalendar.getTimeInMillis()/1000;
             Log.i(TAG, "Using future timestamp: "+(mCalendar.getTimeInMillis()/1000)+" "+mCalendar);
         } else {
@@ -867,7 +867,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     //We've got a list of points. Draw the results.
                     runOnUiThread(new Runnable(){
                         public void run(){
-                            if(mPointMode == pointMode.ROUTE) {
+                            if (mPointMode == pointMode.ROUTE) {
                                 drawColoredPolyline(points, routeNum);
                             } else if (mPointMode == pointMode.GRID) {
                                 drawColoredGrid(points);
@@ -890,7 +890,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     @Override
     public void onCameraIdle() {
         Log.i(TAG, "onCameraIdle()");
-        if(mPointMode == pointMode.GRID) {
+        if (mPointMode == pointMode.GRID) {
             collectGridData();
         }
     }
@@ -986,7 +986,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         routeWidth = 20;
-        if(routeNum == 0) {
+        if (routeNum == 0) {
             routeWidth = 30;
         }
 
@@ -1036,24 +1036,24 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             int dlScore = 0;
             int upScore = 0;
 
-            for(int i = 0; i < DL_THRESHOLDS.length-1; i++) {
-                if(dlSpeed > DL_THRESHOLDS[i] && dlSpeed <= DL_THRESHOLDS[i+1]) {
+            for (int i = 0; i < DL_THRESHOLDS.length-1; i++) {
+                if (dlSpeed > DL_THRESHOLDS[i] && dlSpeed <= DL_THRESHOLDS[i+1]) {
                     dlScore = i+1;
                     break;
                 }
             }
-            for(int i = 0; i < UL_THRESHOLDS.length-1; i++) {
-                if(upSpeed > UL_THRESHOLDS[i] && upSpeed <= UL_THRESHOLDS[i+1]) {
+            for (int i = 0; i < UL_THRESHOLDS.length-1; i++) {
+                if (upSpeed > UL_THRESHOLDS[i] && upSpeed <= UL_THRESHOLDS[i+1]) {
                     upScore = i+1;
                     break;
                 }
             }
 
-            if(dlScore < score) {
+            if (dlScore < score) {
                 score = dlScore;
             }
 
-            if(upScore < score) {
+            if (upScore < score) {
                 score = upScore;
             }
             Log.i(TAG, "getDluserthroughputAvg "+dlSpeed+" getUluserthroughputAvg="+upSpeed+" score="+score);
