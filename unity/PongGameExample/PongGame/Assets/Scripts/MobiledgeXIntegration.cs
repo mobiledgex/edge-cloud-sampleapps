@@ -24,14 +24,17 @@ public class MobiledgeXIntegration
    * These are "carrier independent" settings for demo use:
    */
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
-  public string devName { get; set; } = "MobiledgeX";
-  public string appName { get; set; } = "PongGameHackathonApp";
+  public string devName { get; set; } = "MobiledgeX"; // Your developer name.
+  public string appName { get; set; } = "MobiledgeX SDK Demo"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
-  public string dmeHost { get; set; } = "mexdemo." + MatchingEngine.baseDmeHost; // Demo DME host, with some edge cloudlets.
+  public const string dmeInitialContact = "sdkdemo." + MatchingEngine.baseDmeHost; // Demo DME host, with some edge cloudlets.
+  public string dmeHost { get; set; } = dmeInitialContact;
   public uint port { get; set; } = MatchingEngine.defaultDmeRestPort;
-  public bool useDemo { get; set; } = true;
+
+  // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
+  public bool useDemo { get; set; } = false;
 
   public MobiledgeXIntegration()
   {
@@ -46,7 +49,13 @@ public class MobiledgeXIntegration
 
   public string GenerateDmeHostName()
   {
-    return pIntegration.GenerateDmeHostName();
+    string genHost = pIntegration.GenerateDmeHostName();
+    if (genHost == null)
+    {
+      // fallback to set DME server.
+      genHost = dmeHost;
+    }
+    return genHost;
   }
 
   public async Task<Loc> GetLocationFromDevice()
@@ -73,13 +82,18 @@ public class MobiledgeXIntegration
     string aCarrierName = pIntegration.GetCurrentCarrierName();
     string eHost; // Ephemeral DME host (depends on the SIM).
     string eCarrierName;
-    if (useDemo) // There's no host (PC, UnityEditor, etc.)...
+    if (useDemo)
     {
       eHost = dmeHost;
       eCarrierName = carrierName;
     }
     else
     {
+      if (aCarrierName == null)
+      {
+        Debug.Log("Missing CarrierName for FindCloudlet.");
+        return false;
+      }
       eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
     }
@@ -120,6 +134,11 @@ public class MobiledgeXIntegration
     }
     else
     {
+      if (aCarrierName == "" || aCarrierName == null)
+      {
+        Debug.Log("Missing CarrierName for FindCloudlet.");
+        return null;
+      }
       eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
     }

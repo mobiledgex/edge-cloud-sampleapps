@@ -17,23 +17,15 @@ namespace MexPongGame
 
   public class PlatformIntegration : ICarrierInfo
   {
+    // Sets platform specific internal callbacks (reference counted objects), etc.
+    [DllImport("__Internal")]
+    private static extern string _ensureMatchingEnginePlatformIntegration();
+
     [DllImport("__Internal")]
     private static extern string _getCurrentCarrierName();
 
     [DllImport("__Internal")]
     private static extern string _getMccMnc();
-
-
-    // Sets platform specific internal callbacks, etc.
-    [DllImport("__Internal")]
-    private static extern string _initMatchingEnginePlatformIntegration();
-
-    public PlatformIntegration()
-    {
-#if UNITY_IOS
-      _initMatchingEnginePlatformIntegration();
-#endif
-    }
 
     // All platforms utility function.
     public string GenerateDmeHostName()
@@ -133,7 +125,7 @@ namespace MexPongGame
         return null;
       }
 
-      if (mccmnc.Length < 5 || mccmnc.Length > 6) {
+      if (mccmnc.Length < 5) {
         return null;
       }
       return mccmnc;
