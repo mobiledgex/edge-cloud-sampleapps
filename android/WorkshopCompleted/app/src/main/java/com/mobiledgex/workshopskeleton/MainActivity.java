@@ -263,7 +263,7 @@ public class MainActivity extends AppCompatActivity
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
         devName = "MobiledgeX";
-        carrierName = "TIP";
+        carrierName = "TDG";
         appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
