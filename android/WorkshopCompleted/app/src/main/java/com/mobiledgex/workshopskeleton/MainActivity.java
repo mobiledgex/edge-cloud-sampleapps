@@ -271,8 +271,11 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-        String fallbackHost = "sdkdemo.global.dme.mobiledgex.net"; // Override host.
         host = matchingEngine.generateDmeHostAddress();
+        if(host == null) {
+            host = "sdkdemo.global.dme.mobiledgex.net";   //fallback host
+            Log.e(TAG, "could not generate host");
+        }
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
                 devName, appName, appVersion, carrierName, null);
