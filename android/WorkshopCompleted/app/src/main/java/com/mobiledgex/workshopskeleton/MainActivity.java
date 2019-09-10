@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-        host = "mexdemo.dme.mobiledgex.net"; // Override host.
+        host = "sdkdemo.global.dme.mobiledgex.net"; // Override host.
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
                 devName, appName, appVersion, carrierName, null);
@@ -402,10 +402,10 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "No items added to the position list");
             return false;
         }
-        AppClient.QosPositionKpiRequest qosPositionKpiRequest = matchingEngine.createQoSKPIRequest(requests);
-        if(qosPositionKpiRequest != null) {
+        AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createQoSPositionRequest(requests, 0, null);
+        if(qosPositionRequest != null) {
             try {
-                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionKpiRequest, host, port, 10000);
+                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionRequest, host, port, 10000);
                 if (!qosPositionKpiReplies.hasNext()) {
                     Log.e(TAG, "Replies is empty");
                     return false;
@@ -533,8 +533,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        matchingEngine = new MatchingEngine(ctx);
-        matchingEngine.setNetworkSwitchingEnabled(true);
         // Check permissions here, as the user has the ability to change them on the fly through
         // system settings.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
@@ -542,6 +540,8 @@ public class MainActivity extends AppCompatActivity
             mRpUtil.requestMultiplePermissions(this);
             return;
         }
+        matchingEngine = new MatchingEngine(ctx);
+        matchingEngine.setNetworkSwitchingEnabled(true);
     }
 
     public class VerifyLocBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
