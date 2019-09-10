@@ -62,7 +62,7 @@ namespace MexPongGame {
     MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
     string host = "localhost";
-    string localServerHost = "192.168.1.81"; // Local server hack. Override and set demoServer=true for dev demo use.
+    string localServerHost = "192.168.1.10"; // Local server hack. Override and set demoServer=true for dev demo use.
     int port = 3000;
     string server = "";
     string queryParams = "";
@@ -80,7 +80,7 @@ namespace MexPongGame {
     // Use this for initialization
     async Task Start()
     {
-      integration.useDemo = true; // Demo mode DME server to run MobiledgeX APIs.
+      integration.useDemo = false; // Demo mode DME server to run MobiledgeX APIs.
       // Use local server, by IP. This must be started before use:
       if (demoServer)
       {
@@ -117,23 +117,23 @@ namespace MexPongGame {
       clog("VerifiedLocation: " + verifiedLocation);
 
       //QosPositions of various gps locations
-      QosPositionKpiStreamReply reply = await integration.GetQosPositionKpi(); 
-      if (reply.result == null || reply.error != null)
+      QosPositionKpiStream qosReplyStream = await integration.GetQosPositionKpi();
+      if (qosReplyStream == null)
       {
-        clog("Reply result missing: " + reply);
+        clog("Reply Stream result missing: " + qosReplyStream);
       }
       else
       {
-        clog("Result: " + reply.result);
-        DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionResult));
-        MemoryStream ms = new MemoryStream();
-        foreach (QosPositionResult qpr in reply.result.position_results)
+        foreach (var qosPositionKpiReply in qosReplyStream)
         {
-            ms.Position = 0;
-            serializer.WriteObject(ms, qpr);
-            string jsonStr = Util.StreamToString(ms);
-            clog("QosPositionResult: " + jsonStr);
+          // Serialize the DataContract and print everything:
+          DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionKpiReply));
+          MemoryStream ms = new MemoryStream();
+          serializer.WriteObject(ms, qosPositionKpiReply);
+          string jsonStr = Util.StreamToString(ms);
+          Console.WriteLine("QoS of requested gps location(s): " + jsonStr);
         }
+        qosReplyStream.Dispose();
       }
     }
 
