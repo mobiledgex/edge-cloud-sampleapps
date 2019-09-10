@@ -42,6 +42,8 @@ import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
 import java.net.HttpRetryException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -269,7 +271,8 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-        host = "sdkdemo.global.dme.mobiledgex.net"; // Override host.
+        String fallbackHost = "sdkdemo.global.dme.mobiledgex.net"; // Override host.
+        host = matchingEngine.generateDmeHostAddress();
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
                 devName, appName, appVersion, carrierName, null);
