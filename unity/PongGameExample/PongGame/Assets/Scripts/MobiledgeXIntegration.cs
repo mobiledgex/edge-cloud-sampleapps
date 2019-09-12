@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,14 +24,17 @@ public class MobiledgeXIntegration
    * These are "carrier independent" settings for demo use:
    */
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
-  public string devName { get; set; } = "MobiledgeX";
-  public string appName { get; set; } = "PongGameHackathonApp";
+  public string devName { get; set; } = "MobiledgeX"; // Your developer name.
+  public string appName { get; set; } = "MobiledgeX SDK Demo"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
-  public string host { get; set; } = "mexdemo.dme.mobiledgex.net"; // Demo DME host, with some edge cloudlets.
-  public uint port { get; set; } = 38001;
-  public bool useDemo { get; set; } = true;
+  public const string dmeInitialContact = "sdkdemo." + MatchingEngine.baseDmeHost; // Demo DME host, with some edge cloudlets.
+  public string dmeHost { get; set; } = dmeInitialContact;
+  public uint port { get; set; } = MatchingEngine.defaultDmeRestPort;
+
+  // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
+  public bool useDemo { get; set; } = false;
 
   public MobiledgeXIntegration()
   {
@@ -44,13 +47,24 @@ public class MobiledgeXIntegration
     return pIntegration.GetCurrentCarrierName();
   }
 
+  public string GenerateDmeHostName()
+  {
+    string genHost = pIntegration.GenerateDmeHostName();
+    if (genHost == null)
+    {
+      // fallback to set DME server.
+      genHost = dmeHost;
+    }
+    return genHost;
+  }
+
   public async Task<Loc> GetLocationFromDevice()
   {
     // Location is ephemeral, so retrieve a new location from the platform. May return 0,0 which is
     // technically valid, though less likely real, as of writing.
     Loc loc = await LocationService.RetrieveLocation();
 
-    // If in UnityEditor, 0f and 0f are hard zeros as there is no locaiton service.
+    // If in UnityEditor, 0f and 0f are hard zeros as there is no location service.
     if (loc.longitude == 0f && loc.latitude == 0f)
     {
       // Likely not in the ocean. We'll chose something for demo FindCloudlet purposes:
@@ -68,17 +82,27 @@ public class MobiledgeXIntegration
     string aCarrierName = pIntegration.GetCurrentCarrierName();
     string eHost; // Ephemeral DME host (depends on the SIM).
     string eCarrierName;
-    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
+    if (useDemo)
     {
-      eHost = host;
+      eHost = dmeHost;
       eCarrierName = carrierName;
     }
     else
     {
-      eHost = me.GenerateDmeBaseUri(aCarrierName);
+      if (aCarrierName == null)
+      {
+        Debug.Log("Missing CarrierName for FindCloudlet.");
+        return false;
+      }
+      eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
     }
     Debug.Log("DME Host Generated is: " + eHost);
+    if (eHost == null)
+    {
+      Debug.Log("No apparent SIM subscription available. Use regular cloud servers.");
+      return false;
+    }
 
     RegisterClientRequest req = me.CreateRegisterClientRequest(eCarrierName, devName, appName, appVers, "" /* developer specific string blob */);
     Debug.Log("CarrierName: " + req.carrier_name);
@@ -103,17 +127,27 @@ public class MobiledgeXIntegration
     string aCarrierName = pIntegration.GetCurrentCarrierName();
     string eHost; // Ephemeral DME host (depends on the SIM).
     string eCarrierName;
-    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
+    if (useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
-      eHost = host;
+      eHost = dmeHost;
       eCarrierName = carrierName;
     }
     else
     {
-      eHost = me.GenerateDmeBaseUri(aCarrierName);
+      if (aCarrierName == "" || aCarrierName == null)
+      {
+        Debug.Log("Missing CarrierName for FindCloudlet.");
+        return null;
+      }
+      eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
     }
     Debug.Log("DME Host Generated is: " + eHost);
+    if (eHost == null)
+    {
+      Debug.Log("No apparent SIM subscription available. Use regular cloud servers.");
+      return null;
+    }
 
     FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, devName, appName, appVers, loc);
 
@@ -132,15 +166,20 @@ public class MobiledgeXIntegration
     string aCarrierName = pIntegration.GetCurrentCarrierName();
     string eHost; // Ephemeral DME host (depends on the SIM).
     string eCarrierName;
-    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
+    if (useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
-      eHost = host;
+      eHost = dmeHost;
       eCarrierName = carrierName;
     }
     else
     {
-      eHost = me.GenerateDmeBaseUri(aCarrierName);
+      eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
+    }
+    if (eHost == null)
+    {
+      Debug.Log("No apparent SIM subscription available. Use regular cloud servers.");
+      return false;
     }
 
     // Ask the demo server host (not eHost) to verify it:
@@ -182,60 +221,95 @@ public class MobiledgeXIntegration
     // Too far for this app.
     return false;
   }
-  
-  private List<QosPosition> createListOfPositions(Loc loc, float direction_degrees, double totalDistanceKm, double increment)
+
+  static Timestamp createTimestamp(int futureSeconds)
+  {
+    long ticks = DateTime.Now.Ticks;
+    long sec = ticks / TimeSpan.TicksPerSecond; // Truncates.
+    long remainderTicks = ticks - (sec * TimeSpan.TicksPerSecond);
+    int nanos = (int)(remainderTicks / TimeSpan.TicksPerMillisecond) * 1000000;
+
+    var timestamp = new Timestamp
+    {
+      seconds = (sec + futureSeconds).ToString(),
+      nanos = nanos
+    };
+
+    return timestamp;
+  }
+
+
+  static List<QosPosition> CreateQosPositionList(Loc firstLocation, double direction_degrees, double totalDistanceKm, double increment)
   {
     var req = new List<QosPosition>();
-    long positionid = 1;
-    Loc lastLocation = loc;
-    
-    var firstQosPostion = new QosPosition
+    double kmPerDegreeLong = 111.32; // at Equator
+    double kmPerDegreeLat = 110.57; // at Equator
+    double addLongitude = (Math.Cos(direction_degrees / (Math.PI / 180)) * increment) / kmPerDegreeLong;
+    double addLatitude = (Math.Sin(direction_degrees / (Math.PI / 180)) * increment) / kmPerDegreeLat;
+    double i = 0d;
+    double longitude = firstLocation.longitude;
+    double latitude = firstLocation.latitude;
+
+    long id = 1;
+
+    while (i < totalDistanceKm)
     {
-        positionid = positionid.ToString(),
-        gps_location = lastLocation
-    };
-    
-    req.Add(firstQosPostion);
-    
-    double kmPerDegreeLat = 110.57; //at the Equator     double kmPerDegreeLong = 111.32; //at the Equator     double addLatitude = Mathf.Sin(direction_degrees) * increment / kmPerDegreeLat;
-    double addLongitude = Mathf.Cos(direction_degrees) * increment / kmPerDegreeLong;
-    for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionid++)
-    {
-        Loc next = lastLocation;
-        var np = new QosPosition
+      longitude += addLongitude;
+      latitude += addLatitude;
+      i += increment;
+
+      // FIXME: No time is attached to GPS location, as that breaks the server!
+      var qloc = new QosPosition
+      {
+        positionid = id.ToString(),
+        gps_location = new Loc
         {
-            positionid = positionid.ToString(),
-            gps_location = next
-        };
-        req.Add(np);
-        next.longitude += addLongitude;
-        next.latitude += addLatitude;
-        lastLocation = next;
+          longitude = longitude,
+          latitude = latitude,
+          timestamp = createTimestamp(100)
+        }
+      };
+
+
+      req.Add(qloc);
+      id++;
     }
+
     return req;
   }
-  
-  public async Task<QosPositionKpiStreamReply> GetQosPositionKpi()
+  public async Task<QosPositionKpiStream> GetQosPositionKpi()
   {
     Loc loc = await GetLocationFromDevice();
     
-    string aCarrierName = pIntegration.GetCurrentCarrierName();
     string eHost; // Ephemeral DME host (depends on the SIM).
-    string eCarrierName;
-    if (aCarrierName == "" || useDemo) // There's no host (PC, UnityEditor, etc.)...
+    if (useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
-        eHost = host;
-        eCarrierName = carrierName;
+        eHost = dmeHost;
     }
     else
     {
-        eHost = me.GenerateDmeBaseUri(aCarrierName);
-        eCarrierName = aCarrierName;
+        eHost = GenerateDmeHostName();
+    }
+    if (eHost == null)
+    {
+      Console.WriteLine("No apparent SIM subscription available. Cannot query for network service quality prediction.");
+      return null;
     }
 
-    List<QosPosition> positions = createListOfPositions(loc, 45, 200, 1);
-    QosPositionKpiRequest req = me.CreateQosPositionKpiRequest(positions);
-    QosPositionKpiStreamReply reply = await me.GetQosPositionKpi(eHost, port, req);
-    return reply;
+    // Create a list of quality of service position requests:
+    var firstLoc = new Loc
+    {
+      longitude = 8.5821,
+      latitude = 50.11
+    };
+    var requestList = CreateQosPositionList(firstLoc, 45, 2, 1);
+
+    var qosPositionRequest = me.CreateQosPositionRequest(requestList, 0, null);
+    var qosReplyStream = await me.GetQosPositionKpi(eHost, port, qosPositionRequest);
+    if (qosReplyStream == null)
+    {
+      Console.WriteLine("Reply result missing: " + qosReplyStream);
+    }
+    return qosReplyStream;
   }
 }

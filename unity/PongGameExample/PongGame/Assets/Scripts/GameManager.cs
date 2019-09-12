@@ -62,7 +62,7 @@ namespace MexPongGame {
     MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
     string host = "localhost";
-    string localServerHost = "192.168.1.81"; // Local server hack. Override and set demoServer=true for dev demo use.
+    string serverHost = "192.168.1.10"; // Local server hack. Override and set demoServer=true for dev demo use.
     int port = 3000;
     string server = "";
     string queryParams = "";
@@ -70,7 +70,7 @@ namespace MexPongGame {
 
     bool isPaused = false;
 
-    bool demoServer = false;
+    bool useAltServer = false;
     NetTest netTest = new NetTest();
 
     GameObject uiG;
@@ -80,11 +80,17 @@ namespace MexPongGame {
     // Use this for initialization
     async Task Start()
     {
-      integration.useDemo = true; // Demo mode DME server to run MobiledgeX APIs.
-      // Use local server, by IP. This must be started before use:
-      if (demoServer)
+      // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
+      // and a local DME cannot be located.
+      integration.useDemo = true;
+      if (integration.useDemo)
       {
-        host = localServerHost;
+        integration.dmeHost = "262-01.global.dme.mobiledgex.net";
+      }
+      // Use local server, by IP. This must be started before use:
+      if (useAltServer)
+      {
+        host = serverHost;
       }
 
       server = "ws://" + host + ":" + port;
@@ -108,7 +114,7 @@ namespace MexPongGame {
       // Register and find cloudlet:
       uiConsole.text = "Registering to DME: ";
       edgeCloudletStr = await RegisterAndFindCloudlet();
-      clog("Found Cloudlet from DME result: " + edgeCloudletStr);
+      clog("Found Cloudlet from DME result: [" + edgeCloudletStr + "]");
 
       // This might be inside the update loop. Re-register client and check periodically.
       bool verifiedLocation = await integration.VerifyLocation();
@@ -117,23 +123,23 @@ namespace MexPongGame {
       clog("VerifiedLocation: " + verifiedLocation);
 
       //QosPositions of various gps locations
-      QosPositionKpiStreamReply reply = await integration.GetQosPositionKpi(); 
-      if (reply.result == null || reply.error != null)
+      QosPositionKpiStream qosReplyStream = await integration.GetQosPositionKpi();
+      if (qosReplyStream == null)
       {
-        clog("Reply result missing: " + reply);
+        clog("Reply Stream result missing: " + qosReplyStream);
       }
       else
       {
-        clog("Result: " + reply.result);
-        DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionResult));
-        MemoryStream ms = new MemoryStream();
-        foreach (QosPositionResult qpr in reply.result.position_results)
+        foreach (var qosPositionKpiReply in qosReplyStream)
         {
-            ms.Position = 0;
-            serializer.WriteObject(ms, qpr);
-            string jsonStr = Util.StreamToString(ms);
-            clog("QosPositionResult: " + jsonStr);
+          // Serialize the DataContract and print everything:
+          DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionKpiReply));
+          MemoryStream ms = new MemoryStream();
+          serializer.WriteObject(ms, qosPositionKpiReply);
+          string jsonStr = Util.StreamToString(ms);
+          clog("QoS of requested gps location(s): " + jsonStr);
         }
+        qosReplyStream.Dispose();
       }
     }
 
@@ -147,9 +153,9 @@ namespace MexPongGame {
       }
       Uri edgeCloudletUri = null;
       clog("Connecting to WebSocket Server with roomId="+roomId+"...");
-      clog("demoServer="+demoServer+" host="+host+" edgeCloudletStr="+edgeCloudletStr);
+      clog("useAltServer=" + useAltServer + " host="+host+" edgeCloudletStr="+edgeCloudletStr);
       queryParams = "?roomid="+roomId;
-      if (demoServer)
+      if (useAltServer)
       {
         server = "ws://" + host + ":" + port;
         edgeCloudletUri = new Uri(server + queryParams);
@@ -264,19 +270,19 @@ namespace MexPongGame {
         if (found)
         {
           // Edge cloudlets found!
-          Debug.Log("Edge cloudlets found!");
+          clog("Edge cloudlets found!");
 
           // Where is this app specific edge enabled cloud server:
-          Debug.Log("GPS location: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
+          clog("GPS location: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
 
           // Where is the URI for this app specific edge enabled cloud server:
-          Debug.Log("fqdn: " + reply.fqdn);
+          clog("fqdn: " + reply.fqdn);
           // AppPorts?
           Debug.Log("On ports: ");
 
           foreach (AppPort ap in reply.ports)
           {
-            Debug.Log("Port: proto: " + ap.proto + ", prefix: " +
+            clog("Port: proto: " + ap.proto + ", prefix: " +
                 ap.fqdn_prefix + ", path_prefix: " + ap.path_prefix + ", port: " +
                 ap.public_port);
 
@@ -298,7 +304,7 @@ namespace MexPongGame {
           }
 
         }
-        clog("FindCloudlet found: " + tcpAppPort);
+        clog("FindCloudlet found: [" + tcpAppPort + "]");
       }
 
       return tcpAppPort;
