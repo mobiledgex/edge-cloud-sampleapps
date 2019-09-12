@@ -42,6 +42,8 @@ import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
 import java.net.HttpRetryException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -261,7 +263,7 @@ public class MainActivity extends AppCompatActivity
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
         devName = "MobiledgeX";
-        carrierName = "TIP";
+        carrierName = "TDG";
         appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
@@ -269,7 +271,11 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-        host = "mexdemo.dme.mobiledgex.net"; // Override host.
+        host = matchingEngine.generateDmeHostAddress();
+        if(host == null) {
+            host = "sdkdemo.global.dme.mobiledgex.net";   //fallback host
+            Log.e(TAG, "could not generate host");
+        }
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
                 devName, appName, appVersion, carrierName, null);
@@ -402,10 +408,10 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "No items added to the position list");
             return false;
         }
-        AppClient.QosPositionKpiRequest qosPositionKpiRequest = matchingEngine.createQoSKPIRequest(requests);
-        if(qosPositionKpiRequest != null) {
+        AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createQoSPositionRequest(requests, 0, null);
+        if(qosPositionRequest != null) {
             try {
-                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionKpiRequest, host, port, 10000);
+                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionRequest, host, port, 10000);
                 if (!qosPositionKpiReplies.hasNext()) {
                     Log.e(TAG, "Replies is empty");
                     return false;
@@ -533,8 +539,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        matchingEngine = new MatchingEngine(ctx);
-        matchingEngine.setNetworkSwitchingEnabled(true);
         // Check permissions here, as the user has the ability to change them on the fly through
         // system settings.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
@@ -542,6 +546,8 @@ public class MainActivity extends AppCompatActivity
             mRpUtil.requestMultiplePermissions(this);
             return;
         }
+        matchingEngine = new MatchingEngine(ctx);
+        matchingEngine.setNetworkSwitchingEnabled(true);
     }
 
     public class VerifyLocBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
