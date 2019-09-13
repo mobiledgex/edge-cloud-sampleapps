@@ -154,7 +154,6 @@ if __name__ == "__main__":
                 rc.BASE_URL = 'http://%s:'+str(args.port)
                 thread = Thread(target=rc.run_multi, args=(args.repeat, args.server, args.endpoint, args.directory+"/"+file, args.show_responses, "thread-%d" %i))
                 thread.start()
-                thread.join()
 
     else:
         print("Must include either filename or directory argument")
