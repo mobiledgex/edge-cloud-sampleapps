@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,14 +41,17 @@ public class MobiledgeXIntegration
    * These are "carrier independent" settings for demo use:
    */
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
-  public string devName { get; set; } = "MobiledgeX";
-  public string appName { get; set; } = "PongGameHackathonApp";
+  public string devName { get; set; } = "MobiledgeX"; // Your developer name.
+  public string appName { get; set; } = "MobiledgeX SDK Demo"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
-  public string host { get; set; } = "mexdemo.dme.mobiledgex.net"; // Demo DME host, with some edge cloudlets.
-  public uint port { get; set; } = 38001;
-  public bool useDemo { get; set; } = true;
+  public const string dmeInitialContact = "sdkdemo." + MatchingEngine.baseDmeHost; // Demo DME host, with some edge cloudlets.
+  public string dmeHost { get; set; } = dmeInitialContact;
+  public uint port { get; set; } = MatchingEngine.defaultDmeRestPort;
+
+  // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
+  public bool useDemo { get; set; } = false;
 
   public MobiledgeXIntegration()
   {
@@ -61,13 +64,24 @@ public class MobiledgeXIntegration
     return pIntegration.GetCurrentCarrierName();
   }
 
+  public string GenerateDmeHostName()
+  {
+    string genHost = pIntegration.GenerateDmeHostName();
+    if (genHost == null)
+    {
+      // fallback to set DME server.
+      genHost = dmeHost;
+    }
+    return genHost;
+  }
+
   public async Task<Loc> GetLocationFromDevice()
   {
     // Location is ephemeral, so retrieve a new location from the platform. May return 0,0 which is
     // technically valid, though less likely real, as of writing.
     Loc loc = await LocationService.RetrieveLocation();
 
-    // If in UnityEditor, 0f and 0f are hard zeros as there is no locaiton service.
+    // If in UnityEditor, 0f and 0f are hard zeros as there is no location service.
     if (loc.longitude == 0f && loc.latitude == 0f)
     {
       // Likely not in the ocean. We'll chose something for demo FindCloudlet purposes:
