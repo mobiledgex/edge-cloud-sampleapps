@@ -1,3 +1,18 @@
+# Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+# MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
@@ -82,16 +97,16 @@ def detector_detect(request):
     logger.debug(prepend_ip("Request received: %s" %request, request))
     if request.method != 'POST':
         return HttpResponseBadRequest("Must send frame as a POST")
-    if request.content_type == "image/png" or request.content_type == "image/jpeg": 
+    if request.content_type == "image/png" or request.content_type == "image/jpeg":
         if request.body == "":
             return HttpResponseBadRequest("No image data")
         image = request.body
-        save_debug_image(image, request) 
+        save_debug_image(image, request)
     elif request.content_type == "application/x-www-form-urlencoded":
         if request.POST.get("image", "") == "":
             return HttpResponseBadRequest("Missing 'image' parameter")
         image = base64.b64decode(request.POST.get("image"))
-        save_debug_image(image, request)     
+        save_debug_image(image, request)
     else:
         return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', or 'application/x-www-urlencoded'")
 

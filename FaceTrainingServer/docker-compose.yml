@@ -1,5 +1,5 @@
 version: '3'
 services:
   facetraining:
-    image: "registry.mobiledgex.net:5000/mobiledgex/facetraining"
+    image: "docker.mobiledgex.net/mobiledgex/images/facetraining"
     network_mode: "host"
