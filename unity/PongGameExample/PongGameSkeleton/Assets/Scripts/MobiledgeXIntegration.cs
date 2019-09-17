@@ -40,7 +40,7 @@ public class MobiledgeXIntegration
   /*
    * These are "carrier independent" settings for demo use:
    */
-  public string carrierName { get; set; } = "TDG"; // carrierName depends on the the available subscriber SIM card and roaming carriers, and must be supplied a platform API.
+  public string carrierName { get; set; } = "TDG"; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string devName { get; set; } = "MobiledgeX"; // Your developer name.
   public string appName { get; set; } = "MobiledgeX SDK Demo"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "1.0";
