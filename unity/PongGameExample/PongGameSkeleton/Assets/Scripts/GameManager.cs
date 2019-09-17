@@ -79,7 +79,7 @@ namespace MexPongGame {
     MobiledgeXIntegration integration = new MobiledgeXIntegration();
 
     string host = "localhost";
-    string serverHost = "192.168.1.10"; // Local server hack. Override and set demoServer=true for dev demo use.
+    string serverHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
     int port = 3000;
     string server = "";
     string queryParams = "";
@@ -98,12 +98,10 @@ namespace MexPongGame {
     async Task Start()
     {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
-      // and a local DME cannot be located.
-      integration.useDemo = true;
-      if (integration.useDemo)
-      {
-        integration.dmeHost = "262-01.global.dme.mobiledgex.net";
-      }
+      // and a local DME cannot be located. Set to false if using a supported
+      // Carrier.
+      integration.useDemo = false;
+
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
       {
@@ -139,7 +137,7 @@ namespace MexPongGame {
       // Decide what to do with location status.
       clog("VerifiedLocation: " + verifiedLocation);
 
-      //QosPositions of various gps locations
+      // QosPositions of various gps locations
       QosPositionKpiStream qosReplyStream = await integration.GetQosPositionKpi();
       if (qosReplyStream == null)
       {
@@ -270,6 +268,12 @@ namespace MexPongGame {
 
         // Handle reply status:
         bool found = false;
+        if (reply == null)
+        {
+          clog("FindCloudlet call failed.");
+          return "";
+        }
+
         switch (reply.status)
         {
           case FindCloudletReply.FindStatus.FIND_UNKNOWN:

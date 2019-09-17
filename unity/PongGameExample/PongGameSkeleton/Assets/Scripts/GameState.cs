@@ -67,7 +67,7 @@ namespace MexPongGame
 
   }
 
-  /* There is no intermediate JSON object. 
+  /* There is no intermediate JSON object.
    * The MessageWrapper intermediate class specifies the type of object in the message,
    * so that it can be deserialized to the correct typed object.
    */
