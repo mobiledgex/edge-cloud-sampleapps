@@ -40,14 +40,13 @@ public class MobiledgeXIntegration
   /*
    * These are "carrier independent" settings for demo use:
    */
-  public string carrierName { get; set; } = "TDG"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
+  public string carrierName { get; set; } = "TDG"; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string devName { get; set; } = "MobiledgeX"; // Your developer name.
   public string appName { get; set; } = "MobiledgeX SDK Demo"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
-  public const string dmeInitialContact = "sdkdemo." + MatchingEngine.baseDmeHost; // Demo DME host, with some edge cloudlets.
-  public string dmeHost { get; set; } = dmeInitialContact;
+  public string dmeHost { get; set; } = MatchingEngine.fallbackDmeHost;
   public uint port { get; set; } = MatchingEngine.defaultDmeRestPort;
 
   // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
@@ -57,22 +56,14 @@ public class MobiledgeXIntegration
   {
     pIntegration = new PlatformIntegration();
     me = new MatchingEngine();
+
+    // Set the platform specific way to get SIM carrier information.
+    me.carrierInfo = pIntegration;
   }
 
   public string GetCarrierName()
   {
-    return pIntegration.GetCurrentCarrierName();
-  }
-
-  public string GenerateDmeHostName()
-  {
-    string genHost = pIntegration.GenerateDmeHostName();
-    if (genHost == null)
-    {
-      // fallback to set DME server.
-      genHost = dmeHost;
-    }
-    return genHost;
+    return me.carrierInfo.GetCurrentCarrierName();
   }
 
   public async Task<Loc> GetLocationFromDevice()
@@ -96,12 +87,10 @@ public class MobiledgeXIntegration
   public async Task<bool> Register()
   {
     // If MEX is reachable on your SIM card:
-    string aCarrierName = pIntegration.GetCurrentCarrierName();
-    string eHost; // Ephemeral DME host (depends on the SIM).
+    string aCarrierName = GetCarrierName();
     string eCarrierName;
     if (useDemo)
     {
-      eHost = dmeHost;
       eCarrierName = carrierName;
     }
     else
@@ -111,14 +100,7 @@ public class MobiledgeXIntegration
         Debug.Log("Missing CarrierName for FindCloudlet.");
         return false;
       }
-      eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
-    }
-    Debug.Log("DME Host Generated is: " + eHost);
-    if (eHost == null)
-    {
-      Debug.Log("No apparent SIM subscription available. Use regular cloud servers.");
-      return false;
     }
 
     RegisterClientRequest req = me.CreateRegisterClientRequest(eCarrierName, devName, appName, appVers, "" /* developer specific string blob */);
@@ -128,7 +110,7 @@ public class MobiledgeXIntegration
     Debug.Log("AppVers: " + req.app_vers);
 
     // Calling with pre-assigned values for demo DME server, since eHost may not exist for the SIM card.
-    RegisterClientReply reply = await me.RegisterClient(eHost, port, req);
+    RegisterClientReply reply = await me.RegisterClient(req);
 
     return (reply.status == ReplyStatus.RS_SUCCESS);
   }
@@ -141,12 +123,10 @@ public class MobiledgeXIntegration
     Loc loc = await GetLocationFromDevice();
 
     // If MEX is reachable on your SIM card:
-    string aCarrierName = pIntegration.GetCurrentCarrierName();
-    string eHost; // Ephemeral DME host (depends on the SIM).
+    string aCarrierName = me.carrierInfo.GetCurrentCarrierName();
     string eCarrierName;
     if (useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
-      eHost = dmeHost;
       eCarrierName = carrierName;
     }
     else
@@ -156,20 +136,13 @@ public class MobiledgeXIntegration
         Debug.Log("Missing CarrierName for FindCloudlet.");
         return null;
       }
-      eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
-    }
-    Debug.Log("DME Host Generated is: " + eHost);
-    if (eHost == null)
-    {
-      Debug.Log("No apparent SIM subscription available. Use regular cloud servers.");
-      return null;
     }
 
     FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, devName, appName, appVers, loc);
 
     // Calling with pre-assigned values:
-    FindCloudletReply reply = await me.FindCloudlet(eHost, port, req);
+    FindCloudletReply reply = await me.FindCloudlet(req);
 
 
     return reply;
@@ -181,28 +154,20 @@ public class MobiledgeXIntegration
 
     // If MEX is reachable on your SIM card:
     string aCarrierName = pIntegration.GetCurrentCarrierName();
-    string eHost; // Ephemeral DME host (depends on the SIM).
     string eCarrierName;
     if (useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
-      eHost = dmeHost;
       eCarrierName = carrierName;
     }
     else
     {
-      eHost = GenerateDmeHostName();
       eCarrierName = aCarrierName;
-    }
-    if (eHost == null)
-    {
-      Debug.Log("No apparent SIM subscription available. Use regular cloud servers.");
-      return false;
     }
 
     // Ask the demo server host (not eHost) to verify it:
     VerifyLocationRequest req = me.CreateVerifyLocationRequest(eCarrierName, loc);
 
-    VerifyLocationReply reply = await me.VerifyLocation(eHost, port, req);
+    VerifyLocationReply reply = await me.VerifyLocation(req);
 
     // The return is not binary, but one can decide the particular app's policy
     // on pass or failing the location check. Not being verified or the country
@@ -297,21 +262,6 @@ public class MobiledgeXIntegration
   public async Task<QosPositionKpiStream> GetQosPositionKpi()
   {
     Loc loc = await GetLocationFromDevice();
-    
-    string eHost; // Ephemeral DME host (depends on the SIM).
-    if (useDemo) // There's no host (PC, UnityEditor, etc.)...
-    {
-        eHost = dmeHost;
-    }
-    else
-    {
-        eHost = GenerateDmeHostName();
-    }
-    if (eHost == null)
-    {
-      Console.WriteLine("No apparent SIM subscription available. Cannot query for network service quality prediction.");
-      return null;
-    }
 
     // Create a list of quality of service position requests:
     var firstLoc = new Loc
@@ -322,7 +272,7 @@ public class MobiledgeXIntegration
     var requestList = CreateQosPositionList(firstLoc, 45, 2, 1);
 
     var qosPositionRequest = me.CreateQosPositionRequest(requestList, 0, null);
-    var qosReplyStream = await me.GetQosPositionKpi(eHost, port, qosPositionRequest);
+    var qosReplyStream = await me.GetQosPositionKpi(qosPositionRequest);
     if (qosReplyStream == null)
     {
       Console.WriteLine("Reply result missing: " + qosReplyStream);

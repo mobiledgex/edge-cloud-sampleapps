@@ -20,19 +20,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using DistributedMatchEngine;
+
 // We need this one for importing our IOS functions
 using System.Runtime.InteropServices;
 
 namespace MexPongGame
 {
-  public interface ICarrierInfo
-  {
-    string GetCurrentCarrierName();
-    string GetMccMnc();
-    string GenerateDmeHostName();
-  }
-
-  public class PlatformIntegration : ICarrierInfo
+  public class PlatformIntegration : DistributedMatchEngine.ICarrierInfo
   {
     // Sets platform specific internal callbacks (reference counted objects), etc.
     [DllImport("__Internal")]
@@ -43,28 +38,6 @@ namespace MexPongGame
 
     [DllImport("__Internal")]
     private static extern string _getMccMnc();
-
-    // All platforms utility function.
-    public string GenerateDmeHostName()
-    {
-      string baseDmeHost = DistributedMatchEngine.MatchingEngine.baseDmeHost;
-      string mccmnc = GetMccMnc();
-      if (mccmnc == null || mccmnc.Length < 5)
-      {
-        return null;
-      }
-      string mcc = mccmnc.Substring(0,3);
-      if (mcc == null)
-      {
-        return null;
-      }
-      string mnc = mccmnc.Substring(3);
-      if (mnc == null)
-      {
-        return null;
-      }
-      return mcc + "-" + mnc + "." + baseDmeHost;
-    }
 
 #if UNITY_ANDROID // PC android target builds to through here as well.
     AndroidJavaObject GetTelephonyManager() {
