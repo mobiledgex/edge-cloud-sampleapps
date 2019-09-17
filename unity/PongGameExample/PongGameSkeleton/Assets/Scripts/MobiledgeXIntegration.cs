@@ -104,10 +104,11 @@ public class MobiledgeXIntegration
     return false;
   }
   
-  public async Task<bool> GetQosPositionKpi()
+  public async Task<QosPositionKpiStream> GetQosPositionKpi()
   {
     Debug.Log("GetQoSPositionKpi is NOT IMPLEMENTED");
-    return false;     
+    QosPositionKpiStream reply = null;
+    return reply;     
   }
 
 }
