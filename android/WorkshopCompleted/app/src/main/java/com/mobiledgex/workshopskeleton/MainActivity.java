@@ -475,8 +475,8 @@ public class MainActivity extends AppCompatActivity
 
         double kmPerDegreeLat = 110.57; //at Equator
         double kmPerDegreeLong = 111.32; //at Equator
-        double addLatitude = (Math.sin(direction_degrees) * increment)/kmPerDegreeLat;
-        double addLongitude = (Math.cos(direction_degrees) * increment)/kmPerDegreeLong;
+        double addLatitude = (Math.sin(direction_degrees * (Math.PI/180)) * increment)/kmPerDegreeLat;
+        double addLongitude = (Math.cos(direction_degrees * (Math.PI/180)) * increment)/kmPerDegreeLong;
         for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionId++) {
             LocOuterClass.Loc next = LocOuterClass.Loc.newBuilder()
                     .setLongitude(lastLocation.getLongitude() + addLongitude)
