@@ -257,7 +257,16 @@ namespace MexPongGame {
 
 
       clog("Calling DME to register client...");
-      bool registered = await integration.Register();
+      bool registered = false;
+      try
+      {
+        registered = await integration.Register();
+      }
+      catch (HttpException httpe) // HTTP status, and REST API call error codes.
+      {
+        // server error code, and human readable message:
+        Console.WriteLine("RegisterClient Exception: " + httpe.Message + ", HTTP StatusCode: " + httpe.HttpStatusCode + ", API ErrorCode: " + httpe.ErrorCode + "\nStack: " + httpe.StackTrace);
+      }
 
       if (registered)
       {
