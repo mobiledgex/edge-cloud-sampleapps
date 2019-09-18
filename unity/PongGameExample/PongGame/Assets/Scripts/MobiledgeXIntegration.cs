@@ -226,8 +226,8 @@ public class MobiledgeXIntegration
     var req = new List<QosPosition>();
     double kmPerDegreeLong = 111.32; // at Equator
     double kmPerDegreeLat = 110.57; // at Equator
-    double addLongitude = (Math.Cos(direction_degrees / (Math.PI / 180)) * increment) / kmPerDegreeLong;
-    double addLatitude = (Math.Sin(direction_degrees / (Math.PI / 180)) * increment) / kmPerDegreeLat;
+    double addLongitude = (Math.Cos(direction_degrees * (Math.PI/180)) * increment) / kmPerDegreeLong;
+    double addLatitude = (Math.Sin(direction_degrees * (Math.PI/180)) * increment) / kmPerDegreeLat;
     double i = 0d;
     double longitude = firstLocation.longitude;
     double latitude = firstLocation.latitude;
