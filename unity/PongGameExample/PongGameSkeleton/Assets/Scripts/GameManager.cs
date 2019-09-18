@@ -100,7 +100,7 @@ namespace MexPongGame {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
       // Carrier.
-      integration.useDemo = false;
+      integration.useDemo = true;
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
