@@ -860,7 +860,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             final List<ColoredPoint> points = new ArrayList<>();
 
             try {
-                AppClient.QosPositionRequest request = me.createQoSPositionRequest(positions);
+                AppClient.QosPositionRequest request = me.createQoSPositionRequest(positions, 0, null);
                 ChannelIterator<AppClient.QosPositionKpiReply> responseIterator = me.getQosPositionKpi(request,
                         mHostname, me.getPort(), 15000);
                 // A stream of QosPositionKpiReply(s), with a non-stream block of responses.
@@ -898,6 +898,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             } catch (InterruptedException | ExecutionException | RuntimeException e ) {
                 e.printStackTrace();
+                Log.e(TAG, "e.getMessage()="+e.getMessage()+"\ne.getLocalizedMessage()"+e.getLocalizedMessage());
                 toastOnUiThread(e.getMessage(), Toast.LENGTH_LONG);
             }
             return null;
