@@ -117,7 +117,7 @@
         <item>Demo (mexdemo)</item>
     </string-array>
     <string-array name="pref_dme_hostname_values">
-        <item>mexdemo.dme.mobiledgex.net:50051</item>
+        <item>sdkdemo.dme.mobiledgex.net:50051</item>
     </string-array>
     <string name="title_activity_qoe_map">Predictive QoS</string>
     <string name="map_type">Map Type</string>

@@ -569,18 +569,18 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 routeNum++;
             }
 
+            LatLngBounds bounds = boundsBuilder.build();
+            int width = getResources().getDisplayMetrics().widthPixels;
+            int height = getResources().getDisplayMetrics().heightPixels;
+            int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
+            mMap.animateCamera(cu);
+
         } catch(Exception ex) {
             Log.e(TAG, ex.getLocalizedMessage());
+            toastOnUiThread("Error: "+ex.getLocalizedMessage(), Toast.LENGTH_LONG);
         }
         requestNum++;
-
-        LatLngBounds bounds = boundsBuilder.build();
-        int width = getResources().getDisplayMetrics().widthPixels;
-        int height = getResources().getDisplayMetrics().heightPixels;
-        int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
-        mMap.animateCamera(cu);
-
     }
 
     /**

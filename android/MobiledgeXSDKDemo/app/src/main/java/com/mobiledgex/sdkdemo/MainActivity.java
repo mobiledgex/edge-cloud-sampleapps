@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity
 
     private static final int RC_SIGN_IN = 1;
     public static final int RC_STATS = 2;
-    public static final String DEFAULT_DME_HOSTNAME = "mexdemo.dme.mobiledgex.net";
+    public static final String DEFAULT_DME_HOSTNAME = "sdkdemo.dme.mobiledgex.net";
     public static final String DEFAULT_CARRIER_NAME = "TDG";
     private String mHostname;
     private String mCarrierName;
@@ -1124,7 +1124,7 @@ public class MainActivity extends AppCompatActivity
             String hostAndPort = sharedPreferences.getString(prefKeyDmeHostname, DEFAULT_DME_HOSTNAME+":"+"50051");
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+hostAndPort);
 
-            //Value is in this format: mexdemo.dme.mobiledgex.net:50051
+            //Value is in this format: sdkdemo.dme.mobiledgex.net:50051
             String domainAndPortRegex = "^(((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}):\\d+$";
             Pattern domainAndPortPattern = Pattern.compile(domainAndPortRegex);
             Matcher matcher = domainAndPortPattern.matcher(hostAndPort);
