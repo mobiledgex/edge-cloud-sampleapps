@@ -351,7 +351,7 @@ public class MatchingEngineHelper {
     private boolean getQosPositionKpi(ArrayList<AppClient.QosPosition> positions, String host, int port) throws ExecutionException, InterruptedException {
 
         Log.i(TAG, "me="+mMatchingEngine+" host="+host+" port="+port);
-        AppClient.QosPositionRequest request = mMatchingEngine.createQoSPositionRequest(positions);
+        AppClient.QosPositionRequest request = mMatchingEngine.createQoSPositionRequest(positions, 0, null);
         ChannelIterator<AppClient.QosPositionKpiReply> responseIterator = mMatchingEngine.getQosPositionKpi(request,
                 host, port, 10000);
         // A stream of QosPositionKpiReply(s), with a non-stream block of responses.
