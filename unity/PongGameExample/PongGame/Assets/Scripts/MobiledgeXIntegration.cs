@@ -97,7 +97,7 @@ public class MobiledgeXIntegration
     {
       if (aCarrierName == null)
       {
-        Debug.Log("Missing CarrierName for FindCloudlet.");
+        Debug.Log("Missing CarrierName for RegisterClient.");
         return false;
       }
       eCarrierName = aCarrierName;
