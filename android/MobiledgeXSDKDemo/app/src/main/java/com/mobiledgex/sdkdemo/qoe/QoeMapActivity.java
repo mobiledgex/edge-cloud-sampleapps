@@ -898,8 +898,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             } catch (InterruptedException | ExecutionException | RuntimeException e ) {
                 e.printStackTrace();
-                Log.e(TAG, "e.getMessage()="+e.getMessage()+"\ne.getLocalizedMessage()"+e.getLocalizedMessage());
-                toastOnUiThread(e.getMessage(), Toast.LENGTH_LONG);
+                toastOnUiThread("Error: "+e.getMessage(), Toast.LENGTH_LONG);
             }
             return null;
         }
