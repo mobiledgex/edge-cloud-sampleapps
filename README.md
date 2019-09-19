@@ -2,4 +2,4 @@
 Sample apps demonstrating use of the MobiledgeX SDK
 
 
-https://sites.google.com/a/mobiledgex.com/hackathon/home
+To get started, please visit https://sites.google.com/mobiledgex.com/doc.
