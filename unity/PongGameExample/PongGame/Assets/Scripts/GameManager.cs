@@ -25,7 +25,7 @@ using UnityEngine.UI;
 using System.Net.WebSockets;
 using System;
 using System.Threading.Tasks;
-
+using System.Net.Http;
 
 using DistributedMatchEngine;
 
@@ -265,7 +265,11 @@ namespace MexPongGame {
       catch (HttpException httpe) // HTTP status, and REST API call error codes.
       {
         // server error code, and human readable message:
-        Console.WriteLine("RegisterClient Exception: " + httpe.Message + ", HTTP StatusCode: " + httpe.HttpStatusCode + ", API ErrorCode: " + httpe.ErrorCode + "\nStack: " + httpe.StackTrace);
+        clog("RegisterClient Exception: " + httpe.Message + ", HTTP StatusCode: " + httpe.HttpStatusCode + ", API ErrorCode: " + httpe.ErrorCode + "\nStack: " + httpe.StackTrace);
+      }
+      catch (HttpRequestException httpre)
+      {
+        clog("RegisterClient HttpRequest Exception" + httpre.Message + "\nStack Trace: " + httpre.StackTrace);
       }
 
       if (registered)
