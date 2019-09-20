@@ -47,7 +47,7 @@ public class MobiledgeXIntegration
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
   public string dmeHost { get; set; } = MatchingEngine.fallbackDmeHost;
-  public uint port { get; set; } = MatchingEngine.defaultDmeRestPort;
+  public uint dmePort { get; set; } = MatchingEngine.defaultDmeRestPort;
 
   // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
   public bool useDemo { get; set; } = false;
@@ -103,12 +103,4 @@ public class MobiledgeXIntegration
     Debug.Log("VerifyLocation is NOT IMPLEMENTED");
     return false;
   }
-  
-  public async Task<QosPositionKpiStream> GetQosPositionKpi()
-  {
-    Debug.Log("GetQoSPositionKpi is NOT IMPLEMENTED");
-    QosPositionKpiStream reply = null;
-    return reply;     
-  }
-
 }

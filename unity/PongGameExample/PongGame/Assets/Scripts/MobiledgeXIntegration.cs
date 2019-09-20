@@ -46,8 +46,9 @@ public class MobiledgeXIntegration
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
+  // Override if there is a sdk demo DME host to use.
   public string dmeHost { get; set; } = MatchingEngine.fallbackDmeHost;
-  public uint port { get; set; } = MatchingEngine.defaultDmeRestPort;
+  public uint dmePort { get; set; } = MatchingEngine.defaultDmeRestPort;
 
   // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
   public bool useDemo { get; set; } = false;
@@ -109,8 +110,15 @@ public class MobiledgeXIntegration
     Debug.Log("AppName: " + req.app_name);
     Debug.Log("AppVers: " + req.app_vers);
 
-    // Calling with pre-assigned values for demo DME server, since eHost may not exist for the SIM card.
-    RegisterClientReply reply = await me.RegisterClient(req);
+    RegisterClientReply reply;
+    if (useDemo)
+    {
+      reply = await me.RegisterClient(dmeHost, dmePort, req);
+    }
+    else
+    {
+      reply = await me.RegisterClient(req);
+    }
 
     return (reply.status == ReplyStatus.RS_SUCCESS);
   }
@@ -141,9 +149,15 @@ public class MobiledgeXIntegration
 
     FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, devName, appName, appVers, loc);
 
-    // Calling with pre-assigned values:
-    FindCloudletReply reply = await me.FindCloudlet(req);
-
+    FindCloudletReply reply;
+    if (useDemo)
+    {
+      reply = await me.FindCloudlet(dmeHost, dmePort, req);
+    }
+    else
+    {
+      reply = await me.FindCloudlet(req);
+    }
 
     return reply;
   }
@@ -164,10 +178,17 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    // Ask the demo server host (not eHost) to verify it:
     VerifyLocationRequest req = me.CreateVerifyLocationRequest(eCarrierName, loc);
 
-    VerifyLocationReply reply = await me.VerifyLocation(req);
+    VerifyLocationReply reply;
+    if (useDemo)
+    {
+      reply = await me.VerifyLocation(dmeHost, dmePort, req);
+    }
+    else
+    {
+      reply = await me.VerifyLocation(req);
+    }
 
     // The return is not binary, but one can decide the particular app's policy
     // on pass or failing the location check. Not being verified or the country
@@ -204,79 +225,4 @@ public class MobiledgeXIntegration
     return false;
   }
 
-  static Timestamp createTimestamp(int futureSeconds)
-  {
-    long ticks = DateTime.Now.Ticks;
-    long sec = ticks / TimeSpan.TicksPerSecond; // Truncates.
-    long remainderTicks = ticks - (sec * TimeSpan.TicksPerSecond);
-    int nanos = (int)(remainderTicks / TimeSpan.TicksPerMillisecond) * 1000000;
-
-    var timestamp = new Timestamp
-    {
-      seconds = (sec + futureSeconds).ToString(),
-      nanos = nanos
-    };
-
-    return timestamp;
-  }
-
-
-  static List<QosPosition> CreateQosPositionList(Loc firstLocation, double direction_degrees, double totalDistanceKm, double increment)
-  {
-    var req = new List<QosPosition>();
-    double kmPerDegreeLong = 111.32; // at Equator
-    double kmPerDegreeLat = 110.57; // at Equator
-    double addLongitude = (Math.Cos(direction_degrees * (Math.PI/180)) * increment) / kmPerDegreeLong;
-    double addLatitude = (Math.Sin(direction_degrees * (Math.PI/180)) * increment) / kmPerDegreeLat;
-    double i = 0d;
-    double longitude = firstLocation.longitude;
-    double latitude = firstLocation.latitude;
-
-    long id = 1;
-
-    while (i < totalDistanceKm)
-    {
-      longitude += addLongitude;
-      latitude += addLatitude;
-      i += increment;
-
-      // FIXME: No time is attached to GPS location, as that breaks the server!
-      var qloc = new QosPosition
-      {
-        positionid = id.ToString(),
-        gps_location = new Loc
-        {
-          longitude = longitude,
-          latitude = latitude,
-          timestamp = createTimestamp(100)
-        }
-      };
-
-
-      req.Add(qloc);
-      id++;
-    }
-
-    return req;
-  }
-  public async Task<QosPositionKpiStream> GetQosPositionKpi()
-  {
-    Loc loc = await GetLocationFromDevice();
-
-    // Create a list of quality of service position requests:
-    var firstLoc = new Loc
-    {
-      longitude = 8.5821,
-      latitude = 50.11
-    };
-    var requestList = CreateQosPositionList(firstLoc, 45, 2, 1);
-
-    var qosPositionRequest = me.CreateQosPositionRequest(requestList, 0, null);
-    var qosReplyStream = await me.GetQosPositionKpi(qosPositionRequest);
-    if (qosReplyStream == null)
-    {
-      Console.WriteLine("Reply result missing: " + qosReplyStream);
-    }
-    return qosReplyStream;
-  }
 }

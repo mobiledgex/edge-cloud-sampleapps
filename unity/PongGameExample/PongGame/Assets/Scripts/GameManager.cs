@@ -25,6 +25,7 @@ using UnityEngine.UI;
 using System.Net.WebSockets;
 using System;
 using System.Threading.Tasks;
+
 using System.Net.Http;
 
 using DistributedMatchEngine;
@@ -99,8 +100,9 @@ namespace MexPongGame {
     {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
-      // Carrier.
+      // SIM Card.
       integration.useDemo = true;
+      integration.dmeHost = "sdkdemo." + MatchingEngine.baseDmeHost;
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
@@ -126,35 +128,39 @@ namespace MexPongGame {
       roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
       roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
 
-      // Register and find cloudlet:
-      uiConsole.text = "Registering to DME: ";
-      edgeCloudletStr = await RegisterAndFindCloudlet();
-      clog("Found Cloudlet from DME result: [" + edgeCloudletStr + "]");
-
-      // This might be inside the update loop. Re-register client and check periodically.
-      bool verifiedLocation = await integration.VerifyLocation();
-
-      // Decide what to do with location status.
-      clog("VerifiedLocation: " + verifiedLocation);
-
-      // QosPositions of various gps locations
-      QosPositionKpiStream qosReplyStream = await integration.GetQosPositionKpi();
-      if (qosReplyStream == null)
+      try
       {
-        clog("Reply Stream result missing: " + qosReplyStream);
+        // Register and find cloudlet:
+        uiConsole.text = "Registering to DME: ";
+        edgeCloudletStr = await RegisterAndFindCloudlet();
+
+        clog("Found Cloudlet from DME result: [" + edgeCloudletStr + "]");
+
+        // This might be inside the update loop. Re-register client and check periodically.
+        bool verifiedLocation = await integration.VerifyLocation();
+
+        // Decide what to do with location status.
+        clog("VerifiedLocation: " + verifiedLocation);
       }
-      else
+      catch (HttpException httpe) // HTTP status, and REST API call error codes.
       {
-        foreach (var qosPositionKpiReply in qosReplyStream)
-        {
-          // Serialize the DataContract and print everything:
-          DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(QosPositionKpiReply));
-          MemoryStream ms = new MemoryStream();
-          serializer.WriteObject(ms, qosPositionKpiReply);
-          string jsonStr = Util.StreamToString(ms);
-          clog("QoS of requested gps location(s): " + jsonStr);
-        }
-        qosReplyStream.Dispose();
+        // server error code, and human readable message:
+        clog("RegisterClient Exception: " + httpe.Message + ", HTTP StatusCode: " + httpe.HttpStatusCode + ", API ErrorCode: " + httpe.ErrorCode + "\nStack: " + httpe.StackTrace);
+      }
+      catch (DmeDnsException de)
+      {
+        // This app should fallback to public cloud, as the DME doesn't exist for your
+        // SIM card + carrier.
+        clog("Cannot register to DME host: " + de.Message + ", Stack: " + de.StackTrace);
+        // Handle fallback to public cloud application server.
+      }
+      catch (HttpRequestException httpre)
+      {
+        clog("RegisterClient HttpRequest Exception" + httpre.Message + "\nStack Trace: " + httpre.StackTrace);
+      }
+      catch (Exception e)
+      {
+        clog("Unexpected Exception: " + e.StackTrace);
       }
     }
 
@@ -258,19 +264,7 @@ namespace MexPongGame {
 
       clog("Calling DME to register client...");
       bool registered = false;
-      try
-      {
-        registered = await integration.Register();
-      }
-      catch (HttpException httpe) // HTTP status, and REST API call error codes.
-      {
-        // server error code, and human readable message:
-        clog("RegisterClient Exception: " + httpe.Message + ", HTTP StatusCode: " + httpe.HttpStatusCode + ", API ErrorCode: " + httpe.ErrorCode + "\nStack: " + httpe.StackTrace);
-      }
-      catch (HttpRequestException httpre)
-      {
-        clog("RegisterClient HttpRequest Exception" + httpre.Message + "\nStack Trace: " + httpre.StackTrace);
-      }
+      registered = await integration.Register();
 
       if (registered)
       {
