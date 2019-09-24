@@ -61,6 +61,8 @@ import com.google.maps.android.SphericalUtil;
 
 // Matching Engine API:
 import com.mobiledgex.matchingengine.MatchingEngine;
+import com.mobiledgex.matchingengine.ChannelIterator;
+import com.mobiledgex.matchingengine.DmeDnsException;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
@@ -129,16 +131,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    if(registerClient()) {
-                        // Now that we are registered, let's find the closest cloudlet
-                        findCloudlet();
-                    }
-                } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException e) {
-                    e.printStackTrace();
-                    statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
-                    showErrorMsg(statusText);
-                }
+                registerClientAndFindCloudletInBackground();
             }
         });
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -253,12 +246,12 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException {
+    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException, DmeDnsException {
         // NOTICE: In a real app, these values would be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
         devName = "MobiledgeX";
-        carrierName = "TIP";
+        carrierName = "TDG";
         appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
@@ -272,7 +265,7 @@ public class MainActivity extends AppCompatActivity
         /////////////////////////////////////////////////////////////////////////////////////
 
         if(matchingEngine == null) {
-            statusText = "registerClient call is not successfully coded. Search for TODO in code.";
+            statusText = "matchingEngine uninitialized";
             Log.e(TAG, statusText);
             showErrorMsg(statusText);
             return false;
@@ -287,14 +280,7 @@ public class MainActivity extends AppCompatActivity
             showErrorMsg(statusText);
             return false;
         }
-
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
-        checkboxRegistered.setChecked(true);
-        checkboxRegistered.setText(R.string.client_registered);
-        // Populate app details.
-        carrierNameTv.setText(carrierName);
-        appNameTv.setText(appName);
-
         return true;
     }
 
@@ -305,8 +291,8 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////
         // TODO: Change these coordinates to where you're actually located.
         // Of course a real app would use GPS to acquire the exact location.
-        location.setLatitude(52.5157236);
-        location.setLongitude(13.2975664);
+        location.setLatitude(52.52);
+        location.setLongitude(13.4040);    //Berlin
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
@@ -383,6 +369,11 @@ public class MainActivity extends AppCompatActivity
         // TODO: Copy/paste the code to get QoS of gps locations.
         return false;
         ////////////////////////////////////////////////////////////////////////////////////////////
+    }
+
+    private void registerClientAndFindCloudletInBackground() {
+        // Creates new BackgroundRequest object which will call registerClient (the findCloudlet if registerClient is successful) to run on background thread
+        new RegisterClientAndFindCloudletBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     private void verifyLocationInBackground(Location loc) {
@@ -462,6 +453,42 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         // TODO: Add code to allow user to choose permissions during use of the app.
+    }
+
+    public class RegisterClientAndFindCloudletBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Object... params) {
+            try {
+                return registerClient();
+            } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException | DmeDnsException e) {
+                e.printStackTrace();
+                statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
+                showErrorMsg(statusText);
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean clientRegistered) {
+            if(clientRegistered) {
+                checkboxRegistered.setChecked(true);
+                checkboxRegistered.setText(R.string.client_registered);
+                // Populate app details.
+                carrierNameTv.setText(carrierName);
+                appNameTv.setText(appName);
+                try {
+                    findCloudlet();
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                    statusText = "FindCloudlet Failed. Exception=" + e.getLocalizedMessage();
+                    showErrorMsg(statusText);
+                }
+            } else {
+                statusText = "registerClient call is not successfully coded. Search for TODO in code.";
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
+            }
+        }
     }
 
     public class VerifyLocBackgroundRequest extends AsyncTask<Location, Void, Boolean> {
