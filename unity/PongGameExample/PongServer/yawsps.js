@@ -122,6 +122,7 @@ wsServer.on('connection', function connection(ws, request) {
 
     // Move other player back to waiting state:
     let game = games[gameId];
+    delete games[gameId];
     if (game !== undefined && game.players !== undefined) {
       console.log("Players: %o", game.players);
       for (let i = 0; i < game.players.length; i++) {
@@ -596,7 +597,7 @@ function createOrJoinMatch(uuidPlayer, roomId) {
   }
 
   // Check for connections to players:
-  console.log("uuidPlayer: %s, uuidOtherPlayer: %s, gameId: %d", uuidPlayer, uuidOtherPlayer, gameId)
+  console.log("uuidPlayer: %s, uuidOtherPlayer: %s, gameId: %s", uuidPlayer, uuidOtherPlayer, gameId)
 
   let otherConnection = null;
   if (uuidOtherPlayer !== undefined)
