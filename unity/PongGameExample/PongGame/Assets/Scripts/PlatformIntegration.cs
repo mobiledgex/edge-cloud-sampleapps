@@ -49,7 +49,7 @@ namespace MexPongGame
        return null;
       }
 
-     AndroidJavaObject context = activity.Call<AndroidJavaObject>("getApplicationContext");
+      AndroidJavaObject context = activity.Call<AndroidJavaObject>("getApplicationContext");
 
       if (context == null)
       {
