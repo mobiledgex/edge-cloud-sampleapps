@@ -77,7 +77,7 @@ namespace MexPongGame {
      * MobiledgeX Integration: thin example encapsulation outside Pong for ease
      * of viewing.
      */
-    MobiledgeXIntegration integration = new MobiledgeXIntegration();
+    MobiledgeXIntegration integration;
 
     string host = "localhost";
     string serverHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
@@ -101,6 +101,7 @@ namespace MexPongGame {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
+      integration = new MobiledgeXIntegration();
       integration.useDemo = true;
       integration.dmeHost = "sdkdemo." + MatchingEngine.baseDmeHost;
 
@@ -152,6 +153,10 @@ namespace MexPongGame {
         // This app should fallback to public cloud, as the DME doesn't exist for your
         // SIM card + carrier.
         clog("Cannot register to DME host: " + de.Message + ", Stack: " + de.StackTrace);
+        if (de.InnerException != null)
+        {
+          clog("Original Exception: " + de.InnerException.Message);
+        }
         // Handle fallback to public cloud application server.
       }
       catch (HttpRequestException httpre)
@@ -266,7 +271,11 @@ namespace MexPongGame {
       bool registered = false;
       registered = await integration.Register();
 
-      if (registered)
+      if (!registered)
+      {
+        clog("Not Registered!");
+      }
+      else
       {
         FindCloudletReply reply;
         clog("Finding Cloudlet...");
