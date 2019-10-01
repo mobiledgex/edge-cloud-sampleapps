@@ -21,8 +21,11 @@ import threading
 import logging
 import sys
 import time
+import os
 
 logger = logging.getLogger(__name__)
+
+PERSISTENT_TCP_PORT_DEFAULT = 8011 # Can be overridden with envvar FD_PERSISTENT_TCP_PORT
 
 class TrackerConfig(AppConfig):
     name = 'tracker'
@@ -73,8 +76,14 @@ class TrackerConfig(AppConfig):
             myOpWrapper.start()
             logger.info("Created OpenPose wrapper")
 
+        # Check for environment variables to override settings.
+        try:
+            PORT = int(os.environ['FD_PERSISTENT_TCP_PORT'])
+        except (ValueError, KeyError) as e:
+            PORT = PERSISTENT_TCP_PORT_DEFAULT
+
         # Start the non-REST session-based TCP server.
-        HOST, PORT = "0.0.0.0", 8011
+        HOST = "0.0.0.0"
 
         try:
             server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
@@ -90,6 +99,6 @@ class TrackerConfig(AppConfig):
             # Exit the server thread when the main thread terminates
             server_thread.daemon = True
             server_thread.start()
-            logger.info("Server loop running in thread: %s" %server_thread.name)
+            logger.info("Persistent TCP Server loop running in thread: %s" %server_thread.name)
         except OSError:
-            logger.warn("Server already running on port %d" %PORT)
+            logger.warn("Persistent TCP Server already running on port %d" %PORT)
