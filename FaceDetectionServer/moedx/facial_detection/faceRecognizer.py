@@ -29,6 +29,10 @@ import zlib
 
 logger = logging.getLogger(__name__)
 
+TRAINING_DATA_HOSTNAME = 'opencv.facetraining.mobiledgex.net'
+TRAINING_DATA_PORT_DEFAULT = 8009 # Can be overridden with envvar FD_TRAINING_DATA_PORT
+TRAINING_SERVER_TIMEOUT = 20 # Seconds
+
 class FaceRecognizer(object):
     """
     Wrapper for the OpenCV program for recognizing faces.
@@ -48,9 +52,17 @@ class FaceRecognizer(object):
         self.training_data_local_timestamp = 0
         self.training_data_filename = self.working_dir+'/trainer.yml'
 
+        # Check for environment variables to override settings.
+        try:
+            self.training_data_port = int(os.environ['FD_TRAINING_DATA_PORT'])
+        except (ValueError, KeyError) as e:
+            self.training_data_port = TRAINING_DATA_PORT_DEFAULT
+
+        logger.info("Using training_data_port %d" %self.training_data_port)
+
         # TODO: Update this when we have a different auth method.
-        self.training_data_hostname = 'opencv.facetraining.mobiledgex.net'
-        self.training_data_url = 'http://'+self.training_data_hostname+':8009'
+        self.training_data_hostname = TRAINING_DATA_HOSTNAME
+        self.training_data_url = 'http://%s:%d' %(self.training_data_hostname, self.training_data_port)
         self.training_data_auth = HTTPBasicAuth('mexf4ceuser555', 'p4ssw0dmexf4c3999')
         self.training_data_timestamp = 0
 
@@ -59,6 +71,10 @@ class FaceRecognizer(object):
                 logger.info("Sleeping while another worker updates training data")
                 time.sleep(2)
             self.download_training_data_if_needed()
+        except Exception as e:
+            logger.error(e)
+
+        try:
             self.read_training_data_if_needed()
         except Exception as e:
             logger.error(e)
@@ -347,7 +363,7 @@ class FaceRecognizer(object):
         now = time.time()
         url = self.training_data_url + '/trainer/lastupdate/'
         logger.info("is_training_data_file_current() url=%s" %url)
-        timestamp = int(requests.get(url, auth=self.training_data_auth).content)
+        timestamp = int(requests.get(url, auth=self.training_data_auth, timeout=TRAINING_SERVER_TIMEOUT).content)
         elapsed = "%.3f" %((time.time() - now)*1000)
         logger.info("%s ms to get centralized training data timestamp: %d. local=%d" %(elapsed, timestamp, self.training_data_timestamp))
         self.set_db_timestamps() #Updates last_check_timestamp only
@@ -367,7 +383,7 @@ class FaceRecognizer(object):
         now = time.time()
         url = self.training_data_url + '/trainer/download'
         logger.info("Downloading from %s..." %url)
-        r = requests.get(url, auth=self.training_data_auth)
+        r = requests.get(url, auth=self.training_data_auth, timeout=TRAINING_SERVER_TIMEOUT)
         if r.status_code != 200:
             logger.error("Error downloading centralized training data. status_code=%d" %r.status_code)
             return False
