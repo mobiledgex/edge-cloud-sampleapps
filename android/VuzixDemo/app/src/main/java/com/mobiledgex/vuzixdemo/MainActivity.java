@@ -93,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(context, PoseProcessorActivity.class);
         intent.putExtra(PoseProcessorFragment.EXTRA_POSE_JOINT_RADIUS, 4);
         intent.putExtra(PoseProcessorFragment.EXTRA_POSE_STROKE_WIDTH, 4);
-        intent.putExtra(PoseProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, "136.144.61.37"); //openpose.chicago-packet.mobiledgex.net
         startActivity(intent);
     }
 
