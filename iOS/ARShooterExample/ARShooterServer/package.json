@@ -1,0 +1,16 @@
+{
+  "name": "shooter-server",
+  "version": "1.0.0",
+  "description": "ARShooter Server Example using socket.io",
+  "main": "shooter-server.js",
+  "dependencies": {
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node shooter-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "MobiledgeX",
+  "license": "Apache-2.0"
+}

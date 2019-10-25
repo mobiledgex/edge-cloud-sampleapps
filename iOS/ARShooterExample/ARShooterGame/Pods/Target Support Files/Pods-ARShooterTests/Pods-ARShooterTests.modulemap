@@ -1,0 +1,6 @@
+framework module Pods_ARShooterTests {
+  umbrella header "Pods-ARShooterTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
