@@ -1,7 +1,0 @@
-${PODS_ROOT}/Target Support Files/Pods-ARShooter/Pods-ARShooter-frameworks.sh
-${PODS_ROOT}/IOSMatchingEngine/IOSMatchingEngine.framework
-${BUILT_PRODUCTS_DIR}/NSLogger/NSLogger.framework
-${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework
-${BUILT_PRODUCTS_DIR}/PromisesSwift/Promises.framework
-${BUILT_PRODUCTS_DIR}/Socket.IO-Client-Swift/SocketIO.framework
-${BUILT_PRODUCTS_DIR}/Starscream/Starscream.framework

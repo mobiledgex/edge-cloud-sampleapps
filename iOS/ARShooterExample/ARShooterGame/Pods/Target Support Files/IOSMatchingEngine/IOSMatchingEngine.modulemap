@@ -1,6 +1,0 @@
-framework module IOSMatchingEngine {
-  umbrella header "IOSMatchingEngine-umbrella.h"
-
-  export *
-  module * { export * }
-}
