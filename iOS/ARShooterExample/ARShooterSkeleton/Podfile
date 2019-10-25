@@ -1,0 +1,21 @@
+use_frameworks!
+
+platform :ios, '11.4'
+
+# Default Specs.git:
+source 'https://github.com/CocoaPods/Specs.git'
+
+plugin 'cocoapods-art', :sources => ['cocoapods-releases'] 
+
+target 'ARShooterSkeleton' do
+  pod 'IOSMatchingEngine'
+  pod 'Socket.IO-Client-Swift', '~> 15.1.0'
+
+  target 'ARShooterSkeletonTests' do
+    inherit! :search_paths  
+  end
+  
+  target 'ARShooterSkeletonUITests' do
+    inherit! :search_paths
+  end
+end

@@ -1,0 +1,4 @@
+framework module IOSMatchingEngine {
+  header "IOSMatchingEngine-Swift.h"
+  requires objc
+}

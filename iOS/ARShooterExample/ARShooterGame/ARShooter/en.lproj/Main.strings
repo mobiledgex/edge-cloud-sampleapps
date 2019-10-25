@@ -1,0 +1,21 @@
+
+/* Class = "UIButton"; normalTitle = "Submit"; ObjectID = "BPH-Sd-f3e"; */
+"BPH-Sd-f3e.normalTitle" = "Submit";
+
+/* Class = "UILabel"; text = "Enter Username"; ObjectID = "ORv-Dr-4VX"; */
+"ORv-Dr-4VX.text" = "Enter Username";
+
+/* Class = "UILabel"; text = "Enter GameID"; ObjectID = "VEK-dm-EGF"; */
+"VEK-dm-EGF.text" = "Enter GameID";
+
+/* Class = "UILabel"; text = "Initializing AR Session"; ObjectID = "Wai-Hz-m6a"; */
+"Wai-Hz-m6a.text" = "Initializing AR Session";
+
+/* Class = "UILabel"; text = "Score:"; ObjectID = "gOW-Am-Mih"; */
+"gOW-Am-Mih.text" = "Score:";
+
+/* Class = "UIButton"; normalTitle = "add targets"; ObjectID = "h28-0v-bJT"; */
+"h28-0v-bJT.normalTitle" = "add targets";
+
+/* Class = "UILabel"; text = "nil"; ObjectID = "yyd-fz-bhf"; */
+"yyd-fz-bhf.text" = "nil";
