@@ -37,6 +37,8 @@ class LoginViewController: UIViewController {
     var devName: String?
     var carrierName: String?
     var authToken: String?
+    var dmeHost: String?
+    var dmePort: UInt? 
     var host: String?
     var port: UInt?
     var location: [String: Any]?
@@ -62,8 +64,8 @@ class LoginViewController: UIViewController {
     func setUpMatchingEngineConnection() {
         matchingEngine = MatchingEngine()
         if demo {
-            host = "rogers.dme.mobiledgex.net"
-            port = 38001
+            dmeHost = "rogers.dme.mobiledgex.net"
+            dmePort = 38001
             appName = "ARShooter"  // ARShooter
             appVers = "1.0"
             devName = "HackathonTeam-1"
@@ -88,7 +90,7 @@ class LoginViewController: UIViewController {
                                                 appVers: appVers,
                                                 carrierName: carrierName,
                                                 authToken: authToken)
-        matchingEngine.registerClient(host: self.host!, port: self.port!, request: registerClientRequest)
+        matchingEngine.registerClient(host: self.dmeHost!, port: self.dmePort!, request: registerClientRequest)
         .then { registerClientReply in
             SKToast.show(withMessage: "RegisterClientReply is \(registerClientReply)")
             print("RegisterClientReply is \(registerClientReply)")
@@ -99,13 +101,13 @@ class LoginViewController: UIViewController {
                                             devName: self.devName!,
                                             appName: self.appName!,
                                             appVers: self.appVers!)
-            self.findCloudletPromise = self.matchingEngine.findCloudlet(host: self.host!, port: self.port!, request: findCloudletRequest)
+            self.findCloudletPromise = self.matchingEngine.findCloudlet(host: self.dmeHost!, port: self.dmePort!, request: findCloudletRequest)
               
             let verifyLocationRequest = self.matchingEngine.createVerifyLocationRequest(
                                             carrierName: self.carrierName!,
                                             gpsLocation: self.location!)
                 
-            self.verifyLocationPromise = self.matchingEngine.verifyLocation(host: self.host!, port: self.port!, request: verifyLocationRequest)
+            self.verifyLocationPromise = self.matchingEngine.verifyLocation(host: self.dmeHost!, port: self.dmePort!, request: verifyLocationRequest)
                 
             all([self.findCloudletPromise!, self.verifyLocationPromise!])
             .then { value in

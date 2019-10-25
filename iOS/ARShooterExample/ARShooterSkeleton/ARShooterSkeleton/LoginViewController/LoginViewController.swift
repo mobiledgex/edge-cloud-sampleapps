@@ -37,8 +37,10 @@ class LoginViewController: UIViewController {
     var devName: String?
     var carrierName: String?
     var authToken: String?
+    var dmeHost: String?
+    var dmePort: UInt? 
     var host: String?
-    var port: Int?
+    var port: UInt?
     var location: [String: Any]?
     
     // MatchingEngine API return objects
@@ -91,7 +93,7 @@ class LoginViewController: UIViewController {
         gameIDField.isEnabled = false
         
         if host == nil {
-            host = "arshootereucluster.berlin-main.tdg.mobiledgex.net" // frankfurt-main.tdg.mobiledgex.net
+            return 
         }
         if port == nil {
             port = 1337
