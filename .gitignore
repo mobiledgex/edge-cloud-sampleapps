@@ -72,3 +72,4 @@ fastlane/readme.md
 env/*
 .DS_Store
 logfile*
+Pods/
