@@ -158,8 +158,7 @@
 				59098D152357991A002117CF /* Classes */,
 				59098D182357991A002117CF /* Assets */,
 			);
-			name = SKToast;
-			path = "../../../../IOSMatchingEngineSDK/Example/MatchingEngine/ThirdParty/SKToast-master/SKToast";
+			path = SKToast;
 			sourceTree = "<group>";
 		};
 		59098D152357991A002117CF /* Classes */ = {
