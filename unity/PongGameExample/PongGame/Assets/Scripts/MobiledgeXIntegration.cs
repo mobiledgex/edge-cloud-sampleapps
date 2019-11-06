@@ -83,7 +83,7 @@ public class MobiledgeXIntegration
     return loc;
   }
 
-  // These are just thin wrappers over the SDK to how how to use them:
+  // These are just thin wrappers over the SDK to show how to use them:
   // Call once, or when the carrier changes:
   public async Task<bool> Register()
   {
