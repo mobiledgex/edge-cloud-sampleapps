@@ -1,4 +1,4 @@
-This is the PongServer, for the PongGame. It is based around Node.JS Websockets
+This is the PingPongServer, for the PingPongGame. It is based around Node.js Websockets
 API.
 
 It has a Dockerfile, that can create an image to be submitted to MobieldgeX to
