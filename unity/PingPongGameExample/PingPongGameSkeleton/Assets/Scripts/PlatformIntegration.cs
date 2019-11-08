@@ -25,7 +25,7 @@ using DistributedMatchEngine;
 // We need this one for importing our IOS functions
 using System.Runtime.InteropServices;
 
-namespace MexPongGame
+namespace MobiledgeXPingPongGame
 {
   public class PlatformIntegration : DistributedMatchEngine.ICarrierInfo
   {

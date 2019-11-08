@@ -25,7 +25,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 
 // Example server is JSON based serialization. Binary GRPC later.
-namespace MexPongGame
+namespace MobiledgeXPingPongGame
 {
   public static class Messaging<T>
   {

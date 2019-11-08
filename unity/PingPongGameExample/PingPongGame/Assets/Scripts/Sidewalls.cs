@@ -19,7 +19,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MexPongGame
+namespace MobiledgeXPingPongGame
 {
   public class Sidewalls : MonoBehaviour
   {

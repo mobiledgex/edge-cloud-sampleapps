@@ -21,7 +21,7 @@ using UnityEngine;
 
 using System;
 
-namespace MexPongGame
+namespace MobiledgeXPingPongGame
 {
   public class PlayerControls : MonoBehaviour
   {

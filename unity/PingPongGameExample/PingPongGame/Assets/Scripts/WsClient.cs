@@ -29,7 +29,7 @@ using System.Collections.Concurrent;
 
 using UnityEngine;
 
-namespace MexPongGame
+namespace MobiledgeXPingPongGame
 {
   // C#'s built in WebSockets concurrency model supports the use a single queue for
   // send, and another queue for recieve. WsClient here has 1 independent thread

@@ -30,7 +30,7 @@ using System.Net.Http;
 
 using DistributedMatchEngine;
 
-namespace MexPongGame {
+namespace MobiledgeXPingPongGame {
 
   enum STATUS
   {

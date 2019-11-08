@@ -19,7 +19,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-using MexPongGame;
+using MobiledgeXPingPongGame;
 using DistributedMatchEngine;
 
 using System.Threading.Tasks;
