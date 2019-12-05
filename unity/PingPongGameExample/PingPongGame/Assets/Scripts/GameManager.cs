@@ -319,9 +319,8 @@ namespace MobiledgeXPingPongGame {
 
           foreach (AppPort ap in reply.ports)
           {
-            //ap.public_port = 7777;
             clog("Port: proto: " + ap.proto + ", prefix: " +
-                ap.fqdn_prefix + "  , path_prefix: " + ap.path_prefix + ", port: " +
+                ap.fqdn_prefix + ", path_prefix: " + ap.path_prefix + ", port: " +
                 ap.public_port);
 
             // We're looking for one of the TCP app ports:

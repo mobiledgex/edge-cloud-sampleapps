@@ -45,8 +45,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
@@ -61,10 +61,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.maps.android.SphericalUtil;
 
 // Matching Engine API:
+import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.DmeDnsException;
-import com.mobiledgex.matchingengine.MatchingEngine;
-import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
@@ -77,7 +76,6 @@ public class MainActivity extends AppCompatActivity
     private static final int RC_SIGN_IN = 1;
     public static final int RC_STATS = 2;
     private MatchingEngine matchingEngine;
-    private RequestPermissions mRpUtil;
     private String statusText = null;
     private AppClient.FindCloudletReply mClosestCloudlet;
     private Activity ctx;
@@ -134,7 +132,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new RegisterClientBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                registerClientAndFindCloudletInBackground();
             }
         });
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -169,17 +167,6 @@ public class MainActivity extends AppCompatActivity
         } else {
             signInMenuItem.setVisible(true);
             signOutMenuItem.setVisible(false);
-        }
-
-        /**
-         * MatchEngine APIs require special user approved permissions to READ_PHONE_STATE and
-         * one of the following:
-         * ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION. This creates a dialog, if needed.
-         */
-        mRpUtil = new RequestPermissions();
-        if (mRpUtil.getNeededPermissions(this).size() > 0) {
-            mRpUtil.requestMultiplePermissions(this);
-            return;
         }
     }
 
@@ -260,43 +247,12 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public class RegisterClientBackgroundRequest extends AsyncTask<Void, Void, Boolean> {
-        @Override
-        protected Boolean doInBackground(Void... voids) {
-            try {
-                if(registerClient()) {
-                    return true;
-                }
-            } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException e) {
-                e.printStackTrace();
-                statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
-                showErrorMsg(statusText);
-            }
-            return false;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean clientRegistered) {
-            if (clientRegistered) {
-                try {
-                    // Now that we are registered, let's find the closest cloudlet
-                    findCloudlet();
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                    statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
-                    showErrorMsg(statusText);
-                }
-            } // No need for "else".
-        }
-
-    }
-
-    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException {
+    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException, DmeDnsException {
         // NOTICE: In a real app, these values would be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
         devName = "MobiledgeX";
-        carrierName = "TIP";
+        carrierName = "TDG";
         appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
@@ -304,25 +260,13 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-//        matchingEngine = new MatchingEngine(ctx);
-//        matchingEngine.setNetworkSwitchingEnabled(false); // Stick with wifi for workshop.
-        try {
-            host = matchingEngine.generateDmeHostAddress();
-            Log.i(TAG, "Using generated DME host: "+host);
-        } catch (DmeDnsException e) {
-            Log.e(TAG, "Could not generate DME host. Reason: "+e.getLocalizedMessage());
-            host = "sdkdemo.dme.mobiledgex.net";   //fallback host
-            Log.i(TAG, "Using fallback DME host: "+host);
-        }
-        port = matchingEngine.getPort(); // Keep same port.
-        AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
-                devName, appName, appVersion, carrierName, null);
-        AppClient.RegisterClientReply registerStatus = matchingEngine.registerClient (registerClientRequest, host,
-                port, 10000);
+        matchingEngine = null;
+        AppClient.RegisterClientRequest registerClientRequest = null;
+        AppClient.RegisterClientReply registerStatus = null;
         /////////////////////////////////////////////////////////////////////////////////////
 
         if(matchingEngine == null) {
-            statusText = "registerClient call is not successfully coded. Search for TODO in code.";
+            statusText = "matchingEngine uninitialized";
             Log.e(TAG, statusText);
             showErrorMsg(statusText);
             return false;
@@ -337,20 +281,10 @@ public class MainActivity extends AppCompatActivity
             showErrorMsg(statusText);
             return false;
         }
-
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
-
-        runOnUiThread(new Runnable(){
-            public void run(){
-                checkboxRegistered.setChecked(true);
-                checkboxRegistered.setText(R.string.client_registered);
-                // Populate app details.
-                carrierNameTv.setText(carrierName);
-                appNameTv.setText(appName);
-            }
-        });
         return true;
     }
+
 
     public boolean findCloudlet() throws ExecutionException, InterruptedException {
         //(Blocking call, or use findCloudletFuture):
@@ -358,14 +292,13 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////
         // TODO: Change these coordinates to where you're actually located.
         // Of course a real app would use GPS to acquire the exact location.
-        location.setLatitude(52.5157236);
-        location.setLongitude(13.2975664);
+        location.setLatitude(52.52);
+        location.setLongitude(13.4040);    //Berlin
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
-        AppClient.FindCloudletRequest findCloudletRequest= matchingEngine.createFindCloudletRequest (ctx,
-                carrierName, location);
-        mClosestCloudlet = matchingEngine.findCloudlet(findCloudletRequest, host, port, 10000);
+        AppClient.FindCloudletRequest findCloudletRequest = null;
+        mClosestCloudlet = null;
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         Log.i(TAG, "mClosestCloudlet="+mClosestCloudlet);
@@ -428,55 +361,20 @@ public class MainActivity extends AppCompatActivity
     private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to verify location.
-        AppClient.VerifyLocationRequest verifyLocationRequest = matchingEngine.createVerifyLocationRequest(ctx, carrierName, loc);
-        if (verifyLocationRequest != null) {
-            try {
-                AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
-                Log.i(TAG, "[Location Verified: Tower: " + verifyLocationReply.getTowerStatus() +
-                        ", GPS LocationStatus: " + verifyLocationReply.getGpsLocationStatus() +
-                        ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() + " ]\n");
-                return true;
-            } catch(NetworkOnMainThreadException ne) {
-                Log.e(TAG, "Network thread exception");
-                return false;
-            }
-        } else {
-            Log.e(TAG, "Cannot verify location");
-            return false;
-        }
+        return false;
         ////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     private boolean getQoSPositionKpi(LocOuterClass.Loc loc) throws InterruptedException, ExecutionException {
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to get QoS of gps locations.
-        List<AppClient.QosPosition> requests = createPositionList(loc, 45, 20, 1);
-        if (requests.isEmpty()) {
-            Log.e(TAG, "No items added to the position list");
-            return false;
-        }
-        AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createQoSPositionRequest(requests, 0, null);
-        if(qosPositionRequest != null) {
-            try {
-                Log.i(TAG, "getQosPositionKpi host="+host+" port="+port+" matchingEngine.getHost()="+matchingEngine.getHost());
-                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionRequest, host, port, 10000);
-                if (!qosPositionKpiReplies.hasNext()) {
-                    Log.e(TAG, "Replies is empty");
-                    return false;
-                }
-                while (qosPositionKpiReplies.hasNext()) {
-                    Log.i(TAG, "Position results are " + qosPositionKpiReplies.next().getPositionResultsList());
-                }
-                return true;
-            } catch (NetworkOnMainThreadException ne) {
-                Log.e(TAG, "Network thread exception");
-                return false;
-            }
-        } else {
-            Log.e(TAG, "QoS request is null");
-            return false;
-        }
+        return false;
         ////////////////////////////////////////////////////////////////////////////////////////////
+    }
+
+    private void registerClientAndFindCloudletInBackground() {
+        // Creates new BackgroundRequest object which will call registerClient (the findCloudlet if registerClient is successful) to run on background thread
+        new RegisterClientAndFindCloudletBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     private void verifyLocationInBackground(Location loc) {
@@ -492,41 +390,6 @@ public class MainActivity extends AppCompatActivity
     ////////////////////////////////////////////////////////////////////////////////////////////
     // TODO: Copy/paste the code to get list of gps locations
     ////////////////////////////////////////////////////////////////////////////////////////////
-    private List<AppClient.QosPosition> createPositionList(LocOuterClass.Loc loc, double direction_degrees, double totalDistanceKm, double increment) {
-        List<AppClient.QosPosition> positions = new ArrayList<>();
-        long positionId = 1;
-
-        AppClient.QosPosition firstPosition = AppClient.QosPosition.newBuilder()
-                .setPositionid(positionId)
-                .setGpsLocation(loc)
-                .build();
-        positions.add(firstPosition);
-
-        LocOuterClass.Loc lastLocation = LocOuterClass.Loc.newBuilder()
-                .setLongitude(loc.getLongitude())
-                .setLatitude(loc.getLatitude())
-                .build();
-
-        double kmPerDegreeLat = 110.57; //at Equator
-        double kmPerDegreeLong = 111.32; //at Equator
-        double addLatitude = (Math.sin(direction_degrees * (Math.PI/180)) * increment)/kmPerDegreeLat;
-        double addLongitude = (Math.cos(direction_degrees * (Math.PI/180)) * increment)/kmPerDegreeLong;
-        for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionId++) {
-            LocOuterClass.Loc next = LocOuterClass.Loc.newBuilder()
-                    .setLongitude(lastLocation.getLongitude() + addLongitude)
-                    .setLatitude(lastLocation.getLatitude() + addLatitude)
-                    .build();
-            AppClient.QosPosition nextPosition = AppClient.QosPosition.newBuilder()
-                    .setPositionid(positionId)
-                    .setGpsLocation(next)
-                    .build();
-
-            positions.add(nextPosition);
-            Log.i(TAG, "Latitude is " + nextPosition.getGpsLocation().getLatitude() + " and Longitude is " + nextPosition.getGpsLocation().getLongitude());
-            lastLocation = next;
-        }
-        return positions;
-    }
 
     public void showErrorMsg(String msg) {
         Snackbar.make(findViewById(android.R.id.content), msg, Snackbar.LENGTH_LONG).show();
@@ -591,19 +454,42 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         // TODO: Add code to allow user to choose permissions during use of the app.
-        /*
-         * Check permissions here, as the user has the ability to change them on the fly through
-         * system settings
-         */
-        if (mRpUtil.getNeededPermissions(this).size() > 0) {
-            // Opens a UI. When it returns, onResume() is called again.
-            mRpUtil.requestMultiplePermissions(this);
-            return;
+    }
+
+    public class RegisterClientAndFindCloudletBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Object... params) {
+            try {
+                return registerClient();
+            } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException | DmeDnsException e) {
+                e.printStackTrace();
+                statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
+                showErrorMsg(statusText);
+                return false;
+            }
         }
 
-        // Ensures that user can switch from wifi to cellular network data connection (required to verifyLocation)
-        matchingEngine = new MatchingEngine(ctx);
-        matchingEngine.setNetworkSwitchingEnabled(false);
+        @Override
+        protected void onPostExecute(Boolean clientRegistered) {
+            if(clientRegistered) {
+                checkboxRegistered.setChecked(true);
+                checkboxRegistered.setText(R.string.client_registered);
+                // Populate app details.
+                carrierNameTv.setText(carrierName);
+                appNameTv.setText(appName);
+                try {
+                    findCloudlet();
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                    statusText = "FindCloudlet Failed. Exception=" + e.getLocalizedMessage();
+                    showErrorMsg(statusText);
+                }
+            } else {
+                statusText = "registerClient call is not successfully coded. Search for TODO in code.";
+                Log.e(TAG, statusText);
+                showErrorMsg(statusText);
+            }
+        }
     }
 
     public class VerifyLocBackgroundRequest extends AsyncTask<Location, Void, Boolean> {
