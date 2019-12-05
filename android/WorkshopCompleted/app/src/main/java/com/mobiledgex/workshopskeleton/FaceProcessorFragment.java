@@ -17,7 +17,6 @@
 
 package com.mobiledgex.workshopskeleton;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -104,19 +103,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         /////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to define an ImageSender
         String host = mHostDetectionEdge; //The default from the base class.
-
-        Intent intent = getActivity().getIntent();
-        String cloudletHostname = intent.getStringExtra("EXTRA_EDGE_CLOUDLET_HOSTNAME");
-        if(cloudletHostname != null) {
-            host = cloudletHostname;
-        }
-//        host = "acrotopia.com";
-        host = "vmhackathonteam-1.kraken-main.tmpl.mobiledgex.net";
         mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, host, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
-//        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, host, 8009, PERSISTENT_TCP_PORT);
-
-//        ImageSender.setPreferencesConnectionMode(ImageSender.ConnectionMode.PERSISTENT_TCP, mImageSenderEdge);
-
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.FACE_DETECTION);
         mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
         mCameraToolbar.setTitle("Face Detection");

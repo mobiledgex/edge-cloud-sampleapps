@@ -52,7 +52,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     private TextView mStdFull;
     private TextView mStdNet;
 
-    public static final String DEF_OPENPOSE_HOST_EDGE = "posedetection.defaultedge.mobiledgex.net";
+    public static final String DEF_OPENPOSE_HOST_EDGE = "openpose.chicago-packet.mobiledgex.net";
 
     public static PoseProcessorFragment newInstance() {
         return new PoseProcessorFragment();
