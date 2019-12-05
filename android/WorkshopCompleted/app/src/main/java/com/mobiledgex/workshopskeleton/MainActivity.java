@@ -53,11 +53,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.maps.android.SphericalUtil;
-
-// Matching Engine API:
-import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.DmeDnsException;
+import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
@@ -140,7 +138,16 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                registerClientAndFindCloudletInBackground();
+                try {
+                    if(registerClient()) {
+                        // Now that we are registered, let's find the closest cloudlet
+                        findCloudlet();
+                    }
+                } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException e) {
+                    e.printStackTrace();
+                    statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
+                    showErrorMsg(statusText);
+                }
             }
         });
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -248,6 +255,9 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_face_detection) {
             // Handle the camera action
             Intent intent = new Intent(this, FaceProcessorActivity.class);
+            if(mClosestCloudlet != null) {
+                intent.putExtra("EXTRA_EDGE_CLOUDLET_HOSTNAME", mClosestCloudletHostname);
+            }
             startActivity(intent);
         } else if (id == R.id.nav_google_signin) {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -269,12 +279,13 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException, DmeDnsException {
+    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException {
         // NOTICE: In a real app, these values would be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
-        appName = "MobiledgeX SDK Demo";
-        devName = "MobiledgeX";
-        carrierName = "GDDT";
+        appName = "Face Detection Demo";
+//        appName = "Pong";
+        devName = "HackathonTeam-18";
+        carrierName = "TMPL";
         appVersion = "1.0";
 
         //NOTICE: A real app would request permission to enable this.
@@ -282,11 +293,19 @@ public class MainActivity extends AppCompatActivity
 
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
-        host = matchingEngine.generateDmeHostAddress();
-        if(host == null) {
-            Log.e(TAG, "Could not generate host");
+        try {
+            host = matchingEngine.generateDmeHostAddress();
+            Log.i(TAG, "Using generated DME host: "+host);
+        } catch (DmeDnsException e) {
+            Log.e(TAG, "Could not generate DME host. Reason: "+e.getLocalizedMessage());
             host = "sdkdemo.dme.mobiledgex.net";   //fallback host
+            Log.i(TAG, "Using fallback DME host: "+host);
+        } catch (NetworkOnMainThreadException e) {
+            host = "sdkdemo.dme.mobiledgex.net";   //fallback host
+            Log.i(TAG, "Using fallback DME host: "+host);
         }
+
+//        host = "192.168.1.77";
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
                 devName, appName, appVersion, carrierName, null);
@@ -295,7 +314,7 @@ public class MainActivity extends AppCompatActivity
         /////////////////////////////////////////////////////////////////////////////////////
 
         if(matchingEngine == null) {
-            statusText = "matchingEngine uninitialized";
+            statusText = "registerClient call is not successfully coded. Search for TODO in code.";
             Log.e(TAG, statusText);
             showErrorMsg(statusText);
             return false;
@@ -310,7 +329,14 @@ public class MainActivity extends AppCompatActivity
             showErrorMsg(statusText);
             return false;
         }
+
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
+        checkboxRegistered.setChecked(true);
+        checkboxRegistered.setText(R.string.client_registered);
+        // Populate app details.
+        carrierNameTv.setText(carrierName);
+        appNameTv.setText(appName);
+
         return true;
     }
 
@@ -320,8 +346,8 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////
         // TODO: Change these coordinates to where you're actually located.
         // Of course a real app would use GPS to acquire the exact location.
-        location.setLatitude(52.52);
-        location.setLongitude(13.4040);    //Beacon
+        location.setLatitude(52.531677);
+        location.setLongitude(13.381777);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
@@ -401,7 +427,7 @@ public class MainActivity extends AppCompatActivity
                 return false;
             }
         } else {
-            Log.e(TAG, "Cannot verify location");
+            Log.e(TAG, "Verify Location request is null");
             return false;
         }
     }
@@ -413,10 +439,9 @@ public class MainActivity extends AppCompatActivity
             return false;
         }
         AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createQoSPositionRequest(requests, 0, null);
-
         if(qosPositionRequest != null) {
             try {
-                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionRequest, host, port, 20000);
+                ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionRequest, host, port, 10000);
                 if (!qosPositionKpiReplies.hasNext()) {
                     Log.e(TAG, "Replies is empty");
                     return false;
@@ -435,10 +460,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void registerClientAndFindCloudletInBackground() {
-        // Creates new BackgroundRequest object which will call registerClient (the findCloudlet if registerClient is successful) to run on background thread
-        new RegisterClientAndFindCloudletBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
 
     private void verifyLocationInBackground(Location loc) {
         // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
@@ -469,13 +490,13 @@ public class MainActivity extends AppCompatActivity
         double kmPerDegreeLong = 111.32; //at Equator
         double addLatitude = (Math.sin(direction_degrees * (Math.PI/180)) * increment)/kmPerDegreeLat;
         double addLongitude = (Math.cos(direction_degrees * (Math.PI/180)) * increment)/kmPerDegreeLong;
-        for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment) {
+        for (double traverse = 0; traverse + increment < totalDistanceKm; traverse += increment, positionId++) {
             LocOuterClass.Loc next = LocOuterClass.Loc.newBuilder()
                     .setLongitude(lastLocation.getLongitude() + addLongitude)
                     .setLatitude(lastLocation.getLatitude() + addLatitude)
                     .build();
             AppClient.QosPosition nextPosition = AppClient.QosPosition.newBuilder()
-                    .setPositionid(++positionId)
+                    .setPositionid(positionId)
                     .setGpsLocation(next)
                     .build();
 
@@ -548,54 +569,15 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        /*
-         * Check permissions here, as the user has the ability to change them on the fly through
-         * system settings
-         */
+        // Check permissions here, as the user has the ability to change them on the fly through
+        // system settings.
         if (mRpUtil.getNeededPermissions(this).size() > 0) {
             // Opens a UI. When it returns, onResume() is called again.
             mRpUtil.requestMultiplePermissions(this);
             return;
         }
-        // Ensures that user can switch from wifi to cellular network data connection (required to verifyLocation)
         matchingEngine = new MatchingEngine(ctx);
-        matchingEngine.setNetworkSwitchingEnabled(true);  //false-> wifi (Use wifi for demo)
-    }
-
-    public class RegisterClientAndFindCloudletBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
-        @Override
-        protected Boolean doInBackground(Object... params) {
-            try {
-                return registerClient();
-            } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException |  DmeDnsException e) {
-                e.printStackTrace();
-                statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
-                showErrorMsg(statusText);
-                return false;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Boolean clientRegistered) {
-            if(clientRegistered) {
-                checkboxRegistered.setChecked(true);
-                checkboxRegistered.setText(R.string.client_registered);
-                // Populate app details.
-                carrierNameTv.setText(carrierName);
-                appNameTv.setText(appName);
-                try {
-                    findCloudlet();
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                    statusText = "FindCloudlet Failed. Exception=" + e.getLocalizedMessage();
-                    showErrorMsg(statusText);
-                }
-            } else {
-                statusText = "Failed to register client";
-                Log.e(TAG, statusText);
-                showErrorMsg(statusText);
-            }
-        }
+        matchingEngine.setNetworkSwitchingEnabled(false);
     }
 
     public class VerifyLocBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
@@ -626,10 +608,6 @@ public class MainActivity extends AppCompatActivity
             if (locationVerified) {
                 checkboxLocationVerified.setChecked(true);
                 checkboxLocationVerified.setText(R.string.location_verified);
-            } else {
-                statusText = "Failed to verify location";
-                Log.e(TAG, statusText);
-                showErrorMsg(statusText);
             }
         }
     }
@@ -661,10 +639,11 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(Boolean gotQoSPositions) {
             if (!gotQoSPositions) {
-                statusText = "Failed to get qosPositions";
+                statusText = "qosPositionKpi call is not successfully coded. Search for TODO in code.";
                 Log.e(TAG, statusText);
                 showErrorMsg(statusText);
             }
         }
+
     }
 }

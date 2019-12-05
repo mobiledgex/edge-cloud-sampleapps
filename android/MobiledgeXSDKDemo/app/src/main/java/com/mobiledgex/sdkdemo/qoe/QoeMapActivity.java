@@ -406,7 +406,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             }
             String htmlData = sb.toString();
 
-            // The WebView to show out HTML.
+            // The WebView to show our HTML.
             WebView webView = new WebView(QoeMapActivity.this);
             webView.loadData(htmlData, "text/html; charset=UTF-8",null);
             new AlertDialog.Builder(QoeMapActivity.this)

@@ -38,6 +38,7 @@ dependencies {
 
     // Matching Engine SDK
     implementation 'com.mobiledgex:matchingengine:1.4.14'
+
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
