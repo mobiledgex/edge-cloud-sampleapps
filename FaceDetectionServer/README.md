@@ -8,7 +8,7 @@ python manage.py makemigrations tracker
 python manage.py migrate
 gunicorn moedx.wsgi:application --bind 0.0.0.0:8008
 ```
-###How to install OpenPose on a GPU-enabled server
+### How to install OpenPose on a GPU-enabled server
 This assumes CUDA and CUDNN are already installed.
 We need cmake version at least 3.12 for CUDA 10
 
