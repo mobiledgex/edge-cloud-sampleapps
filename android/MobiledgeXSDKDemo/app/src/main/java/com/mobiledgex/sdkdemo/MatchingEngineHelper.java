@@ -75,6 +75,7 @@ public class MatchingEngineHelper {
         mHostname = hostname;
         mCarrierName = carrierName;
         mMatchingEngine = new MatchingEngine(mContext);
+        mMatchingEngine.setHost(mHostname);
     }
 
     /**
