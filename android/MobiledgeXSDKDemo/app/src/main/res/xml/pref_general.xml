@@ -6,7 +6,7 @@
     android:id="@+id/matching_engine_general_preference_screen">
 
     <ListPreference
-        android:defaultValue="sdkdemo.dme.mobiledgex.net:50051"
+        android:defaultValue="eu-mexdemo.dme.mobiledgex.net:50051"
         android:entries="@array/pref_dme_hostname_titles"
         android:entryValues="@array/pref_dme_hostname_values"
         android:key="@string/dme_hostname"

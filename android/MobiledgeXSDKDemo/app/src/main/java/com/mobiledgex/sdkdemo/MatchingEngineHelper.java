@@ -75,6 +75,7 @@ public class MatchingEngineHelper {
         mHostname = hostname;
         mCarrierName = carrierName;
         mMatchingEngine = new MatchingEngine(mContext);
+        mMatchingEngine.setHost(mHostname);
     }
 
     /**
@@ -175,7 +176,11 @@ public class MatchingEngineHelper {
                 int port = mMatchingEngine.getPort(); // Keep same port.
                 String devName = "MobiledgeX";
                 //Note that mCarrierName came from preferences in MainActivity.
-                String appVersion = ""; //SDK will populate this automatically if we pass in "".
+
+                // SDK will populate the appVersion automatically if we pass in "".
+                // However, the backend we want to connect to is versioned as "1.0",
+                // so we are overriding with that value here.
+                String appVersion = "1.0";
                 boolean reportCookie = false;
 
                 if(reqType == RequestType.REQ_REGISTER_CLIENT) {
