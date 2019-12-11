@@ -21,22 +21,22 @@ The app's startup page is a world map showing MobiledgeX cloudlets where the app
 Tap on any of the cloudlets, and a panel with the cloudlet's name will appear. On that panel, you can "click for details" to see cloudlet information like latitude, longitude, and distance from your location.
 
 #### Cloudlet Details
-In addition to showing the details of the cloudlet, this page allows the initiation of a latency test or a download speed test. The settings of this page, allow control of conditions, such as the number of packets for the latency test, or the size of the download. Click the "Gear" icon to access these settings.
+In addition to showing the details of the cloudlet, this page allows the initiation of a latency test or a download speed test. The settings of this page allow control of certain conditions, such as the number of packets for the latency test, or the size of the download. Click the "Gear" icon to access these settings.
 
-YYou can also choose this cloudlet to be used as the **Edge** server for Face Detection and Face Recognition. Tap the 3-dot menu and select "Use as Face Recognition Edge Host". The **Cloud** server can be configured in the same way.
+You can also choose this cloudlet to be used as the **Edge** server for Face Detection and Face Recognition. Tap the 3-dot menu and select "Use as Face Recognition Edge Host". The **Cloud** server can be configured in the same way.
 
 ### SDK Calls
 #### Register Client
-SDK Calls summon the [RegisterClientAPI](http://swagger.mobiledgex.net/client/#operation/RegisterClient "RegisterClient") with information that identifies this app's backend software. The session cookie is shown to verify that the call was successful.
+This will call the [RegisterClientAPI](http://swagger.mobiledgex.net/client/#operation/RegisterClient "RegisterClient") with information that identifies this app's backend software. The session cookie is shown to verify that the call was successful.
 
 #### Get App Instances
-Get App will call [GetAppInstListAPI](http://swagger.mobiledgex.net/client/#operation/GetAppInstList "GetAppInstList") to find everywhere our backend is running, and will draw a cloudlet icon for every location found.
+This will call the [GetAppInstListAPI](http://swagger.mobiledgex.net/client/#operation/GetAppInstList "GetAppInstList") to find everywhere our backend is running, and will draw a cloudlet icon for every location found.
 
 #### Verify Location
-Verify Location will call [VerifyLocationAPI](http://swagger.mobiledgex.net/client/#operation/VerifyLocation "VerifyLocation") with our current GPS coordinates to verify that the mobile device is where it claims to be. If successful, the mobile phone icon is green showing the accuracy information briefly. If location verification fails, the icon will be red, displaying the result code temporarily. Tapping the icon will show the result code of the call.
+This will call the [VerifyLocationAPI](http://swagger.mobiledgex.net/client/#operation/VerifyLocation "VerifyLocation") with our current GPS coordinates to verify that the mobile device is where it claims to be. If successful, the mobile phone icon is green showing the accuracy information briefly. If location verification fails, the icon will be red, displaying the result code temporarily. Tapping the icon will show the result code of the call.
 
 #### Find Closest Cloudlet
-Find Closest Cloudlet will call [FindCloudletAPI](http://swagger.mobiledgex.net/client/#operation/FindCloudlet "FindCloudlet") with our current GPS coordinates to determine which cloudlet running our backend is the closest. That cloudlet icon will turn green, and a line will be drawn between it and our location.
+This will call the [FindCloudletAPI](http://swagger.mobiledgex.net/client/#operation/FindCloudlet "FindCloudlet") with our current GPS coordinates to determine which cloudlet running our backend is the closest. That cloudlet icon will turn green, and a line will be drawn between it and our location.
 
 #### Perform All
 Select the red button in the lower right to perform all of these API calls in succession.
@@ -52,9 +52,9 @@ You can move the mobile phone icon by long-pressing on it and dragging it to a n
 - Spoof GPS at this location
 - Update location in GPS database.
 
-If you select "Spoof," this new location will be used for subsequent **Find Closest Cloudlet** and **Verify Location** calls. Depending on how close the location stored in the simulator is, your next **Verify Location** call may return a different "accuracy" value, or return a failure. Tapping the mobile phone icon will the distance from the actual location, and any result code available.
+If you select "Spoof," this new location will be used for subsequent **Find Closest Cloudlet** and **Verify Location** calls. Depending on how close the location stored in the simulator is, your next **Verify Location** call may return a different "accuracy" value, or return a failure. Tapping the mobile phone icon will display the distance from the actual location, and any result code available.
 
-If you select "Update location," this new location will be sent to the location simulator and will be used until another location is sent, or "Reset Location" is performed. Reset Location allows you to simulate your real location be anywhere in the world, and you can verify that **Find Closest Cloudlet** finds the expected cloudlet.
+If you select "Update location," this new location will be sent to the location simulator and will be used until another location is sent, or "Reset Location" is performed. Reset Location allows you to simulate your real location to be anywhere in the world, and you can verify that **Find Closest Cloudlet** finds the expected cloudlet.
 
 ### Computer Vision Demos
 Select one of the **Detection** or **Recognition** activities from the main menu. You can control several options, like which stats are displayed by selecting the "gear" icon to access **Computer Vision Settings**. 
@@ -65,7 +65,7 @@ Things to try:
 - Go to settings and turn on "Show Latency Stats after session" to get a stats summary that can be copy/pasted for additional use.
 
 #### Face Detection
-TThe Face Detection activity provides a visual comparison of the latency offered by an Edge cloudlet vs. that of a server in the public cloud. The Edge cloudlet can be determined in a few ways, in this order of priorit: 
+The Face Detection activity provides a visual comparison of the latency offered by an Edge cloudlet vs. that of a server in the public cloud. The Edge cloudlet can be determined in a few ways, in this order of priorit: 
 1. The result of "Find Closest Cloudlet", if performed.
 1. Selected from within the Cloudlet Details page.
 1. "Edge Server" entry in the **Computer Vision Settings**, if updated by the user.
