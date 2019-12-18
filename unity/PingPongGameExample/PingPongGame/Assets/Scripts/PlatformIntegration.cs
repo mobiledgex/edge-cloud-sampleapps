@@ -29,15 +29,6 @@ namespace MobiledgeXPingPongGame
 {
   public class PlatformIntegration : DistributedMatchEngine.ICarrierInfo
   {
-    // Sets platform specific internal callbacks (reference counted objects), etc.
-    [DllImport("__Internal")]
-    private static extern string _ensureMatchingEnginePlatformIntegration();
-
-    [DllImport("__Internal")]
-    private static extern string _getCurrentCarrierName();
-
-    [DllImport("__Internal")]
-    private static extern string _getMccMnc();
 
 #if UNITY_ANDROID // PC android target builds to through here as well.
     AndroidJavaObject GetTelephonyManager() {
@@ -121,6 +112,16 @@ namespace MobiledgeXPingPongGame
       return mccmnc;
     }
 #elif UNITY_IOS
+    // Sets iOS platform specific internal callbacks (reference counted objects), etc.
+    [DllImport("__Internal")]
+    private static extern string _ensureMatchingEnginePlatformIntegration();
+
+    [DllImport("__Internal")]
+    private static extern string _getCurrentCarrierName();
+
+    [DllImport("__Internal")]
+    private static extern string _getMccMnc();
+
     public string GetCurrentCarrierName()
     {
       string networkOperatorName = "";
