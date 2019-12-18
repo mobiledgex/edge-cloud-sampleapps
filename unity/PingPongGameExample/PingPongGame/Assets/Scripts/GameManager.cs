@@ -82,6 +82,7 @@ namespace MobiledgeXPingPongGame {
     string host = "localhost";
     string serverHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
     int port = 3000;
+    string l7Path;
     string server = "";
     string queryParams = "";
     string edgeCloudletStr = "";
@@ -103,7 +104,7 @@ namespace MobiledgeXPingPongGame {
       // SIM Card.
       integration = new MobiledgeXIntegration();
       integration.useDemo = true;
-      integration.dmeHost = "sdkdemo." + MatchingEngine.baseDmeHost;
+      integration.dmeHost = "eu-mexdemo." + MatchingEngine.baseDmeHost;
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
@@ -172,12 +173,14 @@ namespace MobiledgeXPingPongGame {
     // This method is called when the user has finished editing the Room ID InputField.
     async void ConnectToServerWithRoomId(string roomId)
     {
-      if(roomId == "")
+      Uri edgeCloudletUri;
+
+      if (roomId == "")
       {
         clog("You must enter a room ID. Please try again.");
         return;
       }
-      Uri edgeCloudletUri = null;
+
       clog("Connecting to WebSocket Server with roomId="+roomId+"...");
       clog("useAltServer=" + useAltServer + " host="+host+" edgeCloudletStr="+edgeCloudletStr);
       queryParams = "?roomid="+roomId;
@@ -186,7 +189,6 @@ namespace MobiledgeXPingPongGame {
         server = "ws://" + host + ":" + port;
         edgeCloudletUri = new Uri(server + queryParams);
         await client.Connect(edgeCloudletUri);
-        netTest.sites.Enqueue(new NetTest.HostAndPort{host=host, port=port});
       }
       else
       {
@@ -242,7 +244,7 @@ namespace MobiledgeXPingPongGame {
     {
       if (client != null)
       {
-        netTest.doPing(focus);
+        netTest.doTest(focus);
       }
     }
     // TODO: Should manage the thread runnables.
@@ -251,17 +253,18 @@ namespace MobiledgeXPingPongGame {
       isPaused = pauseStatus;
       if (client != null)
       {
-        netTest.doPing(!isPaused);
+        netTest.doTest(!isPaused);
       }
 
     }
 
     // Start() is a time to do this, but can change if the device moves to a new location.
-    async Task<string> RegisterAndFindCloudlet()
+    // The return string is just an example. Your server protocol and connection strings
+    // will determine the correct connection parameters.
+    async Task<String> RegisterAndFindCloudlet()
     {
       // For Demo App purposes, it's the TCP app port. Your app may point somewhere else:
-      string tcpAppPort = "";
-      NetTest.HostAndPort hostAndPort = null;
+      NetTest.Site site;
 
       string aCarrierName = integration.GetCarrierName();
       clog("aCarrierName: " + aCarrierName);
@@ -273,7 +276,8 @@ namespace MobiledgeXPingPongGame {
 
       if (!registered)
       {
-        clog("Not Registered!");
+        clog("Exceptions, or app not found. Not Registered!");
+        return null;
       }
       else
       {
@@ -326,25 +330,33 @@ namespace MobiledgeXPingPongGame {
             // We're looking for one of the TCP app ports:
             if (ap.proto == LProto.L_PROTO_TCP)
             {
-              tcpAppPort = reply.fqdn + ":" + ap.public_port;
-              // FQDN prefix to append to base FQDN in FindCloudlet response. May be empty.
-              if (ap.fqdn_prefix != "")
-              {
-                tcpAppPort = ap.fqdn_prefix + tcpAppPort;
-              }
-
               // Add to test targets.
-              hostAndPort = new NetTest.HostAndPort {  host = ap.fqdn_prefix + reply.fqdn, port = ap.public_port };
-              netTest.sites.Enqueue(hostAndPort);
+              if (ap.path_prefix == "")
+              {
+                site = new NetTest.Site {
+                  host = ap.fqdn_prefix + reply.fqdn,
+                  port = ap.public_port };
+                site.testType = NetTest.TestType.PING;
+              }
+              else
+              {
+                site = new NetTest.Site {
+                  L7Path = ap.fqdn_prefix + reply.fqdn + ":" + ap.public_port + ap.path_prefix
+                };
+                site.testType = NetTest.TestType.CONNECT;
+              }
+              host = site.host;
+              port = site.port;
+              l7Path = site.L7Path;
+              netTest.sites.Enqueue(site);
             }
-
           }
-
+          netTest.doTest(true);
         }
-        clog("FindCloudlet found: [" + tcpAppPort + "]");
       }
 
-      return tcpAppPort;
+      // The WebSocket URI:
+      return host + ":" + port;
     }
 
     public void Score(string wallID)

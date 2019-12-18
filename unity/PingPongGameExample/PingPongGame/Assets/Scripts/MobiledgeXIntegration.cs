@@ -42,7 +42,7 @@ public class MobiledgeXIntegration
    */
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string devName { get; set; } = "MobiledgeX"; // Your developer name.
-  public string appName { get; set; } = "Pong"; // Your appName, if you have created this in the MobiledgeX console.
+  public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
@@ -84,7 +84,7 @@ public class MobiledgeXIntegration
   }
 
   // These are just thin wrappers over the SDK to show how to use them:
-  // Call once, or when the carrier changes:
+  // Call once, or when the carrier changes. May throw DistributedMatchEngine.HttpException.
   public async Task<bool> Register()
   {
     // If MEX is reachable on your SIM card:
@@ -110,7 +110,7 @@ public class MobiledgeXIntegration
     Debug.Log("AppName: " + req.app_name);
     Debug.Log("AppVers: " + req.app_vers);
 
-    RegisterClientReply reply;
+    RegisterClientReply reply = null;
     if (useDemo)
     {
       reply = await me.RegisterClient(dmeHost, dmePort, req);
