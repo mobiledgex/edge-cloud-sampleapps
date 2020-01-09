@@ -23,6 +23,7 @@ using MobiledgeXPingPongGame;
 using DistributedMatchEngine;
 
 using System.Threading.Tasks;
+using DistributedMatchEngine.PerformanceMetrics;
 
 /*
  * MobiledgeX MatchingEngine SDK integration has an additional application side
@@ -35,15 +36,16 @@ using System.Threading.Tasks;
 public class MobiledgeXIntegration
 {
   PlatformIntegration pIntegration;
-  MatchingEngine me;
+  public MatchingEngine me;
+  public NetTest netTest;
 
   /*
    * These are "carrier independent" settings for demo use:
    */
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string devName { get; set; } = "MobiledgeX"; // Your developer name.
-  public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
-  public string appVers { get; set; } = "1.0";
+  public string appName { get; set; } = "PongGame2"; // Your appName, if you have created this in the MobiledgeX console.
+  public string appVers { get; set; } = "2019-09-26";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
   // Override if there is a sdk demo DME host to use.
@@ -56,10 +58,13 @@ public class MobiledgeXIntegration
   public MobiledgeXIntegration()
   {
     pIntegration = new PlatformIntegration();
-    me = new MatchingEngine();
+    // ifdef
+    me = new MatchingEngine(new SimpleNetInterface(new MacNetworkInterfaceName()));
+    //me = new MatchingEngine();
 
     // Set the platform specific way to get SIM carrier information.
     me.carrierInfo = pIntegration;
+    netTest = new NetTest(me);
   }
 
   public string GetCarrierName()
@@ -110,7 +115,7 @@ public class MobiledgeXIntegration
     Debug.Log("AppName: " + req.app_name);
     Debug.Log("AppVers: " + req.app_vers);
 
-    RegisterClientReply reply = null;
+    RegisterClientReply reply;
     if (useDemo)
     {
       reply = await me.RegisterClient(dmeHost, dmePort, req);

@@ -34,7 +34,7 @@ namespace MobiledgeXPingPongGame
   // C#'s built in WebSockets concurrency model supports the use a single queue for
   // send, and another queue for recieve. WsClient here has 1 independent thread
   // per send or receive direction of communication.
-  public class WsClient
+  public class WsClient : IDisposable
   {
     // Life of WsClient:
     private static string proto = "ws";
@@ -52,6 +52,7 @@ namespace MobiledgeXPingPongGame
 
     Thread receiveThread { get; set; }
     Thread sendThread { get; set; }
+    private bool run = true;
 
     // TODO: CancellationToken for Tasks to handle OnApplicationFocus, OnApplicationPause.
     public WsClient()
@@ -152,7 +153,7 @@ namespace MobiledgeXPingPongGame
     {
       Debug.Log("WebSocket Message Receiver looping.");
       string result;
-      while (true)
+      while (run)
       {
         //Debug.Log("Awaiting Receive...");
         result = await Receive();
@@ -179,6 +180,15 @@ namespace MobiledgeXPingPongGame
       }
 
       return readString;
+    }
+
+    public void Dispose()
+    {
+      run = false;
+      ws.Abort();
+      CancellationTokenSource tokenSource = new CancellationTokenSource();
+      CancellationToken token = tokenSource.Token;
+      ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Dispose", token).ConfigureAwait(false).GetAwaiter().GetResult();
     }
   }
 }

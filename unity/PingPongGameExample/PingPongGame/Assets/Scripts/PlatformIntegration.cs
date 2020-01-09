@@ -27,7 +27,7 @@ using System.Runtime.InteropServices;
 
 namespace MobiledgeXPingPongGame
 {
-  public class PlatformIntegration : DistributedMatchEngine.ICarrierInfo
+  public class PlatformIntegration : DistributedMatchEngine.CarrierInfo
   {
 
 #if UNITY_ANDROID // PC android target builds to through here as well.

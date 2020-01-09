@@ -29,6 +29,12 @@ using System.Threading.Tasks;
 using System.Net.Http;
 
 using DistributedMatchEngine;
+using DistributedMatchEngine.PerformanceMetrics;
+using System.Diagnostics;
+using System.Threading;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 namespace MobiledgeXPingPongGame {
 
@@ -80,7 +86,7 @@ namespace MobiledgeXPingPongGame {
     MobiledgeXIntegration integration;
 
     string host = "localhost";
-    string serverHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
+    string altServerHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
     int port = 3000;
     string l7Path;
     string server = "";
@@ -90,7 +96,7 @@ namespace MobiledgeXPingPongGame {
     bool isPaused = false;
 
     bool useAltServer = false;
-    NetTest netTest = new NetTest();
+    Stopwatch stopWatch = new Stopwatch();
 
     GameObject uiG;
     public Text uiConsole;
@@ -109,7 +115,7 @@ namespace MobiledgeXPingPongGame {
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
       {
-        host = serverHost;
+        host = altServerHost;
       }
 
       server = "ws://" + host + ":" + port;
@@ -135,11 +141,13 @@ namespace MobiledgeXPingPongGame {
         // Register and find cloudlet:
         uiConsole.text = "Registering to DME: ";
         edgeCloudletStr = await RegisterAndFindCloudlet();
+        stopWatch.Start();
 
         clog("Found Cloudlet from DME result: [" + edgeCloudletStr + "]");
 
         // This might be inside the update loop. Re-register client and check periodically.
-        bool verifiedLocation = await integration.VerifyLocation();
+        //bool verifiedLocation = await integration.VerifyLocation();
+        bool verifiedLocation = false; // Disabled.
 
         // Decide what to do with location status.
         clog("VerifiedLocation: " + verifiedLocation);
@@ -181,9 +189,16 @@ namespace MobiledgeXPingPongGame {
         return;
       }
 
-      clog("Connecting to WebSocket Server with roomId="+roomId+"...");
-      clog("useAltServer=" + useAltServer + " host="+host+" edgeCloudletStr="+edgeCloudletStr);
-      queryParams = "?roomid="+roomId;
+      clog("Connecting to WebSocket Server with roomId=" + roomId + "...");
+      clog("useAltServer=" + useAltServer + " host=" + host + " edgeCloudletStr=" + edgeCloudletStr);
+      queryParams = "?roomid=" + roomId;
+
+      if (client.isOpen())
+      {
+        client.Dispose();
+        client = new WsClient();
+      }
+
       if (useAltServer)
       {
         server = "ws://" + host + ":" + port;
@@ -192,7 +207,7 @@ namespace MobiledgeXPingPongGame {
       }
       else
       {
-        if(edgeCloudletStr == "")
+        if (edgeCloudletStr == "")
         {
           clog("No edgeCloudletUri received yet. Please try again.");
           return;
@@ -210,12 +225,34 @@ namespace MobiledgeXPingPongGame {
       {
         return;
       }
+
+      integration.netTest.runTest = true;
+      stopWatch.Start();
+      // If Ping is running, print:
+      if (integration.netTest.runTest)
+      {
+        long elapsed = (long)stopWatch.Elapsed.TotalMilliseconds;
+        if (elapsed > integration.netTest.TestTimeoutMS)
+        {
+          stopWatch.Reset();
+          foreach(NetTest.Site s in integration.netTest.sites)
+          {
+            clog("Round trip to host: " + s.host + ", port: " + s.port + ", l7Path: " + s.L7Path +
+              ", average: " + s.average + ", stddev: " + s.stddev);
+            for(int i = 0; i < s.samples.Length; i++)
+            {
+              clog("Samples: " + s.samples[i]);
+            }
+          }
+        }
+      }
+
       var cqueue = client.receiveQueue;
       string msg;
       while (cqueue.TryPeek(out msg))
       {
         cqueue.TryDequeue(out msg);
-        //Debug.Log("Dequeued this message: " + msg);
+        //clog("Dequeued this message: " + msg);
         HandleMessage(msg);
       }
 
@@ -230,13 +267,12 @@ namespace MobiledgeXPingPongGame {
         UpdateBall();
         UpdatePlayer();
       }
-
     }
 
     void clog(string msg)
     {
       uiConsole.text = msg;
-      Debug.Log(msg);
+      UnityEngine.Debug.Log(msg);
     }
 
     // TODO: Should manage the thread runnables.
@@ -244,7 +280,17 @@ namespace MobiledgeXPingPongGame {
     {
       if (client != null)
       {
-        netTest.doTest(focus);
+        try
+        {
+          if (integration != null && integration.netTest != null)
+          {
+            integration.netTest.doTest(focus);
+            clog("NetTest focused run status: " + integration.netTest.runTest);
+          }
+        } catch (Exception e)
+        {
+          clog("Exception hit: " + e.Message);
+        }
       }
     }
     // TODO: Should manage the thread runnables.
@@ -253,9 +299,12 @@ namespace MobiledgeXPingPongGame {
       isPaused = pauseStatus;
       if (client != null)
       {
-        netTest.doTest(!isPaused);
+        if (integration != null && integration.netTest != null)
+        {
+          integration.netTest.doTest(!isPaused);
+          clog("NetTest pauseStatus: " + integration.netTest.runTest);
+        }
       }
-
     }
 
     // Start() is a time to do this, but can change if the device moves to a new location.
@@ -319,7 +368,7 @@ namespace MobiledgeXPingPongGame {
           // Where is the URI for this app specific edge enabled cloud server:
           clog("fqdn: " + reply.fqdn);
           // AppPorts?
-          Debug.Log("On ports: ");
+          clog("On ports: ");
 
           foreach (AppPort ap in reply.ports)
           {
@@ -336,7 +385,7 @@ namespace MobiledgeXPingPongGame {
                 site = new NetTest.Site {
                   host = ap.fqdn_prefix + reply.fqdn,
                   port = ap.public_port };
-                site.testType = NetTest.TestType.PING;
+                site.testType = NetTest.TestType.CONNECT;
               }
               else
               {
@@ -345,13 +394,17 @@ namespace MobiledgeXPingPongGame {
                 };
                 site.testType = NetTest.TestType.CONNECT;
               }
-              host = site.host;
+              if (useAltServer)
+              {
+                site.host = host;
+              }
               port = site.port;
               l7Path = site.L7Path;
-              netTest.sites.Enqueue(site);
+              site.host = "mextest-app-cluster.frankfurt-main.tdg.mobiledgex.net";
+              integration.netTest.sites.Enqueue(site);
             }
           }
-          netTest.doTest(true);
+          integration.netTest.doTest(true);
         }
       }
 
@@ -557,7 +610,7 @@ namespace MobiledgeXPingPongGame {
           break;
 
         default:
-          Debug.Log("Unknown message arrived: " + msg.type + ", message: " + message);
+          clog("Unknown message arrived: " + msg.type + ", message: " + message);
           break;
       }
 
@@ -574,7 +627,7 @@ namespace MobiledgeXPingPongGame {
 
     bool UpdatePosition(MoveEvent moveItem)
     {
-      //Debug.Log("moveItem: " + moveItem.uuid);
+      //clog("moveItem: " + moveItem.uuid);
       var gs = gameSession.currentGs;
 
       if (moveItem.sequence < gameSession.currentGs.sequence)
@@ -751,7 +804,7 @@ namespace MobiledgeXPingPongGame {
       gameState.source = "client";
 
       string jsonStr = Messaging<GameState>.Serialize(gameState);
-      Debug.Log("UpdateServer: " + jsonStr);
+      clog("UpdateServer: " + jsonStr);
       MessageWrapper wrapped = MessageWrapper.WrapTextMessage(jsonStr);
       client.Send(Messaging<MessageWrapper>.Serialize(wrapped));
 
@@ -921,7 +974,7 @@ namespace MobiledgeXPingPongGame {
         }
       }
 
-      Debug.Log("Left sel: " + left.transform.position.x + "Right other: " + right.transform.position.x);
+      clog("Left sel: " + left.transform.position.x + "Right other: " + right.transform.position.x);
 
       if (gameSession.side == 0)
       {
