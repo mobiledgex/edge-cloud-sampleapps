@@ -44,8 +44,8 @@ public class MobiledgeXIntegration
    */
   public string carrierName { get; set; } = "TDG"; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string devName { get; set; } = "MobiledgeX"; // Your developer name.
-  public string appName { get; set; } = "PongGame2"; // Your appName, if you have created this in the MobiledgeX console.
-  public string appVers { get; set; } = "2019-09-26";
+  public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
+  public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
   // Override if there is a sdk demo DME host to use.
@@ -57,13 +57,18 @@ public class MobiledgeXIntegration
 
   public MobiledgeXIntegration()
   {
-    pIntegration = new PlatformIntegration();
-    // ifdef
-    me = new MatchingEngine(new SimpleNetInterface(new MacNetworkInterfaceName()));
-    //me = new MatchingEngine();
-
     // Set the platform specific way to get SIM carrier information.
-    me.carrierInfo = pIntegration;
+    pIntegration = new PlatformIntegration();
+
+    // The following is to allow Get{TCP, TLS, UDP}Connection APIs to return the configured
+    // edge network path to your MobiledgeX AppInsts. Other connections will use the system
+    // default network route.
+    NetInterface netInterface = new SimpleNetInterface(pIntegration.NetworkInterfaceName);
+
+    // Platform integration needs to initialize first:
+    me = new MatchingEngine(pIntegration, netInterface);
+
+    // Optional NetTesting.
     netTest = new NetTest(me);
   }
 
