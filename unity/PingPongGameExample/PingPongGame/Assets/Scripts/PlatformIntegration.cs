@@ -39,7 +39,7 @@ namespace MobiledgeXPingPongGame
 #elif UNITY_IOS
     NetworkInterfaceName networkInterfaceName = new IOSNetworkInterfaceName();
 #else
-#error "Unknown or unsupported platform. Please create WiFi and Cellular interface name Object for your platform".
+      Debug.Log("Unknown or unsupported platform. Please create WiFi and Cellular interface name Object for your platform");
 #endif
       // Editor or Player network management (overrides target device platform):
       switch (Application.platform)

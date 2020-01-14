@@ -85,9 +85,6 @@ wsServer.on('connection', function connection(ws, request) {
   // Handle all messages from users here. The C# websocket embeds all text in
   ws.on('message', function(msgStr) {
     //console.log("got a message: <%s>", msgStr);
-    if (!!msgStr) {
-      return;
-    }
 
     gameMessage = JSON.parse(msgStr);
     //console.log("gameMessage: %o", gameMessage);
