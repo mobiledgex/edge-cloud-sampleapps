@@ -34,7 +34,7 @@ namespace MobiledgeXPingPongGame
   // C#'s built in WebSockets concurrency model supports the use a single queue for
   // send, and another queue for recieve. WsClient here has 1 independent thread
   // per send or receive direction of communication.
-  public class WsClient
+  public class WsClient : IDisposable
   {
     // Life of WsClient:
     private static string proto = "ws";
@@ -52,6 +52,7 @@ namespace MobiledgeXPingPongGame
 
     Thread receiveThread { get; set; }
     Thread sendThread { get; set; }
+    private bool run = true;
 
     // TODO: CancellationToken for Tasks to handle OnApplicationFocus, OnApplicationPause.
     public WsClient()
@@ -70,6 +71,10 @@ namespace MobiledgeXPingPongGame
 
     public bool isConnecting()
     {
+      if (ws == null)
+      {
+        ws = new ClientWebSocket();
+      }
       return ws.State == WebSocketState.Connecting;
     }
 
@@ -88,6 +93,7 @@ namespace MobiledgeXPingPongGame
         Task.Delay(50).Wait();
       }
       Debug.Log("Connect status: " + ws.State);
+      run = true;
     }
 
     public void Send(string message)
@@ -103,12 +109,13 @@ namespace MobiledgeXPingPongGame
     {
       ArraySegment<byte> msg;
       Debug.Log("RunSend entered.");
-      while (true)
+      while (run)
       {
         while(!sendQueue.IsCompleted)
         {
           msg = sendQueue.Take();
-          //Debug.Log("Dequeued this message to send: " + msg);
+          long count = sendQueue.Count;
+          //Debug.Log("Dequeued this message to send: " + msg + ", queueSize: " + count);
           await ws.SendAsync(msg, WebSocketMessageType.Text, true /* is last part of message */, CancellationToken.None);
         }
       }
@@ -152,12 +159,13 @@ namespace MobiledgeXPingPongGame
     {
       Debug.Log("WebSocket Message Receiver looping.");
       string result;
-      while (true)
+      while (run)
       {
         //Debug.Log("Awaiting Receive...");
         result = await Receive();
         if (result != null && result.Length > 0)
         {
+          //Debug.Log("Received: " + result);
           receiveQueue.Enqueue(result);
         }
         else
@@ -179,6 +187,16 @@ namespace MobiledgeXPingPongGame
       }
 
       return readString;
+    }
+
+    public void Dispose()
+    {
+      run = false;
+      ws.Abort();
+      CancellationTokenSource tokenSource = new CancellationTokenSource();
+      CancellationToken token = tokenSource.Token;
+      ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Dispose", token).ConfigureAwait(false).GetAwaiter().GetResult();
+      ws = null;
     }
   }
 }
