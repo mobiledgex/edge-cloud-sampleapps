@@ -145,9 +145,10 @@ namespace MobiledgeXPingPongGame {
 
         clog("Found Cloudlet from DME result: [" + edgeCloudletStr + "]");
 
-        // This might be inside the update loop. Re-register client and check periodically.
-        //bool verifiedLocation = await integration.VerifyLocation();
-        bool verifiedLocation = false; // Disabled.
+        // This might be inside a thread update loop. Re-register client and check periodically.
+        // VerifyLocation will fail if verification is unavailable at the carrier.
+        bool verifiedLocation = await integration.VerifyLocation();
+        //bool verifiedLocation = false;
 
         // Decide what to do with location status.
         clog("VerifiedLocation: " + verifiedLocation);
