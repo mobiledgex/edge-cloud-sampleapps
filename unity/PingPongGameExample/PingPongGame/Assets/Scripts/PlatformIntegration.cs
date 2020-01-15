@@ -27,8 +27,29 @@ using System.Runtime.InteropServices;
 
 namespace MobiledgeXPingPongGame
 {
-  public class PlatformIntegration : DistributedMatchEngine.ICarrierInfo
+  public class PlatformIntegration : DistributedMatchEngine.CarrierInfo
   {
+    public NetworkInterfaceName NetworkInterfaceName { get; }
+
+    public PlatformIntegration()
+    {
+      // Target Device Network Interfaces. This is not known until compile time:
+#if UNITY_ANDROID
+      NetworkInterfaceName = new AndroidNetworkInterfaceName();
+#elif UNITY_IOS
+    NetworkInterfaceName networkInterfaceName = new IOSNetworkInterfaceName();
+#else
+      Debug.Log("Unknown or unsupported platform. Please create WiFi and Cellular interface name Object for your platform");
+#endif
+      // Editor or Player network management (overrides target device platform):
+      switch (Application.platform)
+      {
+        case RuntimePlatform.OSXPlayer:
+        case RuntimePlatform.OSXEditor:
+          NetworkInterfaceName = new MacNetworkInterfaceName();
+          break;
+      }
+    }
 
 #if UNITY_ANDROID // PC android target builds to through here as well.
     AndroidJavaObject GetTelephonyManager() {

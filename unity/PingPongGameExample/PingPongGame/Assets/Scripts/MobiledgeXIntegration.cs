@@ -23,6 +23,7 @@ using MobiledgeXPingPongGame;
 using DistributedMatchEngine;
 
 using System.Threading.Tasks;
+using DistributedMatchEngine.PerformanceMetrics;
 
 /*
  * MobiledgeX MatchingEngine SDK integration has an additional application side
@@ -35,7 +36,8 @@ using System.Threading.Tasks;
 public class MobiledgeXIntegration
 {
   PlatformIntegration pIntegration;
-  MatchingEngine me;
+  public MatchingEngine me;
+  public NetTest netTest;
 
   /*
    * These are "carrier independent" settings for demo use:
@@ -55,11 +57,19 @@ public class MobiledgeXIntegration
 
   public MobiledgeXIntegration()
   {
-    pIntegration = new PlatformIntegration();
-    me = new MatchingEngine();
-
     // Set the platform specific way to get SIM carrier information.
-    me.carrierInfo = pIntegration;
+    pIntegration = new PlatformIntegration();
+
+    // The following is to allow Get{TCP, TLS, UDP}Connection APIs to return the configured
+    // edge network path to your MobiledgeX AppInsts. Other connections will use the system
+    // default network route.
+    NetInterface netInterface = new SimpleNetInterface(pIntegration.NetworkInterfaceName);
+
+    // Platform integration needs to initialize first:
+    me = new MatchingEngine(pIntegration, netInterface);
+
+    // Optional NetTesting.
+    netTest = new NetTest(me);
   }
 
   public string GetCarrierName()
@@ -110,7 +120,7 @@ public class MobiledgeXIntegration
     Debug.Log("AppName: " + req.app_name);
     Debug.Log("AppVers: " + req.app_vers);
 
-    RegisterClientReply reply = null;
+    RegisterClientReply reply;
     if (useDemo)
     {
       reply = await me.RegisterClient(dmeHost, dmePort, req);
