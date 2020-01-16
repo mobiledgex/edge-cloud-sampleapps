@@ -49,7 +49,7 @@ public class MobiledgeXIntegration
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
 
   // Override if there is a sdk demo DME host to use.
-  public string dmeHost { get; set; } = MatchingEngine.fallbackDmeHost;
+  public string dmeHost { get; set; } = MatchingEngine.wifiOnlyDmeHost;
   public uint dmePort { get; set; } = MatchingEngine.defaultDmeRestPort;
 
   // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
@@ -74,7 +74,7 @@ public class MobiledgeXIntegration
 
   public string GetCarrierName()
   {
-    return me.carrierInfo.GetCurrentCarrierName();
+    return me.carrierInfo.GetMccMnc();
   }
 
   public async Task<Loc> GetLocationFromDevice()
@@ -141,7 +141,7 @@ public class MobiledgeXIntegration
     Loc loc = await GetLocationFromDevice();
 
     // If MEX is reachable on your SIM card:
-    string aCarrierName = me.carrierInfo.GetCurrentCarrierName();
+    string aCarrierName = GetCarrierName();
     string eCarrierName;
     if (useDemo) // There's no host (PC, UnityEditor, etc.)...
     {
@@ -177,7 +177,7 @@ public class MobiledgeXIntegration
     Loc loc = await GetLocationFromDevice();
 
     // If MEX is reachable on your SIM card:
-    string aCarrierName = pIntegration.GetCurrentCarrierName();
+    string aCarrierName = GetCarrierName();
     string eCarrierName;
     if (useDemo) // There's no host (PC, UnityEditor, etc.)...
     {

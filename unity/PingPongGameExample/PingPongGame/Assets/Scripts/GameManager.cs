@@ -110,7 +110,7 @@ namespace MobiledgeXPingPongGame {
       // SIM Card.
       integration = new MobiledgeXIntegration();
       integration.useDemo = true;
-      integration.dmeHost = "eu-mexdemo." + MatchingEngine.baseDmeHost;
+      integration.dmeHost = integration.me.GenerateDmeHostName();
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
