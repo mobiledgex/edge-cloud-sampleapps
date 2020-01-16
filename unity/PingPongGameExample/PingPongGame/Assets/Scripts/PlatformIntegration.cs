@@ -106,11 +106,11 @@ namespace MobiledgeXPingPongGame
 
     public string GetMccMnc()
     {
-      string mccmnc = "";
+      string mccmnc = null;
       if (Application.platform != RuntimePlatform.Android)
       {
         Debug.Log("Not on android device.");
-        return "";
+        return null;
       }
 
       AndroidJavaObject telManager = GetTelephonyManager();
@@ -118,7 +118,7 @@ namespace MobiledgeXPingPongGame
       if (telManager == null)
       {
         Debug.Log("Can't get telephony manager!");
-        return "";
+        return null;
       }
 
       mccmnc = telManager.Call<String>("getNetworkOperator", new object[0]);
@@ -166,7 +166,7 @@ namespace MobiledgeXPingPongGame
     public string GetCurrentCarrierName()
     {
       Debug.Log("GetCurrentCarrierName is NOT IMPLEMENTED");
-      return "";
+      return null;
     }
 
     public string GetMccMnc()
