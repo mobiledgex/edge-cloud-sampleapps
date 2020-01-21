@@ -43,8 +43,10 @@ class TrackerConfig(AppConfig):
         global myOpWrapper
         supportOpenPose = False
 
-        # This assumes openpose has been built from source and installed with "make install".
-        sys.path.append('/usr/local/python')
+        # Our docker container has the openpose libraries at the root
+        # Note that the "docker run" command must include the --runtime=nvidia parameter. Example:
+        # sudo docker run --runtime=nvidia --net=host mobiledgex/openpose-docker:20200116
+        sys.path.append('/openpose/build/python')
         try:
             from openpose import pyopenpose as myOpenPose
             supportOpenPose = True
@@ -73,8 +75,13 @@ class TrackerConfig(AppConfig):
             # Starting OpenPose
             myOpWrapper = myOpenPose.WrapperPython()
             myOpWrapper.configure(params)
-            myOpWrapper.start()
-            logger.info("Created OpenPose wrapper")
+            # Starting the wrapper fails during "docker build" because --runtime=nvidia is not available.
+            try:
+                myOpWrapper.start()
+                logger.info("Created OpenPose wrapper")
+            except:
+                logger.error("Failed to start OpenPose wrapper")
+                logger.warn('/openpose/ web services calls will not be allowed.')
 
         # Check for environment variables to override settings.
         try:
