@@ -718,51 +718,34 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 mUserLocationMarker.hideInfoWindow();
-                // We handle this differently for the demo environment, than in real life.
-                if(mHostname.equals(DEFAULT_DME_HOSTNAME)) {
-                    if(status == LOC_VERIFIED) {
-                        fabFindCloudlets.setEnabled(true);
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
-                        message = "User Location - Verified";
+                switch (status) {
+                    case LOC_VERIFIED:
                         message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
-                    } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
-                        message = "User Location - Verified";
-                    } else {
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
-                        message = "User Location - Failed Verify";
-                    }
-
-                } else {
-                    switch (status) {
-                        case LOC_VERIFIED:
-                            message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
-                            if(mGpsLocationAccuracyKM <= 2) {
-                                //Cat 1
-                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
-                            } else if (mGpsLocationAccuracyKM <= 10) {
-                                //Cat 2
-                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_AMBER, ""));
-                            } else {
-                                //Cat 3
-                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_DARK_AMBER, ""));
-                            }
-                            break;
-                        case LOC_MISMATCH_SAME_COUNTRY:
-                            //Cat 4
-                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
-                            break;
-                        case LOC_ROAMING_COUNTRY_MATCH:
-                            //Cat 6
+                        if(mGpsLocationAccuracyKM <= 2) {
+                            //Cat 1
                             mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
-                            break;
-                        default:
-                            //Cat 5, 7, other
-                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
-                            break;
-                    }
-                    message = "User Location - "+status;
+                        } else if (mGpsLocationAccuracyKM <= 10) {
+                            //Cat 2
+                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_AMBER, ""));
+                        } else {
+                            //Cat 3
+                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_DARK_AMBER, ""));
+                        }
+                        break;
+                    case LOC_MISMATCH_SAME_COUNTRY:
+                        //Cat 4
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
+                        break;
+                    case LOC_ROAMING_COUNTRY_MATCH:
+                        //Cat 6
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
+                        break;
+                    default:
+                        //Cat 5, 7, other
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
+                        break;
                 }
+                message = "User Location - "+status;
                 mUserLocationMarker.setTitle(message);
                 Toast.makeText(MainActivity.this, message+message2, Toast.LENGTH_LONG).show();
             }
@@ -1354,6 +1337,5 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
-
 }
 
