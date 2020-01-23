@@ -8,8 +8,7 @@ source 'https://github.com/CocoaPods/Specs.git'
 plugin 'cocoapods-art', :sources => ['cocoapods-releases'] 
 
 target 'ARShooterSkeleton' do
-  pod 'IOSMatchingEngine'
-  pod 'Socket.IO-Client-Swift', '~> 15.1.0'
+  pod 'MobiledgeXiOSLibrary'
 
   target 'ARShooterSkeletonTests' do
     inherit! :search_paths  

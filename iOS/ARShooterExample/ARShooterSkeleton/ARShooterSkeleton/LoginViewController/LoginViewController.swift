@@ -18,7 +18,7 @@
 
 
 import UIKit
-import IOSMatchingEngine
+import MobiledgeXiOSLibrary
 import Promises
 import SocketIO
 
@@ -32,16 +32,28 @@ class LoginViewController: UIViewController {
     var gameID: String?
     
     // MatchingEngine variables
+    var matchingEngine: MobiledgeXiOSLibrary.MatchingEngine!
+    
+    var dmeHost: String?
+    var dmePort: UInt?
+    
     var appName: String?
     var appVers: String?
-    var devName: String?
+    var devName: String!
     var carrierName: String?
     var authToken: String?
-    var dmeHost: String?
-    var dmePort: UInt? 
+    var uniqueIDType: String?
+    var uniqueID: String?
+    var cellID: UInt32?
+    var tags: [[String: String]]?
     var host: String?
     var port: UInt?
+    var internalPort = "1337" // internal port I specified when deploying my app
     var location: [String: Any]?
+    
+    var demo = true
+    
+    var manager: SocketManager?
     
     // MatchingEngine API return objects
     var registerPromise: Promise<[String: AnyObject]>? // AnyObject --> RegisterClientReply
@@ -55,18 +67,25 @@ class LoginViewController: UIViewController {
         userNameField.delegate = self
         gameIDField.delegate = self
         
-        setUpMatchingEngineConnection()
+        setUpMatchingEngineParameters()
         DispatchQueue.main.async {
             self.callMatchingEngineAPIs()
+            self.getWebsocketConnection()
         }
     }
     
-    func setUpMatchingEngineConnection() {
+    func setUpMatchingEngineParameters() {
         SKToast.show(withMessage: "MatchingEngine not setup yet")
     } 
     
+    // This function shows a couple of the MatchingEngine APIs
     func callMatchingEngineAPIs() {
         SKToast.show(withMessage: "RegisterClient not implemented yet")
+    }
+    
+    // This function shows the GetConnection workflow
+    func getWebsocketConnection() {
+        SKToast.show(withMessage: "GetConnection workflow not implemented yet")
     }
     
     private func moveToGameViewController(gameViewController: GameViewController) {
@@ -92,12 +111,11 @@ class LoginViewController: UIViewController {
         userNameField.isEnabled = false
         gameIDField.isEnabled = false
         
-        if host == nil {
-            return 
+        if self.manager == nil {
+            print("No websocket connection yet")
+            return
         }
-        if port == nil {
-            port = 1337
-        }
+        
         SKToast.show(withMessage: "Pass MatchingEngine and GameState variables to GameViewController")
         moveToGameViewController(gameViewController: gameViewController)
     }
