@@ -62,7 +62,6 @@ public class TrainGuestDialog extends DialogFragment {
         super.onCreate(savedInstanceState);
         try {
             mListener = (TrainGuestDialogListener) getTargetFragment();
-            Log.i(TAG, "1.mListener="+mListener);
         } catch (ClassCastException e) {
             throw new ClassCastException("Calling Fragment must implement TrainGuestDialogListener");
         }

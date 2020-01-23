@@ -107,8 +107,6 @@ import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_C
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_VERIFY_LOCATION;
-import static distributed_match_engine.AppClient.VerifyLocationReply.GPSLocationStatus.LOC_ROAMING_COUNTRY_MATCH;
-import static distributed_match_engine.AppClient.VerifyLocationReply.GPSLocationStatus.LOC_VERIFIED;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -160,6 +158,7 @@ public class MainActivity extends AppCompatActivity
     private MenuItem signInMenuItem;
     private MenuItem signOutMenuItem;
     private AlertDialog mAlertDialog;
+    private boolean mAllowLocationSimulatorUpdate = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -548,6 +547,40 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Makes a request to the location simulator address for the corresponding DME hostname.
+     * If the call is successful, we will allow location simulator updates in the UI.
+     *
+     * @param hostname  The DME hostname.
+     */
+    private void checkForLocSimulator(String hostname) {
+        mAllowLocationSimulatorUpdate = false; // Default unless successful.
+        // Instantiate the RequestQueue.
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String hostName = hostname.replace("dme", "locsim");
+        String url = "http://"+hostName+":8888"; // Just check the index.
+        Log.i(TAG, "checkForLocSimulator url="+url);
+
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.i(TAG, "checkForLocSimulator response="+response);
+                        mAllowLocationSimulatorUpdate = true;
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "Non-200 response for checkForLocSimulator. error="+error);
+                mAllowLocationSimulatorUpdate = false;
+            }
+        });
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
+
+    /**
      * Gets list of cloudlets from DME, and populates map with markers.
      *
      */
@@ -620,8 +653,8 @@ public class MainActivity extends AppCompatActivity
         String spoofText = "Spoof GPS at this location";
         String updateSimText = "Update location in GPS database";
         final CharSequence[] charSequence;
-        //Only allow updating location simulator on the demo environment
-        if(mHostname.equals(DEFAULT_DME_HOSTNAME)) {
+        // Only allow updating location simulator on supported environments
+        if(mAllowLocationSimulatorUpdate) {
             charSequence = new CharSequence[] {spoofText, updateSimText};
         } else {
             charSequence = new CharSequence[] {spoofText};
@@ -718,51 +751,34 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 mUserLocationMarker.hideInfoWindow();
-                // We handle this differently for the demo environment, than in real life.
-                if(mHostname.equals(DEFAULT_DME_HOSTNAME)) {
-                    if(status == LOC_VERIFIED) {
-                        fabFindCloudlets.setEnabled(true);
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, ""));
-                        message = "User Location - Verified";
+                switch (status) {
+                    case LOC_VERIFIED:
                         message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
-                    } else if(status == LOC_ROAMING_COUNTRY_MATCH) {
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_CAUTION, ""));
-                        message = "User Location - Verified";
-                    } else {
-                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, ""));
-                        message = "User Location - Failed Verify";
-                    }
-
-                } else {
-                    switch (status) {
-                        case LOC_VERIFIED:
-                            message2 = "\n("+ mGpsLocationAccuracyKM +" km accuracy)";
-                            if(mGpsLocationAccuracyKM <= 2) {
-                                //Cat 1
-                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
-                            } else if (mGpsLocationAccuracyKM <= 10) {
-                                //Cat 2
-                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_AMBER, ""));
-                            } else {
-                                //Cat 3
-                                mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_DARK_AMBER, ""));
-                            }
-                            break;
-                        case LOC_MISMATCH_SAME_COUNTRY:
-                            //Cat 4
-                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
-                            break;
-                        case LOC_ROAMING_COUNTRY_MATCH:
-                            //Cat 6
+                        if(mGpsLocationAccuracyKM <= 2) {
+                            //Cat 1
                             mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
-                            break;
-                        default:
-                            //Cat 5, 7, other
-                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
-                            break;
-                    }
-                    message = "User Location - "+status;
+                        } else if (mGpsLocationAccuracyKM <= 10) {
+                            //Cat 2
+                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_AMBER, ""));
+                        } else {
+                            //Cat 3
+                            mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_DARK_AMBER, ""));
+                        }
+                        break;
+                    case LOC_MISMATCH_SAME_COUNTRY:
+                        //Cat 4
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
+                        break;
+                    case LOC_ROAMING_COUNTRY_MATCH:
+                        //Cat 6
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_GREEN, ""));
+                        break;
+                    default:
+                        //Cat 5, 7, other
+                        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_RED, ""));
+                        break;
                 }
+                message = "User Location - "+status;
                 mUserLocationMarker.setTitle(message);
                 Toast.makeText(MainActivity.this, message+message2, Toast.LENGTH_LONG).show();
             }
@@ -1143,6 +1159,8 @@ public class MainActivity extends AppCompatActivity
                 CloudletListHolder.getSingleton().getCloudletList().clear();
                 getCloudlets();
             }
+
+            checkForLocSimulator(mHostname);
         }
 
         if (key.equals(prefKeyOperatorName)) {
@@ -1354,6 +1372,5 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
-
 }
 
