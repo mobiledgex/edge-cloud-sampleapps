@@ -1,40 +1,37 @@
 PODS:
-  - IOSMatchingEngine (1.4.2.3):
-    - NSLogger/Swift
-    - PromisesSwift
-    - Socket.IO-Client-Swift (~> 15.1.0)
-  - NSLogger/ObjC (1.9.7)
-  - NSLogger/Swift (1.9.7):
-    - NSLogger/ObjC
+  - MobiledgeXiOSLibrary (1.4.2.5):
+    - PromisesSwift (~> 1.2.8)
+    - Socket.IO-Client-Swift (~> 15.2.0)
+    - SwiftyJSON (~> 5.0.0)
   - PromisesObjC (1.2.8)
   - PromisesSwift (1.2.8):
     - PromisesObjC (= 1.2.8)
-  - Socket.IO-Client-Swift (15.1.0):
+  - Socket.IO-Client-Swift (15.2.0):
     - Starscream (~> 3.1)
   - Starscream (3.1.1)
+  - SwiftyJSON (5.0.0)
 
 DEPENDENCIES:
-  - IOSMatchingEngine
-  - Socket.IO-Client-Swift (~> 15.1.0)
+  - MobiledgeXiOSLibrary
 
 SPEC REPOS:
   https://artifactory.mobiledgex.net/artifactory/api/pods/cocoapods-releases:
-    - IOSMatchingEngine
+    - MobiledgeXiOSLibrary
   https://github.com/CocoaPods/Specs.git:
-    - NSLogger
     - PromisesObjC
     - PromisesSwift
     - Socket.IO-Client-Swift
     - Starscream
+    - SwiftyJSON
 
 SPEC CHECKSUMS:
-  IOSMatchingEngine: f19be480f53d46ad0ce76203dcd2aa3cdabf7be1
-  NSLogger: cf3013a4fba189f631f07e6c3d5b8ce2b209654b
+  MobiledgeXiOSLibrary: 5401dffb25c0b11a1da836262eb8295696593faf
   PromisesObjC: c119f3cd559f50b7ae681fa59dc1acd19173b7e6
   PromisesSwift: 37bad6f4daddb02f7c9c531efe91e8b21c13ee2f
-  Socket.IO-Client-Swift: 7cb44c0ffb86e158cee32d0642d30ec5fdcf8f61
+  Socket.IO-Client-Swift: 1e3e3a1f09f3312a167f0d781eb2f383d477357c
   Starscream: 4bb2f9942274833f7b4d296a55504dcfc7edb7b0
+  SwiftyJSON: 36413e04c44ee145039d332b4f4e2d3e8d6c4db7
 
-PODFILE CHECKSUM: 62c4520c29ae972bcd59bb88c3865670e9eced1e
+PODFILE CHECKSUM: f1c5b0ea7bece2245f625cbe11c5840d1f0bfdd5
 
-COCOAPODS: 1.8.3
+COCOAPODS: 1.8.4
