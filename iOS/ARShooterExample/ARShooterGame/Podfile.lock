@@ -12,7 +12,7 @@ PODS:
   - SwiftyJSON (5.0.0)
 
 DEPENDENCIES:
-  - MobiledgeXiOSLibrary
+  - MobiledgeXiOSLibrary (= 1.4.2.5)
 
 SPEC REPOS:
   https://artifactory.mobiledgex.net/artifactory/api/pods/cocoapods-releases:
@@ -32,6 +32,6 @@ SPEC CHECKSUMS:
   Starscream: 4bb2f9942274833f7b4d296a55504dcfc7edb7b0
   SwiftyJSON: 36413e04c44ee145039d332b4f4e2d3e8d6c4db7
 
-PODFILE CHECKSUM: f1c5b0ea7bece2245f625cbe11c5840d1f0bfdd5
+PODFILE CHECKSUM: d6cc34b5d2cf5e7fb928fab2ae8643b0f627c9e4
 
 COCOAPODS: 1.8.4
