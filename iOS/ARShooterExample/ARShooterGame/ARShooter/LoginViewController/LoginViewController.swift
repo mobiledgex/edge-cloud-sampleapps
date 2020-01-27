@@ -46,8 +46,8 @@ class LoginViewController: UIViewController {
     var cellID: UInt32?
     var tags: [[String: String]]?
     var host: String?
-    var port: UInt?
-    var internalPort = "1337" // internal port I specified when deploying my app
+    var port: UInt16?
+    var internalPort: UInt16 = 1337 // internal port I specified when deploying my app
     var location: [String: Any]?
     
     var demo = false
@@ -176,7 +176,7 @@ class LoginViewController: UIViewController {
                 throw LoginViewControllerError.runtimeError("No app ports with specified internal port")
             }
             
-            return self.matchingEngine.getWebsocketConnection(findCloudletReply: findCloudletReply, appPort: appPort, desiredPort: self.internalPort, timeout: 5000)
+            return self.matchingEngine.getWebsocketConnection(findCloudletReply: findCloudletReply, appPort: appPort, desiredPort: Int(self.internalPort), timeout: 5000)
             
         }.then { manager in
             self.manager = manager
