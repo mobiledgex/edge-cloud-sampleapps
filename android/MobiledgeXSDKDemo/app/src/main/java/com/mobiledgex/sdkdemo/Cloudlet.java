@@ -470,6 +470,7 @@ public class Cloudlet implements Serializable {
                 @Override
                 public void onCompletion(final SpeedTestReport report) {
                     // called when upload is finished
+                    speedTestUploadTaskRunning = false;
                     Log.v(TAG, "[UPLOAD COMPLETED] rate in bit/s   : " + report.getTransferRateBit());
                     // Do not update the transfer rate here because the POST response can take long
                     // enough to receive that it can skew the results, possibly dropping by more than 50 %.
