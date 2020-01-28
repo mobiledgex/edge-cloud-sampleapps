@@ -4,17 +4,7 @@
          dismiss it. -->
     <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
     <ListPreference
-        android:defaultValue="dynamic"
-        android:entries="@array/pref_download_type_titles"
-        android:entryValues="@array/pref_download_type_values"
-        android:key="@string/download_type"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null"
-        android:summary="@string/pref_summary_download_type"
-        android:title="@string/pref_title_download_type" />
-
-    <ListPreference
-        android:defaultValue="1048576"
+        android:defaultValue="10485760"
         android:entries="@array/pref_download_size_titles"
         android:entryValues="@array/pref_download_size_values"
         android:key="@string/download_size"
@@ -22,6 +12,16 @@
         android:positiveButtonText="@null"
         android:summary="@string/pref_summary_download_size"
         android:title="@string/pref_title_download_size" />
+
+    <ListPreference
+        android:defaultValue="5242880"
+        android:entries="@array/pref_upload_size_titles"
+        android:entryValues="@array/pref_upload_size_values"
+        android:key="@string/upload_size"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:summary="@string/pref_summary_upload_size"
+        android:title="@string/pref_title_upload_size" />
 
     <ListPreference
         android:defaultValue="4"

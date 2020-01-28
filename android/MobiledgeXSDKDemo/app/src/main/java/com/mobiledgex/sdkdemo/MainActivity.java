@@ -264,8 +264,8 @@ public class MainActivity extends AppCompatActivity
         // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.dme_hostname));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_operator_name));
-        onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_type));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.upload_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_method));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_autostart));
@@ -1009,7 +1009,7 @@ public class MainActivity extends AppCompatActivity
 
         String cloudletName = (String) marker.getTag();
         Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
-        Log.i(TAG, "1."+cloudlet+" "+cloudlet.getCloudletName()+" "+cloudlet.getMbps());
+        Log.i(TAG, "1."+cloudlet+" "+cloudlet.getCloudletName()+" "+cloudlet.getSpeedTestDownloadResult());
 
         Intent intent = new Intent(getApplicationContext(), CloudletDetailsActivity.class);
         intent.putExtra("CloudletName", cloudlet.getCloudletName());
@@ -1098,8 +1098,8 @@ public class MainActivity extends AppCompatActivity
         Log.d(TAG, "onSharedPreferenceChanged("+key+")");
         String prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
         String prefKeyAllowNetSwitch = getResources().getString(R.string.preference_net_switching_allowed);
-        String prefKeyDownloadType = getResources().getString(R.string.download_type);
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
+        String prefKeyUploadSize = getResources().getString(R.string.upload_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
@@ -1174,16 +1174,16 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        if (key.equals(prefKeyDownloadType)) {
-            String downloadType = sharedPreferences.getString(prefKeyDownloadType, "dynamic");
-            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+downloadType);
-            CloudletListHolder.getSingleton().setDownloadTestType(downloadType);
-        }
-
         if (key.equals(prefKeyDownloadSize)) {
             int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyDownloadSize, "1048576"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
-            CloudletListHolder.getSingleton().setNumBytes(numBytes);
+            CloudletListHolder.getSingleton().setNumBytesDownload(numBytes);
+        }
+
+        if (key.equals(prefKeyUploadSize)) {
+            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyUploadSize, "1048576"));
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
+            CloudletListHolder.getSingleton().setNumBytesUpload(numBytes);
         }
 
         if (key.equals(prefKeyNumPackets)) {
