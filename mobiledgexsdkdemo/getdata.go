@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ var (
 	indexpath   = "/"
 	getdatapath = "/getdata"
 	getfilepath = "/getfile"
+	uploaddatapath = "/uploaddata"
 	filedir     = "/root/downloadfiles/"
 )
 
@@ -49,7 +51,7 @@ func generateFiles() {
 
 func showIndex(w http.ResponseWriter, r *http.Request) {
 	log.Printf("doing showIndex req: %+v\n", r)
-	rc := getdatapath + "\n" + getfilepath + "\n"
+	rc := getdatapath + "\n" + getfilepath+ "\n" + uploaddatapath + "\n"
 
 	w.Write([]byte(rc))
 }
@@ -112,10 +114,26 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(response))
 }
 
+func uploadData(w http.ResponseWriter, r *http.Request) {
+	log.Printf("doing uploadData %+v\n", r)
+	log.Printf("ContentLength= %+v\n", r.ContentLength)
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+			message := fmt.Sprintf("Error in ReadAll: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(message))
+			log.Printf(message)
+			return
+	}
+	log.Printf("Read %+v bytes from body\n", len(b))
+}
+
 func run() {
 	http.HandleFunc(indexpath, showIndex)
 	http.HandleFunc(getdatapath, getData)
 	http.HandleFunc(getfilepath, getFile)
+	http.HandleFunc(uploaddatapath, uploadData)
 
 	portstr := fmt.Sprintf(":%d", *port)
 
@@ -133,6 +151,6 @@ func validateArgs() {
 
 func main() {
 	validateArgs()
-	generateFiles()
+//	generateFiles()
 	run()
 }
