@@ -1175,13 +1175,13 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (key.equals(prefKeyDownloadSize)) {
-            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyDownloadSize, "1048576"));
+            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyDownloadSize, "10485760"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
             CloudletListHolder.getSingleton().setNumBytesDownload(numBytes);
         }
 
         if (key.equals(prefKeyUploadSize)) {
-            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyUploadSize, "1048576"));
+            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyUploadSize, "5242880"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
             CloudletListHolder.getSingleton().setNumBytesUpload(numBytes);
         }
