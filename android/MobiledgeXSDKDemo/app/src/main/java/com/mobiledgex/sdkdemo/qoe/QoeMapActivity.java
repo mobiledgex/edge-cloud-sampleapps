@@ -578,7 +578,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             mMap.animateCamera(cu);
 
         } catch(Exception ex) {
-            Log.e(TAG, ex.getCause()+" "+ex.getLocalizedMessage());
+            Log.e(TAG, "Error during routeBetweenPoints: "+ex.getLocalizedMessage());
             toastOnUiThread("Error: "+ex.getLocalizedMessage(), Toast.LENGTH_LONG);
         }
         requestNum++;
