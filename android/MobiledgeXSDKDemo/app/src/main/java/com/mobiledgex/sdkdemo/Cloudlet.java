@@ -44,7 +44,9 @@ import fr.bmartel.speedtest.model.SpeedTestError;
 
 public class Cloudlet implements Serializable {
     private static final String TAG = "Cloudlet";
-    public static final int BYTES_TO_MBYTES = 1024*1024;
+
+    // For data transfer measurements, we use base 10. "Mbits/sec" for displayed units.
+    public static final int BITS_TO_MBITS = 1000*1000;
 
     private String mCloudletName;
     private String mAppName;
@@ -132,7 +134,7 @@ public class Cloudlet implements Serializable {
      */
     private String getDownloadUri() {
         mNumBytes = CloudletListHolder.getSingleton().getNumBytesDownload();
-        return "http://"+hostName+":"+openPort+"/getdata?numbytes="+ mNumBytes;
+        return "http://"+hostName+":"+openPort+"/getdata/?numbytes="+ mNumBytes;
     }
 
     /**
@@ -140,7 +142,7 @@ public class Cloudlet implements Serializable {
      * @return  The URI.
      */
     private String getUploadUri() {
-        return "http://"+hostName+":"+openPort+"/uploaddata";
+        return "http://"+hostName+":"+openPort+"/uploaddata/";
     }
 
     public String toString() {
@@ -418,7 +420,7 @@ public class Cloudlet implements Serializable {
                 public void onCompletion(final SpeedTestReport report) {
                     // called when download is finished
                     Log.v(TAG, "[DOWNLOAD COMPLETED] rate in bit/s   : " + report.getTransferRateBit());
-                    BigDecimal divisor = new BigDecimal(BYTES_TO_MBYTES);
+                    BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
                     downloadMbps = report.getTransferRateBit().divide(divisor);
                     speedTestDownloadTaskRunning = false;
                     mSpeedTestResultsInterface.onSpeedtestDownloadProgress();
@@ -440,7 +442,7 @@ public class Cloudlet implements Serializable {
                 public void onProgress(final float percent, final SpeedTestReport report) {
                     // called to notify download progress
                     Log.v(TAG, "[DOWNLOAD PROGRESS] "+percent + "% - rate in bit/s   : " + report.getTransferRateBit());
-                    BigDecimal divisor = new BigDecimal(BYTES_TO_MBYTES);
+                    BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
                     downloadMbps = report.getTransferRateBit().divide(divisor);
                     mSpeedTestDownloadProgress = (int) percent;
                     if(mSpeedTestResultsInterface != null) {
@@ -496,7 +498,7 @@ public class Cloudlet implements Serializable {
                 public void onProgress(final float percent, final SpeedTestReport report) {
                     // called to notify upload progress
                     Log.v(TAG, "[UPLOAD PROGRESS] "+percent + "% - rate in bit/s   : " + report.getTransferRateBit());
-                    BigDecimal divisor = new BigDecimal(BYTES_TO_MBYTES);
+                    BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
                     uploadMbps = report.getTransferRateBit().divide(divisor);
                     mSpeedTestUploadProgress = (int) percent;
                     if(mSpeedTestResultsInterface != null) {

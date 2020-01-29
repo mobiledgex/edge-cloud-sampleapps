@@ -33,7 +33,6 @@ import android.widget.TextView;
 
 public class CloudletDetailsActivity extends AppCompatActivity implements SpeedTestResultsInterface {
 
-    public static final int BYTES_TO_MBYTES = 1024*1024;
     private static final String TAG = "CloudletDetailsActivity";
     private Intent intent;
     private Cloudlet cloudlet;
