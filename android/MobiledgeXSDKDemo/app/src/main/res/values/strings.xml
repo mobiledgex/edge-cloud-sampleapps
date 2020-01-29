@@ -53,26 +53,34 @@
     <string name="download_size">download_size</string>
     <string-array name="pref_download_size_titles">
         <item>1 MB</item>
-        <item>5 MB</item>
         <item>10 MB</item>
-        <item>20 MB</item>
+        <item>50 MB</item>
+        <item>100 MB</item>
+        <item>250 MB</item>
     </string-array>
     <string-array name="pref_download_size_values">
         <item>1048576</item>
-        <item>5242880</item>
         <item>10485760</item>
-        <item>20971520</item>
+        <item>52428800</item>
+        <item>104857600</item>
+        <item>262144000</item>
     </string-array>
 
-    <string name="pref_title_download_type">Download Type</string>
-    <string name="download_type">download_type</string>
-    <string-array name="pref_download_type_titles">
-        <item>Dynamically Generated</item>
-        <item>Static Files</item>
+    <string name="pref_title_upload_size">Upload Size</string>
+    <string name="upload_size">upload_size</string>
+    <string-array name="pref_upload_size_titles">
+        <item>1 MB</item>
+        <item>5 MB</item>
+        <item>25 MB</item>
+        <item>50 MB</item>
+        <item>100 MB</item>
     </string-array>
-    <string-array name="pref_download_type_values">
-        <item>dynamic</item>
-        <item>staticFile</item>
+    <string-array name="pref_upload_size_values">
+        <item>1048576</item>
+        <item>5242880</item>
+        <item>26214400</item>
+        <item>52428800</item>
+        <item>104857600</item>
     </string-array>
 
     <string name="pref_title_latency_packets">Latency Test Packets</string>
@@ -111,7 +119,7 @@
     <string name="dme_hostname">dme_hostname</string>
     <string name="pref_summary_latency_method">Select socket connection or ICMP ping</string>
     <string name="pref_summary_latency_packets">Number of times to repeat latency test</string>
-    <string name="pref_summary_download_type">Type of data to use for download for speed test</string>
+    <string name="pref_summary_upload_size">Number of Megabytes to upload for speed test</string>
     <string name="pref_summary_download_size">Number of Megabytes to download for speed test</string>
     <string-array name="pref_dme_hostname_titles">
         <item>Demo (mexdemo)</item>
@@ -132,5 +140,7 @@
     <string name="pqoe_map_type_terrain">Terrain</string>
     <string name="pqoe_map_type_hybrid">Hybrid</string>
     <string name="pqoe_map_type_silver">Silver</string>
+    <string name="upload_speed_test">UL Speed Test</string>
+    <string name="download_speed_test">DL Speed Test</string>
 
 </resources>
