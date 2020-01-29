@@ -27,6 +27,9 @@ properties.load(project.rootProject.file('local.properties').newDataInputStream(
 def artifactory_user = properties.getProperty("artifactory_user")
 def artifactory_password = properties.getProperty("artifactory_password")
 
+project.ext.googleMapsApiKey = properties.getProperty('google_maps_key')
+project.ext.googleDirectionsApiKey = properties.getProperty('google_directions_api_key')
+
 allprojects {
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'

@@ -259,17 +259,40 @@
                     android:padding="5dip">
 
                     <Button
-                        android:id="@+id/buttonSpeedtest"
-                        android:text="Speed Test" />
+                        android:id="@+id/buttonSpeedtestDownload"
+                        android:text="@string/download_speed_test" />
 
                     <TextView
-                        android:id="@+id/speedtestResults"
+                        android:id="@+id/speedtestDownloadResults"
                         android:text=""
                         android:textAppearance="?android:attr/textAppearanceMedium" />
                 </TableRow>
 
                 <ProgressBar
                     android:id="@+id/progressBarDownload"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:max="100" />
+
+                <TableRow
+                    android:id="@+id/tableRow12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="5dip">
+
+                    <Button
+                        android:id="@+id/buttonSpeedtestUpload"
+                        android:text="@string/upload_speed_test" />
+
+                    <TextView
+                        android:id="@+id/speedtestUploadResults"
+                        android:text=""
+                        android:textAppearance="?android:attr/textAppearanceMedium" />
+                </TableRow>
+
+                <ProgressBar
+                    android:id="@+id/progressBarUpload"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

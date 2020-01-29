@@ -70,6 +70,7 @@ import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.TravelMode;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.MatchingEngine;
+import com.mobiledgex.sdkdemo.BuildConfig;
 import com.mobiledgex.sdkdemo.MainActivity;
 import com.mobiledgex.sdkdemo.MatchingEngineHelper;
 import com.mobiledgex.sdkdemo.R;
@@ -209,7 +210,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        apiKey = getResources().getString(R.string.google_directions_api_key);
+        apiKey = BuildConfig.GOOGLE_DIRECTIONS_API_KEY;
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -577,7 +578,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             mMap.animateCamera(cu);
 
         } catch(Exception ex) {
-            Log.e(TAG, ex.getLocalizedMessage());
+            Log.e(TAG, "Error during routeBetweenPoints: "+ex.getLocalizedMessage());
             toastOnUiThread("Error: "+ex.getLocalizedMessage(), Toast.LENGTH_LONG);
         }
         requestNum++;

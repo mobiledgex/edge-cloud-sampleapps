@@ -27,21 +27,29 @@ public class CloudletListHolder {
 
     private ArrayMap<String, Cloudlet> mCloudletList = new ArrayMap<>();
     private LatencyTestMethod latencyTestMethod = LatencyTestMethod.ping;
-    private DownloadTestType downloadTestType = DownloadTestType.dynamic;
     private boolean latencyTestAutoStart;
-    private int numBytes;
+    private int numBytesDownload;
+    private int numBytesUpload;
     private int numPackets;
 
     public static CloudletListHolder getSingleton() {
         return ourInstance;
     }
 
-    public int getNumBytes() {
-        return numBytes;
+    public int getNumBytesDownload() {
+        return numBytesDownload;
     }
 
-    public void setNumBytes(int numBytes) {
-        this.numBytes = numBytes;
+    public void setNumBytesDownload(int numBytes) {
+        this.numBytesDownload = numBytes;
+    }
+
+    public int getNumBytesUpload() {
+        return numBytesUpload;
+    }
+
+    public void setNumBytesUpload(int numBytes) {
+        this.numBytesUpload = numBytes;
     }
 
     public int getNumPackets() {
@@ -57,11 +65,6 @@ public class CloudletListHolder {
         socket
     }
 
-    public enum DownloadTestType {
-        dynamic,
-        staticFile
-    }
-
     private CloudletListHolder() {
     }
 
@@ -71,15 +74,6 @@ public class CloudletListHolder {
 
     public void setCloudlets(ArrayMap<String, Cloudlet> mCloudlets) {
         this.mCloudletList = mCloudlets;
-    }
-
-    public DownloadTestType getDownloadTestType() {
-        return downloadTestType;
-    }
-
-    public void setDownloadTestType(String downloadTestType) {
-        this.downloadTestType = DownloadTestType.valueOf(downloadTestType);
-        System.out.println("String DownloadTestType="+downloadTestType+" enum downloadTestType="+this.downloadTestType);
     }
 
     public boolean getLatencyTestAutoStart() {

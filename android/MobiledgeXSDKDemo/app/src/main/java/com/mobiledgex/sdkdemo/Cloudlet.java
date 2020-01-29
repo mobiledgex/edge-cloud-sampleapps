@@ -42,11 +42,11 @@ import fr.bmartel.speedtest.SpeedTestSocket;
 import fr.bmartel.speedtest.inter.ISpeedTestListener;
 import fr.bmartel.speedtest.model.SpeedTestError;
 
-import static com.mobiledgex.sdkdemo.CloudletListHolder.DownloadTestType.staticFile;
-
 public class Cloudlet implements Serializable {
     private static final String TAG = "Cloudlet";
-    public static final int BYTES_TO_MBYTES = 1024*1024;
+
+    // For data transfer measurements, we use base 10. "Mbits/sec" for displayed units.
+    public static final int BITS_TO_MBITS = 1000*1000;
 
     private String mCloudletName;
     private String mAppName;
@@ -62,9 +62,11 @@ public class Cloudlet implements Serializable {
     private double latencyMax=0;
     private double latencyStddev=0;
     private double latencyTotal=0;
-    private BigDecimal mbps = BigDecimal.valueOf(0);
+    private BigDecimal downloadMbps = BigDecimal.valueOf(0);
+    private BigDecimal uploadMbps = BigDecimal.valueOf(0);
     private int latencyTestProgress = 0;
-    private int speedTestProgress = 0;
+    private int mSpeedTestDownloadProgress = 0;
+    private int mSpeedTestUploadProgress = 0;
     private long startTime;
     private double timeDifference;
     private int mNumPackets = 4;
@@ -78,10 +80,13 @@ public class Cloudlet implements Serializable {
     private int openPort = 7777;
     private final int socketTimeout = 3000;
     private boolean latencyTestTaskRunning = false;
-    private boolean speedTestTaskRunning = false;
-    private String uri;
+    private boolean speedTestDownloadTaskRunning = false;
+    private boolean speedTestUploadTaskRunning = false;
+    private String speedTestDownloadErrorMessage = "";
+    private String speedTestUploadErrorMessage = "";
     private String mFqdnPrefix;
     private String mIpAddress;
+    private String uri;
 
     public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, String fqdnPrefix, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
@@ -124,36 +129,20 @@ public class Cloudlet implements Serializable {
     }
 
     /**
-     * Build the download URI based on the download type and size preferences.
-     * @return
+     * Build the download URI based on the download size preference.
+     * @return  The URI.
      */
     private String getDownloadUri() {
-        mNumBytes = CloudletListHolder.getSingleton().getNumBytes();
-        String downloadUri;
-        if(CloudletListHolder.getSingleton().getDownloadTestType() == staticFile) {
-            String size;
-            switch(mNumBytes) {
-                case 1024*1024:
-                    size = "1MB";
-                    break;
-                case 5*1024*1024:
-                    size = "5MB";
-                    break;
-                case 10*1024*1024:
-                    size = "10MB";
-                    break;
-                case 20*1024*1024:
-                    size = "20MB";
-                    break;
-                default:
-                    size = "UNKNOWN";
-                    Log.e(TAG, "Unknown download size: "+mNumBytes);
-            }
-            downloadUri = "http://"+hostName+":"+openPort+"/getfile?filename=download_"+size+".txt";
-        } else {
-            downloadUri = "http://"+hostName+":"+openPort+"/getdata?numbytes="+ mNumBytes;
-        }
-        return downloadUri;
+        mNumBytes = CloudletListHolder.getSingleton().getNumBytesDownload();
+        return "http://"+hostName+":"+openPort+"/getdata/?numbytes="+ mNumBytes;
+    }
+
+    /**
+     * Build the download URI.
+     * @return  The URI.
+     */
+    private String getUploadUri() {
+        return "http://"+hostName+":"+openPort+"/uploaddata/";
     }
 
     public String toString() {
@@ -213,15 +202,22 @@ public class Cloudlet implements Serializable {
         }
     }
 
-    public void startBandwidthTest() {
-        if(speedTestTaskRunning) {
-            Log.d(TAG, "SpeedTest already running");
+    public void startSpeedTestDownload() {
+        Log.d(TAG, "downloadUri=" + getDownloadUri() + " speedTestDownloadTaskRunning="+ speedTestDownloadTaskRunning);
+        if(speedTestDownloadTaskRunning) {
+            Log.d(TAG, "Download SpeedTest already running");
             return;
         }
-        Log.d(TAG, "downloadUri=" + getDownloadUri() + " speedTestTaskRunning="+speedTestTaskRunning);
-        if(!speedTestTaskRunning) {
-            new SpeedTestTask().execute();
+        new SpeedTestDownloadTask().execute();
+    }
+
+    public void startSpeedTestUpload() {
+        Log.d(TAG, "uploadUri=" + getUploadUri() + " speedTestUploadTaskRunning="+ speedTestUploadTaskRunning);
+        if(speedTestUploadTaskRunning) {
+            Log.d(TAG, "Upload SpeedTest already running");
+            return;
         }
+        new SpeedTestUploadTask().execute();
     }
 
     private static boolean isReachable(String addr, int openPort, int timeOutMillis) {
@@ -408,12 +404,13 @@ public class Cloudlet implements Serializable {
 
     }
 
-    public class SpeedTestTask extends AsyncTask<Void, Void, String> {
+    public class SpeedTestDownloadTask extends AsyncTask<Void, Void, String> {
 
         @Override
         protected String doInBackground(Void... params) {
 
-            speedTestTaskRunning = true;
+            speedTestDownloadTaskRunning = true;
+            speedTestDownloadErrorMessage = "";
             SpeedTestSocket speedTestSocket = new SpeedTestSocket();
 
             // add a listener to wait for speedtest completion and progress
@@ -421,34 +418,97 @@ public class Cloudlet implements Serializable {
 
                 @Override
                 public void onCompletion(final SpeedTestReport report) {
-                    // called when download/upload is finished
-                    Log.v(TAG, "[COMPLETED] rate in bit/s   : " + report.getTransferRateBit());
-                    BigDecimal divisor = new BigDecimal(BYTES_TO_MBYTES);
-                    mbps = report.getTransferRateBit().divide(divisor);
-                    speedTestProgress = 100;
-                    speedTestTaskRunning = false;
-                    mSpeedTestResultsInterface.onBandwidthProgress();
+                    // called when download is finished
+                    Log.v(TAG, "[DOWNLOAD COMPLETED] rate in bit/s   : " + report.getTransferRateBit());
+                    BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
+                    downloadMbps = report.getTransferRateBit().divide(divisor);
+                    speedTestDownloadTaskRunning = false;
+                    mSpeedTestResultsInterface.onSpeedtestDownloadProgress();
                 }
 
                 @Override
                 public void onError(SpeedTestError speedTestError, String errorMessage) {
-                    // called when a download/upload error occurs
+                    // called when a download error occurs
+                    Log.e(TAG, "Download speedTestError="+speedTestError+" errorMessage="+errorMessage);
+                    speedTestDownloadErrorMessage = speedTestError.toString();
+                    speedTestDownloadTaskRunning = false;
+                    downloadMbps = BigDecimal.valueOf(0);
+                    if(mSpeedTestResultsInterface != null) {
+                        mSpeedTestResultsInterface.onSpeedtestUploadProgress();
+                    }
                 }
 
                 @Override
                 public void onProgress(final float percent, final SpeedTestReport report) {
-                    // called to notify download/upload progress
-                    Log.v(TAG, "[PROGRESS] "+percent + "% - rate in bit/s   : " + report.getTransferRateBit());
-                    BigDecimal divisor = new BigDecimal(BYTES_TO_MBYTES);
-                    mbps = report.getTransferRateBit().divide(divisor);
-                    speedTestProgress = (int) percent;
+                    // called to notify download progress
+                    Log.v(TAG, "[DOWNLOAD PROGRESS] "+percent + "% - rate in bit/s   : " + report.getTransferRateBit());
+                    BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
+                    downloadMbps = report.getTransferRateBit().divide(divisor);
+                    mSpeedTestDownloadProgress = (int) percent;
                     if(mSpeedTestResultsInterface != null) {
-                        mSpeedTestResultsInterface.onBandwidthProgress();
+                        mSpeedTestResultsInterface.onSpeedtestDownloadProgress();
                     }
                 }
             });
 
             speedTestSocket.startDownload(getDownloadUri());
+
+            return null;
+        }
+    }
+
+    public class SpeedTestUploadTask extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            speedTestUploadTaskRunning = true;
+            speedTestUploadErrorMessage = "";
+            SpeedTestSocket speedTestSocket = new SpeedTestSocket();
+
+            // add a listener to wait for speedtest completion and progress
+            speedTestSocket.addSpeedTestListener(new ISpeedTestListener() {
+
+                @Override
+                public void onCompletion(final SpeedTestReport report) {
+                    // called when upload is finished
+                    speedTestUploadTaskRunning = false;
+                    Log.v(TAG, "[UPLOAD COMPLETED] rate in bit/s   : " + report.getTransferRateBit());
+                    // Do not update the transfer rate here because the POST response can take long
+                    // enough to receive that it can skew the results, possibly dropping by more than 50 %.
+                }
+
+                @Override
+                public void onError(SpeedTestError speedTestError, String errorMessage) {
+                    // called when a upload error occurs
+                    Log.e(TAG, "Upload speedTestError="+speedTestError+" errorMessage="+errorMessage);
+                    // A second error may occur as SOCKET_TIMEOUT, which would overwrite a more useful
+                    // INVALID_HTTP_RESPONSE error, so only keep the first error per run.
+                    if (speedTestUploadErrorMessage.isEmpty()) {
+                        speedTestUploadErrorMessage = speedTestError.toString();
+                    }
+                    speedTestUploadTaskRunning = false;
+                    uploadMbps = BigDecimal.valueOf(0);
+                    if(mSpeedTestResultsInterface != null) {
+                        mSpeedTestResultsInterface.onSpeedtestUploadProgress();
+                    }
+                }
+
+                @Override
+                public void onProgress(final float percent, final SpeedTestReport report) {
+                    // called to notify upload progress
+                    Log.v(TAG, "[UPLOAD PROGRESS] "+percent + "% - rate in bit/s   : " + report.getTransferRateBit());
+                    BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
+                    uploadMbps = report.getTransferRateBit().divide(divisor);
+                    mSpeedTestUploadProgress = (int) percent;
+                    if(mSpeedTestResultsInterface != null) {
+                        mSpeedTestResultsInterface.onSpeedtestUploadProgress();
+                    }
+                }
+            });
+
+            mNumBytes = CloudletListHolder.getSingleton().getNumBytesUpload();
+            speedTestSocket.startUpload(getUploadUri(), mNumBytes);
 
             return null;
         }
@@ -537,16 +597,32 @@ public class Cloudlet implements Serializable {
         return latencyStddev;
     }
 
-    public BigDecimal getMbps() {
-        return mbps;
+    public String getSpeedTestDownloadResult() {
+        if (speedTestDownloadErrorMessage.isEmpty()) {
+            return String.format("%.2f", downloadMbps) + " Mbits/sec";
+        } else {
+            return speedTestDownloadErrorMessage;
+        }
+    }
+
+    public String getSpeedTestUploadResult() {
+        if (speedTestUploadErrorMessage.isEmpty()) {
+            return String.format("%.2f", uploadMbps) + " Mbits/sec";
+        } else {
+            return speedTestUploadErrorMessage;
+        }
     }
 
     public int getLatencyTestProgress() {
         return latencyTestProgress;
     }
 
-    public int getSpeedTestProgress() {
-        return speedTestProgress;
+    public int getSpeedTestDownloadProgress() {
+        return mSpeedTestDownloadProgress;
+    }
+
+    public int getSpeedTestUploadProgress() {
+        return mSpeedTestUploadProgress;
     }
 
     public boolean isPingFailed() {

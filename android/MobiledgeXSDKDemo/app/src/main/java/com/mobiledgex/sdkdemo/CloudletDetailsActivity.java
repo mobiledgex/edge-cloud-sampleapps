@@ -33,13 +33,13 @@ import android.widget.TextView;
 
 public class CloudletDetailsActivity extends AppCompatActivity implements SpeedTestResultsInterface {
 
-    public static final int BYTES_TO_MBYTES = 1024*1024;
     private static final String TAG = "CloudletDetailsActivity";
     private Intent intent;
     private Cloudlet cloudlet;
     private TextView cloudletNameTv;
     private TextView appNameTv;
-    private TextView speedtestResultsTv;
+    private TextView speedtestDownloadResultsTv;
+    private TextView speedtestUploadResultsTv;
     private TextView latencyMinTv;
     private TextView latencyAvgTv;
     private TextView latencyMaxTv;
@@ -50,9 +50,11 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
     private TextView distanceTv;
     private TextView latitudeTv;
     private TextView longitudeTv;
-    private Button buttonSpeedTest;
+    private Button buttonSpeedTestDownload;
+    private Button buttonSpeedTestUpload;
     private Button buttonLatencyTest;
     private ProgressBar progressBarDownload;
+    private ProgressBar progressBarUpload;
     private ProgressBar progressBarLatency;
 
     @Override
@@ -80,13 +82,15 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         distanceTv = findViewById(R.id.distance);
         latitudeTv = findViewById(R.id.latitude);
         longitudeTv = findViewById(R.id.longitude);
-        speedtestResultsTv = findViewById(R.id.speedtestResults);
+        speedtestDownloadResultsTv = findViewById(R.id.speedtestDownloadResults);
+        speedtestUploadResultsTv = findViewById(R.id.speedtestUploadResults);
         latencyMinTv = findViewById(R.id.latencyMin);
         latencyAvgTv = findViewById(R.id.latencyAvg);
         latencyMaxTv = findViewById(R.id.latencyMax);
         latencyStddevTv = findViewById(R.id.latencyStddev);
         latencyMessageTv = findViewById(R.id.latencyMessage);
         progressBarDownload = findViewById(R.id.progressBarDownload);
+        progressBarUpload = findViewById(R.id.progressBarUpload);
         progressBarLatency = findViewById(R.id.progressBarLatency);
 
         cloudletNameTv.setText(cloudlet.getCloudletName());
@@ -96,11 +100,18 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         latitudeTv.setText(Double.toString(cloudlet.getLatitude()));
         longitudeTv.setText(Double.toString(cloudlet.getLongitude()));
 
-        buttonSpeedTest = findViewById(R.id.buttonSpeedtest);
-        buttonSpeedTest.setOnClickListener(new View.OnClickListener() {
+        buttonSpeedTestDownload = findViewById(R.id.buttonSpeedtestDownload);
+        buttonSpeedTestDownload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                cloudlet.startBandwidthTest();
+                cloudlet.startSpeedTestDownload();
+            }
+        });
+        buttonSpeedTestUpload = findViewById(R.id.buttonSpeedtestUpload);
+        buttonSpeedTestUpload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cloudlet.startSpeedTestUpload();
             }
         });
         buttonLatencyTest = findViewById(R.id.buttonLatencytest);
@@ -175,7 +186,12 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
     }
 
     @Override
-    public void onBandwidthProgress() {
+    public void onSpeedtestDownloadProgress() {
+        updateUi();
+    }
+
+    @Override
+    public void onSpeedtestUploadProgress() {
         updateUi();
     }
 
@@ -189,6 +205,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
             @Override
             public void run() {
                 CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+                latencyMessageTv.setText("Method: "+latencyTestMethod.name());
                 if(cloudlet.getCarrierName().equalsIgnoreCase("azure")) {
                     if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
                         latencyMessageTv.setText("Socket test forced");
@@ -211,8 +228,10 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
                 latencyMaxTv.setText(formatValue(cloudlet.getLatencyMax())+" ms");
                 latencyStddevTv.setText(formatValue(cloudlet.getLatencyStddev())+" ms");
                 progressBarLatency.setProgress(cloudlet.getLatencyTestProgress());
-                progressBarDownload.setProgress(cloudlet.getSpeedTestProgress());
-                speedtestResultsTv.setText(String.format("%.2f", cloudlet.getMbps())+" Mbits/sec");
+                progressBarDownload.setProgress(cloudlet.getSpeedTestDownloadProgress());
+                progressBarUpload.setProgress(cloudlet.getSpeedTestUploadProgress());
+                speedtestDownloadResultsTv.setText(cloudlet.getSpeedTestDownloadResult());
+                speedtestUploadResultsTv.setText(cloudlet.getSpeedTestUploadResult());
                 distanceTv.setText(String.format("%.4f", cloudlet.getDistance()));
                 ipAddressTv.setText(cloudlet.getIpAddress());
             }
