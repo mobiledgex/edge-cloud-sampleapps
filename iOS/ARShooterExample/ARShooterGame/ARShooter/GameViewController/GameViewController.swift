@@ -44,8 +44,6 @@ class GameViewController: UIViewController {
     var userName: String?
     var gameID: String?
     var peers = [String: Int]()
-    var host: String? // Host from findCloudlet (MatchingEngine)
-    var port: UInt? // Port from findCloudlet (MatchingEngine)
     
     // SocketIO Variables
     var manager: SocketManager?

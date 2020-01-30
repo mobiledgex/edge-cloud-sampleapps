@@ -17,7 +17,7 @@
 //  ARShooter
 
 import UIKit
-import IOSMatchingEngine
+import MobiledgeXiOSLibrary
 import Promises
 import SocketIO
 
@@ -31,23 +31,37 @@ class LoginViewController: UIViewController {
     var gameID: String?
     
     // MatchingEngine variables
-    var matchingEngine: MatchingEngine!
+    var matchingEngine: MobiledgeXiOSLibrary.MatchingEngine!
+    
+    var dmeHost: String?
+    var dmePort: UInt?
+    
     var appName: String?
     var appVers: String?
-    var devName: String?
+    var devName: String!
     var carrierName: String?
     var authToken: String?
-    var dmeHost: String?
-    var dmePort: UInt? 
+    var uniqueIDType: String?
+    var uniqueID: String?
+    var cellID: UInt32?
+    var tags: [[String: String]]?
     var host: String?
-    var port: UInt?
+    var port: UInt16?
+    var internalPort: UInt16 = 1337 // internal port I specified when deploying my app
     var location: [String: Any]?
-    var demo = true
+    
+    var demo = false
+    
+    var manager: SocketManager?
     
     // MatchingEngine API return objects
     var registerPromise: Promise<[String: AnyObject]>? // AnyObject --> RegisterClientReply
     var findCloudletPromise: Promise<[String: AnyObject]>?
     var verifyLocationPromise: Promise<[String: AnyObject]>?
+    
+    enum LoginViewControllerError: Error {
+        case runtimeError(String)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -55,42 +69,59 @@ class LoginViewController: UIViewController {
         userNameField.delegate = self
         gameIDField.delegate = self
         
-        setUpMatchingEngineConnection()
+        setUpMatchingEngineParameters()
         DispatchQueue.main.async {
             self.callMatchingEngineAPIs()
+            self.getWebsocketConnection()
         }
     }
     
-    func setUpMatchingEngineConnection() {
-        matchingEngine = MatchingEngine()
+    func setUpMatchingEngineParameters() {
+        matchingEngine = MobiledgeXiOSLibrary.MatchingEngine()
         if demo {
-            dmeHost = "rogers.dme.mobiledgex.net"
+            // dmeHost and dmePort can be used as parameters in overloaded API calls
+            // (ie. registerClient(host: dmeHost, port: dmePort, request: request))
+            dmeHost = "sdkdemo.dme.mobiledgex.net"
             dmePort = 38001
             appName = "ARShooter"  // ARShooter
             appVers = "1.0"
-            devName = "HackathonTeam-1"
-            carrierName = "Rogers"
+            devName = "franklin-mobiledgex"
+            carrierName = "TDG"
             authToken = nil
             location = ["longitude": -122.149349, "latitude": 37.459609]  // Get actual location and ask user for permission
+            uniqueIDType = nil
+            uniqueID = nil
+            cellID = 0
+            tags = nil
         } else {
             appName = matchingEngine.getAppName()
             appVers = matchingEngine.getAppVersion()
-            devName = "mex-team1"
-            carrierName = "Rogers"
-            //carrierName = matchingEngine.getCarrierName() ?? "TDG"
-            //location = ["longitude": -122.149349, "latitude": 37.459609]  // Get actual location and ask user for permission
-            location = ["latitude": 53.112, "longitude": 13.4223] // Get actual location and ask user for permission
+            devName = "franklin-mobiledgex"
+            // carrierName = matchingEngine.getCarrierName() ?? "TDG"
+            carrierName = "TDG"
+            authToken = nil
+            location = ["longitude": -122.149349, "latitude": 37.459609]  // Get actual location and ask user for permission
+            uniqueIDType = MobiledgeXiOSLibrary.MatchingEngine.IDTypes.ID_UNDEFINED
+            uniqueID = matchingEngine.getUniqueID()
+            cellID = 0
+            tags = nil
         }
     }
     
+    // This function shows a couple of the MatchingEngine APIs
     func callMatchingEngineAPIs() {
         let registerClientRequest = matchingEngine.createRegisterClientRequest(
                                                 devName: devName,
                                                 appName: appName,
                                                 appVers: appVers,
                                                 carrierName: carrierName,
-                                                authToken: authToken)
-        matchingEngine.registerClient(host: self.dmeHost!, port: self.dmePort!, request: registerClientRequest)
+                                                authToken: authToken,
+                                                uniqueIDType: uniqueIDType,
+                                                uniqueID: uniqueID,
+                                                cellID: cellID,
+                                                tags: tags)
+        
+        matchingEngine.registerClient(request: registerClientRequest)
         .then { registerClientReply in
             SKToast.show(withMessage: "RegisterClientReply is \(registerClientReply)")
             print("RegisterClientReply is \(registerClientReply)")
@@ -100,14 +131,18 @@ class LoginViewController: UIViewController {
                                             gpsLocation: self.location!,
                                             devName: self.devName!,
                                             appName: self.appName!,
-                                            appVers: self.appVers!)
-            self.findCloudletPromise = self.matchingEngine.findCloudlet(host: self.dmeHost!, port: self.dmePort!, request: findCloudletRequest)
+                                            appVers: self.appVers!,
+                                            cellID: self.cellID,
+                                            tags: self.tags)
+            self.findCloudletPromise = self.matchingEngine.findCloudlet(request: findCloudletRequest)
               
             let verifyLocationRequest = self.matchingEngine.createVerifyLocationRequest(
                                             carrierName: self.carrierName!,
-                                            gpsLocation: self.location!)
+                                            gpsLocation: self.location!,
+                                            cellID: self.cellID,
+                                            tags: self.tags)
                 
-            self.verifyLocationPromise = self.matchingEngine.verifyLocation(host: self.dmeHost!, port: self.dmePort!, request: verifyLocationRequest)
+            self.verifyLocationPromise = self.matchingEngine.verifyLocation(request: verifyLocationRequest)
                 
             all([self.findCloudletPromise!, self.verifyLocationPromise!])
             .then { value in
@@ -115,19 +150,38 @@ class LoginViewController: UIViewController {
                 let findCloudletReply = value[0]
                 SKToast.show(withMessage: "FindCloudletReply is \(findCloudletReply)")
                 print("FindCloudletReply is \(findCloudletReply)")
-                self.host = findCloudletReply["fqdn"] as? String
-                // ports is mapped to an _NSSingleObjectArrayI with a map inside (can have multiple ports)
-                guard let arr = findCloudletReply["ports"] as? [[String: Any]] else {
-                    return
-                }
-                let ports = arr[0] as [String: Any]
-                self.port = ports["public_port"] as? UInt
                 
                 // Handle verifyLocation reply
                 let verifyLocationReply = value[1]
                 SKToast.show(withMessage: "VerifyLocationReply is \(verifyLocationReply)")
                 print("VerifyLocationReply is \(verifyLocationReply)")
             }
+        }
+    }
+    
+    // This function shows the GetConnection workflow
+    func getWebsocketConnection() {
+        let replyPromise = matchingEngine.registerAndFindCloudlet(devName: devName, appName: appName, appVers: appVers, carrierName: carrierName, authToken: authToken, gpsLocation: location!, uniqueIDType: uniqueIDType, uniqueID: uniqueID, cellID: cellID, tags: tags)
+            
+        .then { findCloudletReply -> Promise<SocketManager> in
+            // Get Dictionary: key -> internal port, value -> AppPort Dictionary
+            guard let appPortsDict = self.matchingEngine.getTCPAppPorts(findCloudletReply: findCloudletReply) else {
+                throw LoginViewControllerError.runtimeError("GetTCPPorts returned nil")
+            }
+            if appPortsDict.capacity == 0 {
+                throw LoginViewControllerError.runtimeError("No AppPorts in dictionary")
+            }
+            // Select AppPort Dictionary corresponding to internal port 3001
+            guard let appPort = appPortsDict[self.internalPort] else {
+                throw LoginViewControllerError.runtimeError("No app ports with specified internal port")
+            }
+            
+            return self.matchingEngine.getWebsocketConnection(findCloudletReply: findCloudletReply, appPort: appPort, desiredPort: Int(self.internalPort), timeout: 5000)
+            
+        }.then { manager in
+            self.manager = manager
+        }.catch { error in
+            print("Error is \(error.localizedDescription)")
         }
     }
     
@@ -154,22 +208,16 @@ class LoginViewController: UIViewController {
         userNameField.isEnabled = false
         gameIDField.isEnabled = false
         
-        if host == nil {
-            host = "rogers.dme.mobiledgex.net"
+        if self.manager == nil {
+            print("No websocket connection yet")
+            return
         }
-        if port == nil {
-            port = 1337
-        }
-        //port = 1337
-        let url = "wss://\(host!):\(String(port!))/"
-        let manager = SocketManager(socketURL: URL(string: url)!)
+        
         // Set variables for next GameViewController
         gameViewController.gameID = gameID
         gameViewController.userName = userName
         gameViewController.peers[userName!] = 0
-        gameViewController.host = host
-        gameViewController.port = port
-        gameViewController.manager = manager
+        gameViewController.manager = self.manager
         moveToGameViewController(gameViewController: gameViewController)
     }
 }
