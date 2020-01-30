@@ -49,6 +49,40 @@ def test_connection(request):
         return HttpResponse("Valid GET Request to server")
     return HttpResponseBadRequest("Please send response as a GET")
 
+@csrf_exempt
+def get_data(request):
+    """ Generate and send data to a client connection """
+    logger.info(prepend_ip("Request received: %s" %request, request))
+    if request.method == 'GET':
+        numbytes = request.GET.get("numbytes", "")
+        if numbytes == "":
+            return HttpResponseBadRequest("Missing 'numbytes' parameter")
+        return HttpResponse("Z"*int(numbytes))
+    return HttpResponseBadRequest("Please send response as a GET")
+
+@csrf_exempt
+def upload_data(request):
+    """
+    Receive data from a client connection. This is used for speed test purposes,
+    so the data isn't written anywhere or used in any way.
+    """
+    logger.info(prepend_ip("Request received: %s" %request, request))
+    if request.method == 'POST':
+        start = time.time()
+        # Doesn't do anything with posted data
+        content_length = int(request.headers['Content-Length']) # Gets the size of data
+        logger.info(prepend_ip("content_length=%s" %content_length, request))
+        # post_data = request.body.read(content_length) # Gets the data itself
+        post_data = request.read(content_length) # Gets the data itself
+        elapsed = float("%.3f" %((time.time() - start)*1000))
+        mbps = "%.3f" %((content_length*8)/(elapsed*1000))
+        ret = {"bytes_read": content_length, "elapsed_ms": elapsed, "mbps": mbps}
+        json_ret = json.dumps(ret)
+        logger.info(prepend_ip(json_ret, request))
+        return HttpResponse(json_ret)
+
+    return HttpResponseBadRequest("Please send response as a POST")
+
 def prepend_ip(text, request):
     return "[%s] %s" %(request.META.get('REMOTE_ADDR'), text)
 
@@ -255,7 +289,9 @@ def openpose_detect(request):
     if myOpenPose is None:
         error = "OpenPose not supported on this server"
         logger.error(prepend_ip("%s" %error, request))
-        return HttpResponse(error, status=501)
+        ret = {"success": "false", "error": error}
+        json_ret = json.dumps(ret)
+        return HttpResponse(json_ret, status=501)
 
     logger.debug(prepend_ip("Request received: %s" %request, request))
     if request.method != 'POST':

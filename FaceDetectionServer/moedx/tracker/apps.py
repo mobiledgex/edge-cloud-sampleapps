@@ -82,6 +82,8 @@ class TrackerConfig(AppConfig):
             except:
                 logger.error("Failed to start OpenPose wrapper")
                 logger.warn('/openpose/ web services calls will not be allowed.')
+                myOpenPose = None
+                myOpWrapper = None
 
         # Check for environment variables to override settings.
         try:
