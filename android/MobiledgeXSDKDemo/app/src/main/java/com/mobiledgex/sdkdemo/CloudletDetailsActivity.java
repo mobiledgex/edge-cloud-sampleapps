@@ -124,7 +124,6 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         });
 
         updateUi();
-
     }
 
     @Override
@@ -144,27 +143,15 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (id == R.id.action_copy_cloud_host) {
             String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
-            // Convert Demo app hostname to Face app hostname. Example:
-            // mobiledgexsdkdemo-tcp.mobiledgexsdkdemomobiledgexsdkdemo10.mexdemo-centralus-cloudlet.azure.mobiledgex.net
-            // becomes
-            // facedetectiondemo-tcp.mobiledgexsdkdemofacedetectiondemo10.mexdemo-centralus-cloudlet.azure.mobiledgex.net
-            // Change appName, but keep devName the same.
-            // TODO: Find the appInst for the face app and pull the FQDN directly from there instead converting here.
             String hostname = cloudlet.getHostName();
-            Log.i(TAG, "Cloud hostname before conversion: "+hostname);
-            hostname = hostname.replaceAll("mobiledgexsdkdemo-tcp", "facedetectiondemo-tcp");
-            hostname = hostname.replaceAll("mobiledgexsdkdemo10", "facedetectiondemo10");
-            Log.i(TAG, "Cloud hostname after conversion: "+hostname);
+            Log.i(TAG, "Cloud hostname being set to: "+hostname);
             prefs.edit().putString(prefKeyHostCloud, hostname).apply();
             return true;
         }
         if (id == R.id.action_copy_edge_host) {
             String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
             String hostname = cloudlet.getHostName();
-            Log.i(TAG, "Edge hostname before conversion: "+hostname);
-            hostname = hostname.replaceAll("mobiledgexsdkdemo-tcp", "facedetectiondemo-tcp");
-            hostname = hostname.replaceAll("mobiledgexsdkdemo10", "facedetectiondemo10");
-            Log.i(TAG, "Edge hostname after conversion: "+hostname);
+            Log.i(TAG, "Edge hostname being set to: "+hostname);
             prefs.edit().putString(prefKeyHostEdge, hostname).apply();
             return true;
         }
@@ -176,7 +163,6 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
             return true;
         }
         return super.onOptionsItemSelected(item);
-
     }
 
 

@@ -464,6 +464,7 @@ public class Cloudlet implements Serializable {
 
             speedTestUploadTaskRunning = true;
             speedTestUploadErrorMessage = "";
+            uploadMbps = BigDecimal.valueOf(0);
             SpeedTestSocket speedTestSocket = new SpeedTestSocket();
 
             // add a listener to wait for speedtest completion and progress
@@ -498,8 +499,12 @@ public class Cloudlet implements Serializable {
                 public void onProgress(final float percent, final SpeedTestReport report) {
                     // called to notify upload progress
                     Log.v(TAG, "[UPLOAD PROGRESS] "+percent + "% - rate in bit/s   : " + report.getTransferRateBit());
-                    BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
-                    uploadMbps = report.getTransferRateBit().divide(divisor);
+                    // When first started, the upload value may spike to an unrealistic value.
+                    // Don't show anything until it's had time to settle.
+                    if (percent > 25) {
+                        BigDecimal divisor = new BigDecimal(BITS_TO_MBITS);
+                        uploadMbps = report.getTransferRateBit().divide(divisor);
+                    }
                     mSpeedTestUploadProgress = (int) percent;
                     if(mSpeedTestResultsInterface != null) {
                         mSpeedTestResultsInterface.onSpeedtestUploadProgress();
