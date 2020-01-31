@@ -11,8 +11,8 @@ endif
 default: docker-build docker-push
 
 docker-build:
-	docker build -t mobiledgex/facedetection:${TAG} -f $(DOCKERFILE) .
+	docker build -t mobiledgex/mobiledgexsdkdemo20:${TAG} -f $(DOCKERFILE) .
 
 docker-push:
-	docker tag mobiledgex/facedetection:${TAG} docker.mobiledgex.net/mobiledgex/images/facedetection:${TAG}
-	docker push docker.mobiledgex.net/mobiledgex/images/facedetection:${TAG}
+	docker tag mobiledgex/mobiledgexsdkdemo20:${TAG} docker.mobiledgex.net/mobiledgex/images/mobiledgexsdkdemo20:${TAG}
+	docker push docker.mobiledgex.net/mobiledgex/images/mobiledgexsdkdemo20:${TAG}

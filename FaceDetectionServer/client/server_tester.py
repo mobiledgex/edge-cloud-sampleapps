@@ -58,7 +58,7 @@ class RequestClient(object):
         return requests.post(url, data=data)
 
     def get_server_stats(self, host):
-        url = self.BASE_URL %host + "/server/usage"
+        url = self.BASE_URL %host + "/server/usage/"
         print(requests.get(url).content)
 
     def time_open_socket(self, host, port):
