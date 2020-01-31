@@ -72,7 +72,6 @@ def upload_data(request):
         # Doesn't do anything with posted data
         content_length = int(request.headers['Content-Length']) # Gets the size of data
         logger.info(prepend_ip("content_length=%s" %content_length, request))
-        # post_data = request.body.read(content_length) # Gets the data itself
         post_data = request.read(content_length) # Gets the data itself
         elapsed = float("%.3f" %((time.time() - start)*1000))
         mbps = "%.3f" %((content_length*8)/(elapsed*1000))
