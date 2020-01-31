@@ -9,6 +9,7 @@
     - Find Closest Cloudlet
 - Cloudlet Latency Test
 - Cloudlet Download Speed Test
+- Cloudlet Upload Speed Test
 - GPS Spoofing Demo (see below)
 - Face Detection
 - Face Recognition
@@ -21,7 +22,7 @@ The app's startup page is a world map showing MobiledgeX cloudlets where the app
 Tap on any of the cloudlets, and a panel with the cloudlet's name will appear. On that panel, you can "click for details" to see cloudlet information like latitude, longitude, and distance from your location.
 
 #### Cloudlet Details
-In addition to showing the details of the cloudlet, this page allows the initiation of a latency test or a download speed test. The settings of this page allow control of certain conditions, such as the number of packets for the latency test, or the size of the download. Click the "Gear" icon to access these settings.
+In addition to showing the details of the cloudlet, this page allows the initiation of a latency test or download/upload speed tests. The settings of this page allow control of certain conditions, such as the number of packets for the latency test, or the size of the download. Click the "Gear" icon to access these settings.
 
 You can also choose this cloudlet to be used as the **Edge** server for Face Detection and Face Recognition. Tap the 3-dot menu and select "Use as Face Recognition Edge Host". The **Cloud** server can be configured in the same way.
 

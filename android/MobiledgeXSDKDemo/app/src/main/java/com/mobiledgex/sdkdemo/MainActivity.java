@@ -830,10 +830,7 @@ public class MainActivity extends AppCompatActivity
                             .color(COLOR_VERIFIED));
                     //Save the hostname for use by Face Detection Activity.
                     mClosestCloudletHostname = cloudlet.getHostName();
-                    Log.i(TAG, "mClosestCloudletHostname before conversion: "+mClosestCloudletHostname);
-                    mClosestCloudletHostname = mClosestCloudletHostname.replaceAll("mobiledgexsdkdemo-tcp", "facedetectiondemo-tcp");
-                    mClosestCloudletHostname = mClosestCloudletHostname.replaceAll("mobiledgexsdkdemo10", "facedetectiondemo10");
-                    Log.i(TAG, "mClosestCloudletHostname after conversion: "+mClosestCloudletHostname);
+                    Log.i(TAG, "mClosestCloudletHostname: "+mClosestCloudletHostname);
                 }
             }
         });
@@ -886,18 +883,22 @@ public class MainActivity extends AppCompatActivity
                     String uri = appInstances.get(0).getFqdn();
                     String appName = appInstances.get(0).getAppName();
                     String FQDNPrefix = "";
-                    int publicPort = 7777;
+                    int publicPort = 0;
                     List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
                     String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
                     for (Appcommon.AppPort aPort : ports) {
                         FQDNPrefix = aPort.getFqdnPrefix();
-                        publicPort = aPort.getPublicPort();
                         Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                                     aPort.getProto().getNumber(),
                                     aPort.getFqdnPrefix(),
                                     aPort.getInternalPort(),
                                     aPort.getPublicPort(),
                                     aPort.getPathPrefix()));
+                        // Only choose the first port
+                        if (publicPort == 0) {
+                            publicPort = aPort.getPublicPort();
+                            Log.i(TAG, "Using publicPort="+publicPort);
+                        }
                     }
                     double distance = cloudletLocation.getDistance();
                     LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());
