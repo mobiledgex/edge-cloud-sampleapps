@@ -54,6 +54,8 @@ public class LocationService : MonoBehaviour
 
   public static async Task<LocationInfo> UpdateLocation()
   {
+    // Main thread check, so, submit to main thread.
+
     // First, check if user has location service enabled
     if (!Input.location.isEnabledByUser)
     {
