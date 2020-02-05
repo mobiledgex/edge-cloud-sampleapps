@@ -58,7 +58,7 @@ public class MobiledgeXIntegration
   public uint dmePort { get; set; } = MatchingEngine.defaultDmeRestPort;
 
   // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
-  public bool useDemo { get; set; } = false;
+  public bool useDemo { get; set; } = true;
 
   public MobiledgeXIntegration()
   {
@@ -243,7 +243,7 @@ public class MobiledgeXIntegration
   }
 
   // Typical developer workflow to get connection to application backend
-  public async Task<ClientWebSocket> GetWebsocketConnection()
+  public async Task<ClientWebSocket> GetWebsocketConnection(string path)
   {
     Loc loc = await GetLocationFromDevice();
 
@@ -272,11 +272,9 @@ public class MobiledgeXIntegration
     {
       findCloudletReply = await me.RegisterAndFindCloudlet(dmeHost, dmePort, eCarrierName, devName, appName, appVers, developerAuthToken, loc, cellID, uniqueIDType, uniqueID, tags);
     }
-
     Dictionary<int, AppPort> appPortsDict = me.GetTCPAppPorts(findCloudletReply);
     int public_port = findCloudletReply.ports[0].public_port; // We happen to know it's the first one.
     AppPort appPort = appPortsDict[public_port];
-
-    return await me.GetWebsocketConnection(findCloudletReply, appPort, public_port, 5000);
+    return await me.GetWebsocketConnection(findCloudletReply, appPort, public_port, path, 5000);
   }
 }
