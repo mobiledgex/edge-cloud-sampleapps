@@ -227,7 +227,6 @@ namespace MobiledgeXPingPongGame {
         return;
       }
 
-      integration.netTest.runTest = true;
       stopWatch.Start();
       // If Ping is running, print:
       if (integration.netTest.runTest)
@@ -399,13 +398,15 @@ namespace MobiledgeXPingPongGame {
               {
                 site.host = host;
               }
-              port = site.port;
               l7Path = site.L7Path;
-              site.host = "mextest-app-cluster.frankfurt-main.tdg.mobiledgex.net";
               integration.netTest.sites.Enqueue(site);
             }
           }
           integration.netTest.doTest(true);
+
+          // We happen to know it's the first port for this App:
+          host = reply.ports[0].fqdn_prefix + reply.fqdn;
+          port = reply.ports[0].public_port;
         }
       }
 
