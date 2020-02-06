@@ -132,6 +132,12 @@ namespace MobiledgeXPingPongGame
       }
       return mccmnc;
     }
+
+    public uint GetCellID()
+    {
+      Debug.Log("GetCellID is NOT IMPLEMENTED");
+      return 0;
+    }
 #elif UNITY_IOS
     // Sets iOS platform specific internal callbacks (reference counted objects), etc.
     [DllImport("__Internal")]
@@ -162,6 +168,12 @@ namespace MobiledgeXPingPongGame
       }
       return mccmnc;
     }
+
+    public uint GetCellID()
+    {
+      Debug.Log("GetCellID is NOT IMPLEMENTED");
+      return 0;
+    }
 #else
     public string GetCurrentCarrierName()
     {
@@ -173,6 +185,12 @@ namespace MobiledgeXPingPongGame
     {
       Debug.Log("GetMccMnc is NOT IMPLEMENTED");
       return null;
+    }
+
+    public uint GetCellID()
+    {
+      Debug.Log("GetCellID is NOT IMPLEMENTED");
+      return 0;
     }
 #endif
   }
