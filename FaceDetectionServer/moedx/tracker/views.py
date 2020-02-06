@@ -135,13 +135,23 @@ def detector_detect(request):
             return HttpResponseBadRequest("No image data")
         image = request.body
         save_debug_image(image, request)
+    elif request.content_type == "multipart/form-data":
+        # Image data is expected as if it came from a form with <input type="file" name="image">
+        if not "image" in request.FILES.keys():
+            return HttpResponseBadRequest("Image file must be uploaded with key of 'image'")
+        uploaded_file = request.FILES["image"]
+        logger.info("Uploaded file type=%s size=%d" %(uploaded_file.content_type, uploaded_file.size))
+        if uploaded_file.content_type != "image/png" and uploaded_file.content_type != "image/jpeg":
+            return HttpResponseBadRequest("Uploaded file Content-Type must be 'image/png', 'image/jpeg'")
+        image = uploaded_file.read()
+        save_debug_image(image, request)
     elif request.content_type == "application/x-www-form-urlencoded":
         if request.POST.get("image", "") == "":
             return HttpResponseBadRequest("Missing 'image' parameter")
         image = base64.b64decode(request.POST.get("image"))
         save_debug_image(image, request)
     else:
-        return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', or 'application/x-www-urlencoded'")
+        return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'")
 
     logger.debug(prepend_ip("Performing detection process", request))
     start = time.time()
