@@ -275,6 +275,6 @@ public class MobiledgeXIntegration
     Dictionary<int, AppPort> appPortsDict = me.GetTCPAppPorts(findCloudletReply);
     int public_port = findCloudletReply.ports[0].public_port; // We happen to know it's the first one.
     AppPort appPort = appPortsDict[public_port];
-    return await me.GetWebsocketConnection(findCloudletReply, appPort, public_port, path, 5000);
+    return await me.GetWebsocketConnection(findCloudletReply, appPort, public_port, 5000, path);
   }
 }
