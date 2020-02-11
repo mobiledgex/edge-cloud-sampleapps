@@ -54,6 +54,8 @@ namespace MobiledgeXPingPongGame
     Thread sendThread { get; set; }
     private bool run = true;
 
+    MobiledgeXIntegration integration = new MobiledgeXIntegration();
+
     // TODO: CancellationToken for Tasks to handle OnApplicationFocus, OnApplicationPause.
     public WsClient()
     {
@@ -81,6 +83,13 @@ namespace MobiledgeXPingPongGame
     public bool isOpen()
     {
       return ws.State == WebSocketState.Open;
+    }
+
+    public async Task Connect(string path)
+    {
+      ws = await integration.GetWebsocketConnection(path);
+      run = true;
+      Debug.Log("websocket state is " + ws.State);
     }
 
     public async Task Connect(Uri uri)
