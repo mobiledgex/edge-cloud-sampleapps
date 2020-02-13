@@ -564,7 +564,7 @@ public class MainActivity extends AppCompatActivity
         }
         // Ensures that user can switch from wifi to cellular network data connection (required to verifyLocation)
         matchingEngine = new MatchingEngine(ctx);
-        matchingEngine.setNetworkSwitchingEnabled(true);  //false-> wifi (Use wifi for demo)
+        matchingEngine.setNetworkSwitchingEnabled(false);  //false-> wifi (Use wifi for demo)
     }
 
     public class RegisterClientAndFindCloudletBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
