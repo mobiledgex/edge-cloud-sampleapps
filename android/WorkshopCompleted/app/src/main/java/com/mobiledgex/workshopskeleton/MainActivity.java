@@ -288,7 +288,7 @@ public class MainActivity extends AppCompatActivity
         host = matchingEngine.generateDmeHostAddress();
         if(host == null) {
             Log.e(TAG, "Could not generate host");
-            host = "sdkdemo.dme.mobiledgex.net";   //fallback host
+            host = "wifi.dme.mobiledgex.net";   //fallback host
         }
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest;
