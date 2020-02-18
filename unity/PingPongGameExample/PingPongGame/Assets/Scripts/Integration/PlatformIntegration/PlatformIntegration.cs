@@ -49,13 +49,7 @@ namespace MobiledgeXPingPongGame
       // Editor or Player network management (overrides target device platform):
       switch (Application.platform)
       {
-        case RuntimePlatform.OSXPlayer:
-          NetworkInterfaceName = new MacNetworkInterfaceName();
-          CarrierInfo = new TestCarrierInfoClass();
-          NetInterface = new SimpleNetInterface(NetworkInterfaceName);
-          UniqueID = new TestUniqueIDClass();
-          break;
-        case RuntimePlatform.OSXEditor:
+        case RuntimePlatform.OSXPlayer: case RuntimePlatform.OSXEditor:
           NetworkInterfaceName = new MacNetworkInterfaceName();
           CarrierInfo = new TestCarrierInfoClass();
           NetInterface = new SimpleNetInterface(NetworkInterfaceName);
