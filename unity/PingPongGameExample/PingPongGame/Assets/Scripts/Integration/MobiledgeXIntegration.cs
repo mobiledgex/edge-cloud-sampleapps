@@ -64,8 +64,6 @@ public class MobiledgeXIntegration
   {
     // Set the platform specific way to get SIM carrier information.
     pIntegration = new PlatformIntegration();
-    Debug.Log("cellid is " + pIntegration.CarrierInfo.GetCellID());
-    Debug.Log("unique id is " + pIntegration.UniqueID.GetUniqueID());
 
     // The following is to allow Get{TCP, TLS, UDP}Connection APIs to return the configured
     // edge network path to your MobiledgeX AppInsts. Other connections will use the system
