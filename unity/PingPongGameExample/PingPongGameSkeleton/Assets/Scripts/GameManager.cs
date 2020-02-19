@@ -29,6 +29,12 @@ using System.Threading.Tasks;
 using System.Net.Http;
 
 using DistributedMatchEngine;
+using DistributedMatchEngine.PerformanceMetrics;
+using System.Diagnostics;
+using System.Threading;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 namespace MobiledgeXPingPongGame {
 
@@ -77,11 +83,12 @@ namespace MobiledgeXPingPongGame {
      * MobiledgeX Integration: thin example encapsulation outside Pong for ease
      * of viewing.
      */
-    MobiledgeXIntegration integration = new MobiledgeXIntegration();
+    MobiledgeXIntegration integration;
 
     string host = "localhost";
-    string serverHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
+    string altServerHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
     int port = 3000;
+    string l7Path;
     string server = "";
     string queryParams = "";
     string edgeCloudletStr = "";
@@ -89,7 +96,7 @@ namespace MobiledgeXPingPongGame {
     bool isPaused = false;
 
     bool useAltServer = false;
-    NetTest netTest = new NetTest();
+    Stopwatch stopWatch = new Stopwatch();
 
     GameObject uiG;
     public Text uiConsole;
@@ -101,13 +108,14 @@ namespace MobiledgeXPingPongGame {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
+      integration = new MobiledgeXIntegration();
       integration.useDemo = true;
-      integration.dmeHost = "sdkdemo." + MatchingEngine.baseDmeHost;
+      integration.dmeHost = integration.me.GenerateDmeHostName();
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
       {
-        host = serverHost;
+        host = altServerHost;
       }
 
       server = "ws://" + host + ":" + port;
@@ -133,10 +141,12 @@ namespace MobiledgeXPingPongGame {
         // Register and find cloudlet:
         uiConsole.text = "Registering to DME: ";
         edgeCloudletStr = await RegisterAndFindCloudlet();
+        stopWatch.Start();
 
         clog("Found Cloudlet from DME result: [" + edgeCloudletStr + "]");
 
-        // This might be inside the update loop. Re-register client and check periodically.
+        // This might be inside a thread update loop. Re-register client and check periodically.
+        // VerifyLocation will fail if verification is unavailable at the carrier.
         bool verifiedLocation = await integration.VerifyLocation();
 
         // Decide what to do with location status.
@@ -152,6 +162,10 @@ namespace MobiledgeXPingPongGame {
         // This app should fallback to public cloud, as the DME doesn't exist for your
         // SIM card + carrier.
         clog("Cannot register to DME host: " + de.Message + ", Stack: " + de.StackTrace);
+        if (de.InnerException != null)
+        {
+          clog("Original Exception: " + de.InnerException.Message);
+        }
         // Handle fallback to public cloud application server.
       }
       catch (HttpRequestException httpre)
@@ -167,33 +181,35 @@ namespace MobiledgeXPingPongGame {
     // This method is called when the user has finished editing the Room ID InputField.
     async void ConnectToServerWithRoomId(string roomId)
     {
-      if(roomId == "")
+      Uri edgeCloudletUri;
+
+      if (roomId == "")
       {
         clog("You must enter a room ID. Please try again.");
         return;
       }
-      Uri edgeCloudletUri = null;
-      clog("Connecting to WebSocket Server with roomId="+roomId+"...");
-      clog("useAltServer=" + useAltServer + " host="+host+" edgeCloudletStr="+edgeCloudletStr);
-      queryParams = "?roomid="+roomId;
+
+      clog("Connecting to WebSocket Server with roomId=" + roomId + "...");
+      clog("useAltServer=" + useAltServer + " host=" + host + " edgeCloudletStr=" + edgeCloudletStr);
+      queryParams = "?roomid=" + roomId;
+
+      if (client.isOpen())
+      {
+        client.Dispose();
+        client = new WsClient();
+      }
+
       if (useAltServer)
       {
         server = "ws://" + host + ":" + port;
         edgeCloudletUri = new Uri(server + queryParams);
         await client.Connect(edgeCloudletUri);
-        netTest.sites.Enqueue(new NetTest.HostAndPort{host=host, port=port});
       }
       else
       {
-        if(edgeCloudletStr == "")
-        {
-          clog("No edgeCloudletUri received yet. Please try again.");
-          return;
-        }
-        edgeCloudletUri = new Uri("ws://" + edgeCloudletStr + queryParams);
-        await client.Connect(edgeCloudletUri);
+        await client.Connect(queryParams);
       }
-      clog("Connection to " + edgeCloudletUri + " status: " + client.isOpen());
+      clog("Connection to status: " + client.isOpen());
     }
 
     void Update()
@@ -203,18 +219,39 @@ namespace MobiledgeXPingPongGame {
       {
         return;
       }
+
+      stopWatch.Start();
+      // If Ping is running, print:
+      if (integration.netTest.runTest)
+      {
+        long elapsed = (long)stopWatch.Elapsed.TotalMilliseconds;
+        if (elapsed > integration.netTest.TestTimeoutMS)
+        {
+          stopWatch.Reset();
+          foreach(NetTest.Site s in integration.netTest.sites)
+          {
+            clog("Round trip to host: " + s.host + ", port: " + s.port + ", l7Path: " + s.L7Path +
+              ", average: " + s.average + ", stddev: " + s.stddev);
+            for(int i = 0; i < s.samples.Length; i++)
+            {
+              clog("Samples: " + s.samples[i]);
+            }
+          }
+        }
+      }
+
       var cqueue = client.receiveQueue;
       string msg;
       while (cqueue.TryPeek(out msg))
       {
         cqueue.TryDequeue(out msg);
-        //Debug.Log("Dequeued this message: " + msg);
+        //clog("Dequeued this message: " + msg);
         HandleMessage(msg);
       }
 
       if (gameSession.status == STATUS.JOINED)
       {
-        //theBall.SendMessage("GoBall", null, SendMessageOptions.RequireReceiver);
+        // theBall.SendMessage("GoBall", null, SendMessageOptions.RequireReceiver);
       }
 
       if (gameSession.status == STATUS.INGAME)
@@ -223,13 +260,12 @@ namespace MobiledgeXPingPongGame {
         UpdateBall();
         UpdatePlayer();
       }
-
     }
 
     void clog(string msg)
     {
       uiConsole.text = msg;
-      Debug.Log(msg);
+      UnityEngine.Debug.Log(msg);
     }
 
     // TODO: Should manage the thread runnables.
@@ -237,7 +273,17 @@ namespace MobiledgeXPingPongGame {
     {
       if (client != null)
       {
-        netTest.doPing(focus);
+        try
+        {
+          if (integration != null && integration.netTest != null)
+          {
+            integration.netTest.doTest(focus);
+            clog("NetTest focused run status: " + integration.netTest.runTest);
+          }
+        } catch (Exception e)
+        {
+          clog("Exception hit: " + e.Message);
+        }
       }
     }
     // TODO: Should manage the thread runnables.
@@ -246,17 +292,21 @@ namespace MobiledgeXPingPongGame {
       isPaused = pauseStatus;
       if (client != null)
       {
-        netTest.doPing(!isPaused);
+        if (integration != null && integration.netTest != null)
+        {
+          integration.netTest.doTest(!isPaused);
+          clog("NetTest pauseStatus: " + integration.netTest.runTest);
+        }
       }
-
     }
 
     // Start() is a time to do this, but can change if the device moves to a new location.
-    async Task<string> RegisterAndFindCloudlet()
+    // The return string is just an example. Your server protocol and connection strings
+    // will determine the correct connection parameters.
+    async Task<String> RegisterAndFindCloudlet()
     {
       // For Demo App purposes, it's the TCP app port. Your app may point somewhere else:
-      string tcpAppPort = "";
-      NetTest.HostAndPort hostAndPort = null;
+      NetTest.Site site;
 
       string aCarrierName = integration.GetCarrierName();
       clog("aCarrierName: " + aCarrierName);
@@ -266,7 +316,12 @@ namespace MobiledgeXPingPongGame {
       bool registered = false;
       registered = await integration.Register();
 
-      if (registered)
+      if (!registered)
+      {
+        clog("Exceptions, or app not found. Not Registered!");
+        return null;
+      }
+      else
       {
         FindCloudletReply reply;
         clog("Finding Cloudlet...");
@@ -306,7 +361,7 @@ namespace MobiledgeXPingPongGame {
           // Where is the URI for this app specific edge enabled cloud server:
           clog("fqdn: " + reply.fqdn);
           // AppPorts?
-          Debug.Log("On ports: ");
+          clog("On ports: ");
 
           foreach (AppPort ap in reply.ports)
           {
@@ -317,25 +372,39 @@ namespace MobiledgeXPingPongGame {
             // We're looking for one of the TCP app ports:
             if (ap.proto == LProto.L_PROTO_TCP)
             {
-              tcpAppPort = reply.fqdn + ":" + ap.public_port;
-              // FQDN prefix to append to base FQDN in FindCloudlet response. May be empty.
-              if (ap.fqdn_prefix != "")
-              {
-                tcpAppPort = ap.fqdn_prefix + tcpAppPort;
-              }
-
               // Add to test targets.
-              hostAndPort = new NetTest.HostAndPort {  host = ap.fqdn_prefix + reply.fqdn, port = ap.public_port };
-              netTest.sites.Enqueue(hostAndPort);
+              if (ap.path_prefix == "")
+              {
+                site = new NetTest.Site {
+                  host = ap.fqdn_prefix + reply.fqdn,
+                  port = ap.public_port };
+                site.testType = NetTest.TestType.CONNECT;
+              }
+              else
+              {
+                site = new NetTest.Site {
+                  L7Path = ap.fqdn_prefix + reply.fqdn + ":" + ap.public_port + ap.path_prefix
+                };
+                site.testType = NetTest.TestType.CONNECT;
+              }
+              if (useAltServer)
+              {
+                site.host = host;
+              }
+              l7Path = site.L7Path;
+              integration.netTest.sites.Enqueue(site);
             }
-
           }
+          integration.netTest.doTest(true);
 
+          // We happen to know it's the first port for this App:
+          host = reply.ports[0].fqdn_prefix + reply.fqdn;
+          port = reply.ports[0].public_port;
         }
-        clog("FindCloudlet found: [" + tcpAppPort + "]");
       }
 
-      return tcpAppPort;
+      // The WebSocket URI:
+      return host + ":" + port;
     }
 
     public void Score(string wallID)
@@ -536,7 +605,7 @@ namespace MobiledgeXPingPongGame {
           break;
 
         default:
-          Debug.Log("Unknown message arrived: " + msg.type + ", message: " + message);
+          clog("Unknown message arrived: " + msg.type + ", message: " + message);
           break;
       }
 
@@ -553,7 +622,7 @@ namespace MobiledgeXPingPongGame {
 
     bool UpdatePosition(MoveEvent moveItem)
     {
-      //Debug.Log("moveItem: " + moveItem.uuid);
+      //clog("moveItem: " + moveItem.uuid);
       var gs = gameSession.currentGs;
 
       if (moveItem.sequence < gameSession.currentGs.sequence)
@@ -730,7 +799,7 @@ namespace MobiledgeXPingPongGame {
       gameState.source = "client";
 
       string jsonStr = Messaging<GameState>.Serialize(gameState);
-      Debug.Log("UpdateServer: " + jsonStr);
+      clog("UpdateServer: " + jsonStr);
       MessageWrapper wrapped = MessageWrapper.WrapTextMessage(jsonStr);
       client.Send(Messaging<MessageWrapper>.Serialize(wrapped));
 
@@ -900,7 +969,7 @@ namespace MobiledgeXPingPongGame {
         }
       }
 
-      Debug.Log("Left sel: " + left.transform.position.x + "Right other: " + right.transform.position.x);
+      clog("Left sel: " + left.transform.position.x + "Right other: " + right.transform.position.x);
 
       if (gameSession.side == 0)
       {
@@ -988,9 +1057,5 @@ namespace MobiledgeXPingPongGame {
 
       return false;
     }
-
-
-
   }
-
 }
