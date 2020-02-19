@@ -359,4 +359,24 @@ namespace MobiledgeXPingPongGame
 
 #endif
   }
+
+  // Used for testing in UnityEditor (any target platform)
+  public class TestCarrierInfoClass : CarrierInfo
+  {
+    // Implement CarrierInfo
+    public string GetCurrentCarrierName()
+    {
+      return "wifi";
+    }
+
+    public string GetMccMnc()
+    {
+      return "26201";
+    }
+
+    public uint GetCellID()
+    {
+      return 0;
+    }
+  }
 }

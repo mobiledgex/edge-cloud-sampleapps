@@ -42,22 +42,25 @@ namespace MobiledgeXPingPongGame
 #if UNITY_ANDROID
       NetworkInterfaceName = new AndroidNetworkInterfaceName();
 #elif UNITY_IOS
-      NetworkInterfaceName networkInterfaceName = new IOSNetworkInterfaceName();
+      NetworkInterfaceName = new IOSNetworkInterfaceName();
 #else
       Debug.Log("Unknown or unsupported platform. Please create WiFi and Cellular interface name Object for your platform");
 #endif
       // Editor or Player network management (overrides target device platform):
       switch (Application.platform)
       {
-        case RuntimePlatform.OSXPlayer:
-        case RuntimePlatform.OSXEditor:
+        case RuntimePlatform.OSXPlayer: case RuntimePlatform.OSXEditor:
           NetworkInterfaceName = new MacNetworkInterfaceName();
+          CarrierInfo = new TestCarrierInfoClass();
+          NetInterface = new SimpleNetInterface(NetworkInterfaceName);
+          UniqueID = new TestUniqueIDClass();
+          break;
+        default:
+          CarrierInfo = new CarrierInfoClass();
+          NetInterface = new NetInterfaceClass(NetworkInterfaceName);
+          UniqueID = new UniqueIDClass();
           break;
       }
-
-      CarrierInfo = new CarrierInfoClass();
-      NetInterface = new NetInterfaceClass(NetworkInterfaceName);
-      UniqueID = new UniqueIDClass();
     }
   }
 }

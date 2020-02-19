@@ -19,10 +19,11 @@ using System;
 using UnityEngine;
 // We need this one for importing our IOS functions
 using System.Runtime.InteropServices;
+using DistributedMatchEngine;
 
 namespace MobiledgeXPingPongGame
 {
-  public class UniqueIDClass : DistributedMatchEngine.UniqueID
+  public class UniqueIDClass : UniqueID
   {
 
 #if UNITY_ANDROID
@@ -118,5 +119,18 @@ namespace MobiledgeXPingPongGame
       return null;
     }
 #endif
+  }
+
+  // Used for testing in UnityEditor (any target platform)
+  public class TestUniqueIDClass : UniqueID
+  {
+    public string GetUniqueIDType()
+    {
+      return "";
+    }
+    public string GetUniqueID()
+    {
+      return "";
+    }
   }
 }
