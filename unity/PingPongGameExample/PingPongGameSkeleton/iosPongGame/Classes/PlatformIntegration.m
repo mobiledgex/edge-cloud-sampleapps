@@ -22,6 +22,12 @@
 #import <Foundation/Foundation.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
 #import <CoreTelephony/CTCarrier.h>
+#import <UIKit/UIKit.h>
+
+#import <ifaddrs.h>
+#import <sys/socket.h>
+#import <netdb.h>
+#import <sys/types.h>
 
 // The subscriber callback is set, and notifies new subscriber info.
 // Simple state object.
@@ -133,4 +139,109 @@ char* _getMccMnc(NSString* name)
 
     NSLog(@"Mobile Country Code and Mobile Network Code: %@", mccmnc);
     return convertToCStr([mccmnc UTF8String]);
+}
+
+// Gets the local IP address with specified network interface
+// TODO: SUPPORT IPV6 (also in iOS)
+char* _getIPAddress(char* netInterfaceType)
+{
+    _ensureMatchingEnginePlatformIntegration();
+    char* ipAddress = (char*)malloc(sizeof(char)*INET6_ADDRSTRLEN);
+    struct ifaddrs* interfaces = malloc(sizeof(struct ifaddrs));
+    
+    if (getifaddrs(&interfaces) == -1)
+    {
+        return "";
+    }
+    struct ifaddrs* runner = interfaces;
+    while (runner != NULL)
+    {
+        char* name = runner->ifa_name;
+        if (strcmp(name, netInterfaceType) == 0)
+        {
+            struct sockaddr* sockaddr = runner->ifa_addr;
+            char address[INET_ADDRSTRLEN]; // max: length of ipv4 address
+            if (sockaddr->sa_family == AF_INET && getnameinfo(sockaddr, sockaddr->sa_len, address, sizeof(address), NULL, 0, NI_NUMERICHOST) == 0)
+            {
+                strcpy(ipAddress, address);
+                break;
+            }
+        }
+        runner = runner->ifa_next;
+    }
+    freeifaddrs(interfaces);
+    return ipAddress;
+}
+
+bool _isWifi()
+{
+    struct ifaddrs* interfaces = NULL;
+    
+    if (getifaddrs(&interfaces) == -1)
+    {
+        return false;
+    }
+    
+    struct ifaddrs* runner = interfaces;
+    
+    while (runner != NULL)
+    {
+        sa_family_t family = runner->ifa_addr->sa_family;
+        if (family == AF_INET)
+        {
+            char* name = runner->ifa_name;
+            NSString* interfaceName = [NSString stringWithFormat:@"%s", name];
+            if ([interfaceName isEqualToString:@"en0"])
+            {
+                return true;
+            }
+        }
+        runner = runner->ifa_next;
+    }
+    return false;
+}
+
+bool _isCellular()
+{
+    struct ifaddrs* interfaces = NULL;
+    
+    if (getifaddrs(&interfaces) == -1)
+    {
+        return false;
+    }
+    
+    struct ifaddrs* runner = interfaces;
+    
+    while (runner != NULL)
+    {
+        sa_family_t family = runner->ifa_addr->sa_family;
+        if (family == AF_INET)
+        {
+            char* name = runner->ifa_name;
+            NSString* interfaceName = [NSString stringWithFormat:@"%s", name];
+            if ([interfaceName isEqualToString:@"pdp_ip0"])
+            {
+                return true;
+            }
+        }
+        runner = runner->ifa_next;
+    }
+    return false;
+}
+
+unsigned int _getCellID()
+{
+    return 0;
+}
+
+char* _getUniqueID()
+{
+    UIDevice* device = UIDevice.currentDevice;
+    NSUUID *uuid = device.identifierForVendor;
+    return convertToCStr([uuid.UUIDString UTF8String]);
+}
+
+char* _getUniqueIDType()
+{
+    return "";
 }
