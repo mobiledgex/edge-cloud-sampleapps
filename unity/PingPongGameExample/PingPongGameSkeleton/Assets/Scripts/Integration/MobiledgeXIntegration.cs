@@ -23,6 +23,8 @@ using MobiledgeXPingPongGame;
 using DistributedMatchEngine;
 
 using System.Threading.Tasks;
+using DistributedMatchEngine.PerformanceMetrics;
+using System.Net.WebSockets;
 
 /*
  * MobiledgeX MatchingEngine SDK integration has an additional application side
@@ -35,35 +37,49 @@ using System.Threading.Tasks;
 public class MobiledgeXIntegration
 {
   PlatformIntegration pIntegration;
-  MatchingEngine me;
+  public MatchingEngine me;
+  public NetTest netTest;
 
   /*
    * These are "carrier independent" settings for demo use:
    */
-  public string carrierName { get; set; } = "TDG"; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
+  public string carrierName { get; set; } = MatchingEngine.wifiCarrier; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string devName { get; set; } = "MobiledgeX"; // Your developer name.
-  public string appName { get; set; } = "Pong"; // Your appName, if you have created this in the MobiledgeX console.
-  public string appVers { get; set; } = "1.0";
+  public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
+  public string appVers { get; set; } = "2020-02-03"; // Your app version uploaded to the docker registry.
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
+  public uint cellID { get; set; } = 0;
+  public string uniqueIDType { get; set; } = "";
+  public string uniqueID { get; set; } = "";
+  public Tag[] tags { get; set; } = new Tag[0];
 
-  public string dmeHost { get; set; } = MatchingEngine.fallbackDmeHost;
+  // Override if there is a sdk demo DME host to use.
+  public string dmeHost { get; set; } = MatchingEngine.wifiOnlyDmeHost;
   public uint dmePort { get; set; } = MatchingEngine.defaultDmeRestPort;
 
   // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
-  public bool useDemo { get; set; } = false;
+  public bool useDemo { get; set; } = true;
 
   public MobiledgeXIntegration()
   {
-    pIntegration = new PlatformIntegration();
-    me = new MatchingEngine();
-
     // Set the platform specific way to get SIM carrier information.
-    me.carrierInfo = pIntegration;
+    pIntegration = new PlatformIntegration();
+
+    // The following is to allow Get{TCP, TLS, UDP}Connection APIs to return the configured
+    // edge network path to your MobiledgeX AppInsts. Other connections will use the system
+    // default network route. (SimpleNetInterface is used for MacOS and Linux)
+    NetInterface netInterface = new SimpleNetInterface(pIntegration.NetworkInterfaceName);
+
+    // Platform integration needs to initialize first:
+    me = new MatchingEngine(pIntegration.CarrierInfo, pIntegration.NetInterface, pIntegration.UniqueID);
+
+    // Optional NetTesting.
+    netTest = new NetTest(me);
   }
 
   public string GetCarrierName()
   {
-    return me.carrierInfo.GetCurrentCarrierName();
+    return me.carrierInfo.GetMccMnc();
   }
 
   public async Task<Loc> GetLocationFromDevice()
@@ -83,7 +99,7 @@ public class MobiledgeXIntegration
   }
 
   // These are just thin wrappers over the SDK to show how to use them:
-  // Call once, or when the carrier changes:
+  // Call once, or when the carrier changes. May throw DistributedMatchEngine.HttpException.
   public async Task<bool> Register()
   {
     Debug.Log("Register is NOT IMPLEMENTED");
@@ -102,5 +118,12 @@ public class MobiledgeXIntegration
   {
     Debug.Log("VerifyLocation is NOT IMPLEMENTED");
     return false;
+  }
+
+  // Typical developer workflow to get connection to application backend
+  public async Task<ClientWebSocket> GetWebsocketConnection(string path)
+  {
+    Debug.Log("GetWebsocketConnection is NOT IMPLEMENTED");
+    return null;
   }
 }
