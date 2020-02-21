@@ -92,7 +92,7 @@ class RequestClient(object):
         response = self.send_image_param(self.BASE_URL %host + endpoint, image)
         content = response.content
         if response.status_code != 200:
-            print "non-200 response: %d: %s" %(response.status_code, content)
+            print("non-200 response: %d: %s" %(response.status_code, content))
             return
 
         millis = (time.time() - now)*1000
