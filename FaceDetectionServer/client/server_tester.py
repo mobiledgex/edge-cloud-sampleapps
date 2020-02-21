@@ -52,7 +52,7 @@ class RequestClient(object):
         global json_params
         data = {'image':image}
         if json_params != None:
-            params = json.loads(json_params)
+            params = json.loads(json_params.decode('utf-8'))
             data.update(params)
 
         return requests.post(url, data=data)
@@ -99,7 +99,7 @@ class RequestClient(object):
         elapsed = "%.3f" %millis
         total_latency_full_process = total_latency_full_process + millis
         count_latency_full_process += 1
-        decoded_json = json.loads(content)
+        decoded_json = json.loads(content.decode('utf-8'))
         base64_size = len(image)
         if 'server_processing_time' in decoded_json:
             server_processing_time = decoded_json['server_processing_time']
