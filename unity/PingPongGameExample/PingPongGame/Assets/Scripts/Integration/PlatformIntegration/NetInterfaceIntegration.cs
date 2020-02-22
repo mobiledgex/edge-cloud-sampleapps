@@ -50,21 +50,42 @@ namespace MobiledgeXPingPongGame
 
     AndroidJavaObject GetNetworkInterface(String netInterfaceType)
     {
-      AndroidJavaClass networkInterfaceClass = new AndroidJavaClass("java.net.NetworkInterface");
+      AndroidJavaClass networkInterfaceClass = PlatformIntegrationUtil.getAndroidJavaClass("java.net.NetworkInterface");
+      if (networkInterfaceClass == null)
+      {
+        Debug.Log("Unable to get network interface class");
+        return null;
+      }
 
       object[] netParams = new object[1];
       netParams[0] = netInterfaceType;
-      AndroidJavaObject networkInterface = networkInterfaceClass.CallStatic<AndroidJavaObject>("getByName", netParams);
+
+      AndroidJavaObject networkInterface = PlatformIntegrationUtil.callStatic(networkInterfaceClass, "getByName", netParams);
       return networkInterface;
     }
 
     IntPtr GetInetAddress(AndroidJavaObject networkInterface)
     {
-      AndroidJavaObject inetAddresses = networkInterface.Call<AndroidJavaObject>("getInetAddresses");
-      IntPtr inetAddressesRaw = inetAddresses.GetRawObject();       // Get pointer to inetAddresses (Java enum), so that we can iterate through it
+      AndroidJavaObject inetAddresses = PlatformIntegrationUtil.call(networkInterface, "getInetAddresses");
+      if (inetAddresses == null)
+      {
+        Debug.Log("Could not get inetAddresses");
+        return IntPtr.Zero;
+      }
+
+      IntPtr inetAddressesRaw = inetAddresses.GetRawObject();  // Get pointer to inetAddresses (Java enum), so that we can iterate through it
       IntPtr inetAddressesClass = AndroidJNI.GetObjectClass(inetAddressesRaw);
-      // Null pointer??
+      if(inetAddressesClass == IntPtr.Zero)
+      {
+        Debug.Log("Could not get inetAddressesClass");
+        return IntPtr.Zero;
+      }
+
       IntPtr nextMethod = AndroidJNIHelper.GetMethodID(inetAddressesClass, "nextElement");
+      if (nextMethod == IntPtr.Zero)
+      {
+        return IntPtr.Zero;
+      }
 
       IntPtr inetAddress = AndroidJNI.CallObjectMethod(inetAddressesRaw, nextMethod, new jvalue[] { });
       return inetAddress;
@@ -86,7 +107,13 @@ namespace MobiledgeXPingPongGame
       {
         return "";
       }
+
       IntPtr inetAddress = GetInetAddress(networkInterface);
+      if (inetAddress == IntPtr.Zero)
+      {
+        return "";
+      }
+
       String ipAddress = GetHostAddress(inetAddress);
       return ipAddress;
     }
