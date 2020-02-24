@@ -32,6 +32,7 @@ count_latency_network_only = 0
 json_params = None
 do_server_stats = False
 port_number = 8008
+TEST_PASS = False
 
 class RequestClient(object):
     """ """
@@ -80,6 +81,7 @@ class RequestClient(object):
     def encode_and_send_image(self, host, endpoint, image_file_name, show_responses):
         global total_latency_full_process
         global count_latency_full_process
+        global TEST_PASS
         try:
             image = ""
             with open(image_file_name, "rb") as f:
@@ -101,6 +103,10 @@ class RequestClient(object):
         count_latency_full_process += 1
         decoded_json = json.loads(content.decode('utf-8'))
         base64_size = len(image)
+        if decoded_json["success"] == "true":
+            TEST_PASS = True
+        else:
+            TEST_PASS = False
         if 'server_processing_time' in decoded_json:
             server_processing_time = decoded_json['server_processing_time']
         else:
@@ -187,3 +193,5 @@ if __name__ == "__main__":
     # file_size = os.path.getsize(args.filename)
     # The following line outputs CSV data that can be imported to a spreadsheet.
     #print("%s,%s,%d,%.3f,%.3f" %((args.server, args.filename, file_size, average_latency_full_process, average_latency_network_only)))
+
+    print("TEST_PASS=%r" %TEST_PASS)
