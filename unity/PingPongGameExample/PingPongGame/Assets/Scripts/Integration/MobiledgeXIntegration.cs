@@ -53,13 +53,6 @@ public class MobiledgeXIntegration
   public string uniqueID { get; set; } = "";
   public Tag[] tags { get; set; } = new Tag[0];
 
-  // Override if there is a sdk demo DME host to use.
-  public string dmeHost { get; set; } = MatchingEngine.wifiOnlyDmeHost;
-  public uint dmePort { get; set; } = MatchingEngine.defaultDmeRestPort;
-
-  // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
-  public bool useDemo { get; set; } = true;
-
   public MobiledgeXIntegration()
   {
     // Set the platform specific way to get SIM carrier information.
@@ -75,6 +68,11 @@ public class MobiledgeXIntegration
 
     // Optional NetTesting.
     netTest = new NetTest(me);
+  }
+
+  public void useWifiOnly(bool useWifi)
+  {
+    me.useOnlyWifi = useWifi;
   }
 
   public string GetCarrierName()
@@ -105,7 +103,7 @@ public class MobiledgeXIntegration
     // If MEX is reachable on your SIM card:
     string aCarrierName = GetCarrierName();
     string eCarrierName;
-    if (useDemo)
+    if (me.useOnlyWifi)
     {
       eCarrierName = carrierName;
     }
@@ -125,15 +123,7 @@ public class MobiledgeXIntegration
     Debug.Log("AppName: " + req.app_name);
     Debug.Log("AppVers: " + req.app_vers);
 
-    RegisterClientReply reply;
-    if (useDemo)
-    {
-      reply = await me.RegisterClient(dmeHost, dmePort, req);
-    }
-    else
-    {
-      reply = await me.RegisterClient(req);
-    }
+    RegisterClientReply reply = await me.RegisterClient(req);
 
     return (reply.status == ReplyStatus.RS_SUCCESS);
   }
@@ -148,7 +138,7 @@ public class MobiledgeXIntegration
     // If MEX is reachable on your SIM card:
     string aCarrierName = GetCarrierName();
     string eCarrierName;
-    if (useDemo) // There's no host (PC, UnityEditor, etc.)...
+    if (me.useOnlyWifi) // There's no host (PC, UnityEditor, etc.)...
     {
       eCarrierName = carrierName;
     }
@@ -164,15 +154,7 @@ public class MobiledgeXIntegration
 
     FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, devName, appName, appVers, loc, cellID, tags);
 
-    FindCloudletReply reply;
-    if (useDemo)
-    {
-      reply = await me.FindCloudlet(dmeHost, dmePort, req);
-    }
-    else
-    {
-      reply = await me.FindCloudlet(req);
-    }
+    FindCloudletReply reply = await me.FindCloudlet(req);
 
     return reply;
   }
@@ -184,7 +166,7 @@ public class MobiledgeXIntegration
     // If MEX is reachable on your SIM card:
     string aCarrierName = GetCarrierName();
     string eCarrierName;
-    if (useDemo) // There's no host (PC, UnityEditor, etc.)...
+    if (me.useOnlyWifi) // There's no host (PC, UnityEditor, etc.)...
     {
       eCarrierName = carrierName;
     }
@@ -195,15 +177,7 @@ public class MobiledgeXIntegration
 
     VerifyLocationRequest req = me.CreateVerifyLocationRequest(eCarrierName, loc, cellID, tags);
 
-    VerifyLocationReply reply;
-    if (useDemo)
-    {
-      reply = await me.VerifyLocation(dmeHost, dmePort, req);
-    }
-    else
-    {
-      reply = await me.VerifyLocation(req);
-    }
+    VerifyLocationReply reply = await me.VerifyLocation(req);
 
     // The return is not binary, but one can decide the particular app's policy
     // on pass or failing the location check. Not being verified or the country
@@ -247,7 +221,7 @@ public class MobiledgeXIntegration
 
     string aCarrierName = GetCarrierName();
     string eCarrierName;
-    if (useDemo)
+    if (me.useOnlyWifi)
     {
       eCarrierName = carrierName;
     }
@@ -261,15 +235,8 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    FindCloudletReply findCloudletReply;
-    if (useDemo)
-    {
-      findCloudletReply = await me.RegisterAndFindCloudlet(eCarrierName, devName, appName, appVers, developerAuthToken, loc, cellID, uniqueIDType, uniqueID, tags);
-    }
-    else
-    {
-      findCloudletReply = await me.RegisterAndFindCloudlet(dmeHost, dmePort, eCarrierName, devName, appName, appVers, developerAuthToken, loc, cellID, uniqueIDType, uniqueID, tags);
-    }
+    FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(eCarrierName, devName, appName, appVers, developerAuthToken, loc, cellID, uniqueIDType, uniqueID, tags);
+
     Dictionary<int, AppPort> appPortsDict = me.GetTCPAppPorts(findCloudletReply);
     int public_port = findCloudletReply.ports[0].public_port; // We happen to know it's the first one.
     AppPort appPort = appPortsDict[public_port];
