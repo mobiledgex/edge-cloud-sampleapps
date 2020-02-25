@@ -52,15 +52,14 @@ namespace MobiledgeXPingPongGame
         case RuntimePlatform.OSXPlayer: case RuntimePlatform.OSXEditor:
           NetworkInterfaceName = new MacNetworkInterfaceName();
           CarrierInfo = new TestCarrierInfoClass();
-          NetInterface = new SimpleNetInterface(NetworkInterfaceName);
           UniqueID = new TestUniqueIDClass();
           break;
         default:
           CarrierInfo = new CarrierInfoClass();
-          NetInterface = new NetInterfaceClass(NetworkInterfaceName);
           UniqueID = new UniqueIDClass();
           break;
       }
+      NetInterface = new NetInterfaceClass(NetworkInterfaceName);
     }
   }
 }

@@ -57,60 +57,60 @@ namespace MobiledgeXPingPongGame
       }
 
       if (sdkVersion >= 17) {
-        cellInfoLte = PlatformIntegrationUtil.getAndroidJavaObject("android.telephony.CellInfoLte");
-        cellInfoLteString = cellInfoLte != null ? PlatformIntegrationUtil.getSimpleName(cellInfoLte) : "";
+        cellInfoLte = PlatformIntegrationUtil.GetAndroidJavaObject("android.telephony.CellInfoLte");
+        cellInfoLteString = cellInfoLte != null ? PlatformIntegrationUtil.GetSimpleName(cellInfoLte) : "";
 
-        cellInfoGsm = PlatformIntegrationUtil.getAndroidJavaObject("android.telephony.CellInfoGsm");
-        cellInfoGsmString = cellInfoGsm != null ? PlatformIntegrationUtil.getSimpleName(cellInfoGsm) : "";
+        cellInfoGsm = PlatformIntegrationUtil.GetAndroidJavaObject("android.telephony.CellInfoGsm");
+        cellInfoGsmString = cellInfoGsm != null ? PlatformIntegrationUtil.GetSimpleName(cellInfoGsm) : "";
 
-        cellInfoCdma = PlatformIntegrationUtil.getAndroidJavaObject("android.telephony.CellInfoCdma");
-        cellInfoCdmaString = cellInfoCdma != null ? PlatformIntegrationUtil.getSimpleName(cellInfoCdma) : "";
+        cellInfoCdma = PlatformIntegrationUtil.GetAndroidJavaObject("android.telephony.CellInfoCdma");
+        cellInfoCdmaString = cellInfoCdma != null ? PlatformIntegrationUtil.GetSimpleName(cellInfoCdma) : "";
       }
 
       if (sdkVersion >= 18) {
-        cellInfoWcdma = PlatformIntegrationUtil.getAndroidJavaObject("android.telephony.CellInfoWcdma");
-        cellInfoWcdmaString = cellInfoWcdma != null ? PlatformIntegrationUtil.getSimpleName(cellInfoWcdma) : "";
+        cellInfoWcdma = PlatformIntegrationUtil.GetAndroidJavaObject("android.telephony.CellInfoWcdma");
+        cellInfoWcdmaString = cellInfoWcdma != null ? PlatformIntegrationUtil.GetSimpleName(cellInfoWcdma) : "";
       }
       
       if (sdkVersion >= 28)
       {
-        cellInfoTdscdma = PlatformIntegrationUtil.getAndroidJavaObject("android.telephony.CellInfoTdscdma");
-        cellInfoTdscdmaString = cellInfoTdscdma != null ? PlatformIntegrationUtil.getSimpleName(cellInfoTdscdma) : "";
+        cellInfoTdscdma = PlatformIntegrationUtil.GetAndroidJavaObject("android.telephony.CellInfoTdscdma");
+        cellInfoTdscdmaString = cellInfoTdscdma != null ? PlatformIntegrationUtil.GetSimpleName(cellInfoTdscdma) : "";
       }
       if (sdkVersion >= 29)
       {
-        cellInfoNr = PlatformIntegrationUtil.getAndroidJavaObject("android.telephony.CellInfoNr");
-        cellInfoNrString = cellInfoNr != null ? PlatformIntegrationUtil.getSimpleName(cellInfoNr) : "";
+        cellInfoNr = PlatformIntegrationUtil.GetAndroidJavaObject("android.telephony.CellInfoNr");
+        cellInfoNrString = cellInfoNr != null ? PlatformIntegrationUtil.GetSimpleName(cellInfoNr) : "";
       }
     }
 
     public int getAndroidSDKVers()
     {
-      AndroidJavaClass version = PlatformIntegrationUtil.getAndroidJavaClass("android.os.Build$VERSION");
+      AndroidJavaClass version = PlatformIntegrationUtil.GetAndroidJavaClass("android.os.Build$VERSION");
       if (version == null)
       {
         Debug.Log("Unable to get Build Version");
-        return -1;
+        return 0;
       }
-      return PlatformIntegrationUtil.getStaticInt(version, "SDK_INT");
+      return PlatformIntegrationUtil.GetStatic<int>(version, "SDK_INT");
     }
 
     AndroidJavaObject GetTelephonyManager()
     {
-      AndroidJavaClass unityPlayer = PlatformIntegrationUtil.getAndroidJavaClass("com.unity3d.player.UnityPlayer");
+      AndroidJavaClass unityPlayer = PlatformIntegrationUtil.GetAndroidJavaClass("com.unity3d.player.UnityPlayer");
       if (unityPlayer == null)
       {
         Debug.Log("Unable to get UnityPlayer");
         return null;
       }
-      AndroidJavaObject activity = PlatformIntegrationUtil.getStatic(unityPlayer, "currentActivity");
+      AndroidJavaObject activity = PlatformIntegrationUtil.GetStatic<AndroidJavaObject>(unityPlayer, "currentActivity");
       if (activity == null)
       {
         Debug.Log("Can't find an activity!");
         return null;
       }
 
-      AndroidJavaObject context = PlatformIntegrationUtil.call(activity, "getApplicationContext");
+      AndroidJavaObject context = PlatformIntegrationUtil.Call<AndroidJavaObject>(activity, "getApplicationContext");
       if (context == null)
       {
         Debug.Log("Can't find an app context!");
@@ -118,14 +118,14 @@ namespace MobiledgeXPingPongGame
       }
 
       // Context.TELEPHONY_SERVICE:
-      string CONTEXT_TELEPHONY_SERVICE = context.GetStatic<String>("TELEPHONY_SERVICE");
+      string CONTEXT_TELEPHONY_SERVICE = context.GetStatic<string>("TELEPHONY_SERVICE");
       if (CONTEXT_TELEPHONY_SERVICE == null)
       {
         Debug.Log("Can't get Context Telephony Service");
         return null;
       }
 
-      AndroidJavaObject telManager = PlatformIntegrationUtil.call(context, "getSystemService", new object[] {CONTEXT_TELEPHONY_SERVICE});
+      AndroidJavaObject telManager = PlatformIntegrationUtil.Call<AndroidJavaObject>(context, "getSystemService", new object[] {CONTEXT_TELEPHONY_SERVICE});
       return telManager;
     }
 
@@ -146,7 +146,7 @@ namespace MobiledgeXPingPongGame
         return "";
       }
 
-      networkOperatorName = PlatformIntegrationUtil.callString(telManager, "getNetworkOperatorName");
+      networkOperatorName = PlatformIntegrationUtil.Call<string>(telManager, "getNetworkOperatorName");
       if (networkOperatorName == null)
       {
         Debug.Log("Network Operator Name is not found on the device");
@@ -172,8 +172,8 @@ namespace MobiledgeXPingPongGame
         return null;
       }
 
-      mccmnc = PlatformIntegrationUtil.callString(telManager, "getNetworkOperator");
-      if (mccmnc == null)
+      mccmnc = PlatformIntegrationUtil.Call<string>(telManager, "getNetworkOperator");
+      if (mccmnc == null || mccmnc == "")
       {
         return null;
       }
@@ -182,6 +182,7 @@ namespace MobiledgeXPingPongGame
       {
         return null;
       }
+
       return mccmnc;
     }
 
@@ -189,8 +190,8 @@ namespace MobiledgeXPingPongGame
     {
       KeyValuePair<string, uint> pair = new KeyValuePair<string, uint>(null, 0);
 
-      string simpleName = PlatformIntegrationUtil.getSimpleName(cellInfo);
-      AndroidJavaObject cellIdentity = PlatformIntegrationUtil.call(cellInfo, "getCellIdentity");
+      string simpleName = PlatformIntegrationUtil.GetSimpleName(cellInfo);
+      AndroidJavaObject cellIdentity = PlatformIntegrationUtil.Call<AndroidJavaObject>(cellInfo, "getCellIdentity");
       if (cellIdentity == null)
       {
         Debug.Log("Unable to get cellIdentity");
@@ -199,48 +200,48 @@ namespace MobiledgeXPingPongGame
 
       if (simpleName.Equals(cellInfoTdscdmaString))
       {
-        int cid = PlatformIntegrationUtil.callInt(cellIdentity, "getCid");
-        if (cid != -1)
+        int cid = PlatformIntegrationUtil.Call<int>(cellIdentity, "getCid");
+        if (cid > 0)
         {
           pair = new KeyValuePair<string, uint>(simpleName, (uint)cid);
         }
       }
       else if (simpleName.Equals(cellInfoNrString))
       {
-        int nci = PlatformIntegrationUtil.callInt(cellIdentity, "getNci");
-        if (nci != -1)
+        int nci = PlatformIntegrationUtil.Call<int>(cellIdentity, "getNci");
+        if (nci > 0)
         {
           pair = new KeyValuePair<string, uint>(simpleName, (uint)nci);
         }
       }
       else if (simpleName.Equals(cellInfoLteString))
       {
-        int ci = PlatformIntegrationUtil.callInt(cellIdentity, "getCi");
-        if (ci != -1)
+        int ci = PlatformIntegrationUtil.Call<int>(cellIdentity, "getCi");
+        if (ci > 0)
         {
           pair = new KeyValuePair<string, uint>(simpleName, (uint)ci);
         }
       }
       else if (simpleName.Equals(cellInfoGsmString))
       {
-        int cid = PlatformIntegrationUtil.callInt(cellIdentity, "getCid");
-        if (cid != -1)
+        int cid = PlatformIntegrationUtil.Call<int>(cellIdentity, "getCid");
+        if (cid > 0)
         {
           pair = new KeyValuePair<string, uint>(simpleName, (uint)cid);
         }
       }
       else if (simpleName.Equals(cellInfoWcdmaString))
       {
-        int cid = PlatformIntegrationUtil.callInt(cellIdentity, "getCid");
-        if (cid != -1)
+        int cid = PlatformIntegrationUtil.Call<int>(cellIdentity, "getCid");
+        if (cid > 0)
         { 
           pair = new KeyValuePair<string, uint>(simpleName, (uint)cid);
         }
       }
       else if (simpleName.Equals(cellInfoCdmaString))
       {
-        int baseStationId = PlatformIntegrationUtil.callInt(cellIdentity, "getBaseStationId");
-        if (baseStationId != -1)
+        int baseStationId = PlatformIntegrationUtil.Call<int>(cellIdentity, "getBaseStationId");
+        if (baseStationId > 0)
         { 
           pair = new KeyValuePair<string, uint>(simpleName, (uint)baseStationId);
         }
@@ -274,14 +275,14 @@ namespace MobiledgeXPingPongGame
         Permission.RequestUserPermission(Permission.FineLocation);
       }
 
-      AndroidJavaObject cellInfoList = PlatformIntegrationUtil.call(telManager, "getAllCellInfo");
+      AndroidJavaObject cellInfoList = PlatformIntegrationUtil.Call<AndroidJavaObject>(telManager, "getAllCellInfo");
       if (cellInfoList == null)
       {
         Debug.Log("Can't get list of cellInfo objects.");
         return null;
       }
 
-      int length = PlatformIntegrationUtil.callInt(cellInfoList, "size");
+      int length = PlatformIntegrationUtil.Call<int>(cellInfoList, "size");
       if (length <= 0)
       {
         Debug.Log("Unable to get valid length for cellInfoList");
@@ -294,10 +295,10 @@ namespace MobiledgeXPingPongGame
 
       for (int i = 0; i < length; i++)
       {
-        AndroidJavaObject cellInfo = PlatformIntegrationUtil.call(cellInfoList, "get", new object[] {i});
+        AndroidJavaObject cellInfo = PlatformIntegrationUtil.Call<AndroidJavaObject>(cellInfoList, "get", new object[] {i});
         if (cellInfo == null) continue;
         
-        bool isRegistered = PlatformIntegrationUtil.callBool(cellInfo, "isRegistered");
+        bool isRegistered = PlatformIntegrationUtil.Call<bool>(cellInfo, "isRegistered");
         if (isRegistered)
         {
           KeyValuePair<string, uint> pair = GetCidKeyValuePair(cellInfo);
