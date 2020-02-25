@@ -35,36 +35,42 @@ namespace MobiledgeXPingPongGame
 
     public String GetUniqueID()
     {
-      AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-      AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+      AndroidJavaClass unityPlayer = PlatformIntegrationUtil.getAndroidJavaClass("com.unity3d.player.UnityPlayer");
+      if (unityPlayer == null)
+      {
+        Debug.Log("Can't get UnityPlayer");
+        return null;
+      }
+
+      AndroidJavaObject activity = PlatformIntegrationUtil.getStatic(unityPlayer, "currentActivity");
       if (activity == null)
       {
         Debug.Log("Can't find an activity!");
         return null;
       }
 
-      AndroidJavaObject context = activity.Call<AndroidJavaObject>("getApplicationContext");
+      AndroidJavaObject context = PlatformIntegrationUtil.call(activity, "getApplicationContext");
       if (context == null)
       {
         Debug.Log("Can't find an app context!");
         return null;
       }
 
-      AndroidJavaObject contentResolver = context.Call<AndroidJavaObject>("getContentResolver");
+      AndroidJavaObject contentResolver = PlatformIntegrationUtil.call(context, "getContentResolver");
       if (contentResolver == null)
       {
         Debug.Log("Can't get content resolver from context");
         return null;
       }
 
-      AndroidJavaClass secureClass = new AndroidJavaClass("android.provider.Settings$Secure");
+      AndroidJavaClass secureClass = PlatformIntegrationUtil.getAndroidJavaClass("android.provider.Settings$Secure");
       if (secureClass == null)
       {
         Debug.Log("Can't get secure class");
         return null;
       }
 
-      AndroidJavaObject androidID = secureClass.GetStatic<AndroidJavaObject>("ANDROID_ID");
+      AndroidJavaObject androidID = PlatformIntegrationUtil.getStatic(secureClass, "ANDROID_ID");
       if (androidID == null)
       {
         Debug.Log("Cant get Android ID static string");
@@ -75,7 +81,7 @@ namespace MobiledgeXPingPongGame
       parameters[0] = contentResolver;
       parameters[1] = androidID;
 
-      String uuid = secureClass.CallStatic<String>("getString", parameters);
+      string uuid = PlatformIntegrationUtil.callStaticString(secureClass, "getString", parameters);
       return uuid;
     }
 
