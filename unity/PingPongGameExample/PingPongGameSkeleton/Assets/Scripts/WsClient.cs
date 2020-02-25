@@ -54,13 +54,14 @@ namespace MobiledgeXPingPongGame
     Thread sendThread { get; set; }
     private bool run = true;
 
-    MobiledgeXIntegration integration = new MobiledgeXIntegration();
+    MobiledgeXIntegration integration;
 
     // TODO: CancellationToken for Tasks to handle OnApplicationFocus, OnApplicationPause.
-    public WsClient()
+    public WsClient(MobiledgeXIntegration integration)
     {
       encoder = new UTF8Encoding();
       ws = new ClientWebSocket();
+      this.integration = integration;
 
       receiveQueue = new ConcurrentQueue<string>();
       receiveThread = new Thread(RunReceive);

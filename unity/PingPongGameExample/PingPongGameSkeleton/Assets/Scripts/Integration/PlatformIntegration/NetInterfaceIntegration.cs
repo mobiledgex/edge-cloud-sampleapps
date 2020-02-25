@@ -15,16 +15,18 @@
  * limitations under the License.
  */
 
-using System;
 using UnityEngine;
 using DistributedMatchEngine;
 
-// We need this one for importing our IOS functions
-using System.Runtime.InteropServices;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 namespace MobiledgeXPingPongGame
 {
+  // A generic network interface for most systems, with an interface names parameter.
+  // The following is to allow Get{TCP, TLS, UDP}Connection APIs to return the configured
+  // edge network path to your MobiledgeX AppInsts. Other connections will use the system
+  // default network route. (NetInterfaceClass is used for MacOS and Linux)
   public class NetInterfaceClass : NetInterface
   {
     NetworkInterfaceName networkInterfaceName;
@@ -44,135 +46,80 @@ namespace MobiledgeXPingPongGame
       this.networkInterfaceName = networkInterfaceName;
     }
 
-#if UNITY_ANDROID
-
-    AndroidNetworkInterfaceName name = new AndroidNetworkInterfaceName();
-
-    AndroidJavaObject GetNetworkInterface(String netInterfaceType)
+    private NetworkInterface[] GetInterfaces()
     {
-      AndroidJavaClass networkInterfaceClass = new AndroidJavaClass("java.net.NetworkInterface");
-
-      object[] netParams = new object[1];
-      netParams[0] = netInterfaceType;
-      AndroidJavaObject networkInterface = networkInterfaceClass.CallStatic<AndroidJavaObject>("getByName", netParams);
-      return networkInterface;
+      return NetworkInterface.GetAllNetworkInterfaces();
     }
 
-    IntPtr GetInetAddress(AndroidJavaObject networkInterface)
+    public string GetIPAddress(string sourceNetInterfaceName, AddressFamily addressfamily = AddressFamily.InterNetwork)
     {
-      AndroidJavaObject inetAddresses = networkInterface.Call<AndroidJavaObject>("getInetAddresses");
-      IntPtr inetAddressesRaw = inetAddresses.GetRawObject();       // Get pointer to inetAddresses (Java enum), so that we can iterate through it
-      IntPtr inetAddressesClass = AndroidJNI.GetObjectClass(inetAddressesRaw);
-      // Null pointer??
-      IntPtr nextMethod = AndroidJNIHelper.GetMethodID(inetAddressesClass, "nextElement");
-
-      IntPtr inetAddress = AndroidJNI.CallObjectMethod(inetAddressesRaw, nextMethod, new jvalue[] { });
-      return inetAddress;
-    }
-
-    string GetHostAddress(IntPtr inetAddress)
-    {
-      IntPtr inetAddressClass = AndroidJNI.GetObjectClass(inetAddress);
-      IntPtr getHostAddressMethod = AndroidJNIHelper.GetMethodID(inetAddressClass, "getHostAddress");
-
-      String ipAddress = AndroidJNI.CallStringMethod(inetAddress, getHostAddressMethod, new jvalue[] { });
-      return ipAddress;
-    }
-
-    string GetNetworkInterfaceIP(String netInterfaceType)
-    {
-      AndroidJavaObject networkInterface = GetNetworkInterface(netInterfaceType);
-      if (networkInterface == null)
+      if (!NetworkInterface.GetIsNetworkAvailable())
       {
-        return "";
+        return null;
       }
-      IntPtr inetAddress = GetInetAddress(networkInterface);
-      String ipAddress = GetHostAddress(inetAddress);
-      return ipAddress;
-    }
 
-    public string GetIPAddress(String netInterfaceType, AddressFamily adressFamily = AddressFamily.InterNetwork)
-    {
-      return GetNetworkInterfaceIP(netInterfaceType);
-    }
+      NetworkInterface[] netInterfaces = GetInterfaces();
 
-    public bool HasWifi()
-    {
-      if (GetNetworkInterfaceIP(name.WIFI) != "")
-      {
-        return true;
-      }
-      return false;
-    }
-
-    public bool HasCellular()
-    {
-      if (GetNetworkInterfaceIP(name.CELLULAR) != "")
-      {
-        return true;
-      }
-      return false;
-    }
-
-#elif UNITY_IOS
-
-    [DllImport("__Internal")]
-    private static extern string _getIPAddress(string netInterfaceType);
-
-    [DllImport("__Internal")]
-    private static extern bool _isWifi();
-
-    [DllImport("__Internal")]
-    private static extern bool _isCellular();
-
-    public string GetIPAddress(String netInterfaceType, AddressFamily adressFamily = AddressFamily.InterNetwork)
-    {
       string ipAddress = null;
-      if (Application.platform == RuntimePlatform.IPhonePlayer)
+      string ipAddressV4 = null;
+      string ipAddressV6 = null;
+      Debug.Log("Looking for: " + sourceNetInterfaceName + ", known Wifi: " + networkInterfaceName.WIFI + ", known Cellular: " + networkInterfaceName.CELLULAR);
+
+      foreach (NetworkInterface iface in netInterfaces)
       {
-        ipAddress = _getIPAddress(netInterfaceType);
+        if (iface.Name.Equals(sourceNetInterfaceName))
+        {
+          IPInterfaceProperties ipifaceProperties = iface.GetIPProperties();
+          foreach (UnicastIPAddressInformation ip in ipifaceProperties.UnicastAddresses)
+          {
+            if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+            {
+              ipAddressV4 = ip.Address.ToString();
+            }
+            if (ip.Address.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+              ipAddressV6 = ip.Address.ToString();
+            }
+          }
+
+          if (addressfamily == AddressFamily.InterNetworkV6)
+          {
+            return ipAddressV6;
+          }
+
+          if (addressfamily == AddressFamily.InterNetwork)
+          {
+            return ipAddressV4;
+          }
+        }
       }
       return ipAddress;
     }
 
-    public bool HasWifi()
-    {
-      bool isWifi = false;
-      if (Application.platform == RuntimePlatform.IPhonePlayer)
-      {
-        isWifi = _isWifi();
-      }
-      return isWifi;
-    }
-
     public bool HasCellular()
     {
-      bool isCellular = false;
-      if (Application.platform == RuntimePlatform.IPhonePlayer)
+      NetworkInterface[] netInterfaces = GetInterfaces();
+      foreach (NetworkInterface iface in netInterfaces)
       {
-        isCellular = _isCellular();
+        if (iface.Name.Equals(networkInterfaceName.CELLULAR))
+        {
+          return iface.OperationalStatus == OperationalStatus.Up;
+        }
       }
-      return isCellular;
-    }
-
-#else
-    public string GetIPAddress(String netInterfaceType, AddressFamily adressFamily = AddressFamily.InterNetwork)
-    {
-      Debug.Log("GetIPAddress is NOT IMPLEMENTED");
-      return null;
+      return false;
     }
 
     public bool HasWifi()
     {
-      Debug.Log("HasWifi is NOT IMPLEMENTED");
+      NetworkInterface[] netInterfaces = GetInterfaces();
+      foreach (NetworkInterface iface in netInterfaces)
+      {
+        if (iface.Name.Equals(networkInterfaceName.WIFI))
+        {
+          return iface.OperationalStatus == OperationalStatus.Up;
+        }
+      }
       return false;
     }
-
-    public bool HasCellular()
-    {
-      Debug.Log("HasCellular is NOT IMPLEMENTED");
-      return false;
-    }
-#endif
   }
 }

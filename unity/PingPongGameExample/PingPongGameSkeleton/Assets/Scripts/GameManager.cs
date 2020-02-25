@@ -109,8 +109,7 @@ namespace MobiledgeXPingPongGame {
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
       integration = new MobiledgeXIntegration();
-      integration.useDemo = true;
-      integration.dmeHost = integration.me.GenerateDmeHostName();
+      integration.useWifiOnly(true);
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
@@ -121,7 +120,7 @@ namespace MobiledgeXPingPongGame {
       server = "ws://" + host + ":" + port;
       theBall = GameObject.FindGameObjectWithTag("Ball");
       players = GameObject.FindGameObjectsWithTag("Player");
-      client = new WsClient();
+      client = new WsClient(integration);
       gameSession.currentGs = new GameState();
       gameSession.status = STATUS.LOBBY;
 
@@ -148,6 +147,7 @@ namespace MobiledgeXPingPongGame {
         // This might be inside a thread update loop. Re-register client and check periodically.
         // VerifyLocation will fail if verification is unavailable at the carrier.
         bool verifiedLocation = await integration.VerifyLocation();
+        //bool verifiedLocation = false;
 
         // Decide what to do with location status.
         clog("VerifiedLocation: " + verifiedLocation);
@@ -196,7 +196,7 @@ namespace MobiledgeXPingPongGame {
       if (client.isOpen())
       {
         client.Dispose();
-        client = new WsClient();
+        client = new WsClient(integration);
       }
 
       if (useAltServer)
