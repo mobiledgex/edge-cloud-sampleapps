@@ -109,7 +109,7 @@ namespace MobiledgeXPingPongGame {
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
       integration = new MobiledgeXIntegration();
-      integration.useWifiOnly(false);
+      integration.useWifiOnly(true);
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
@@ -120,7 +120,7 @@ namespace MobiledgeXPingPongGame {
       server = "ws://" + host + ":" + port;
       theBall = GameObject.FindGameObjectWithTag("Ball");
       players = GameObject.FindGameObjectsWithTag("Player");
-      client = new WsClient();
+      client = new WsClient(integration);
       gameSession.currentGs = new GameState();
       gameSession.status = STATUS.LOBBY;
 
@@ -196,7 +196,7 @@ namespace MobiledgeXPingPongGame {
       if (client.isOpen())
       {
         client.Dispose();
-        client = new WsClient();
+        client = new WsClient(integration);
       }
 
       if (useAltServer)
