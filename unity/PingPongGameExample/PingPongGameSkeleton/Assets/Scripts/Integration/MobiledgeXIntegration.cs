@@ -53,28 +53,21 @@ public class MobiledgeXIntegration
   public string uniqueID { get; set; } = "";
   public Tag[] tags { get; set; } = new Tag[0];
 
-  // Override if there is a sdk demo DME host to use.
-  public string dmeHost { get; set; } = MatchingEngine.wifiOnlyDmeHost;
-  public uint dmePort { get; set; } = MatchingEngine.defaultDmeRestPort;
-
-  // Set to true and define the DME if there's no SIM card to find appropriate geolocated MobiledgeX DME (client is PC, UnityEditor, etc.)...
-  public bool useDemo { get; set; } = true;
-
   public MobiledgeXIntegration()
   {
     // Set the platform specific way to get SIM carrier information.
     pIntegration = new PlatformIntegration();
-
-    // The following is to allow Get{TCP, TLS, UDP}Connection APIs to return the configured
-    // edge network path to your MobiledgeX AppInsts. Other connections will use the system
-    // default network route. (SimpleNetInterface is used for MacOS and Linux)
-    NetInterface netInterface = new SimpleNetInterface(pIntegration.NetworkInterfaceName);
 
     // Platform integration needs to initialize first:
     me = new MatchingEngine(pIntegration.CarrierInfo, pIntegration.NetInterface, pIntegration.UniqueID);
 
     // Optional NetTesting.
     netTest = new NetTest(me);
+  }
+
+  public void useWifiOnly(bool useWifi)
+  {
+    me.useOnlyWifi = useWifi;
   }
 
   public string GetCarrierName()
@@ -110,7 +103,7 @@ public class MobiledgeXIntegration
   {
     Debug.Log("FindCloudlet is NOT IMPLEMENTED");
     FindCloudletReply reply = null;
-
+ 
     return reply;
   }
 
