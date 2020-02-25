@@ -109,8 +109,7 @@ namespace MobiledgeXPingPongGame {
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
       integration = new MobiledgeXIntegration();
-      integration.useDemo = true;
-      integration.dmeHost = integration.me.GenerateDmeHostName();
+      integration.useWifiOnly(false);
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
