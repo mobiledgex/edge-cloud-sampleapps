@@ -58,11 +58,6 @@ public class MobiledgeXIntegration
     // Set the platform specific way to get SIM carrier information.
     pIntegration = new PlatformIntegration();
 
-    // The following is to allow Get{TCP, TLS, UDP}Connection APIs to return the configured
-    // edge network path to your MobiledgeX AppInsts. Other connections will use the system
-    // default network route. (SimpleNetInterface is used for MacOS and Linux)
-    NetInterface netInterface = new SimpleNetInterface(pIntegration.NetworkInterfaceName);
-
     // Platform integration needs to initialize first:
     me = new MatchingEngine(pIntegration.CarrierInfo, pIntegration.NetInterface, pIntegration.UniqueID);
 
@@ -236,6 +231,10 @@ public class MobiledgeXIntegration
     }
 
     FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(eCarrierName, devName, appName, appVers, developerAuthToken, loc, cellID, uniqueIDType, uniqueID, tags);
+    if (findCloudletReply == null)
+    {
+      Debug.Log("cannot find findCloudletReply");
+    }
 
     Dictionary<int, AppPort> appPortsDict = me.GetTCPAppPorts(findCloudletReply);
     int public_port = findCloudletReply.ports[0].public_port; // We happen to know it's the first one.

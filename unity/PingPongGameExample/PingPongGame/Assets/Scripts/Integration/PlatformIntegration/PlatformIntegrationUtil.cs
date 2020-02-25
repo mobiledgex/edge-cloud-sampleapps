@@ -31,7 +31,7 @@ namespace MobiledgeXPingPongGame
     // empty parameters for JNI calls
     private static object[] emptyObjectArr = new object[0];
 
-    public static AndroidJavaClass getAndroidJavaClass(string pkg)
+    public static AndroidJavaClass GetAndroidJavaClass(string pkg)
     {
       try
       {
@@ -44,7 +44,7 @@ namespace MobiledgeXPingPongGame
       }
     }
 
-    public static AndroidJavaObject getAndroidJavaObject(string pkg)
+    public static AndroidJavaObject GetAndroidJavaObject(string pkg)
     {
       try
       {
@@ -57,7 +57,7 @@ namespace MobiledgeXPingPongGame
       }
     }
 
-    public static string getSimpleName(AndroidJavaObject obj)
+    public static string GetSimpleName(AndroidJavaObject obj)
     {
       try
       {
@@ -72,46 +72,20 @@ namespace MobiledgeXPingPongGame
    
     // Generic functions that get static variables, call static functions, and call object functions
 
-    public static AndroidJavaObject getStatic(AndroidJavaClass c, string member)
+    public static T GetStatic<T>(AndroidJavaClass c, string member)
     {
       try
       {
-        return c.GetStatic<AndroidJavaObject>(member);
+        return c.GetStatic<T>(member);
       }
       catch (Exception e)
       {
-        Debug.Log("Could not getStatic object. Exception: " + e.Message);
-        return null;
+        Debug.Log("Could not GetStatic " + typeof(T) + ". Exception: " + e.Message);
+        return default(T);
       }
     }
 
-    public static string getStaticString(AndroidJavaClass c, string member)
-    {
-      try
-      {
-        return c.GetStatic<string>(member);
-      }
-      catch (Exception e)
-      {
-        Debug.Log("Could not getStatic string. Exception: " + e.Message);
-        return "";
-      }
-    }
-
-    public static int getStaticInt(AndroidJavaClass c, string member)
-    {
-      try
-      {
-        return c.GetStatic<int>(member);
-      }
-      catch (Exception e)
-      {
-        Debug.Log("Could not getStatic int. Exception: " + e.Message);
-        return -1;
-      }
-    }
-
-    public static AndroidJavaObject callStatic(AndroidJavaClass c, string method, object[] param = null)
+    public static T CallStatic<T>(AndroidJavaClass c, string method, object[] param = null)
     {
       if (param == null)
       {
@@ -120,16 +94,16 @@ namespace MobiledgeXPingPongGame
 
       try
       {
-        return c.CallStatic<AndroidJavaObject>(method, param);
+        return c.CallStatic<T>(method, param);
       }
       catch (Exception e)
       {
-        Debug.Log("Could not callStatic object. Exception: " + e.Message);
-        return null;
+        Debug.Log("Could not CallStatic " + typeof(T) + ". Exception: " + e.Message);
+        return default(T);
       }
     }
 
-    public static string callStaticString(AndroidJavaClass c, string method, object[] param = null)
+    public static T Call<T>(AndroidJavaObject obj, string method, object[] param = null)
     {
       if (param == null)
       {
@@ -138,84 +112,12 @@ namespace MobiledgeXPingPongGame
 
       try
       {
-        return c.CallStatic<string>(method, param);
+        return obj.Call<T>(method, param);
       }
       catch (Exception e)
       {
-        Debug.Log("Could not callStatic string. Exception: " + e.Message);
-        return "";
-      }
-    }
-
-    public static AndroidJavaObject call(AndroidJavaObject obj, string method, object[] param = null)
-    {
-      if (param == null)
-      {
-        param = emptyObjectArr;
-      }
-
-      try
-      {
-        return obj.Call<AndroidJavaObject>(method, param);
-      }
-      catch (Exception e)
-      {
-        Debug.Log("Could not call java method " + method + ". Exception: " + e.Message);
-        return null;
-      }
-    }
-
-    public static string callString(AndroidJavaObject obj, string method, object[] param = null)
-    {
-      if (param == null)
-      {
-        param = emptyObjectArr;
-      }
-
-      try
-      {
-        return obj.Call<string>(method, param);
-      }
-      catch (Exception e)
-      {
-        Debug.Log("Could not call java string method " + method + ". Exception: " + e.Message);
-        return "";
-      }
-    }
-
-    public static int callInt(AndroidJavaObject obj, string method, object[] param = null)
-    {
-      if (param == null)
-      {
-        param = emptyObjectArr;
-      }
-
-      try
-      {
-        return obj.Call<int>(method, param);
-      }
-      catch (Exception e)
-      {
-        Debug.Log("Could not call java int method " + method + ". Exception: " + e.Message);
-        return -1;
-      }
-    }
-
-    public static bool callBool(AndroidJavaObject obj, string method, object[] param = null)
-    {
-      if (param == null)
-      {
-        param = emptyObjectArr;
-      }
-
-      try
-      {
-        return obj.Call<bool>(method, param);
-      }
-      catch (Exception e)
-      {
-        Debug.Log("Could not call java bool method " + method + ". Exception: " + e.Message);
-        return false;
+        Debug.Log("Could not Call " + typeof(T) + " method " + method + ". Exception: " + e.Message);
+        return default(T);
       }
     }
 
