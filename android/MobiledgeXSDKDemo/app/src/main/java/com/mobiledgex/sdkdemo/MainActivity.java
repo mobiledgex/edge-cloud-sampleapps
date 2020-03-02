@@ -1140,6 +1140,7 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyDmeHostname)) {
             String hostAndPort = sharedPreferences.getString(prefKeyDmeHostname, DEFAULT_DME_HOSTNAME+":"+"50051");
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+hostAndPort);
+            mClosestCloudletHostname = null;
 
             //Value is in this format: eu-mexdemo.dme.mobiledgex.net:50051
             String domainAndPortRegex = "^(((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}):\\d+$";
@@ -1160,13 +1161,13 @@ public class MainActivity extends AppCompatActivity
                 CloudletListHolder.getSingleton().getCloudletList().clear();
                 getCloudlets();
             }
-
             checkForLocSimulator(mHostname);
         }
 
         if (key.equals(prefKeyOperatorName)) {
             mCarrierName = sharedPreferences.getString(prefKeyOperatorName, DEFAULT_CARRIER_NAME);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mCarrierName);
+            mClosestCloudletHostname = null;
             if(mMatchingEngineHelper != null) {
                 mMatchingEngineHelper.setCarrierName(mCarrierName);
                 //Clear list so we don't show old cloudlets as transparent
@@ -1202,12 +1203,14 @@ public class MainActivity extends AppCompatActivity
         if(key.equals(prefKeyHostEdge)) {
             // This call will attempt to connect to the server at prefKeyHostEdge.
             // If it fails, the default will be restored.
+            mClosestCloudletHostname = null;
             new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
                     ImageProcessorFragment.DEF_FACE_HOST_EDGE, key);
         }
 
         if(key.equals(prefKeyResetFdHosts)) {
             String value = sharedPreferences.getString(prefKeyResetFdHosts, "No");
+            mClosestCloudletHostname = null;
             Log.i(TAG, prefKeyResetFdHosts+" "+value);
             if(value.startsWith("Yes")) {
                 Log.i(TAG, "Resetting Face server hosts.");

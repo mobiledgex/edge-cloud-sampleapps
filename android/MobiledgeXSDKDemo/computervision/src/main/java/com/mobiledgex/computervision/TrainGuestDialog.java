@@ -119,6 +119,9 @@ public class TrainGuestDialog extends DialogFragment {
                         errorMessage = "Illegal character \""+c+"\". Please try again.";
                     }
                 }
+                if(guestName.startsWith(" ") || guestName.endsWith(" ")) {
+                    errorMessage = "Name cannot start or end with a space";
+                }
                 if(errorMessage != null) {
                     new android.support.v7.app.AlertDialog.Builder(getContext())
                             .setTitle("Error")
