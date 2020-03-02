@@ -875,6 +875,16 @@ public class Camera2BasicFragment extends Fragment
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestCameraPermission();
+            return;
+        }
+    }
+
+    @Override
     public void onResume() {
         Log.d(TAG, "onResume()");
         super.onResume();
@@ -1105,7 +1115,6 @@ public class Camera2BasicFragment extends Fragment
         Log.i(TAG, "openCamera("+width+","+height+")");
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
-            requestCameraPermission();
             return;
         }
         setUpCameraOutputs(width, height);

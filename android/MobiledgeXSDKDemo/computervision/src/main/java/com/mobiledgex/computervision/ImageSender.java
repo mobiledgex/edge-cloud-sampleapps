@@ -615,7 +615,7 @@ public class ImageSender {
      * @return  The statistics text.
      */
     public String getStatsText() {
-        String statsText = mHost+ "\n" +
+        String statsText = mCloudLetType +" hostname: "+mHost+ "\n" +
                 "Connection mode="+mConnectionMode + "\n" +
                 "Latency test method="+mLatencyTestMethod+"\n\n" +
                 mLatencyFullProcessRollingAvg.getStatsText() + "\n\n" +
