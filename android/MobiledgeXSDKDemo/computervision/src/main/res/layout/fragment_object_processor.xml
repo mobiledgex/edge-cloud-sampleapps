@@ -14,8 +14,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center" />
 
-    <com.mobiledgex.computervision.PoseRenderer
-        android:id="@+id/poseSkeleton"
+    <com.mobiledgex.computervision.ObjectClassRenderer
+        android:id="@+id/object_class_renderer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center" />
@@ -36,7 +36,7 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="?attr/colorPrimary"
                 app:popupTheme="@style/AppTheme.PopupOverlay"
-                app:title="@string/title_activity_pose_detection" />
+                app:title="@string/title_activity_object_detection" />
         </android.support.design.widget.AppBarLayout>
 
         <RelativeLayout

@@ -413,7 +413,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             new AlertDialog.Builder(QoeMapActivity.this)
                     .setView(webView)
                     .setCancelable(true)
-                    .setPositiveButton("OK", null)
+                    .setPositiveButton(R.string.ok, null)
                     .show();
         } catch (IOException e) {
             e.printStackTrace();
