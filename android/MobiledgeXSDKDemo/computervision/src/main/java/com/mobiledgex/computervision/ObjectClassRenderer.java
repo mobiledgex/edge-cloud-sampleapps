@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,13 +104,13 @@ public class ObjectClassRenderer extends View {
      * @param objectsJsonArray The array of detected object coordinates and class names.
      */
     public void setObjects(JSONArray objectsJsonArray) {
-        Log.d(TAG, "setPoses() "+getWidth()+","+getHeight()+" mObjects already exists = "+(mObjects !=null));
+        Log.d(TAG, "setObjects() "+getWidth()+","+getHeight()+" mObjects already exists = "+(mObjects !=null));
         mObjects = objectsJsonArray;
         restartAnimation();
     }
 
     /**
-     * Sets display parameters used to determine ratios and offsets to correctly draw the pose skeletons.
+     * Sets display parameters used to determine ratios and offsets to correctly draw the object rectangles.
      * @param imageRect  The coordinates of the TextureView that is showing the preview image.
      * @param serverToDisplayRatioX  The ratio of the width of the image sent to the server vs.
      *                               the width of the preview image being displayed.

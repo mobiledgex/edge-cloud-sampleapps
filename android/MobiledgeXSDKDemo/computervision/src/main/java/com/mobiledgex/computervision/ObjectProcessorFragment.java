@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,6 @@ import java.text.DecimalFormat;
 public class ObjectProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
     private static final String TAG = "ObjectProcessorFragment";
-    public static final String EXTRA_POSE_STROKE_WIDTH = "EXTRA_POSE_STROKE_WIDTH";
     private ObjectClassRenderer mObjectClassRenderer;
 
     private TextView mLatencyFull;
@@ -66,7 +65,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
      *
      * @param bitmap  The bitmap from the camera or video.
      * @param imageRect  The coordinates of the image on the screen. Needed for scaling/offsetting
-     *                   resulting pose skeleton coordinates.
+     *                   resulting object coordinates.
      */
     @Override
     public void onBitmapAvailable(Bitmap bitmap, Rect imageRect) {
@@ -84,15 +83,15 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     }
 
     /**
-     * Update the body poses.
+     * Update the object coordinates.
      *
-     * @param cloudletType  The cloudlet type. Not used for Poses.
+     * @param cloudletType  The cloudlet type. Not used for object detection.
      * @param objectsJsonArray  An array of rectangular coordinates and class names for each object detected.
-     * @param subject  Should be null or empty for Poses.
+     * @param subject  Should be null or empty for object detection.
      */
     @Override
     public void updateOverlay(CloudletType cloudletType, final JSONArray objectsJsonArray, String subject) {
-        Log.i(TAG, "updateOverlay Poses("+cloudletType+","+objectsJsonArray.toString());
+        Log.i(TAG, "updateOverlay objects("+cloudletType+","+objectsJsonArray.toString());
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -188,13 +187,13 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.i(TAG, "onCreateView PoseProcessorFragment");
+        Log.i(TAG, "onCreateView ObjectProcessorFragment");
         return inflater.inflate(R.layout.fragment_object_processor, container, false);
     }
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        Log.i(TAG, "onViewCreated PoseProcessorFragment savedInstanceState="+savedInstanceState);
+        Log.i(TAG, "onViewCreated ObjectProcessorFragment savedInstanceState="+savedInstanceState);
 
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
@@ -215,6 +214,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         prefs.registerOnSharedPreferenceChangeListener(this);
         onSharedPreferenceChanged(prefs, "ALL");
 
+        // TODO: Create separate preference for Object Detection Host
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
         mHostDetectionEdge = prefs.getString(prefKeyOpenPoseHostEdge, DEF_OBJECT_DETECTION_HOST_EDGE);
         Log.i(TAG, "prefKeyOpenPoseHostEdge="+prefKeyOpenPoseHostEdge+" mHostDetectionEdge="+mHostDetectionEdge);
@@ -285,7 +285,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
             mStdNet.setVisibility(View.GONE);
         }
 
-        // Always disable this for Pose Detection.
+        // Always disable this for Object Detection.
         prefLocalProcessing = false;
 
     }

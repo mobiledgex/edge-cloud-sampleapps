@@ -117,7 +117,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
     public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
-    public static final String EXTRA_OBJECT_DETECTION = "EXTRA_OBJECT_DETECTION";
 
     /**
      * Return statistics information to be displayed in dialog after activity -- a combination
@@ -728,15 +727,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT, PERSISTENT_TCP_PORT);
 
         boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
-        boolean objectDetection = intent.getBooleanExtra(EXTRA_OBJECT_DETECTION, false);
         if (faceRecognition) {
             mCameraMode = ImageSender.CameraMode.FACE_RECOGNITION;
             mCameraToolbar.setTitle(R.string.title_activity_face_recognition);
             mImageSenderCloud.recognizerUpdate();
             mImageSenderEdge.recognizerUpdate();
-        } else if (objectDetection) {
-            mCameraMode = ImageSender.CameraMode.OBJECT_DETECTION;
-            mCameraToolbar.setTitle(R.string.title_activity_object_detection);
         } else {
             mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
