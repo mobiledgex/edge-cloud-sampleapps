@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.preference.PreferenceActivity;
@@ -75,7 +76,7 @@ public class MatchingEngineHelper {
         mHostname = hostname;
         mCarrierName = carrierName;
         mMatchingEngine = new MatchingEngine(mContext);
-        mMatchingEngine.setHost(mHostname);
+        // mMatchingEngine.setHost(mHostname);
     }
 
     /**
@@ -252,9 +253,14 @@ public class MatchingEngineHelper {
 
     private boolean registerClient(Activity ctx, String host, int port, String devName, String appVersion,
                                    String carrierName, boolean reportCookie) throws InterruptedException, ExecutionException {
-        AppClient.RegisterClientRequest registerClientRequest =
-                mMatchingEngine.createRegisterClientRequest(ctx,
-                        devName, "", appVersion, carrierName, null);
+        AppClient.RegisterClientRequest registerClientRequest;
+        try {
+            registerClientRequest =
+                    mMatchingEngine.createDefaultRegisterClientRequest(ctx, devName).build();
+        } catch (PackageManager.NameNotFoundException nnfe) {
+            Log.e(TAG, "NameNotFoundException in create default register client request. " + nnfe.getMessage());
+            return false;
+        }
         Log.i(TAG, "registerClientRequest.getAppVers()=["+registerClientRequest.getAppVers()+"] registerClientRequest.getAppName()="+registerClientRequest.getAppName());
         AppClient.RegisterClientReply registerStatus =
                 mMatchingEngine.registerClient(registerClientRequest,
@@ -277,9 +283,7 @@ public class MatchingEngineHelper {
 
     private boolean getAppInstList(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
         // Location Verification (Blocking, or use verifyLocationFuture):
-        Log.i(TAG, "mMatchingEngine getHost()="+mMatchingEngine.getHost());
-        AppClient.AppInstListRequest appInstListRequest =
-                mMatchingEngine.createAppInstListRequest(ctx, carrierName, location);
+        AppClient.AppInstListRequest appInstListRequest = mMatchingEngine.createDefaultAppInstListRequest(ctx, location).build();
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     host, port, 10000);
@@ -305,8 +309,7 @@ public class MatchingEngineHelper {
 
     private boolean findCloudlet(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
         // Find the closest cloudlet for your application to use. (Blocking call, or use findCloudletFuture):
-        AppClient.FindCloudletRequest findCloudletRequest =
-                mMatchingEngine.createFindCloudletRequest(ctx, carrierName, location);
+        AppClient.FindCloudletRequest findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).build();
         if(findCloudletRequest != null) {
             mClosestCloudlet = mMatchingEngine.findCloudlet(findCloudletRequest,
                     host, port, 10000);
@@ -332,7 +335,7 @@ public class MatchingEngineHelper {
     private boolean verifyLocation(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, IOException, ExecutionException {
         // Location Verification (Blocking, or use verifyLocationFuture):
         AppClient.VerifyLocationRequest verifyRequest =
-                mMatchingEngine.createVerifyLocationRequest(ctx, carrierName, location);
+                mMatchingEngine.createVerifyLocationRequest(ctx, carrierName, location, 0, null);
         if (verifyRequest != null) {
             AppClient.VerifyLocationReply verifiedLocation =
                     mMatchingEngine.verifyLocation(verifyRequest, host, port, 10000);
@@ -356,7 +359,7 @@ public class MatchingEngineHelper {
     private boolean getQosPositionKpi(ArrayList<AppClient.QosPosition> positions, String host, int port) throws ExecutionException, InterruptedException {
 
         Log.i(TAG, "me="+mMatchingEngine+" host="+host+" port="+port);
-        AppClient.QosPositionRequest request = mMatchingEngine.createQoSPositionRequest(positions, 0, null);
+        AppClient.QosPositionRequest request = mMatchingEngine.createDefaultQosPositionRequest(positions, 0, null).build();
         ChannelIterator<AppClient.QosPositionKpiReply> responseIterator = mMatchingEngine.getQosPositionKpi(request,
                 host, port, 10000);
         // A stream of QosPositionKpiReply(s), with a non-stream block of responses.
