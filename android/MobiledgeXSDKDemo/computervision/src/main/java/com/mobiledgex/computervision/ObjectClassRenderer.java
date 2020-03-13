@@ -148,6 +148,12 @@ public class ObjectClassRenderer extends View {
         Log.d(TAG, "mObjects.length()="+ mObjects.length());
 
         int totalObjects = mObjects.length();
+        if (totalObjects > colors.length) {
+            // In testing, this is super-unlikely. 6 is about the most objects I've seen at once.
+            Log.w(TAG, "Total number of objects supported is " + colors.length + ". " +
+                    "Received " + totalObjects + ". Dropping extras.");
+            totalObjects = colors.length;
+        }
         try {
             for (int i = 0; i < totalObjects; i++) {
                 JSONObject object = mObjects.getJSONObject(i);
