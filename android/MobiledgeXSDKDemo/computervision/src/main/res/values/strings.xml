@@ -2,6 +2,7 @@
     <string name="app_name">Computer Vision</string>
     <string name="title_activity_face_detection">Face Detection</string>
     <string name="title_activity_face_recognition">Face Recognition</string>
+    <string name="title_activity_object_detection">Object Detection</string>
     <string name="title_activity_pose_detection">Pose Detection</string>
 
     <string name="yes">Yes</string>

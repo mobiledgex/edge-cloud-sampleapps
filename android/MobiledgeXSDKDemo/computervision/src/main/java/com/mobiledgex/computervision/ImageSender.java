@@ -56,6 +56,7 @@ import java.util.regex.Pattern;
 public class ImageSender {
     private static final String TAG = "ImageSender";
     public static final int TRAINING_COUNT_TARGET = 10;
+    private static final double RECOGNITION_CONFIDENCE_THRESHOLD = 105;
 
     private ImageServerInterface mImageServerInterface;
     private RequestQueue mRequestQueue;
@@ -106,7 +107,8 @@ public class ImageSender {
         FACE_TRAINING,
         FACE_UPDATING_SERVER,
         FACE_UPDATE_SERVER_COMPLETE,
-        POSE_DETECTION
+        POSE_DETECTION,
+        OBJECT_DETECTION
     }
 
     public ImageSender(final Activity activity, ImageServerInterface imageServerInterface,
@@ -208,6 +210,9 @@ public class ImageSender {
         } else if (mode == CameraMode.POSE_DETECTION){
             mOpcode = 3;
             mDjangoUrl = "/openpose/detect/";
+        } else if (mode == CameraMode.OBJECT_DETECTION){
+            mOpcode = 4;
+            mDjangoUrl = "/object/detect/";
         } else {
             Log.e(TAG, "Invalid CameraMode: "+mode);
         }
@@ -310,7 +315,9 @@ public class ImageSender {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     mBusy = false;
-                    Log.e(TAG, "sendImage received error=" + error);
+                    String message = "sendImage received error=" + error;
+                    mImageServerInterface.showMessage(message);
+                    Log.e(TAG, message);
                 }
             }) {
 
@@ -345,15 +352,22 @@ public class ImageSender {
                 if (mCameraMode == CameraMode.POSE_DETECTION) {
                     JSONArray poses = jsonObject.getJSONArray("poses");
                     mImageServerInterface.updateOverlay(mCloudLetType, poses, null);
+                } else if (mCameraMode == CameraMode.OBJECT_DETECTION) {
+                    JSONArray objects = jsonObject.getJSONArray("objects");
+                    mImageServerInterface.updateOverlay(mCloudLetType, objects, null);
                 } else {
                     if (jsonObject.has("subject")) {
                         //This means it was from recognition mode
                         subject = jsonObject.getString("subject");
+                        double confidence = jsonObject.getDouble("confidence");
+                        if (confidence > RECOGNITION_CONFIDENCE_THRESHOLD) {
+                            subject = subject+"\n[DOUBTFUL]";
+                        }
                         JSONArray rect = jsonObject.getJSONArray("rect");
                         rects = new JSONArray();
                         rects.put(rect);
                     } else {
-                        //Default is from detection mode
+                        //Default is from face detection mode
                         rects = jsonObject.getJSONArray("rects");
                     }
                     mImageServerInterface.updateOverlay(mCloudLetType, rects, subject);
@@ -364,6 +378,8 @@ public class ImageSender {
                     Log.i(TAG, mCloudLetType + " mTrainingCount=" + mTrainingCount);
                     mImageServerInterface.updateTrainingProgress(mTrainingCount, mCameraMode);
                 }
+            } else {
+                Log.i(TAG, "None found in image");
             }
         } catch (JSONException e) {
             e.printStackTrace();
