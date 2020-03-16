@@ -29,6 +29,8 @@ total_latency_full_process = 0
 count_latency_full_process = 0
 total_latency_network_only = 0
 count_latency_network_only = 0
+total_server_processing_time = 0
+count_server_processing_time = 0
 json_params = None
 do_server_stats = False
 port_number = 8008
@@ -81,6 +83,8 @@ class RequestClient(object):
     def encode_and_send_image(self, host, endpoint, image_file_name, show_responses):
         global total_latency_full_process
         global count_latency_full_process
+        global total_server_processing_time
+        global count_server_processing_time
         global TEST_PASS
         try:
             image = ""
@@ -109,6 +113,8 @@ class RequestClient(object):
             TEST_PASS = False
         if 'server_processing_time' in decoded_json:
             server_processing_time = decoded_json['server_processing_time']
+            total_server_processing_time += float(server_processing_time)
+            count_server_processing_time += 1
         else:
             server_processing_time = "NA"
         if show_responses:
@@ -189,6 +195,9 @@ if __name__ == "__main__":
     if count_latency_network_only > 0:
         average_latency_network_only = total_latency_network_only / count_latency_network_only
         print("Average Latency Network Only=%.3f ms" %average_latency_network_only)
+    if count_server_processing_time > 0:
+        average_server_processing_time = total_server_processing_time / count_server_processing_time
+        print("Average Server Processing Time=%.3f ms" %average_server_processing_time)
 
     # file_size = os.path.getsize(args.filename)
     # The following line outputs CSV data that can be imported to a spreadsheet.

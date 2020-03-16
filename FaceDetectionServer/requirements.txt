@@ -6,3 +6,9 @@ opencv-contrib-python
 imageio
 psutil
 requests
+torch
+torchvision
+numba
+scikit-image
+scikit-learn
+filterpy
