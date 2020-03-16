@@ -61,6 +61,10 @@
             android:label="@string/title_activity_face_detection"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
+            android:name="com.mobiledgex.computervision.ObjectProcessorActivity"
+            android:label="@string/title_activity_object_detection"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name="com.mobiledgex.computervision.PoseProcessorActivity"
             android:label="@string/title_activity_pose_detection"
             android:theme="@style/AppTheme.NoActionBar" />

@@ -2,54 +2,42 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
-        <!--<item-->
-            <!--android:id="@+id/nav_camera"-->
-            <!--android:icon="@drawable/ic_menu_camera"-->
-            <!--android:title="Import" />-->
-        <!--<item-->
-            <!--android:id="@+id/nav_gallery"-->
-            <!--android:icon="@drawable/ic_menu_gallery"-->
-            <!--android:title="Gallery" />-->
-        <!--<item-->
-            <!--android:id="@+id/nav_slideshow"-->
-            <!--android:icon="@drawable/ic_menu_slideshow"-->
-            <!--android:title="Slideshow" />-->
-        <!--<item-->
-            <!--android:id="@+id/nav_manage"-->
-            <!--android:icon="@drawable/ic_menu_manage"-->
-            <!--android:title="Tools" />-->
         <item
             android:id="@+id/nav_google_signin"
             android:icon="@drawable/googleg_color"
-            android:title="Sign in with Google" />
+            android:title="@string/menu_sign_in_with_google" />
         <item
             android:id="@+id/nav_google_signout"
             android:icon="@drawable/googleg_color"
-            android:title="Sign out" />
+            android:title="@string/menu_sign_out" />
         <item
             android:id="@+id/nav_face_recognition"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Face Recognition" />
+            android:title="@string/title_activity_face_recognition" />
         <item
             android:id="@+id/nav_face_detection"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Face Detection" />
+            android:title="@string/title_activity_face_detection" />
+        <item
+            android:id="@+id/nav_object_detection"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="@string/title_activity_object_detection" />
         <item
             android:id="@+id/nav_pose_detection"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Pose Detection" />
+            android:title="@string/title_activity_pose_detection" />
         <item
             android:id="@+id/nav_qoe_map"
             android:icon="@drawable/ic_menu_qoe"
-            android:title="Predictive QoS" />
+            android:title="@string/title_activity_qoe_map" />
         <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_menu_settings"
-            android:title="Settings" />
+            android:title="@string/title_activity_settings" />
         <item
             android:id="@+id/nav_about"
             android:icon="@drawable/ic_menu_help"
-            android:title="About" />
+            android:title="@string/menu_about" />
     </group>
 
 </menu>

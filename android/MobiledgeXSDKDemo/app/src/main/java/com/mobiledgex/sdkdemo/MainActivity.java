@@ -25,6 +25,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -48,6 +49,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -84,6 +86,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.mobiledgex.computervision.ImageProcessorFragment;
 import com.mobiledgex.computervision.ImageSender;
+import com.mobiledgex.computervision.ObjectProcessorActivity;
+import com.mobiledgex.computervision.ObjectProcessorFragment;
 import com.mobiledgex.computervision.OpencvImageProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorFragment;
@@ -94,7 +98,12 @@ import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -319,17 +328,35 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
 
-        new AlertDialog.Builder(MainActivity.this)
-                .setIcon(R.mipmap.ic_launcher_foreground)
-                .setTitle("About")
-                .setMessage(appName+"\nVersion: "+appVersion)
-                .setPositiveButton("OK", null)
-                .show();
+        StringBuilder sb = new StringBuilder();
+        try {
+            InputStream is = getAssets().open("about_dialog.html");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8 ));
+            String str;
+            while ((str = br.readLine()) != null) {
+                sb.append(str);
+            }
+            String htmlData = sb.toString();
+            htmlData = htmlData.replace("${appVersion}", appVersion);
+
+            // The WebView to show our HTML.
+            WebView webView = new WebView(MainActivity.this);
+            webView.loadData(htmlData, "text/html; charset=UTF-8",null);
+            new AlertDialog.Builder(MainActivity.this)
+                    .setView(webView)
+                    .setIcon(R.mipmap.ic_launcher_foreground)
+                    .setTitle(appName)
+                    .setCancelable(true)
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -422,6 +449,13 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, PoseProcessorActivity.class);
             //Due to limited GPU availabilty, we don't want to override the default yet.
             //It's still possible to override the default via preferences.
+            //TODO: Add this back when we have more cloudlets with GPU support.
+//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
+            startActivityForResult(intent, RC_STATS);
+            return true;
+        } else if (id == R.id.nav_object_detection) {
+            // Start the object detection Activity
+            Intent intent = new Intent(this, ObjectProcessorActivity.class);
             //TODO: Add this back when we have more cloudlets with GPU support.
 //            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);

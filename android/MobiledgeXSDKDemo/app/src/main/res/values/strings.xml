@@ -142,5 +142,8 @@
     <string name="pqoe_map_type_silver">Silver</string>
     <string name="upload_speed_test">UL Speed Test</string>
     <string name="download_speed_test">DL Speed Test</string>
+    <string name="menu_sign_in_with_google">Sign in with Google</string>
+    <string name="menu_sign_out">Sign out</string>
+    <string name="menu_about">About</string>
 
 </resources>
