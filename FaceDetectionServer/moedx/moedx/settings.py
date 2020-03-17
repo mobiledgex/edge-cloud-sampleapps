@@ -38,12 +38,12 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'standard',
         },
         'logfile': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': '../logfile',
             'maxBytes': 1*1024*1024,
@@ -52,7 +52,7 @@ LOGGING = {
         },
     },
     'root': {
-        'level': 'DEBUG',
+        'level': 'INFO',
         'handlers': ['console', 'logfile']
     },
 }
