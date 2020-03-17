@@ -28,7 +28,7 @@ import struct
 import logging
 from PIL import Image
 
-opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'ping_rtt'}
+opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'obj_det', 5:'ping_rtt'}
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 else:
                     ret = {"success": "true", "server_processing_time": elapsed, "objects": objects}
 
-            if opcode == 5: #'ping_rtt':
+            elif opcode == 5: #'ping_rtt':
                 ret = {"success": "pong"}
 
             else:

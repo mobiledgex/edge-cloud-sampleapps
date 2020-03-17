@@ -143,8 +143,8 @@ if __name__ == "__main__":
     do_server_stats = args.server_stats
     show_responses = args.show_responses
 
-    opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det'}
-    print(opcodes)
+    opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'obj_det', 5:'ping_rtt'}
+    #print(opcodes)
 
     for i in range(args.threads):
         thread = Thread(target=run_multi, args=(args.repeat, args.server, args.port, args.opcode, args.filename, "thread-%d" %i))
