@@ -1,4 +1,4 @@
-# Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+# Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
 # MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,11 @@
 
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-
-from facial_detection.facedetector import FaceDetector
-from facial_detection.faceRecognizer import FaceRecognizer
-from tracker.apps import myFaceRecognizer, myOpenPose, myOpWrapper
-from tracker.models import CentralizedTraining
 from django.http import HttpResponse, HttpResponseBadRequest
+
+from tracker.models import CentralizedTraining
+from tracker.apps import myFaceDetector, myFaceRecognizer, myOpenPose, myOpWrapper
+from tracker.apps import myObjectDetector
 
 import ast
 import cv2
@@ -36,10 +35,9 @@ import json
 import logging
 from subprocess import Popen, PIPE
 import imghdr
+from PIL import Image
 
 logger = logging.getLogger(__name__)
-
-fd = FaceDetector()
 
 @csrf_exempt
 def test_connection(request):
@@ -85,41 +83,56 @@ def upload_data(request):
 def prepend_ip(text, request):
     return "[%s] %s" %(request.META.get('REMOTE_ADDR'), text)
 
-def save_debug_image(image, request):
-    logger.debug(prepend_ip("Saving image for debugging", request))
-    #Save current image with timestamp
+def save_debug_image(image, request, type):
+    """ Save current image with timestamp. """
+    logger.debug(prepend_ip("Saving image for debugging (first 32 bytes logged): %s" %image[:32], request))
     extension = imghdr.what("XXX", image)
+    if extension is None or extension == "jpeg":
+        extension = "jpg"
     now = time.time()
     mlsec = repr(now).split('.')[1][:3]
     timestr = time.strftime("%Y%m%d-%H%M%S")+"."+mlsec
-    fileName = "/tmp/face_"+timestr+"."+extension
+    fileName = "/tmp/"+type+"_"+timestr+"."+extension
     with open(fileName, "wb") as fh:
         fh.write(image)
     #Delete all old files except the 20 most recent
     logger.debug(prepend_ip("Deleting all but 20 newest images", request))
     try:
-        files = sorted(glob.glob("/tmp/face_*.*"), key=os.path.getctime, reverse=True)
+        files = sorted(glob.glob("/tmp/"+type+"_*.*"), key=os.path.getctime, reverse=True)
         for file in files[20:]:
             os.remove(file)
     except FileNotFoundError:
-        logger.warn("Cleanup of /tmp/face* failed. Next request will retry.")
+        logger.warn("Cleanup of /tmp/"+type+"* failed. Next request will retry.")
 
-def save_rendered_pose_image(image, request):
-    logger.debug(prepend_ip("Saving rendered pose image for debugging", request))
-    #Save current image with timestamp
-    now = time.time()
-    mlsec = repr(now).split('.')[1][:3]
-    timestr = time.strftime("%Y%m%d-%H%M%S")+"."+mlsec
-    fileName = "/tmp/pose_"+timestr+".png"
-    imwrite(fileName, image)
-    #Delete all old files except the 20 most recent
-    logger.debug(prepend_ip("Deleting all but 20 newest pose images", request))
-    try:
-        files = sorted(glob.glob("/tmp/pose_*.*"), key=os.path.getctime, reverse=True)
-        for file in files[20:]:
-            os.remove(file)
-    except FileNotFoundError:
-        logger.warn("Cleanup of /tmp/face* failed. Next request will retry.")
+def get_image_from_request(request, type):
+    """ Based on the content type, get the image data from the request. """
+    logger.debug(prepend_ip("get_image_from_request method=%s content_type=%s" %(request.method, request.content_type), request))
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Must send frame as a POST")
+
+    if request.content_type == "image/png" or request.content_type == "image/jpeg":
+        if request.body == "":
+            return HttpResponseBadRequest("No image data")
+        image = request.body
+    elif request.content_type == "multipart/form-data":
+        # Image data is expected as if it came from a form with <input type="file" name="image">
+        if not "image" in request.FILES.keys():
+            return HttpResponseBadRequest("Image file must be uploaded with key of 'image'")
+        uploaded_file = request.FILES["image"]
+        logger.info("Uploaded file type=%s size=%d" %(uploaded_file.content_type, uploaded_file.size))
+        if uploaded_file.content_type != "image/png" and uploaded_file.content_type != "image/jpeg" and uploaded_file.content_type != "application/octet-stream":
+            return HttpResponseBadRequest("Uploaded file Content-Type must be 'image/png', 'image/jpeg'")
+        image = uploaded_file.read()
+    elif request.content_type == "application/x-www-form-urlencoded":
+        if request.POST.get("image", "") == "":
+            return HttpResponseBadRequest("Missing 'image' parameter")
+        image = base64.b64decode(request.POST.get("image"))
+    else:
+        return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'")
+
+    save_debug_image(image, request, type)
+    image = imread(io.BytesIO(image)) # convert to numpy array
+    return image
 
 @csrf_exempt
 def detector_detect(request):
@@ -128,35 +141,16 @@ def detector_detect(request):
     API call and returns a JSON formatted set of coordinates.
     """
     logger.debug(prepend_ip("Request received: %s" %request, request))
-    if request.method != 'POST':
-        return HttpResponseBadRequest("Must send frame as a POST")
-    if request.content_type == "image/png" or request.content_type == "image/jpeg":
-        if request.body == "":
-            return HttpResponseBadRequest("No image data")
-        image = request.body
-        save_debug_image(image, request)
-    elif request.content_type == "multipart/form-data":
-        # Image data is expected as if it came from a form with <input type="file" name="image">
-        if not "image" in request.FILES.keys():
-            return HttpResponseBadRequest("Image file must be uploaded with key of 'image'")
-        uploaded_file = request.FILES["image"]
-        logger.info("Uploaded file type=%s size=%d" %(uploaded_file.content_type, uploaded_file.size))
-        if uploaded_file.content_type != "image/png" and uploaded_file.content_type != "image/jpeg":
-            return HttpResponseBadRequest("Uploaded file Content-Type must be 'image/png', 'image/jpeg'")
-        image = uploaded_file.read()
-        save_debug_image(image, request)
-    elif request.content_type == "application/x-www-form-urlencoded":
-        if request.POST.get("image", "") == "":
-            return HttpResponseBadRequest("Missing 'image' parameter")
-        image = base64.b64decode(request.POST.get("image"))
-        save_debug_image(image, request)
-    else:
-        return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'")
+
+    image = get_image_from_request(request, "face")
+    if not isinstance(image, np.ndarray):
+        # If it's not an image in numpy array format, it is an
+        # HttpResponseBadRequest which we will return to the caller.
+        return image
 
     logger.debug(prepend_ip("Performing detection process", request))
     start = time.time()
-    image = imread(io.BytesIO(image))
-    rects = fd.detect_faces(image)
+    rects = myFaceDetector.detect_faces(image)
     elapsed = "%.3f" %((time.time() - start)*1000)
 
     # Create a JSON response to be returned in a consistent manner
@@ -176,7 +170,7 @@ def recognizer_update(request):
     """
     logger.debug(prepend_ip("Request received: %s" %request, request))
     if request.method != 'POST':
-        return HttpResponseBadRequest("Must send frame as a POST")
+        return HttpResponseBadRequest("Must send request as a POST")
     ret = myFaceRecognizer.download_training_data_if_needed()
     return HttpResponse("%s\n" %ret)
 
@@ -187,24 +181,18 @@ def recognizer_predict(request):
     Returns subject name, and rectangle coordinates of recognized face.
     """
     logger.debug(prepend_ip("Request received: %s" %request, request))
-    if request.method != 'POST':
-        return HttpResponseBadRequest("Must send frame as a POST")
-    if request.content_type != 'application/x-www-form-urlencoded':
-        return HttpResponseBadRequest("Content-Type must be 'application/x-www-form-urlencoded'")
 
-    if request.POST.get("image", "") == "":
-        return HttpResponseBadRequest("Missing 'image' parameter")
+    image = get_image_from_request(request, "face")
+    if not isinstance(image, np.ndarray):
+        return image
 
     if myFaceRecognizer.is_update_in_progress() or myFaceRecognizer.read_training_data_if_needed():
         error = "Training data update in progress"
         logger.error(prepend_ip("%s" %error, request))
         return HttpResponse(error, status=503)
 
-    image = base64.b64decode(request.POST.get("image"))
-    save_debug_image(image, request)
     logger.debug(prepend_ip("Performing recognition process", request))
     now = time.time()
-    image = imread(io.BytesIO(image))
     predicted_img, subject, confidence, rect = myFaceRecognizer.predict(image)
     elapsed = "%.3f" %((time.time() - now)*1000)
 
@@ -215,8 +203,6 @@ def recognizer_predict(request):
         # Convert rect from [x, y, width, height] to [x, y, right, bottom]
         rect2 = rect.tolist()
         rect2 = [int(rect[0]), int(rect[1]), int(rect[0]+rect[2]), int(rect[1]+rect[3])]
-        if confidence >= 105:
-            subject = "Unknown"
         ret = {"success": "true", "subject": subject, "confidence":"%.3f" %confidence, "server_processing_time": elapsed, "rect": rect2}
     logger.info(prepend_ip("Returning: %s" %(ret), request))
     json_ret = json.dumps(ret)
@@ -254,19 +240,10 @@ def recognizer_add(request):
     subject's training data directory.
     """
     logger.debug(prepend_ip("Request received: %s" %request, request))
-    if request.method != 'POST':
-        return HttpResponseBadRequest("Must send frame as a POST")
-    if request.content_type != 'application/x-www-form-urlencoded':
-        return HttpResponseBadRequest("Content-Type must be 'application/x-www-form-urlencoded'")
 
-    if request.POST.get("subject", "") == "":
-        return HttpResponseBadRequest("Missing 'subject' parameter")
-    if request.POST.get("image", "") == "":
-        return HttpResponseBadRequest("Missing 'image' parameter")
-
-    subject = request.POST.get("subject")
-    image = base64.b64decode(request.POST.get("image"))
-    save_debug_image(image, request)
+    image = get_image_from_request(request, "face")
+    if not isinstance(image, np.ndarray):
+        return image
 
     if request.POST.get("owner", "") != "":
         owner = request.POST.get("owner")
@@ -274,8 +251,7 @@ def recognizer_add(request):
 
     logger.debug(prepend_ip("Performing detection process", request))
     start = time.time()
-    image2 = imread(io.BytesIO(image))
-    rects = fd.detect_faces(image2)
+    rects = myFaceDetector.detect_faces(image)
     elapsed = "%.3f" %((time.time() - start)*1000)
 
     # Create a JSON response to be returned in a consistent manner
@@ -303,18 +279,10 @@ def openpose_detect(request):
         return HttpResponse(json_ret, status=501)
 
     logger.debug(prepend_ip("Request received: %s" %request, request))
-    if request.method != 'POST':
-        return HttpResponseBadRequest("Must send frame as a POST")
-    if request.content_type != 'application/x-www-form-urlencoded':
-        return HttpResponseBadRequest("Content-Type must be 'application/x-www-form-urlencoded'")
 
-    if request.POST.get("image", "") == "":
-        return HttpResponseBadRequest("Missing 'image' parameter")
-    image = base64.b64decode(request.POST.get("image"))
-    logger.debug(prepend_ip("Size of received image: %d" %(len(request.POST.get("image"))), request))
-    save_debug_image(image, request)
-
-    image = imread(io.BytesIO(image))
+    image = get_image_from_request(request, "pose")
+    if not isinstance(image, np.ndarray):
+        return image
 
     logger.debug(prepend_ip("Performing pose detection process", request))
     start = time.time()
@@ -423,3 +391,28 @@ def server_usage(request):
         return HttpResponse(json_ret)
 
     return HttpResponseBadRequest("This request must be a GET")
+
+@csrf_exempt
+def object_detect(request):
+    """
+    """
+    logger.debug(prepend_ip("Request received: %s" %request, request))
+
+    image = get_image_from_request(request, "obj")
+    if not isinstance(image, np.ndarray):
+        return image
+
+    logger.debug(prepend_ip("Performing detection process", request))
+    pillow_image = Image.fromarray(image, 'RGB')
+    start = time.time()
+    objects = myObjectDetector.process_image(pillow_image)
+    elapsed = "%.3f" %((time.time() - start)*1000)
+
+    # Create a JSON response to be returned in a consistent manner
+    if len(objects) == 0:
+        ret = {"success": "false", "server_processing_time": elapsed}
+    else:
+        ret = {"success": "true", "server_processing_time": elapsed, "objects": objects}
+    logger.info(prepend_ip("%s ms to detect objects: %s" %(elapsed, ret), request))
+    json_ret = json.dumps(ret)
+    return HttpResponse(json_ret)

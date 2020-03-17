@@ -2,6 +2,9 @@ FROM python:3.6.6-onbuild
 COPY requirements.txt /tmp
 WORKDIR /tmp
 RUN pip install -r requirements.txt
+# Download weights file required for object detection
+WORKDIR /usr/src/app/moedx/pytorch_objectdetecttrack/config
+RUN wget https://pjreddie.com/media/files/yolov3.weights
 WORKDIR /usr/src/app/moedx
 # Initialize the database.
 RUN python manage.py makemigrations tracker
