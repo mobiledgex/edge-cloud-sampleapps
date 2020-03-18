@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path
 from tracker.views import test_connection
 from tracker.views import detector_detect, recognizer_add, recognizer_train, recognizer_update
-from tracker.views import recognizer_predict, openpose_detect, server_usage
+from tracker.views import recognizer_predict, openpose_detect, object_detect, server_usage
 from tracker.views import get_data, upload_data
 
 urlpatterns = [
@@ -28,6 +28,7 @@ urlpatterns = [
     path('recognizer/predict/', recognizer_predict),
     path('recognizer/update/', recognizer_update),
     path('openpose/detect/', openpose_detect),
+    path('object/detect/', object_detect),
     path('server/usage/', server_usage),
     path('getdata/', get_data),
     path('uploaddata/', upload_data),

@@ -1,4 +1,4 @@
-# Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+# Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
 # MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,9 @@ from imageio import imread, imwrite
 import imghdr
 import struct
 import logging
+from PIL import Image
 
-opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'ping_rtt'}
+opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'obj_det', 4:'ping_rtt'}
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +45,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
             logger.info("Opcode: %s len(data)=%d %s" %(opcode, len(data), threading.current_thread()))
 
-            if opcode == 4: #'ping_rtt':
-                ret = {"success": "pong"}
-
-            elif opcode == 1: #'face_det':
+            if opcode == 1: #'face_det':
                 now = time.time()
                 image = imread(io.BytesIO(data))
                 rects = myFaceDetector.detect_faces(image)
@@ -69,8 +67,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     # Convert rect from [x, y, width, height] to [x, y, right, bottom]
                     rect2 = rect.tolist()
                     rect2 = [int(rect[0]), int(rect[1]), int(rect[0]+rect[2]), int(rect[1]+rect[3])]
-                    if confidence >= 105:
-                        subject = "Unknown"
                     ret = {"success": "true", "subject": subject, "confidence":"%.3f" %confidence, "server_processing_time": elapsed, "rect": rect2}
 
             elif opcode == 3: #'pose_det':
@@ -99,6 +95,21 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     else:
                         num_poses = len(poses2)
                         ret = {"success": "true", "server_processing_time": elapsed, "poses": poses2.tolist()}
+
+            elif opcode == 4: #'obj_det':
+                now = time.time()
+                image = imread(io.BytesIO(data))
+                pillow_image = Image.fromarray(image, 'RGB')
+                objects = myObjectDetector.process_image(pillow_image)
+                elapsed = "%.3f" %((time.time() - now)*1000)
+                # Create a JSON response to be returned in a consistent manner
+                if len(objects) == 0:
+                    ret = {"success": "false", "server_processing_time": elapsed, "gpu_support": myObjectDetector.is_gpu_supported()}
+                else:
+                    ret = {"success": "true", "server_processing_time": elapsed, "gpu_support": myObjectDetector.is_gpu_supported(), "objects": objects}
+
+            elif opcode == 5: #'ping_rtt':
+                ret = {"success": "pong"}
 
             else:
                 error = "Unsupported opcode: %s" %opcode
@@ -156,6 +167,9 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         myOpenPose = openPose
         global myOpWrapper
         myOpWrapper = opWrapper
+    def setObjectDetector(self, objectDetector):
+        global myObjectDetector
+        myObjectDetector = objectDetector
 
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 8011
