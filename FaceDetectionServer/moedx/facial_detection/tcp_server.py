@@ -108,7 +108,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 else:
                     ret = {"success": "true", "server_processing_time": elapsed, "objects": objects}
 
-            if opcode == 5: #'ping_rtt':
+            elif opcode == 5: #'ping_rtt':
                 ret = {"success": "pong"}
 
             else:
