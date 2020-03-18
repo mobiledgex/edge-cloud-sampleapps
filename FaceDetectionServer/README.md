@@ -2,6 +2,7 @@
 This project depends on a submodule. To fetch the submodule, please run these
 commands after cloning the repository:
 ```bash
+cd edge-cloud-sampleapps/
 git submodule init
 git submodule update
 ```

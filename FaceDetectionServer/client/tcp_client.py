@@ -25,6 +25,8 @@ total_latency_full_process = 0
 count_latency_full_process = 0
 total_latency_network_only = 0
 count_latency_network_only = 0
+total_server_processing_time = 0
+count_server_processing_time = 0
 
 do_server_stats = False
 show_responses = False
@@ -75,6 +77,9 @@ def run_multi(num_repeat, host, port, op_code, image_file_name, thread_name):
     global show_responses
     global total_latency_full_process
     global count_latency_full_process
+    global total_server_processing_time
+    global count_server_processing_time
+
     # print("run_multi(%s, %s)\n" %(host, image_file_name))
     with open(image_file_name, "rb") as f:
         image = f.read()
@@ -92,27 +97,24 @@ def run_multi(num_repeat, host, port, op_code, image_file_name, thread_name):
     for x in range(num_repeat):
         now = time.time()
         length = len(data)
-        # opcode = bytes(op_code, 'utf-8')
-        # sock.sendall(struct.pack('!8s', opcode))
         sock.sendall(struct.pack('!I', op_code))
         sock.sendall(struct.pack('!I', length))
         sock.sendall(data)
-        # sock.settimeout(2)
-
-        # lengthbuf = recvall(sock, 4)
-        # length, = struct.unpack('!I', lengthbuf)
-        # received = str(recvall(sock, length), "utf-8")
 
         lengthbuf = sock.recv(4)
         length, = struct.unpack('!I', lengthbuf)
         received = str(sock.recv(length), "utf-8")
 
-        # received = str(sock.recv(1024), "utf-8")
-
         millis = (time.time() - now)*1000
         total_latency_full_process = total_latency_full_process + millis
         count_latency_full_process += 1
         elapsed = "%.3f" %millis
+        decoded_json = json.loads(received)
+        if 'server_processing_time' in decoded_json:
+            server_processing_time = decoded_json['server_processing_time']
+            total_server_processing_time += float(server_processing_time)
+            count_server_processing_time += 1
+
         if show_responses:
             print("%s ms to send and receive: %s" %(elapsed, received))
 
@@ -157,3 +159,6 @@ if __name__ == "__main__":
     if count_latency_network_only > 0:
         average_latency_network_only = total_latency_network_only / count_latency_network_only
         print("===> Average Latency Network Only=%.3f ms" %average_latency_network_only)
+    if count_server_processing_time > 0:
+        average_server_processing_time = total_server_processing_time / count_server_processing_time
+        print("Average Server Processing Time=%.3f ms" %average_server_processing_time)

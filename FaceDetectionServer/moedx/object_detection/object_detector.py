@@ -1,10 +1,25 @@
+# Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+# MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# First off, add the submodule's path so we can import its packages.
 import os, sys
 submodule = "../pytorch_objectdetecttrack"
 sys.path.append(os.path.join(os.path.dirname(__file__), submodule))
 
 from models import *
 from utils import *
-# from object_tracker import detect_image
 
 import time, datetime, random
 import torch
@@ -17,9 +32,7 @@ import matplotlib.patches as patches
 from PIL import Image
 
 package_dir = os.path.dirname(os.path.abspath(__file__))+"/"+submodule
-print("XXXXXXXXXXXX", package_dir)
 config_path=package_dir+'/config/yolov3.cfg'
-print("XXXXXXXXXXXX", config_path)
 weights_path=package_dir+'/config/yolov3.weights'
 class_path=package_dir+'/config/coco.names'
 img_size=416
@@ -69,7 +82,9 @@ class ObjectDetector(object):
 
     def process_image(self, img, outdir = None):
         """
-        This version saves processed image to outdir
+        Convert and process the image. If "outdir" is included,
+        save the processed image there. (Only for command-line executions.
+        It will always be None when called by the Django server.)
         """
         global total_server_processing_time
         global count_server_processing_time
