@@ -14,9 +14,10 @@
 # limitations under the License.
 
 from django.apps import AppConfig
-from facial_detection.facedetector import FaceDetector
-from facial_detection.faceRecognizer import FaceRecognizer
+from facial_detection.face_detector import FaceDetector
+from facial_detection.face_recognizer import FaceRecognizer
 from facial_detection.tcp_server import ThreadedTCPServer, ThreadedTCPRequestHandler
+from object_detection.object_detector import ObjectDetector
 import threading
 import logging
 import sys
@@ -38,6 +39,9 @@ class TrackerConfig(AppConfig):
 
         global myFaceDetector
         myFaceDetector = FaceDetector()
+
+        global myObjectDetector
+        myObjectDetector = ObjectDetector()
 
         global myOpenPose
         global myOpWrapper
@@ -99,6 +103,7 @@ class TrackerConfig(AppConfig):
             server.setFaceDetector(myFaceDetector)
             server.setFaceRecognizer(myFaceRecognizer)
             server.setOpenPose(myOpenPose, myOpWrapper)
+            server.setObjectDetector(myObjectDetector)
             ip, port = server.server_address
             logger.info("ip=%s port=%d" %(ip, port))
 
