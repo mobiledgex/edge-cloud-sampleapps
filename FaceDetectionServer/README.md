@@ -1,6 +1,8 @@
 ### Submodule Requirements
-This project depends on a submodule. To fetch the submodule, please run these
-commands after cloning the repository:
+This project depends on a submodule. We link to another repository instead of
+copying the code into our own repository because the example code used for
+object detection does not include any license information.
+To fetch the submodule, please run these commands after cloning the repository:
 ```bash
 cd edge-cloud-sampleapps/
 git submodule init
