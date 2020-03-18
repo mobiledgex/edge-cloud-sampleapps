@@ -75,8 +75,10 @@ public class MatchingEngineUnitTest {
         assertEquals("com.mobiledgex.sdkdemo", appContext.getPackageName());
     }
 
-    // Call this before each API call in order to get session cookie
-    public void registerClient(MatchingEngine me, Context ctx) {
+    /*
+     * Call this before each API call in order to get session cookie
+     */
+    private void registerClient(MatchingEngine me, Context ctx) {
         try {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(ctx, orgName)
                     .setAppName(appName)

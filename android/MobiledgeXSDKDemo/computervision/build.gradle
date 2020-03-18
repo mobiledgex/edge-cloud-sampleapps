@@ -20,7 +20,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {
@@ -36,6 +35,10 @@ dependencies {
     implementation project(':opencv')
     implementation 'com.android.volley:volley:1.1.1'
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
+    implementation "com.mobiledgex:matchingengine:${matchingengineVersion}"
+    implementation "io.grpc:grpc-okhttp:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
 }
 
 artifactoryPublish.dependsOn('build')
