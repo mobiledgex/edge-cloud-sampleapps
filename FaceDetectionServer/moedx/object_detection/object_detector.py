@@ -43,9 +43,11 @@ nms_thres=0.4
 model = Darknet(config_path, img_size=img_size)
 model.load_weights(weights_path)
 
+gpu_support = False
 if torch.cuda.is_available():
     model.cuda()
     Tensor = torch.cuda.FloatTensor
+    gpu_support = True
 else:
     Tensor = torch.FloatTensor
 
@@ -59,6 +61,9 @@ count_server_processing_time = 0
 class ObjectDetector(object):
     def __init__(self):
         pass
+
+    def is_gpu_supported(self):
+        return gpu_support
 
     def detect_image(self, img):
         # scale and pad image

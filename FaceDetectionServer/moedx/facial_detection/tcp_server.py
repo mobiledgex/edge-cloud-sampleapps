@@ -28,7 +28,7 @@ import struct
 import logging
 from PIL import Image
 
-opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'ping_rtt'}
+opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'obj_det', 4:'ping_rtt'}
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +104,9 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 elapsed = "%.3f" %((time.time() - now)*1000)
                 # Create a JSON response to be returned in a consistent manner
                 if len(objects) == 0:
-                    ret = {"success": "false", "server_processing_time": elapsed}
+                    ret = {"success": "false", "server_processing_time": elapsed, "gpu_support": myObjectDetector.is_gpu_supported()}
                 else:
-                    ret = {"success": "true", "server_processing_time": elapsed, "objects": objects}
+                    ret = {"success": "true", "server_processing_time": elapsed, "gpu_support": myObjectDetector.is_gpu_supported(), "objects": objects}
 
             elif opcode == 5: #'ping_rtt':
                 ret = {"success": "pong"}

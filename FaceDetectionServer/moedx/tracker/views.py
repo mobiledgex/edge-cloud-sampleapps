@@ -410,9 +410,9 @@ def object_detect(request):
 
     # Create a JSON response to be returned in a consistent manner
     if len(objects) == 0:
-        ret = {"success": "false", "server_processing_time": elapsed}
+        ret = {"success": "false", "server_processing_time": elapsed, "gpu_support": myObjectDetector.is_gpu_supported()}
     else:
-        ret = {"success": "true", "server_processing_time": elapsed, "objects": objects}
+        ret = {"success": "true", "server_processing_time": elapsed, "gpu_support": myObjectDetector.is_gpu_supported(), "objects": objects}
     logger.info(prepend_ip("%s ms to detect objects: %s" %(elapsed, ret), request))
     json_ret = json.dumps(ret)
     return HttpResponse(json_ret)
