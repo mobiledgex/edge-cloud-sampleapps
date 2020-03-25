@@ -55,7 +55,7 @@ class LoginViewController: UIViewController {
     var manager: SocketManager?
     
     // MatchingEngine API return objects
-    var registerPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.RegisterClientReply>? // AnyObject --> RegisterClientReply
+    var registerPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.RegisterClientReply>?
     var findCloudletPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.FindCloudletReply>?
     var verifyLocationPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.VerifyLocationReply>?
     
