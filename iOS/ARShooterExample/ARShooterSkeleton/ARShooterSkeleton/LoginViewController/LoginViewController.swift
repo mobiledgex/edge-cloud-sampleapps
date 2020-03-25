@@ -35,31 +35,30 @@ class LoginViewController: UIViewController {
     var matchingEngine: MobiledgeXiOSLibrary.MatchingEngine!
     
     var dmeHost: String?
-    var dmePort: UInt?
+    var dmePort: UInt16?
     
     var appName: String?
     var appVers: String?
-    var devName: String!
+    var orgName: String!
     var carrierName: String?
     var authToken: String?
-    var uniqueIDType: String?
+    var uniqueIDType: MobiledgeXiOSLibrary.MatchingEngine.IDTypes?
     var uniqueID: String?
     var cellID: UInt32?
-    var tags: [[String: String]]?
+    var tags: [MobiledgeXiOSLibrary.MatchingEngine.Tag]?
     var host: String?
-    var port: UInt?
-    var internalPort = "1337" // internal port I specified when deploying my app
-    var location: [String: Any]?
+    var port: UInt16?
+    var internalPort: uint = 1337 // internal port I specified when deploying my app
+    var location: MobiledgeXiOSLibrary.MatchingEngine.Loc?
     
     var demo = true
     
     var manager: SocketManager?
     
     // MatchingEngine API return objects
-    var registerPromise: Promise<[String: AnyObject]>? // AnyObject --> RegisterClientReply
-    var findCloudletPromise: Promise<[String: AnyObject]>?
-    var verifyLocationPromise: Promise<[String: AnyObject]>?
-    var appInstListPromise: Promise<[String: AnyObject]>?
+    var registerPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.RegisterClientReply>? // AnyObject --> RegisterClientReply
+    var findCloudletPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.FindCloudletReply>?
+    var verifyLocationPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.VerifyLocationReply>?
     
     override func viewDidLoad() {
         super.viewDidLoad()

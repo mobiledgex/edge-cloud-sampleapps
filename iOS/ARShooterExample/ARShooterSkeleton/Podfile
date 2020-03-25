@@ -8,7 +8,7 @@ source 'https://github.com/CocoaPods/Specs.git'
 plugin 'cocoapods-art', :sources => ['cocoapods-releases'] 
 
 target 'ARShooterSkeleton' do
-  pod 'MobiledgeXiOSLibrary', '= 1.4.2.5'
+  pod 'MobiledgeXiOSLibrary', '= 1.5'
 
   target 'ARShooterSkeletonTests' do
     inherit! :search_paths  
