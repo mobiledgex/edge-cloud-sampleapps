@@ -44,10 +44,10 @@ public class MobiledgeXIntegration
    * These are "carrier independent" settings for demo use:
    */
   public string carrierName { get; set; } = MatchingEngine.wifiCarrier; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
-  public string devName { get; set; } = "MobiledgeX"; // Your developer name.
+  public string orgName { get; set; } = "MobiledgeX"; // Your organization name.
   public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "2020-02-03"; // Your app version uploaded to the docker registry.
-  public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
+  public string authToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
   public uint cellID { get; set; } = 0;
   public string uniqueIDType { get; set; } = "";
   public string uniqueID { get; set; } = "";
@@ -112,9 +112,9 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    RegisterClientRequest req = me.CreateRegisterClientRequest(eCarrierName, devName, appName, appVers, developerAuthToken, cellID, uniqueIDType, uniqueID, tags);
+    RegisterClientRequest req = me.CreateRegisterClientRequest(eCarrierName, orgName, appName, appVers, authToken, cellID, uniqueIDType, uniqueID, tags);
     Debug.Log("CarrierName: " + req.carrier_name);
-    Debug.Log("DevName: " + req.dev_name);
+    Debug.Log("orgName: " + req.org_name);
     Debug.Log("AppName: " + req.app_name);
     Debug.Log("AppVers: " + req.app_vers);
 
@@ -147,7 +147,7 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, devName, appName, appVers, loc, cellID, tags);
+    FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, loc);
 
     FindCloudletReply reply = await me.FindCloudlet(req);
 
@@ -230,7 +230,7 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(eCarrierName, devName, appName, appVers, developerAuthToken, loc, cellID, uniqueIDType, uniqueID, tags);
+    FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(eCarrierName, orgName, appName, appVers, authToken, loc, cellID, uniqueIDType, uniqueID, tags);
     if (findCloudletReply == null)
     {
       Debug.Log("cannot find findCloudletReply");
