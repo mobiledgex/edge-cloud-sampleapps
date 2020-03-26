@@ -20,6 +20,7 @@ import UIKit
 import MobiledgeXiOSLibrary
 import Promises
 import SocketIO
+import CoreLocation
 
 class LoginViewController: UIViewController {
     
@@ -34,30 +35,32 @@ class LoginViewController: UIViewController {
     var matchingEngine: MobiledgeXiOSLibrary.MatchingEngine!
     
     var dmeHost: String?
-    var dmePort: UInt?
+    var dmePort: UInt16?
     
     var appName: String?
     var appVers: String?
-    var devName: String!
+    var orgName: String!
     var carrierName: String?
     var authToken: String?
-    var uniqueIDType: String?
+    var uniqueIDType: MobiledgeXiOSLibrary.MatchingEngine.IDTypes?
     var uniqueID: String?
     var cellID: UInt32?
-    var tags: [[String: String]]?
+    var tags: [MobiledgeXiOSLibrary.MatchingEngine.Tag]?
     var host: String?
     var port: UInt16?
     var internalPort: UInt16 = 1337 // internal port I specified when deploying my app
-    var location: [String: Any]?
+    var location: MobiledgeXiOSLibrary.MatchingEngine.Loc?
     
-    var demo = false
+    var demo = true
     
     var manager: SocketManager?
     
     // MatchingEngine API return objects
-    var registerPromise: Promise<[String: AnyObject]>? // AnyObject --> RegisterClientReply
-    var findCloudletPromise: Promise<[String: AnyObject]>?
-    var verifyLocationPromise: Promise<[String: AnyObject]>?
+    var registerPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.RegisterClientReply>?
+    var findCloudletPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.FindCloudletReply>?
+    var verifyLocationPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.VerifyLocationReply>?
+    
+    var locationManager: CLLocationManager?
     
     enum LoginViewControllerError: Error {
         case runtimeError(String)
@@ -68,6 +71,11 @@ class LoginViewController: UIViewController {
         // Do any additional setup after loading the view.
         userNameField.delegate = self
         gameIDField.delegate = self
+        
+        if !demo {
+            self.locationManager = CLLocationManager()
+            locationManager!.requestWhenInUseAuthorization()
+        }
         
         setUpMatchingEngineParameters()
         DispatchQueue.main.async {
@@ -83,12 +91,12 @@ class LoginViewController: UIViewController {
             // (ie. registerClient(host: dmeHost, port: dmePort, request: request))
             dmeHost = "sdkdemo.dme.mobiledgex.net"
             dmePort = 38001
-            appName = "ARShooter"  // ARShooter
+            appName = "ARShooter"
             appVers = "1.0"
-            devName = "franklin-mobiledgex"
+            orgName = "franklin-mobiledgex"
             carrierName = "TDG"
             authToken = nil
-            location = ["longitude": -122.149349, "latitude": 37.459609]  // Get actual location and ask user for permission
+            location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: 37.459609, longitude: -122.149349)  // Get actual location and ask user for permission
             uniqueIDType = nil
             uniqueID = nil
             cellID = 0
@@ -96,11 +104,10 @@ class LoginViewController: UIViewController {
         } else {
             appName = matchingEngine.getAppName()
             appVers = matchingEngine.getAppVersion()
-            devName = "franklin-mobiledgex"
-            // carrierName = matchingEngine.getCarrierName() ?? "TDG"
+            orgName = "franklin-mobiledgex"
             carrierName = "TDG"
             authToken = nil
-            location = ["longitude": -122.149349, "latitude": 37.459609]  // Get actual location and ask user for permission
+            location = getLocation()
             uniqueIDType = MobiledgeXiOSLibrary.MatchingEngine.IDTypes.ID_UNDEFINED
             uniqueID = matchingEngine.getUniqueID()
             cellID = 0
@@ -108,10 +115,22 @@ class LoginViewController: UIViewController {
         }
     }
     
+    func getLocation() -> MobiledgeXiOSLibrary.MatchingEngine.Loc? {
+        var currLocation: CLLocation!
+        
+        var authStatus = CLLocationManager.authorizationStatus()
+        if (authStatus == .authorizedAlways || authStatus == .authorizedWhenInUse) {
+            currLocation = locationManager?.location
+            return MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: currLocation.coordinate.latitude, longitude: currLocation.coordinate.longitude)
+        }
+        
+        return nil
+    }
+    
     // This function shows a couple of the MatchingEngine APIs
     func callMatchingEngineAPIs() {
         let registerClientRequest = matchingEngine.createRegisterClientRequest(
-                                                devName: devName,
+                                                orgName: orgName,
                                                 appName: appName,
                                                 appVers: appVers,
                                                 carrierName: carrierName,
@@ -126,10 +145,14 @@ class LoginViewController: UIViewController {
             SKToast.show(withMessage: "RegisterClientReply is \(registerClientReply)")
             print("RegisterClientReply is \(registerClientReply)")
             
+            guard let _ = self.location else {
+                return
+            }
+            
             let findCloudletRequest = self.matchingEngine.createFindCloudletRequest(
                                             carrierName: self.carrierName!,
                                             gpsLocation: self.location!,
-                                            devName: self.devName!,
+                                            orgName: self.orgName!,
                                             appName: self.appName!,
                                             appVers: self.appVers!,
                                             cellID: self.cellID,
@@ -143,16 +166,16 @@ class LoginViewController: UIViewController {
                                             tags: self.tags)
                 
             self.verifyLocationPromise = self.matchingEngine.verifyLocation(request: verifyLocationRequest)
-                
-            all([self.findCloudletPromise!, self.verifyLocationPromise!])
+            
+            all(self.findCloudletPromise!, self.verifyLocationPromise!)
             .then { value in
                 // Handle findCloudlet reply
-                let findCloudletReply = value[0]
+                let findCloudletReply = value.0
                 SKToast.show(withMessage: "FindCloudletReply is \(findCloudletReply)")
                 print("FindCloudletReply is \(findCloudletReply)")
                 
                 // Handle verifyLocation reply
-                let verifyLocationReply = value[1]
+                let verifyLocationReply = value.1
                 SKToast.show(withMessage: "VerifyLocationReply is \(verifyLocationReply)")
                 print("VerifyLocationReply is \(verifyLocationReply)")
             }
@@ -161,7 +184,7 @@ class LoginViewController: UIViewController {
     
     // This function shows the GetConnection workflow
     func getWebsocketConnection() {
-        let replyPromise = matchingEngine.registerAndFindCloudlet(devName: devName, appName: appName, appVers: appVers, carrierName: carrierName, authToken: authToken, gpsLocation: location!, uniqueIDType: uniqueIDType, uniqueID: uniqueID, cellID: cellID, tags: tags)
+        let replyPromise = matchingEngine.registerAndFindCloudlet(orgName: orgName, appName: appName, appVers: appVers, carrierName: carrierName, authToken: authToken, gpsLocation: location!, uniqueIDType: uniqueIDType, uniqueID: uniqueID, cellID: cellID, tags: tags)
             
         .then { findCloudletReply -> Promise<SocketManager> in
             // Get Dictionary: key -> internal port, value -> AppPort Dictionary
@@ -171,7 +194,7 @@ class LoginViewController: UIViewController {
             if appPortsDict.capacity == 0 {
                 throw LoginViewControllerError.runtimeError("No AppPorts in dictionary")
             }
-            // Select AppPort Dictionary corresponding to internal port 3001
+            // Select AppPort corresponding to internal port 3001
             guard let appPort = appPortsDict[self.internalPort] else {
                 throw LoginViewControllerError.runtimeError("No app ports with specified internal port")
             }
