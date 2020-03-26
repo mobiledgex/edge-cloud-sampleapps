@@ -175,7 +175,7 @@ public class MatchingEngineHelper {
             try {
                 String host = mHostname; // Override host.
                 int port = mMatchingEngine.getPort(); // Keep same port.
-                String devName = "MobiledgeX";
+                String orgName = "MobiledgeX";
                 //Note that mCarrierName came from preferences in MainActivity.
 
                 // SDK will populate the appVersion automatically if we pass in "".
@@ -195,7 +195,7 @@ public class MatchingEngineHelper {
                 }
                 Log.i(TAG, "mHost:" + host);
 
-                if (!registerClient(ctx, host, port, devName, appVersion, mCarrierName, reportCookie)) {
+                if (!registerClient(ctx, host, port, orgName, appVersion, mCarrierName, reportCookie)) {
                     return null;
                 }
 
@@ -251,17 +251,21 @@ public class MatchingEngineHelper {
         }
     }
 
-    private boolean registerClient(Activity ctx, String host, int port, String devName, String appVersion,
+    private boolean registerClient(Activity ctx, String host, int port, String orgName, String appVersion,
                                    String carrierName, boolean reportCookie) throws InterruptedException, ExecutionException {
         AppClient.RegisterClientRequest registerClientRequest;
         try {
             registerClientRequest =
-                    mMatchingEngine.createDefaultRegisterClientRequest(ctx, devName).build();
+                    mMatchingEngine.createDefaultRegisterClientRequest(ctx, orgName).setAppVers(appVersion).build();
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, "NameNotFoundException in create default register client request. " + nnfe.getMessage());
             return false;
         }
-        Log.i(TAG, "registerClientRequest.getAppVers()=["+registerClientRequest.getAppVers()+"] registerClientRequest.getAppName()="+registerClientRequest.getAppName());
+        Log.i(TAG, "registerClientRequest: host="+host+" port="+port
+                +" getAppName()="+registerClientRequest.getAppName()
+                +" getAppVers()="+registerClientRequest.getAppVers()
+                +" getOrgName()="+registerClientRequest.getOrgName()
+                +" getCarrierName()="+registerClientRequest.getCarrierName());
         AppClient.RegisterClientReply registerStatus =
                 mMatchingEngine.registerClient(registerClientRequest,
                         host, port, 10000);
@@ -309,7 +313,12 @@ public class MatchingEngineHelper {
 
     private boolean findCloudlet(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
         // Find the closest cloudlet for your application to use. (Blocking call, or use findCloudletFuture):
-        AppClient.FindCloudletRequest findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).build();
+        AppClient.FindCloudletRequest findCloudletRequest = null;
+        try {
+            findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).build();
+        } catch (PackageManager.NameNotFoundException nnfe) {
+            Log.e(TAG, "NameNotFoundException in create default find cloudlet request. " + nnfe.getMessage());
+        }
         if(findCloudletRequest != null) {
             mClosestCloudlet = mMatchingEngine.findCloudlet(findCloudletRequest,
                     host, port, 10000);
