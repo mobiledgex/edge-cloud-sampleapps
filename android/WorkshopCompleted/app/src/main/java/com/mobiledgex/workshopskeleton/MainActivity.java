@@ -290,17 +290,10 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "Could not generate host");
             host = "sdkdemo.dme.mobiledgex.net";   //fallback host
         }
-        Log.i(TAG, "host="+host);
-        host = "eu-mexdemo.dme.mobiledgex.net";
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest;
         registerClientRequest = matchingEngine.createDefaultRegisterClientRequest(ctx, orgName)
                 .setAppName(appName).setAppVers(appVersion).setCarrierName(carrierName).build();
-        Log.i(TAG, "registerClientRequest: host="+host+" port="+port
-                +" getAppName()="+registerClientRequest.getAppName()
-                +" getAppVers()="+registerClientRequest.getAppVers()
-                +" getOrgName()="+registerClientRequest.getOrgName()
-                +" getCarrierName()="+registerClientRequest.getCarrierName());
         AppClient.RegisterClientReply registerStatus
                 = matchingEngine.registerClient (registerClientRequest, host, port, 10000);
         /////////////////////////////////////////////////////////////////////////////////////
