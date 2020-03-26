@@ -12,6 +12,12 @@ Alternatively, use this command to do the initial clone:
 ```bash
 git clone --recurse-submodules https://github.com/mobiledgex/edge-cloud-sampleapps.git
 ```
+### To publish a new Docker image:
+Make sure you are logged in to docker.mobiledgex.net, set the TAG and run `make`. Example:
+```bash
+TAG=2020-3-26 make
+```
+If you see an error, particularly `ModuleNotFoundError: No module named 'models'`, you probably neglected the `git submodule` commands above.
 ### To run the server manually:
 ```bash
 virtualenv env -ppython3
