@@ -20,6 +20,7 @@ package com.mobiledgex.workshopskeleton;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -72,6 +73,7 @@ import java.util.concurrent.ExecutionException;
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
+import io.grpc.StatusRuntimeException;
 
 // Matching Engine API:
 
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity
     private int port;
     private String carrierName;
     private String appName;
-    private String devName;
+    private String orgName;
     private String appVersion;
 
     private TextView cloudletNameTv;
@@ -269,13 +271,14 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException, DmeDnsException {
+    private boolean registerClient() throws ExecutionException, InterruptedException,
+            io.grpc.StatusRuntimeException, DmeDnsException, PackageManager.NameNotFoundException {
         // NOTICE: In a real app, these values would be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
-        devName = "MobiledgeX";
+        orgName = "MobiledgeX";
         carrierName = "TDG";
-        appVersion = "1.0";
+        appVersion = "2.0";
 
         //NOTICE: A real app would request permission to enable this.
         MatchingEngine.setMatchingEngineLocationAllowed(true);
@@ -287,11 +290,19 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "Could not generate host");
             host = "sdkdemo.dme.mobiledgex.net";   //fallback host
         }
+        Log.i(TAG, "host="+host);
+        host = "eu-mexdemo.dme.mobiledgex.net";
         port = matchingEngine.getPort(); // Keep same port.
-        AppClient.RegisterClientRequest registerClientRequest = matchingEngine.createRegisterClientRequest(ctx,
-                devName, appName, appVersion, carrierName, null);
-        AppClient.RegisterClientReply registerStatus = matchingEngine.registerClient (registerClientRequest, host,
-                port, 10000);
+        AppClient.RegisterClientRequest registerClientRequest;
+        registerClientRequest = matchingEngine.createDefaultRegisterClientRequest(ctx, orgName)
+                .setAppName(appName).setAppVers(appVersion).setCarrierName(carrierName).build();
+        Log.i(TAG, "registerClientRequest: host="+host+" port="+port
+                +" getAppName()="+registerClientRequest.getAppName()
+                +" getAppVers()="+registerClientRequest.getAppVers()
+                +" getOrgName()="+registerClientRequest.getOrgName()
+                +" getCarrierName()="+registerClientRequest.getCarrierName());
+        AppClient.RegisterClientReply registerStatus
+                = matchingEngine.registerClient (registerClientRequest, host, port, 10000);
         /////////////////////////////////////////////////////////////////////////////////////
 
         if(matchingEngine == null) {
@@ -314,7 +325,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public boolean findCloudlet() throws ExecutionException, InterruptedException {
+    public boolean findCloudlet() throws ExecutionException, InterruptedException, PackageManager.NameNotFoundException {
         //(Blocking call, or use findCloudletFuture):
         Location location = new Location("MEX");
         ////////////////////////////////////////////////////////////
@@ -325,8 +336,8 @@ public class MainActivity extends AppCompatActivity
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
-        AppClient.FindCloudletRequest findCloudletRequest= matchingEngine.createFindCloudletRequest (ctx,
-                carrierName, location);
+        AppClient.FindCloudletRequest findCloudletRequest;
+        findCloudletRequest = matchingEngine.createDefaultFindCloudletRequest(ctx, location).build();
         mClosestCloudlet = matchingEngine.findCloudlet(findCloudletRequest, host, port, 10000);
         ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -388,7 +399,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
-        AppClient.VerifyLocationRequest verifyLocationRequest = matchingEngine.createVerifyLocationRequest(ctx, carrierName, loc);
+        AppClient.VerifyLocationRequest verifyLocationRequest
+                = matchingEngine.createDefaultVerifyLocationRequest(ctx, loc).build();
         if (verifyLocationRequest != null) {
             try {
                 AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
@@ -412,7 +424,7 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "No items added to the position list");
             return false;
         }
-        AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createQoSPositionRequest(requests, 0, null);
+        AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createDefaultQosPositionRequest(requests, 0, null).build();
 
         if(qosPositionRequest != null) {
             try {
@@ -567,7 +579,7 @@ public class MainActivity extends AppCompatActivity
         protected Boolean doInBackground(Object... params) {
             try {
                 return registerClient();
-            } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException |  DmeDnsException e) {
+            } catch (ExecutionException | InterruptedException | StatusRuntimeException | DmeDnsException | PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
                 statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
                 showErrorMsg(statusText);
@@ -585,7 +597,7 @@ public class MainActivity extends AppCompatActivity
                 appNameTv.setText(appName);
                 try {
                     findCloudlet();
-                } catch (ExecutionException | InterruptedException e) {
+                } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
                     e.printStackTrace();
                     statusText = "FindCloudlet Failed. Exception=" + e.getLocalizedMessage();
                     showErrorMsg(statusText);
