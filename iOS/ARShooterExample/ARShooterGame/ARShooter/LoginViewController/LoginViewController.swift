@@ -20,6 +20,7 @@ import UIKit
 import MobiledgeXiOSLibrary
 import Promises
 import SocketIO
+import CoreLocation
 
 class LoginViewController: UIViewController {
     
@@ -59,6 +60,8 @@ class LoginViewController: UIViewController {
     var findCloudletPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.FindCloudletReply>?
     var verifyLocationPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.VerifyLocationReply>?
     
+    var locationManager: CLLocationManager?
+    
     enum LoginViewControllerError: Error {
         case runtimeError(String)
     }
@@ -68,6 +71,11 @@ class LoginViewController: UIViewController {
         // Do any additional setup after loading the view.
         userNameField.delegate = self
         gameIDField.delegate = self
+        
+        if !demo {
+            self.locationManager = CLLocationManager()
+            locationManager!.requestWhenInUseAuthorization()
+        }
         
         setUpMatchingEngineParameters()
         DispatchQueue.main.async {
@@ -83,7 +91,7 @@ class LoginViewController: UIViewController {
             // (ie. registerClient(host: dmeHost, port: dmePort, request: request))
             dmeHost = "sdkdemo.dme.mobiledgex.net"
             dmePort = 38001
-            appName = "ARShooter"  // ARShooter
+            appName = "ARShooter"
             appVers = "1.0"
             orgName = "franklin-mobiledgex"
             carrierName = "TDG"
@@ -99,12 +107,24 @@ class LoginViewController: UIViewController {
             orgName = "franklin-mobiledgex"
             carrierName = "TDG"
             authToken = nil
-            location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: 37.459609, longitude: -122.149349)  // Get actual location and ask user for permission
+            location = getLocation()
             uniqueIDType = MobiledgeXiOSLibrary.MatchingEngine.IDTypes.ID_UNDEFINED
             uniqueID = matchingEngine.getUniqueID()
             cellID = 0
             tags = nil
         }
+    }
+    
+    func getLocation() -> MobiledgeXiOSLibrary.MatchingEngine.Loc? {
+        var currLocation: CLLocation!
+        
+        var authStatus = CLLocationManager.authorizationStatus()
+        if (authStatus == .authorizedAlways || authStatus == .authorizedWhenInUse) {
+            currLocation = locationManager?.location
+            return MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: currLocation.coordinate.latitude, longitude: currLocation.coordinate.longitude)
+        }
+        
+        return nil
     }
     
     // This function shows a couple of the MatchingEngine APIs
@@ -120,10 +140,14 @@ class LoginViewController: UIViewController {
                                                 cellID: cellID,
                                                 tags: tags)
         
-        matchingEngine.registerClient(host: dmeHost!, port: dmePort!, request: registerClientRequest)
+        matchingEngine.registerClient(request: registerClientRequest)
         .then { registerClientReply in
             SKToast.show(withMessage: "RegisterClientReply is \(registerClientReply)")
             print("RegisterClientReply is \(registerClientReply)")
+            
+            guard let _ = self.location else {
+                return
+            }
             
             let findCloudletRequest = self.matchingEngine.createFindCloudletRequest(
                                             carrierName: self.carrierName!,
@@ -170,7 +194,7 @@ class LoginViewController: UIViewController {
             if appPortsDict.capacity == 0 {
                 throw LoginViewControllerError.runtimeError("No AppPorts in dictionary")
             }
-            // Select AppPort Dictionary corresponding to internal port 3001
+            // Select AppPort corresponding to internal port 3001
             guard let appPort = appPortsDict[self.internalPort] else {
                 throw LoginViewControllerError.runtimeError("No app ports with specified internal port")
             }
