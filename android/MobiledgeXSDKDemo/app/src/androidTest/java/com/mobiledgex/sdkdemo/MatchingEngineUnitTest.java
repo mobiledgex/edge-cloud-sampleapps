@@ -40,7 +40,7 @@ public class MatchingEngineUnitTest {
     public static final String carrierName = "wifi";
     public static final String authToken = null;
     public static final int cellID = 0;
-    public static final List<AppClient.Tag> tags = null;
+    public static final List<AppClient.Tag> tags = new ArrayList<>();
     public static final int lteCategory = 0;
     public static final AppClient.BandSelection bandSelection = null;
 
@@ -142,6 +142,8 @@ public class MatchingEngineUnitTest {
             assertTrue("ExecutionException finding cloudlet. " + ee.getMessage(), false);
         } catch (InterruptedException ie) {
             assertTrue("InterruptedException finding cloudlet. " + ie.getMessage(),  false);
+        } catch (NameNotFoundException nnfe) {
+            assertTrue("NameNotFoundException finding cloudlet. " + nnfe.getMessage(),  false);
         }
     }
 
