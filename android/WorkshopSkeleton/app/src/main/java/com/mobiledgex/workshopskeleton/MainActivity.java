@@ -20,6 +20,7 @@ package com.mobiledgex.workshopskeleton;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -68,6 +69,7 @@ import com.mobiledgex.matchingengine.DmeDnsException;
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
+import io.grpc.StatusRuntimeException;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -247,7 +249,8 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private boolean registerClient() throws ExecutionException, InterruptedException, io.grpc.StatusRuntimeException, DmeDnsException {
+    private boolean registerClient() throws ExecutionException, InterruptedException,
+            io.grpc.StatusRuntimeException, DmeDnsException, PackageManager.NameNotFoundException {
         // NOTICE: In a real app, these values would be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "MobiledgeX SDK Demo";
@@ -461,7 +464,7 @@ public class MainActivity extends AppCompatActivity
         protected Boolean doInBackground(Object... params) {
             try {
                 return registerClient();
-            } catch (ExecutionException | InterruptedException | io.grpc.StatusRuntimeException | DmeDnsException e) {
+            } catch (ExecutionException | InterruptedException | StatusRuntimeException | DmeDnsException | PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
                 statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
                 showErrorMsg(statusText);

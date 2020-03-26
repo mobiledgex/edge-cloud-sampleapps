@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.preference.PreferenceActivity;
@@ -56,6 +57,12 @@ public class MatchingEngineHelper {
     private String mHostname;
     private String mCarrierName;
 
+    // New optional parameter values, currently empty.
+    private int mCellId = 0;
+    private List<AppClient.Tag> mTags;
+    private String mUniqueIdType = "";
+    private String mUniqueId = "";
+
     /**
      * Possible actions to perform with the matching engine.
      */
@@ -75,7 +82,6 @@ public class MatchingEngineHelper {
         mHostname = hostname;
         mCarrierName = carrierName;
         mMatchingEngine = new MatchingEngine(mContext);
-        mMatchingEngine.setHost(mHostname);
     }
 
     /**
@@ -174,7 +180,7 @@ public class MatchingEngineHelper {
             try {
                 String host = mHostname; // Override host.
                 int port = mMatchingEngine.getPort(); // Keep same port.
-                String devName = "MobiledgeX";
+                String orgName = "MobiledgeX";
                 //Note that mCarrierName came from preferences in MainActivity.
 
                 // SDK will populate the appVersion automatically if we pass in "".
@@ -194,7 +200,7 @@ public class MatchingEngineHelper {
                 }
                 Log.i(TAG, "mHost:" + host);
 
-                if (!registerClient(ctx, host, port, devName, appVersion, mCarrierName, reportCookie)) {
+                if (!registerClient(ctx, host, port, orgName, appVersion, mCarrierName, reportCookie)) {
                     return null;
                 }
 
@@ -242,7 +248,8 @@ public class MatchingEngineHelper {
 
                 Log.i(TAG, "someText=" + someText);
             } catch (IOException | StatusRuntimeException | IllegalArgumentException
-                    | ExecutionException | InterruptedException ioe) {
+                    | ExecutionException | InterruptedException
+                    | PackageManager.NameNotFoundException ioe) {
                 ioe.printStackTrace();
                 toastOnUiThread(ioe.getMessage(), Toast.LENGTH_LONG);
             }
@@ -250,12 +257,18 @@ public class MatchingEngineHelper {
         }
     }
 
-    private boolean registerClient(Activity ctx, String host, int port, String devName, String appVersion,
-                                   String carrierName, boolean reportCookie) throws InterruptedException, ExecutionException {
+    private boolean registerClient(Activity ctx, String host, int port, String orgName, String appVersion,
+                                   String carrierName, boolean reportCookie) throws InterruptedException,
+                                   ExecutionException, PackageManager.NameNotFoundException {
         AppClient.RegisterClientRequest registerClientRequest =
                 mMatchingEngine.createRegisterClientRequest(ctx,
-                        devName, "", appVersion, carrierName, null);
-        Log.i(TAG, "registerClientRequest.getAppVers()=["+registerClientRequest.getAppVers()+"] registerClientRequest.getAppName()="+registerClientRequest.getAppName());
+                        orgName, "", appVersion, carrierName, null, mCellId, mUniqueIdType, mUniqueId, null);
+
+        Log.i(TAG, "registerClientRequest: host="+host+" port="+port
+                +" getAppName()="+registerClientRequest.getAppName()
+                +" getAppVers()="+registerClientRequest.getAppVers()
+                +" getOrgName()="+registerClientRequest.getOrgName()
+                +" getCarrierName()="+registerClientRequest.getCarrierName());
         AppClient.RegisterClientReply registerStatus =
                 mMatchingEngine.registerClient(registerClientRequest,
                         host, port, 10000);
@@ -265,6 +278,7 @@ public class MatchingEngineHelper {
             Snackbar.make(mView, someText, Snackbar.LENGTH_LONG).show();
             return false;
         }
+        Log.i(TAG, "registerStatus.getStatus()="+registerStatus.getStatus());
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
         if(reportCookie) {
             Log.i(TAG, "REQ_REGISTER_CLIENT only.");
@@ -277,9 +291,8 @@ public class MatchingEngineHelper {
 
     private boolean getAppInstList(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
         // Location Verification (Blocking, or use verifyLocationFuture):
-        Log.i(TAG, "mMatchingEngine getHost()="+mMatchingEngine.getHost());
         AppClient.AppInstListRequest appInstListRequest =
-                mMatchingEngine.createAppInstListRequest(ctx, carrierName, location);
+                mMatchingEngine.createAppInstListRequest(ctx, carrierName, location, mCellId, mTags);
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     host, port, 10000);
@@ -306,7 +319,7 @@ public class MatchingEngineHelper {
     private boolean findCloudlet(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
         // Find the closest cloudlet for your application to use. (Blocking call, or use findCloudletFuture):
         AppClient.FindCloudletRequest findCloudletRequest =
-                mMatchingEngine.createFindCloudletRequest(ctx, carrierName, location);
+                mMatchingEngine.createFindCloudletRequest(ctx, carrierName, location, mCellId, mTags);
         if(findCloudletRequest != null) {
             mClosestCloudlet = mMatchingEngine.findCloudlet(findCloudletRequest,
                     host, port, 10000);
@@ -332,7 +345,7 @@ public class MatchingEngineHelper {
     private boolean verifyLocation(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, IOException, ExecutionException {
         // Location Verification (Blocking, or use verifyLocationFuture):
         AppClient.VerifyLocationRequest verifyRequest =
-                mMatchingEngine.createVerifyLocationRequest(ctx, carrierName, location);
+                mMatchingEngine.createVerifyLocationRequest(ctx, carrierName, location, mCellId, mTags);
         if (verifyRequest != null) {
             AppClient.VerifyLocationReply verifiedLocation =
                     mMatchingEngine.verifyLocation(verifyRequest, host, port, 10000);
@@ -356,7 +369,7 @@ public class MatchingEngineHelper {
     private boolean getQosPositionKpi(ArrayList<AppClient.QosPosition> positions, String host, int port) throws ExecutionException, InterruptedException {
 
         Log.i(TAG, "me="+mMatchingEngine+" host="+host+" port="+port);
-        AppClient.QosPositionRequest request = mMatchingEngine.createQoSPositionRequest(positions, 0, null);
+        AppClient.QosPositionRequest request = mMatchingEngine.createQoSPositionRequest(positions, 0, null, mCellId, mTags);
         ChannelIterator<AppClient.QosPositionKpiReply> responseIterator = mMatchingEngine.getQosPositionKpi(request,
                 host, port, 10000);
         // A stream of QosPositionKpiReply(s), with a non-stream block of responses.

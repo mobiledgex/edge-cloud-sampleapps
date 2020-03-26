@@ -857,11 +857,11 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             int reqNum = (int) params[2];
             Log.i(TAG, positions.size()+" positions routeNum="+routeNum+" reqNum="+reqNum);
             MatchingEngine me = mMatchingEngineHelper.getMatchingEngine();
-            Log.i(TAG, "me="+me+" host="+me.getHost()+" port="+me.getPort());
+            Log.i(TAG, "me="+me+" port="+me.getPort());
             final List<ColoredPoint> points = new ArrayList<>();
 
             try {
-                AppClient.QosPositionRequest request = me.createQoSPositionRequest(positions, 0, null);
+                AppClient.QosPositionRequest request = me.createQoSPositionRequest(positions, 0, null, 0, null);
                 ChannelIterator<AppClient.QosPositionKpiReply> responseIterator = me.getQosPositionKpi(request,
                         mHostname, me.getPort(), 15000);
                 // A stream of QosPositionKpiReply(s), with a non-stream block of responses.
