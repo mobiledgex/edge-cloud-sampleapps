@@ -256,7 +256,7 @@ public class MatchingEngineHelper {
         AppClient.RegisterClientRequest registerClientRequest;
         try {
             registerClientRequest =
-                    mMatchingEngine.createDefaultRegisterClientRequest(ctx, orgName).setAppVers(appVersion).build();
+                    mMatchingEngine.createDefaultRegisterClientRequest(ctx, orgName).setCarrierName(carrierName).setAppVers(appVersion).build();
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, "NameNotFoundException in create default register client request. " + nnfe.getMessage());
             return false;
@@ -287,7 +287,8 @@ public class MatchingEngineHelper {
 
     private boolean getAppInstList(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
         // Location Verification (Blocking, or use verifyLocationFuture):
-        AppClient.AppInstListRequest appInstListRequest = mMatchingEngine.createDefaultAppInstListRequest(ctx, location).build();
+        AppClient.AppInstListRequest appInstListRequest
+                = mMatchingEngine.createDefaultAppInstListRequest(ctx, location).setCarrierName(carrierName).build();
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     host, port, 10000);
@@ -315,7 +316,8 @@ public class MatchingEngineHelper {
         // Find the closest cloudlet for your application to use. (Blocking call, or use findCloudletFuture):
         AppClient.FindCloudletRequest findCloudletRequest = null;
         try {
-            findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).build();
+            findCloudletRequest
+                    = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).setCarrierName(carrierName).build();
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, "NameNotFoundException in create default find cloudlet request. " + nnfe.getMessage());
         }
@@ -344,7 +346,7 @@ public class MatchingEngineHelper {
     private boolean verifyLocation(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, IOException, ExecutionException {
         // Location Verification (Blocking, or use verifyLocationFuture):
         AppClient.VerifyLocationRequest verifyRequest =
-                mMatchingEngine.createVerifyLocationRequest(ctx, carrierName, location, 0, null);
+                mMatchingEngine.createDefaultVerifyLocationRequest(ctx, location).setCarrierName(carrierName).build();
         if (verifyRequest != null) {
             AppClient.VerifyLocationReply verifiedLocation =
                     mMatchingEngine.verifyLocation(verifyRequest, host, port, 10000);
