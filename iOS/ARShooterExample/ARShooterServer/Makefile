@@ -21,5 +21,5 @@ docker-build:
 	docker build -t mobiledgex/arshooter:${TAG} -f Dockerfile .
 
 docker-push:
-        docker tag mobiledgex/arshooter:${TAG} docker.mobiledgex.net/mobiledgex/images/arshooter:${TAG}
+	docker tag mobiledgex/arshooter:${TAG} docker.mobiledgex.net/mobiledgex/images/arshooter:${TAG}
 	docker push docker.mobiledgex.net/mobiledgex/images/arshooter:${TAG}
