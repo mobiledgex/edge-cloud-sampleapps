@@ -12,3 +12,5 @@ numba
 scikit-image
 scikit-learn
 filterpy
+channels
+uvicorn

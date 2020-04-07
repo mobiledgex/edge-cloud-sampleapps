@@ -18,7 +18,7 @@ from django.urls import path
 from tracker.views import test_connection
 from tracker.views import detector_detect, recognizer_add, recognizer_train, recognizer_update
 from tracker.views import recognizer_predict, openpose_detect, object_detect, server_usage
-from tracker.views import get_data, upload_data
+from tracker.views import get_data, upload_data, chat_index, chat_room
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,4 +33,6 @@ urlpatterns = [
     path('getdata/', get_data),
     path('uploaddata/', upload_data),
     path('test/', test_connection),
+    path('chat/', chat_index),
+    path('chat/<str:room_name>/', chat_room),
 ]

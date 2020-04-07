@@ -75,7 +75,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     logger.error(error)
                     ret = {"success": "false", "error": error, "server_processing_time": 0}
                 else:
-                    now = time.time()
                     image = imread(io.BytesIO(data))
                     logger.debug("Performing pose detection process")
                     start = time.time()

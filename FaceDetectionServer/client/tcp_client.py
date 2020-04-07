@@ -161,4 +161,4 @@ if __name__ == "__main__":
         print("===> Average Latency Network Only=%.3f ms" %average_latency_network_only)
     if count_server_processing_time > 0:
         average_server_processing_time = total_server_processing_time / count_server_processing_time
-        print("Average Server Processing Time=%.3f ms" %average_server_processing_time)
+        print("===> Average Server Processing Time=%.3f ms" %average_server_processing_time)
