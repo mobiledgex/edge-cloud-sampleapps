@@ -16,6 +16,7 @@ import json
 import time
 import logging
 from threading import Thread
+from utils import RunningStats
 
 WEBSOCKET_OPCODE_BINARY = 0x2
 PING_INTERVAL = 4
@@ -44,12 +45,9 @@ class Client:
     """ Base Client class """
 
     # Initialize "Grand total" class variables.
-    total_latency_full_process = 0
-    count_latency_full_process = 0
-    total_latency_network_only = 0
-    count_latency_network_only = 0
-    total_server_processing_time = 0
-    count_server_processing_time = 0
+    stats_latency_full_process = RunningStats()
+    stats_latency_network_only = RunningStats()
+    stats_server_processing_time = RunningStats()
 
     def __init__(self, host, port):
         # Initialize instance variables.
@@ -57,12 +55,9 @@ class Client:
         self.port = port
         self.do_server_stats = False
         self.show_responses = False
-        self.total_latency_full_process = 0
-        self.count_latency_full_process = 0
-        self.total_latency_network_only = 0
-        self.count_latency_network_only = 0
-        self.total_server_processing_time = 0
-        self.count_server_processing_time = 0
+        self.stats_latency_full_process = RunningStats()
+        self.stats_latency_network_only = RunningStats()
+        self.stats_server_processing_time = RunningStats()
         self.image_file_name = None
         self.latency_start_time = 0
         self.loop_count = 0
@@ -95,8 +90,9 @@ class Client:
         millis = (time.time() - now)*1000
         elapsed = "%.3f" %millis
         logger.info("%s ms to open socket" %(elapsed))
-        self.total_latency_network_only = self.total_latency_network_only + millis
-        self.count_latency_network_only += 1
+        self.stats_latency_network_only.push(millis)
+        Client.stats_latency_network_only.push(millis)
+
 
     def icmp_ping(self):
         args=[PING, '-c', '1', '-W', '1', self.host]
@@ -112,8 +108,8 @@ class Client:
             search = re.search(PING_REGEX, p_ping_out, re.M|re.I)
             ping_rtt = search.group(2)
             logger.info("%s ms ICMP ping" %(ping_rtt))
-            self.total_latency_network_only = self.total_latency_network_only + float(ping_rtt)
-            self.count_latency_network_only += 1
+            self.stats_latency_network_only.push(ping_rtt)
+            Client.stats_latency_network_only.push(ping_rtt)
         else:
             logger.error("ICMP ping failed")
 
@@ -127,42 +123,31 @@ class Client:
                 TEST_PASS = False
         if 'latency_start' in decoded_json:
             millis = (time.time() - decoded_json['latency_start'])*1000
-            self.total_latency_network_only += millis
-            self.count_latency_network_only += 1
+            self.stats_latency_network_only.push(millis)
+            Client.stats_latency_network_only.push(millis)
         else:
             millis = (time.time() - self.latency_start_time)*1000
-            self.total_latency_full_process += millis
-            self.count_latency_full_process += 1
+            self.stats_latency_full_process.push(millis)
+            Client.stats_latency_full_process.push(millis)
             if 'server_processing_time' in decoded_json:
                 server_processing_time = decoded_json['server_processing_time']
-                self.total_server_processing_time += float(server_processing_time)
-                self.count_server_processing_time += 1
+                self.stats_server_processing_time.push(float(server_processing_time))
+                Client.stats_server_processing_time.push(float(server_processing_time))
 
         if self.show_responses:
             elapsed = "%.3f" %millis
             logger.info("%s ms to send and receive: %s" %(elapsed, result))
 
-    def submit_results(self):
-        # Add up the totals from each instance as they finish
-        Client.count_latency_full_process += self.count_latency_full_process
-        Client.total_latency_full_process += self.total_latency_full_process
-        Client.count_latency_network_only += self.count_latency_network_only
-        Client.total_latency_network_only += self.total_latency_network_only
-        Client.count_server_processing_time += self.count_server_processing_time
-        Client.total_server_processing_time += self.total_server_processing_time
-
+    def display_results(self):
         if not self.show_responses:
             return
 
-        if self.count_latency_full_process > 0:
-            average_latency_full_process = self.total_latency_full_process / self.count_latency_full_process
-            logger.info("==> Average Latency Full Process=%.3f ms" %average_latency_full_process)
-        if self.count_latency_network_only > 0:
-            average_latency_network_only = self.total_latency_network_only / self.count_latency_network_only
-            logger.info("==> Average Latency Network Only=%.3f ms" %average_latency_network_only)
-        if self.count_server_processing_time > 0:
-            average_server_processing_time = self.total_server_processing_time / self.count_server_processing_time
-            logger.info("==> Average Server Processing Time=%.3f ms" %average_server_processing_time)
+        if self.stats_latency_full_process.n > 0:
+            logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(self.stats_latency_full_process.mean(), self.stats_latency_full_process.stddev()))
+        if self.stats_latency_network_only.n > 0:
+            logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(self.stats_latency_network_only.mean(), self.stats_latency_network_only.stddev()))
+        if self.stats_server_processing_time.n > 0:
+            logger.info("====> Average Server Processing Time=%.3f ms (stddev=%.3f)" %(self.stats_server_processing_time.mean(), Client.stats_server_processing_time.stddev()))
 
 class RestClient(Client):
     def __init__(self, host, port=8008):
@@ -197,7 +182,7 @@ class RestClient(Client):
             self.next_file_name()
 
         logger.debug("Done")
-        self.submit_results()
+        self.display_results()
 
     def send_image(self, image):
         """
@@ -268,7 +253,7 @@ class PersistentTcpClient(Client):
             self.next_file_name()
 
         logger.debug("Done")
-        self.submit_results()
+        self.display_results()
 
     def recvall(sock, count):
         buf = b''
@@ -302,9 +287,9 @@ class WebSocketClient(Client):
         # logger.info("on_message: %s loop_count: %s", %(message,self.loop_count))
         self.process_result(message)
 
-        if self.count_latency_full_process >= self.num_repeat:
+        if self.stats_latency_full_process.n >= self.num_repeat:
             logger.debug("repeating done")
-            self.submit_results()
+            self.display_results()
             ws.close()
             return
 
@@ -319,7 +304,7 @@ class WebSocketClient(Client):
             return
 
         self.next_file_name()
-        logger.debug("image_file_name: %s filename_list_index: %s num_repeat: %s count_latency_full_process: %s" %(self.image_file_name, self.filename_list_index, self.num_repeat, self.count_latency_full_process))
+        logger.debug("image_file_name: %s filename_list_index: %s num_repeat: %s count_latency_full_process: %s" %(self.image_file_name, self.filename_list_index, self.num_repeat, self.stats_latency_full_process.n))
         with open(self.image_file_name, "rb") as f:
             image = f.read()
         self.latency_start_time = time.time()
@@ -410,7 +395,7 @@ if __name__ == "__main__":
 
     thread.join()
 
-    if Client.count_latency_full_process + Client.count_latency_network_only + Client.count_server_processing_time > 0:
+    if Client.stats_latency_full_process.n + Client.stats_latency_network_only.n + Client.stats_server_processing_time.n > 0:
         header1 = "Grand totals for %s %s %s" %(args.server, args.endpoint, args.connection_method)
         header2 = "%d threads repeated %d times on %d files" %(args.threads, args.repeat, len(client.filename_list))
         separator = ""
@@ -419,18 +404,15 @@ if __name__ == "__main__":
         logger.info(header1)
         logger.info(header2)
         logger.info(separator)
-        if Client.count_latency_full_process > 0:
-            average_latency_full_process = Client.total_latency_full_process / Client.count_latency_full_process
-            logger.info("====> Average Latency Full Process=%.3f ms" %average_latency_full_process)
-        if Client.count_latency_network_only > 0:
-            average_latency_network_only = Client.total_latency_network_only / Client.count_latency_network_only
-            logger.info("====> Average Latency Network Only=%.3f ms" %average_latency_network_only)
-        if Client.count_server_processing_time > 0:
-            average_server_processing_time = Client.total_server_processing_time / Client.count_server_processing_time
-            logger.info("====> Average Server Processing Time=%.3f ms" %average_server_processing_time)
+        if Client.stats_latency_full_process.n > 0:
+            logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(Client.stats_latency_full_process.mean(), Client.stats_latency_full_process.stddev()))
+        if Client.stats_latency_network_only.n > 0:
+            logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(Client.stats_latency_network_only.mean(), Client.stats_latency_network_only.stddev()))
+        if Client.stats_server_processing_time.n > 0:
+            logger.info("====> Average Server Processing Time=%.3f ms (stddev=%.3f)" %(Client.stats_server_processing_time.mean(), Client.stats_server_processing_time.stddev()))
 
         # The following line outputs CSV data that can be imported to a spreadsheet.
-        #print("%s,%s,%.3f,%.3f" %((args.server, args.filename, file_size, Client.average_latency_full_process, Client.average_latency_network_only)))
+        #print("%s,%s,%.3f,%.3f" %((args.server, args.filename, file_size, Client.stats_latency_full_process.mean(), Client.stats_latency_network_only.mean())))
 
         logger.info("TEST_PASS=%r" %TEST_PASS)
     else:
