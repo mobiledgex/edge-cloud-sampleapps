@@ -41,4 +41,8 @@ EXPOSE 8008/tcp
 EXPOSE 8011/tcp
 ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-CMD ["gunicorn","moedx.wsgi:application","--bind","0.0.0.0:8008","--workers=2"]
+# Fix for "click" Python library, a uvicorn dependency.
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+CMD ["uvicorn","moedx.asgi:application","--host", "0.0.0.0","--port","8008","--workers","2"]
