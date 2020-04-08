@@ -104,6 +104,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -1092,10 +1094,13 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
 
+            DateFormat format = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.SHORT, Locale.getDefault());
+            String currentDateTime = format.format(new Date());
+
             String stats = data.getExtras().getString("STATS");
             // The TextView to show your Text
             TextView showText = new TextView(MainActivity.this);
-            showText.setText(stats);
+            showText.setText(currentDateTime + "\n" + stats);
             showText.setTextIsSelectable(true);
             int horzPadding = (int) (15 * getResources().getDisplayMetrics().density);
             showText.setPadding(horzPadding, 0,horzPadding,0);

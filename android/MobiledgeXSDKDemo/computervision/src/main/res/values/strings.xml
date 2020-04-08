@@ -84,10 +84,12 @@
     <string-array name="pref_fd_connection_mode_titles">
         <item>REST</item>
         <item>Persistent TCP</item>
+        <item>WebSocket</item>
     </string-array>
     <string-array name="pref_fd_connection_mode_values">
         <item>REST</item>
         <item>PERSISTENT_TCP</item>
+        <item>WEBSOCKET</item>
     </string-array>
 
 </resources>

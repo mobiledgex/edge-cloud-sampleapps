@@ -46,17 +46,21 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import okhttp3.OkHttpClient;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
+import okio.ByteString;
+
 public class ImageSender {
     private static final String TAG = "ImageSender";
     public static final int TRAINING_COUNT_TARGET = 10;
     private static final double RECOGNITION_CONFIDENCE_THRESHOLD = 105;
+    private static final int NORMAL_CLOSURE_STATUS = 1000;
 
     private ImageServerInterface mImageServerInterface;
     private RequestQueue mRequestQueue;
@@ -90,9 +94,13 @@ public class ImageSender {
     private long mStartTime;
     private int mOpcode;
 
+    private OkHttpClient mWebSocketClient;
+    private WebSocket mWebSocket;
+
     public enum ConnectionMode {
         REST,
         PERSISTENT_TCP,
+        WEBSOCKET,
         QUIC
     }
 
@@ -111,34 +119,82 @@ public class ImageSender {
         OBJECT_DETECTION
     }
 
-    public ImageSender(final Activity activity, ImageServerInterface imageServerInterface,
-                       ImageServerInterface.CloudletType cloudLetType, String host, int port,
-                       int persistentTcpPort) {
-        mCloudLetType = cloudLetType;
-        mHost = host;
-        mPort = port;
-        mPersistentTcpPort = persistentTcpPort;
+    static class Builder {
+        private Activity activity;
+        private ImageServerInterface imageServerInterface;
+        private ImageServerInterface.CloudletType cloudLetType;
+        private String host;
+        private int port;
+        private int persistentTcpPort;
+        private ImageSender.CameraMode cameraMode;
 
-        mImageServerInterface = imageServerInterface;
+        public Builder setActivity(Activity activity) {
+            this.activity = activity;
+            return this;
+        }
 
-        mAccount = GoogleSignIn.getLastSignedInAccount(activity);
+        public Builder setImageServerInterface(ImageServerInterface imageServerInterface) {
+            this.imageServerInterface = imageServerInterface;
+            return this;
+        }
+
+        public Builder setCloudLetType(ImageServerInterface.CloudletType cloudLetType) {
+            this.cloudLetType = cloudLetType;
+            return this;
+        }
+
+        public Builder setHost(String host) {
+            this.host = host;
+            return this;
+        }
+
+        public Builder setPort(int port) {
+            this.port = port;
+            return this;
+        }
+
+        public Builder setPersistentTcpPort(int persistentTcpPort) {
+            this.persistentTcpPort = persistentTcpPort;
+            return this;
+        }
+
+        public Builder setCameraMode(ImageSender.CameraMode cameraMode) {
+            this.cameraMode = cameraMode;
+            return this;
+        }
+
+        public ImageSender build() {
+            return new ImageSender(this);
+        }
+    }
+
+    private ImageSender(final Builder builder) {
+        mCloudLetType = builder.cloudLetType;
+        mHost = builder.host;
+        mPort = builder.port;
+        mPersistentTcpPort = builder.persistentTcpPort;
+        setCameraMode(builder.cameraMode);
+
+        mImageServerInterface = builder.imageServerInterface;
+
+        mAccount = GoogleSignIn.getLastSignedInAccount(builder.activity);
         if(mAccount != null) {
             Log.i(TAG, "mAccount=" + mAccount.getDisplayName()+" "+mAccount.getId());
         } else {
             Log.i(TAG, "mAccount=" + mAccount);
         }
 
-        mLatencyFullProcessRollingAvg = new RollingAverage(cloudLetType, "Full Process", mRollingAvgSize);
-        mLatencyNetOnlyRollingAvg = new RollingAverage(cloudLetType, "Network Only", mRollingAvgSize);
-        HandlerThread handlerThread = new HandlerThread("BackgroundPinger"+cloudLetType);
+        mLatencyFullProcessRollingAvg = new RollingAverage(mCloudLetType, "Full Process", mRollingAvgSize);
+        mLatencyNetOnlyRollingAvg = new RollingAverage(mCloudLetType, "Network Only", mRollingAvgSize);
+        HandlerThread handlerThread = new HandlerThread("BackgroundPinger"+mCloudLetType);
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
 
-        HandlerThread handlerThreadPersistentTcp = new HandlerThread("PersistentTcp"+cloudLetType);
+        HandlerThread handlerThreadPersistentTcp = new HandlerThread("PersistentTcp"+mCloudLetType);
         handlerThreadPersistentTcp.start();
 
         // Instantiate the RequestQueue.
-        mRequestQueue = Volley.newRequestQueue(activity);
+        mRequestQueue = Volley.newRequestQueue(builder.activity);
 
         Log.i(TAG, "preferencesConnectionMode="+ preferencesConnectionMode);
         if(mCloudLetType == ImageServerInterface.CloudletType.PUBLIC) {
@@ -151,6 +207,10 @@ public class ImageSender {
         if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
             initTcpSocketConnection();
         }
+
+        if (mConnectionMode == ConnectionMode.WEBSOCKET) {
+            startWebSocketClient();
+        }
     }
 
     private void initTcpSocketConnection() {
@@ -158,7 +218,52 @@ public class ImageSender {
         // connect to the server
         ConnectTask connectTask = new ConnectTask();
         connectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
 
+    private final class ResultWebSocketListener extends WebSocketListener {
+        @Override
+        public void onOpen(WebSocket webSocket, okhttp3.Response response) {
+            Log.i(TAG, "onOpen response="+response);
+        }
+        @Override
+        public void onMessage(WebSocket webSocket, String text) {
+            Log.i(TAG, "onMessage text="+text);
+            mBusy = false;
+            long endTime = System.nanoTime();
+            mLatency = endTime - mStartTime;
+            handleResponse(text, mLatency);
+        }
+        @Override
+        public void onMessage(WebSocket webSocket, ByteString bytes) {
+            Log.i(TAG, "Received bytes: " + bytes.hex());
+        }
+        @Override
+        public void onClosing(WebSocket webSocket, int code, String reason) {
+            webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            Log.i(TAG, "Closing: " + code + " / " + reason);
+            mWebSocketClient.dispatcher().cancelAll();
+        }
+        @Override
+        public void onFailure(WebSocket webSocket, Throwable t, okhttp3.Response response) {
+            Log.e(TAG, "Error: " + t.getMessage());
+            mWebSocketClient.dispatcher().cancelAll();
+        }
+    }
+
+    private void startWebSocketClient() {
+        //mHost = "192.168.1.86;" //laptop
+        String url = "ws://"+mHost+":8008/ws"+mDjangoUrl;
+        okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
+        ResultWebSocketListener listener = new ResultWebSocketListener();
+        mWebSocketClient = new OkHttpClient();
+        mWebSocket = mWebSocketClient.newWebSocket(request, listener);
+        mWebSocketClient.dispatcher().executorService().shutdown();
+        Log.i(TAG, "Started WebSocket client. url: " + url);
+    }
+
+    private void disconnectWebSocketClient() {
+        Log.i(TAG, "Disconnecting WebSocket client");
+        mWebSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
     }
 
     /*receive the message from server with asyncTask*/
@@ -331,8 +436,10 @@ public class ImageSender {
 
             // Add the request to the RequestQueue.
             mRequestQueue.add(stringRequest);
+        } else if(mConnectionMode == ConnectionMode.WEBSOCKET) {
+            mWebSocket.send(ByteString.of(bytes));
         } else {
-            Log.e(TAG, "Unknown communication mode:"+ mConnectionMode);
+            Log.e(TAG, "Unknown communication mode: "+ mConnectionMode);
         }
     }
 
