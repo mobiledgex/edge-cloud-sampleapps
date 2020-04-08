@@ -16,7 +16,6 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, HttpResponseBadRequest
-
 from tracker.models import CentralizedTraining
 from tracker.apps import myFaceDetector, myFaceRecognizer, myOpenPose, myOpWrapper
 from tracker.apps import myObjectDetector
@@ -130,7 +129,9 @@ def get_image_from_request(request, type):
     else:
         return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'")
 
-    save_debug_image(image, request, type)
+    if request.headers.get("Mobiledgex-Debug", "") == "true":
+        save_debug_image(image, request, type)
+
     image = imread(io.BytesIO(image)) # convert to numpy array
     return image
 
@@ -416,3 +417,4 @@ def object_detect(request):
     logger.info(prepend_ip("%s ms to detect objects: %s" %(elapsed, ret), request))
     json_ret = json.dumps(ret)
     return HttpResponse(json_ret)
+

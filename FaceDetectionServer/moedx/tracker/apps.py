@@ -1,4 +1,4 @@
-# Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+# Copyright 2019-2020 MobiledgeX, Inc. All rights and licenses reserved.
 # MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,16 +32,18 @@ class TrackerConfig(AppConfig):
     name = 'tracker'
 
     def ready(self):
-        # This global variable will be used by views.py.
+        # These global variables will be used by views.py.
         global myFaceRecognizer
         myFaceRecognizer = FaceRecognizer()
         logger.info("Created myFaceRecognizer")
 
         global myFaceDetector
         myFaceDetector = FaceDetector()
+        logger.info("Created myFaceDetector")
 
         global myObjectDetector
         myObjectDetector = ObjectDetector()
+        logger.info("Created myObjectDetector")
 
         global myOpenPose
         global myOpWrapper
