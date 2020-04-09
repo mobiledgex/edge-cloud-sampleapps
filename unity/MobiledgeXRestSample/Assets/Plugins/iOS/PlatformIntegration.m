@@ -1,5 +1,9 @@
 /**
+<<<<<<< HEAD
+ * Copyright 2020 MobiledgeX, Inc. All rights and licenses reserved.
+=======
  * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+>>>>>>> e1c4196b9d294f85b83d1f339990966519d7ed7d
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +21,18 @@
 
 //
 //  PlatformIntegration.m
+<<<<<<< HEAD
+//  Unity-iPhone
+=======
+>>>>>>> e1c4196b9d294f85b83d1f339990966519d7ed7d
 //
 
 #import <Foundation/Foundation.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
 #import <CoreTelephony/CTCarrier.h>
+<<<<<<< HEAD
+
+=======
 #import <UIKit/UIKit.h>
 
 #import <ifaddrs.h>
@@ -68,19 +79,36 @@ void _ensureMatchingEnginePlatformIntegration() {
         }
     }
 }
+>>>>>>> e1c4196b9d294f85b83d1f339990966519d7ed7d
 
 char* convertToCStr(const char* str) {
     if (str == NULL) {
         return (char*)NULL;
     }
 
+<<<<<<< HEAD
+    size_t len = strlen(str);
+    char* out = (char*)malloc(len + 1);
+=======
     char* out = (char*)malloc(strlen(str) + 1);
+>>>>>>> e1c4196b9d294f85b83d1f339990966519d7ed7d
     strcpy(out, str);
     return out;
 }
 
 char* _getCurrentCarrierName()
 {
+<<<<<<< HEAD
+    CTTelephonyNetworkInfo *netinfo = [[CTTelephonyNetworkInfo alloc] init];
+    CTCarrier *carrier = [netinfo subscriberCellularProvider]; // s for dual SIM?
+    NSLog(@"Carrier Name: %@", [carrier carrierName]);
+    // Ref counted.
+
+    NSString* nsstr = [carrier carrierName];
+
+    return convertToCStr([nsstr UTF8String]);
+}
+=======
     _ensureMatchingEnginePlatformIntegration();
     NSString* nsstr = @"";
 
@@ -245,3 +273,4 @@ char* _getUniqueIDType()
 {
     return "";
 }
+>>>>>>> e1c4196b9d294f85b83d1f339990966519d7ed7d
