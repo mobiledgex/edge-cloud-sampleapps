@@ -16,22 +16,22 @@
  */
 
 ﻿using UnityEngine;
+using UnityEngine.Android;
 
-using UnityEngine.UI;
-using DistributedMatchEngine;
-
-public class FullSampleButtonScript : MonoBehaviour {
-    public Button startMexSampleButton;
-    public MexSample mexSample;
-
-    void Start () {
-        Button btn = startMexSampleButton.GetComponent<Button>();
-        btn.onClick.AddListener(TaskOnClick);
-    }
-
-  void TaskOnClick()
+public class PermissionScript : MonoBehaviour
+{
+  void Start()
   {
-    Debug.Log("You have clicked the button!");
-    mexSample.RunSampleFlow();
+#if UNITY_ANDROID
+    if (Permission.HasUserAuthorizedPermission(Permission.FineLocation))
+    {
+      // The user authorized use of the FineLocation.
+    }
+    else
+    {
+      // Ask for permission or proceed without the functionality enabled.
+      Permission.RequestUserPermission(Permission.FineLocation);
+    }
+#endif
   }
 }
