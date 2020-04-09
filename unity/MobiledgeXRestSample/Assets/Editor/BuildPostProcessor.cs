@@ -1,5 +1,4 @@
-﻿
-/**
+﻿/**
  * Copyright 2020 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
@@ -15,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 using System.IO;
 using UnityEngine;
 using UnityEditor;
