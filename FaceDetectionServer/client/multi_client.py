@@ -158,7 +158,7 @@ class Client:
             return
 
         if self.stats_latency_full_process.n > 0:
-            logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(self.stats_latency_full_process.mean(), self.stats_latency_full_process.stddev()))
+            logger.info("====> Average Latency Full Process=%.3f ms (stddev=%.3f)" %(self.stats_latency_full_process.mean(), self.stats_latency_full_process.stddev()))
         if self.stats_latency_network_only.n > 0:
             logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(self.stats_latency_network_only.mean(), self.stats_latency_network_only.stddev()))
         if self.stats_server_processing_time.n > 0:
@@ -420,7 +420,7 @@ if __name__ == "__main__":
         logger.info(header2)
         logger.info(separator)
         if Client.stats_latency_full_process.n > 0:
-            logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(Client.stats_latency_full_process.mean(), Client.stats_latency_full_process.stddev()))
+            logger.info("====> Average Latency Full Process=%.3f ms (stddev=%.3f)" %(Client.stats_latency_full_process.mean(), Client.stats_latency_full_process.stddev()))
         if Client.stats_latency_network_only.n > 0:
             logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(Client.stats_latency_network_only.mean(), Client.stats_latency_network_only.stddev()))
         if Client.stats_server_processing_time.n > 0:
