@@ -1,6 +1,7 @@
 package com.mobiledgex.computervision;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
@@ -126,6 +127,9 @@ public class ComputerVisionRestUnitTest {
             return null;
         } catch (InterruptedException ie) {
             Log.e(TAG, "InterruptedException registering client. " + ie.getMessage());
+            return null;
+        } catch (PackageManager.NameNotFoundException nnfe) {
+            Log.e(TAG, "InterruptedException registering client. " + nnfe.getMessage());
             return null;
         }
     }

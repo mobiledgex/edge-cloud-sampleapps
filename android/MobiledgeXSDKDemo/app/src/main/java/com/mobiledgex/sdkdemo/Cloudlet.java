@@ -87,6 +87,8 @@ public class Cloudlet implements Serializable {
     private String mFqdnPrefix;
     private String mIpAddress;
     private String uri;
+    private CloudletListHolder.LatencyTestMethod mLatencyTestMethod;
+    private boolean mLatencyTestMethodForced = false;
 
     public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, String fqdnPrefix, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
@@ -98,6 +100,8 @@ public class Cloudlet implements Serializable {
         } else {
             Log.i(TAG, "LatencyTestAutoStart is disabled");
         }
+
+        mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
     }
 
     public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, String fqdnPrefix, int port) {
@@ -183,22 +187,24 @@ public class Cloudlet implements Serializable {
             Log.i(TAG, "NO, I am NOT an emulator.");
         }
 
-        CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
         if(mCarrierName.equalsIgnoreCase("azure")) {
             Log.i(TAG, "Socket test forced for Azure");
-            latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+            mLatencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+            mLatencyTestMethodForced = true;
         }
         if(runningOnEmulator) {
             Log.i(TAG, "Socket test forced for emulator");
-            latencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+            mLatencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
+            mLatencyTestMethodForced = true;
         }
 
-        if (latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
+        if (mLatencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
             new LatencyTestTaskSocket().execute();
-        } else if (latencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
+        } else if (mLatencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
             new LatencyTestTaskPing().execute();
         } else {
-            Log.e(TAG, "Unknown latencyTestMethod: " + latencyTestMethod);
+            Log.e(TAG, "Unknown mLatencyTestMethod: " + mLatencyTestMethod);
         }
     }
 
@@ -662,6 +668,13 @@ public class Cloudlet implements Serializable {
         return mFqdnPrefix;
     }
 
+    public CloudletListHolder.LatencyTestMethod getLatencyTestMethod() {
+        return mLatencyTestMethod;
+    }
+
+    public boolean getLatencyTestMethodForced() {
+        return mLatencyTestMethodForced;
+    }
 
 
 }
