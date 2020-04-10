@@ -228,12 +228,19 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
             mHostDetectionEdge = edgeCloudletHostname;
         }
         
-        mImageSenderEdge = new ImageSender(getActivity(),this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
+        mImageSenderEdge = new ImageSender.Builder()
+                .setActivity(getActivity())
+                .setImageServerInterface(this)
+                .setCloudLetType(CloudletType.EDGE)
+                .setHost(mHostDetectionEdge)
+                .setPort(FACE_DETECTION_HOST_PORT)
+                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .setCameraMode(ImageSender.CameraMode.OBJECT_DETECTION)
+                .build();
 
         //TODO: Revisit when we have GPU support on multiple servers.
         //The only GPU-enabled server we have doesn't support ping.
         mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.socket);
-        mImageSenderEdge.setCameraMode(ImageSender.CameraMode.OBJECT_DETECTION);
         mCameraMode = ImageSender.CameraMode.OBJECT_DETECTION;
         mCameraToolbar.setTitle(R.string.title_activity_object_detection);
     }

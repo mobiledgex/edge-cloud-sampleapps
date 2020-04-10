@@ -400,6 +400,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             menu.findItem(R.id.action_benchmark_local).setVisible(false);
             menu.findItem(R.id.action_benchmark_submenu).setVisible(false);
         }
+
     }
 
     @Override
@@ -722,9 +723,30 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mEdgeFaceBoxRenderer.setStrokeWidth(strokeWidth);
         mLocalFaceBoxRenderer.setStrokeWidth(strokeWidth);
 
-        mImageSenderCloud = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHostDetectionCloud, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
-        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, mHostDetectionEdge, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
-        mImageSenderTraining = new ImageSender(getActivity(), this, CloudletType.PUBLIC, mHostTraining, FACE_TRAINING_HOST_PORT, PERSISTENT_TCP_PORT);
+        mImageSenderCloud = new ImageSender.Builder()
+                .setActivity(getActivity())
+                .setImageServerInterface(this)
+                .setCloudLetType(CloudletType.CLOUD)
+                .setHost(mHostDetectionCloud)
+                .setPort(FACE_DETECTION_HOST_PORT)
+                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .build();
+        mImageSenderEdge = new ImageSender.Builder()
+                .setActivity(getActivity())
+                .setImageServerInterface(this)
+                .setCloudLetType(CloudletType.EDGE)
+                .setHost(mHostDetectionEdge)
+                .setPort(FACE_DETECTION_HOST_PORT)
+                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .build();
+        mImageSenderTraining = new ImageSender.Builder()
+                .setActivity(getActivity())
+                .setImageServerInterface(this)
+                .setCloudLetType(CloudletType.PUBLIC)
+                .setHost(mHostTraining)
+                .setPort(FACE_TRAINING_HOST_PORT)
+                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .build();
 
         boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
         if (faceRecognition) {
@@ -741,6 +763,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         //One more call to get preferences for ImageSenders
         onSharedPreferenceChanged(prefs, "ALL");
+
     }
 
     protected void toggleViews() {
