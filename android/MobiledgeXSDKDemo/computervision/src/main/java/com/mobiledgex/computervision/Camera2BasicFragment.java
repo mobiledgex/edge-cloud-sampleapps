@@ -844,6 +844,10 @@ public class Camera2BasicFragment extends Fragment
         mTextureView = view.findViewById(R.id.textureView);
         mVideoView = view.findViewById(R.id.videoView);
         mVideoView.setOnClickListener(this);
+
+        //TODO: Remove
+        startVideo();
+
     }
 
     public void switchCamera() {

@@ -764,6 +764,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         //One more call to get preferences for ImageSenders
         onSharedPreferenceChanged(prefs, "ALL");
 
+        //TODO: Remove
+        mCameraToolbar.setVisibility(View.GONE);
+//        mCamera2BasicFragment.startVideo();
     }
 
     protected void toggleViews() {

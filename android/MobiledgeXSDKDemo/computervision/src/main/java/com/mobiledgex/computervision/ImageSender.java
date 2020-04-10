@@ -211,6 +211,11 @@ public class ImageSender {
         if (mConnectionMode == ConnectionMode.WEBSOCKET) {
             startWebSocketClient();
         }
+
+        // TODO: Remove
+        if (mCloudLetType == ImageServerInterface.CloudletType.CLOUD) {
+            mBusy = true;
+        }
     }
 
     private void initTcpSocketConnection() {

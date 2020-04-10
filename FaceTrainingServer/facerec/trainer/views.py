@@ -74,6 +74,11 @@ def add(request):
     Perform face detection on received image. If face found, save image to
     subject's training data directory.
     """
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        return HttpResponseForbidden("Authentication failed")
     logger.debug("Request received: %s" %request)
     if request.method != 'POST':
         error = "Must send frame as a POST"
