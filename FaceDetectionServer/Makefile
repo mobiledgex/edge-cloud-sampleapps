@@ -10,7 +10,11 @@ endif
 
 default: docker-build docker-push
 
-docker-build:
+submodule-update:
+	git submodule init
+	git submodule update
+
+docker-build: submodule-update
 	docker build -t mobiledgex/mobiledgexsdkdemo20:${TAG} -f $(DOCKERFILE) .
 
 docker-push:
