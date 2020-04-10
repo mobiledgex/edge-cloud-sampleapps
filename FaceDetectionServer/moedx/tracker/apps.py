@@ -13,18 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# If this script is called by manage.py with with either "makemigrations" or "migrate",
+# we don't need to continue with initialization.
+import sys
+import logging
+logger = logging.getLogger(__name__)
+if len(sys.argv) >= 2 and sys.argv[0] == "manage.py" and "migrat" in sys.argv[1]:
+    logger.info("Called by '%s %s'. Aborting app initialization." %(sys.argv[0], sys.argv[1]))
+    sys.exit()
+
 from django.apps import AppConfig
 from facial_detection.face_detector import FaceDetector
 from facial_detection.face_recognizer import FaceRecognizer
 from facial_detection.tcp_server import ThreadedTCPServer, ThreadedTCPRequestHandler
 from object_detection.object_detector import ObjectDetector
 import threading
-import logging
-import sys
 import time
 import os
-
-logger = logging.getLogger(__name__)
 
 PERSISTENT_TCP_PORT_DEFAULT = 8011 # Can be overridden with envvar FD_PERSISTENT_TCP_PORT
 
