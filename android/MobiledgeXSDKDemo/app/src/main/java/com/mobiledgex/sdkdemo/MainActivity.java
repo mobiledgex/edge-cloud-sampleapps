@@ -25,7 +25,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -84,11 +83,10 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.mobiledgex.computervision.ImageProcessorActivity;
 import com.mobiledgex.computervision.ImageProcessorFragment;
 import com.mobiledgex.computervision.ImageSender;
 import com.mobiledgex.computervision.ObjectProcessorActivity;
-import com.mobiledgex.computervision.ObjectProcessorFragment;
-import com.mobiledgex.computervision.OpencvImageProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorFragment;
 import com.mobiledgex.matchingengine.MatchingEngine;
@@ -435,13 +433,13 @@ public class MainActivity extends AppCompatActivity
             return true;
         } else if (id == R.id.nav_face_detection) {
             // Start the face detection Activity
-            Intent intent = new Intent(this, OpencvImageProcessorActivity.class);
+            Intent intent = new Intent(this, ImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_face_recognition) {
             // Start the face recognition Activity
-            Intent intent = new Intent(this, OpencvImageProcessorActivity.class);
+            Intent intent = new Intent(this, ImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_FACE_RECOGNITION, true);
             intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
             startActivityForResult(intent, RC_STATS);
