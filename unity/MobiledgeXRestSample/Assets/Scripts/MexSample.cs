@@ -28,7 +28,7 @@ using DistributedMatchEngine;
 public class MexSample : MonoBehaviour
 {
   public string carrierName { get; set; } = "gddt"; // carrierName depends on the the subscriber SIM card and roaming carriers, and must be supplied a platform API.
-  public string devName { get; set; } = "MobiledgeX";
+  public string orgName { get; set; } = "MobiledgeX";
   public string appName { get; set; } = "MobiledgeX SDK Demo";
   public string appVers { get; set; } = "1.0";
   public string developerAuthToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
@@ -89,7 +89,7 @@ public class MexSample : MonoBehaviour
       var location = await LocationService.RetrieveLocation();
       statusContainer.Post("RestSample Location Task started.");
 
-      var registerClientRequest = dme.CreateRegisterClientRequest(carrierName, devName, appName, appVers, developerAuthToken);
+      var registerClientRequest = dme.CreateRegisterClientRequest(carrierName, orgName, appName, appVers, developerAuthToken);
 
       // Await synchronously.
 
@@ -119,7 +119,7 @@ public class MexSample : MonoBehaviour
       // Do Verify and FindCloudlet in parallel tasks:
 
       var verifyLocationRequest = dme.CreateVerifyLocationRequest(carrierName, location);
-      var findCloudletRequest = dme.CreateFindCloudletRequest(carrierName, devName, appName, appVers, location);
+      var findCloudletRequest = dme.CreateFindCloudletRequest(carrierName, location, orgName, appName, appVers);
       var getLocationRequest = dme.CreateGetLocationRequest(carrierName);
 
 
