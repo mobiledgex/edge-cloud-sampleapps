@@ -71,10 +71,11 @@ public class FindCloudletButtonScript : MonoBehaviour
 
       var findCloudletRequest = dme.CreateFindCloudletRequest(
           mexSample.carrierName,
-          mexSample.devName,
+          deviceSourcedLocation,
+          mexSample.orgName,
           mexSample.appName,
-          mexSample.appVers,
-          deviceSourcedLocation);
+          mexSample.appVers
+          );
 
       if (findCloudletRequest == null)
       {
