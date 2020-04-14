@@ -291,10 +291,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
             mStdFull.setVisibility(View.GONE);
             mStdNet.setVisibility(View.GONE);
         }
-
-        // Always disable this for Object Detection.
-        prefLocalProcessing = false;
-
     }
 
 }

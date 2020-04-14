@@ -298,10 +298,6 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
             mStdFull.setVisibility(View.GONE);
             mStdNet.setVisibility(View.GONE);
         }
-
-        // Always disable this for Pose Detection.
-        prefLocalProcessing = false;
-
     }
 
 }

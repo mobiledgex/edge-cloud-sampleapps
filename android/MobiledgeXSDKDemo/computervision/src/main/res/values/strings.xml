@@ -16,9 +16,6 @@
 
     <string name="pref_summary_latency_method">Select socket connection or ICMP ping</string>
     <string name="preference_fd_front_camera">fd_front_camera</string>
-    <string name="preference_fd_local_proc">fd_local_proc</string>
-    <string name="preference_fd_local_proc_title">Local processing</string>
-    <string name="preference_fd_local_proc_summary">Include tracking via local processing</string>
     <string name="preference_fd_multi_face">fd_multi_face</string>
     <string name="preference_fd_multi_face_title">Multi-face</string>
     <string name="preference_fd_multi_face_summary">Track multiple faces</string>

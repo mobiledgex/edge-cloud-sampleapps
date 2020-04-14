@@ -91,7 +91,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefShowNetLatency;
     protected boolean prefShowStdDev;
     protected boolean prefUseRollingAvg;
-    protected boolean prefLocalProcessing = false;
     protected boolean prefRemoteProcessing = true;
     protected int prefCameraLensFacingDirection;
     protected ImageSender.CameraMode mCameraMode;
@@ -510,7 +509,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (id == R.id.action_benchmark_edge) {
             mCameraToolbar.setVisibility(View.GONE);
             mBenchmarkActive = true;
-            prefLocalProcessing = false;
             prefRemoteProcessing = true;
             mCloudLatency.setVisibility(View.GONE);
             mCloudLatency2.setVisibility(View.GONE);
@@ -554,7 +552,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
         String prefKeyLegacyCamera = getResources().getString(R.string.preference_fd_legacy_camera);
         String prefKeyMultiFace = getResources().getString(R.string.preference_fd_multi_face);
-        String prefKeyLocalProc = getResources().getString(R.string.preference_fd_local_proc);
         String prefKeyShowFullLatency = getResources().getString(R.string.preference_fd_show_full_latency);
         String prefKeyShowNetLatency = getResources().getString(R.string.preference_fd_show_net_latency);
         String prefKeyShowStdDev = getResources().getString(R.string.preference_fd_show_stddev);
@@ -605,9 +602,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             if(mCamera2BasicFragment != null) {
                 mCamera2BasicFragment.setLegacyCamera(prefLegacyCamera);
             }
-        }
-        if (key.equals(prefKeyLocalProc) || key.equals("ALL")) {
-            prefLocalProcessing = sharedPreferences.getBoolean(prefKeyLocalProc, false);
         }
         if (key.equals(prefKeyShowFullLatency) || key.equals("ALL")) {
             prefShowFullLatency = sharedPreferences.getBoolean(prefKeyShowFullLatency, true);
