@@ -33,7 +33,7 @@ public class StatusContainer : MonoBehaviour
   // Use this for initialization
   void Start()
   {
-    scrollViewText = GameObject.Find("/UICanvas/OutputScrollView/Viewport/Content/GRPCOutputText").GetComponent<Text>();
+    scrollViewText = GameObject.Find("/UICanvas/OutputScrollView/Viewport/Content/RESTOutputText").GetComponent<Text>();
   }
 
   // Update is called once per frame
