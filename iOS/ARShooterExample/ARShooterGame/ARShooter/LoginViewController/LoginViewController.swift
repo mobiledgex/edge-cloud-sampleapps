@@ -194,7 +194,7 @@ class LoginViewController: UIViewController {
             if appPortsDict.capacity == 0 {
                 throw LoginViewControllerError.runtimeError("No AppPorts in dictionary")
             }
-            // Select AppPort corresponding to internal port 3001
+            // Select AppPort corresponding to internal port 1337
             guard let appPort = appPortsDict[self.internalPort] else {
                 throw LoginViewControllerError.runtimeError("No app ports with specified internal port")
             }
