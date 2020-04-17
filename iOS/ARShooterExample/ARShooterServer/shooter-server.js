@@ -1,4 +1,4 @@
-var io = require('socket.io')(1337) // Listen on port 1337
+var io = require('socket.io')(3838) // Listen on port 3838 
 
 var scoreInGameMap = new Map(); // Map gameID to Map of usernames and score in that game
 
