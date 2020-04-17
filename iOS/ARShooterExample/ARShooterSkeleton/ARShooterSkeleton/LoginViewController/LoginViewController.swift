@@ -48,7 +48,7 @@ class LoginViewController: UIViewController {
     var tags: [MobiledgeXiOSLibrary.MatchingEngine.Tag]?
     var host: String?
     var port: UInt16?
-    var internalPort: UInt16 = 1337 // internal port I specified when deploying my app
+    var internalPort: UInt16 = 3838 // internal port I specified when deploying my app
     var location: MobiledgeXiOSLibrary.MatchingEngine.Loc?
     
     var demo = true

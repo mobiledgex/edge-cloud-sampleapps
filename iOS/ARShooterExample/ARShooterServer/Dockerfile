@@ -8,4 +8,4 @@ COPY . /usr/src/app
 
 CMD node shooter-server.js 
 
-EXPOSE 1337 
+EXPOSE 3838 

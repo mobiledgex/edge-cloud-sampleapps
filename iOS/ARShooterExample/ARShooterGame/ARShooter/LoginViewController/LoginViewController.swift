@@ -48,7 +48,7 @@ class LoginViewController: UIViewController {
     var tags: [MobiledgeXiOSLibrary.MatchingEngine.Tag]?
     var host: String?
     var port: UInt16?
-    var internalPort: UInt16 = 1337 // internal port I specified when deploying my app
+    var internalPort: UInt16 = 3838 // internal port I specified when deploying my app
     var location: MobiledgeXiOSLibrary.MatchingEngine.Loc?
     
     var demo = true
@@ -93,7 +93,7 @@ class LoginViewController: UIViewController {
             dmePort = 38001
             appName = "ARShooter"
             appVers = "1.0"
-            orgName = "franklin-mobiledgex"
+            orgName = "MobiledgeX"
             carrierName = "TDG"
             authToken = nil
             location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: 37.459609, longitude: -122.149349)  // Get actual location and ask user for permission
@@ -104,7 +104,7 @@ class LoginViewController: UIViewController {
         } else {
             appName = matchingEngine.getAppName()
             appVers = matchingEngine.getAppVersion()
-            orgName = "franklin-mobiledgex"
+            orgName = "MobiledgeX"
             carrierName = "TDG"
             authToken = nil
             location = getLocation()
@@ -194,7 +194,7 @@ class LoginViewController: UIViewController {
             if appPortsDict.capacity == 0 {
                 throw LoginViewControllerError.runtimeError("No AppPorts in dictionary")
             }
-            // Select AppPort corresponding to internal port 3001
+            // Select AppPort corresponding to internal port 3838 
             guard let appPort = appPortsDict[self.internalPort] else {
                 throw LoginViewControllerError.runtimeError("No app ports with specified internal port")
             }
