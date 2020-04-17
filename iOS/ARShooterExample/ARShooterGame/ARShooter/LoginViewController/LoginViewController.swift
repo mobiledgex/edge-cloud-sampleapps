@@ -93,7 +93,7 @@ class LoginViewController: UIViewController {
             dmePort = 38001
             appName = "ARShooter"
             appVers = "1.0"
-            orgName = "franklin-mobiledgex"
+            orgName = "MobiledgeX"
             carrierName = "TDG"
             authToken = nil
             location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: 37.459609, longitude: -122.149349)  // Get actual location and ask user for permission
@@ -104,7 +104,7 @@ class LoginViewController: UIViewController {
         } else {
             appName = matchingEngine.getAppName()
             appVers = matchingEngine.getAppVersion()
-            orgName = "franklin-mobiledgex"
+            orgName = "MobiledgeX"
             carrierName = "TDG"
             authToken = nil
             location = getLocation()
