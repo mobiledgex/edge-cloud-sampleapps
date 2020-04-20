@@ -34,9 +34,6 @@ class ImageConsumerFaceDetector(WebsocketConsumer):
     def connect(self):
         self.accept()
         logger.info("ImageConsumerFaceDetector")
-        logger.info("keys: %s" %self.scope.keys())
-        logger.info("items: %s" %self.scope.items())
-        logger.info("values: %s" %self.scope.values())
 
     def disconnect(self, close_code):
         logger.info("disconnect. close_code=%s" %close_code)

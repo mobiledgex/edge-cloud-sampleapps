@@ -59,6 +59,7 @@ else:
 class Client:
     """ Base Client class """
 
+    MULTI_THREADED = False
     # Initialize "Grand total" class variables.
     stats_latency_full_process = RunningStats()
     stats_latency_network_only = RunningStats()
@@ -104,7 +105,8 @@ class Client:
             return
         millis = (time.time() - now)*1000
         elapsed = "%.3f" %millis
-        logger.info("%s ms to open socket" %(elapsed))
+        if self.show_responses:
+            logger.info("%s ms to open socket" %(elapsed))
         self.stats_latency_network_only.push(millis)
         Client.stats_latency_network_only.push(millis)
 
@@ -122,7 +124,8 @@ class Client:
             # rtt min/avg/max/mdev = 61.994/61.994/61.994/0.000 ms
             search = re.search(PING_REGEX, p_ping_out, re.M|re.I)
             ping_rtt = search.group(2)
-            logger.info("%s ms ICMP ping" %(ping_rtt))
+            if self.show_responses:
+                logger.info("%s ms ICMP ping" %(ping_rtt))
             self.stats_latency_network_only.push(ping_rtt)
             Client.stats_latency_network_only.push(ping_rtt)
         else:
@@ -154,7 +157,7 @@ class Client:
             logger.info("%s ms to send and receive: %s" %(elapsed, result))
 
     def display_results(self):
-        if not self.show_responses:
+        if not self.show_responses or not Client.MULTI_THREADED:
             return
 
         if self.stats_latency_full_process.n > 0:
@@ -358,6 +361,8 @@ if __name__ == "__main__":
     parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
     args = parser.parse_args()
 
+    if args.threads > 1:
+        Client.MULTI_THREADED = True
     for x in range(args.threads):
         if args.connection_method == "rest":
             client = RestClient(args.server, args.port)

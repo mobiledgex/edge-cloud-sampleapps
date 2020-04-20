@@ -14,25 +14,22 @@
 # limitations under the License.
 
 
-# If this script is called by manage.py with with either "makemigrations" or "migrate",
-# we don't need to continue with initialization.
 import sys
 import logging
-logger = logging.getLogger(__name__)
-if len(sys.argv) >= 2 and sys.argv[0] == "manage.py" and "migrat" in sys.argv[1]:
-    logger.info("Called by '%s %s'. Aborting app initialization." %(sys.argv[0], sys.argv[1]))
-    sys.exit()
-
 from django.apps import AppConfig
-from facial_detection.face_detector import FaceDetector
-from facial_detection.face_recognizer import FaceRecognizer
-from facial_detection.tcp_server import ThreadedTCPServer, ThreadedTCPRequestHandler
-from object_detection.object_detector import ObjectDetector
 import threading
 import time
 import os
 
+logger = logging.getLogger(__name__)
+
 PERSISTENT_TCP_PORT_DEFAULT = 8011 # Can be overridden with envvar FD_PERSISTENT_TCP_PORT
+
+myFaceRecognizer = None
+myFaceDetector = None
+myObjectDetector = None
+myOpenPose = None
+myOpWrapper = None
 
 class TrackerConfig(AppConfig):
     name = 'tracker'
@@ -40,19 +37,31 @@ class TrackerConfig(AppConfig):
     def ready(self):
         # These global variables will be used by views.py.
         global myFaceRecognizer
+        global myFaceDetector
+        global myObjectDetector
+        global myOpenPose
+        global myOpWrapper
+
+        # If this script is called by manage.py with with either "makemigrations" or "migrate",
+        # we don't need to continue with initialization.
+        if len(sys.argv) >= 2 and sys.argv[0] == "manage.py" and "migrat" in sys.argv[1]:
+            logger.info("Called by '%s %s'. Aborting app initialization." %(sys.argv[0], sys.argv[1]))
+            return
+
+        from facial_detection.face_detector import FaceDetector
+        from facial_detection.face_recognizer import FaceRecognizer
+        from facial_detection.tcp_server import ThreadedTCPServer, ThreadedTCPRequestHandler
+        from object_detection.object_detector import ObjectDetector
+
         myFaceRecognizer = FaceRecognizer()
         logger.info("Created myFaceRecognizer")
 
-        global myFaceDetector
         myFaceDetector = FaceDetector()
         logger.info("Created myFaceDetector")
 
-        global myObjectDetector
         myObjectDetector = ObjectDetector()
         logger.info("Created myObjectDetector")
 
-        global myOpenPose
-        global myOpWrapper
         supportOpenPose = False
 
         # Our docker container has the openpose libraries at the root
