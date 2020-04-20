@@ -261,6 +261,9 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
 
+        //No Cloud available for benchmarking
+        menu.findItem(R.id.action_benchmark_cloud).setVisible(false);
+
         // Declutter the menu, but keep the code in place in case we need it later.
         menu.findItem(R.id.action_camera_debug).setVisible(false);
 

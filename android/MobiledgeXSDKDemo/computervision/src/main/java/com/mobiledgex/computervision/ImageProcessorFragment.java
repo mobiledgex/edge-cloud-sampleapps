@@ -519,26 +519,28 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_benchmark_edge) {
-            mCloudLatency.setVisibility(View.GONE);
-            mCloudLatency2.setVisibility(View.GONE);
-            mCloudStd.setVisibility(View.GONE);
-            mCloudStd2.setVisibility(View.GONE);
             mCameraToolbar.setVisibility(View.GONE);
-
-            mImageSenderCloud.setInactiveBenchmark(true);
+            if (mImageSenderCloud != null) {
+                mImageSenderCloud.setInactiveBenchmark(true);
+                mCloudLatency.setVisibility(View.GONE);
+                mCloudLatency2.setVisibility(View.GONE);
+                mCloudStd.setVisibility(View.GONE);
+                mCloudStd2.setVisibility(View.GONE);
+            }
             mCamera2BasicFragment.startVideo(mVideoFilename);
             mCamera2BasicFragment.runBenchmark(getContext(), "Edge");
             return true;
         }
 
         if (id == R.id.action_benchmark_cloud) {
-            mEdgeLatency.setVisibility(View.GONE);
-            mEdgeLatency2.setVisibility(View.GONE);
-            mEdgeStd.setVisibility(View.GONE);
-            mEdgeStd2.setVisibility(View.GONE);
             mCameraToolbar.setVisibility(View.GONE);
-
-            mImageSenderEdge.setInactiveBenchmark(true);
+            if (mImageSenderEdge != null) {
+                mImageSenderEdge.setInactiveBenchmark(true);
+                mEdgeLatency.setVisibility(View.GONE);
+                mEdgeLatency2.setVisibility(View.GONE);
+                mEdgeStd.setVisibility(View.GONE);
+                mEdgeStd2.setVisibility(View.GONE);
+            }
             mCamera2BasicFragment.startVideo(mVideoFilename);
             mCamera2BasicFragment.runBenchmark(getContext(), "Cloud");
             return true;
