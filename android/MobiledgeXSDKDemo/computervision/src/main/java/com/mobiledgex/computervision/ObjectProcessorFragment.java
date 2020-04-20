@@ -43,6 +43,7 @@ import java.text.DecimalFormat;
 public class ObjectProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
     private static final String TAG = "ObjectProcessorFragment";
+    private static final String VIDEO_FILE_NAME = "objects.mp4";
     private ObjectClassRenderer mObjectClassRenderer;
 
     private TextView mLatencyFull;
@@ -243,6 +244,8 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.socket);
         mCameraMode = ImageSender.CameraMode.OBJECT_DETECTION;
         mCameraToolbar.setTitle(R.string.title_activity_object_detection);
+
+        mVideoFilename = VIDEO_FILE_NAME;
     }
 
     @Override
@@ -258,9 +261,8 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
 
-        menu.findItem(R.id.action_benchmark_edge).setVisible(false);
-        menu.findItem(R.id.action_benchmark_local).setVisible(false);
-        menu.findItem(R.id.action_benchmark_submenu).setVisible(false);
+        // Declutter the menu, but keep the code in place in case we need it later.
+        menu.findItem(R.id.action_camera_debug).setVisible(false);
 
     }
 

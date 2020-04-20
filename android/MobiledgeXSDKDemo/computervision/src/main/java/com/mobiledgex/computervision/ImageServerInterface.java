@@ -58,8 +58,15 @@ public interface ImageServerInterface {
     /**
      * Shows a message to the user.
      * @param message  The message to show.
+     * @param length  The length of time to show it for.
      */
-    void showMessage(String message);
+    void showMessage(String message, int length);
+
+    /**
+     * Shows a message to the user.
+     * @param error  The message to show.
+     */
+    void showError(String error);
 
     /**
      * The type of server that is processing the images.

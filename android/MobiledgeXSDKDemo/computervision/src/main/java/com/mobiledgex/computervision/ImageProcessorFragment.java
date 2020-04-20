@@ -18,6 +18,7 @@
 package com.mobiledgex.computervision;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -62,6 +63,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     private static final String TAG = "ImageProcessorFragment";
     public static final String EXTRA_FACE_STROKE_WIDTH = "EXTRA_FACE_STROKE_WIDTH";
+    private static final String VIDEO_FILE_NAME = "Jason.mp4";
 
     protected Camera2BasicFragment mCamera2BasicFragment;
     protected Menu mOptionsMenu;
@@ -91,12 +93,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefShowNetLatency;
     protected boolean prefShowStdDev;
     protected boolean prefUseRollingAvg;
-    protected boolean prefRemoteProcessing = true;
     protected int prefCameraLensFacingDirection;
     protected ImageSender.CameraMode mCameraMode;
     protected float mServerToDisplayRatioX;
     protected float mServerToDisplayRatioY;
-    protected boolean mBenchmarkActive;
     private String defaultLatencyMethod = "socket";
     private String defaultConnectionMode = "REST";
 
@@ -116,6 +116,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
     public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
+    protected String mVideoFilename;
 
     /**
      * Return statistics information to be displayed in dialog after activity -- a combination
@@ -130,16 +131,33 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     /**
      * Shows a {@link Toast} on the UI thread.
      *
-     * @param text The message to show
+     * @param text The message to show.
+     * @param length  The length of time to show it for.
      */
     @Override
-    public void showMessage(final String text) {
+    public void showMessage(final String text, final int length) {
         final Activity activity = getActivity();
         if (activity != null) {
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, text, length).show();
+                }
+            });
+        }
+    }
+
+    public void showError(final String text) {
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    new AlertDialog.Builder(getContext())
+                            .setTitle(R.string.error)
+                            .setMessage(text)
+                            .setPositiveButton("OK", null)
+                            .show();
                 }
             });
         }
@@ -166,16 +184,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
         // Determine which ImageSenders should handle this image.
-        if(prefRemoteProcessing) {
-            if(mCameraMode == ImageSender.CameraMode.FACE_TRAINING
-                || mCameraMode == ImageSender.CameraMode.FACE_UPDATING_SERVER) {
-                mImageSenderTraining.sendImage(bitmap);
-            } else {
-                mImageSenderEdge.sendImage(bitmap);
-                if(!mBenchmarkActive) {
-                    mImageSenderCloud.sendImage(bitmap);
-                }
-            }
+        if(mCameraMode == ImageSender.CameraMode.FACE_TRAINING
+            || mCameraMode == ImageSender.CameraMode.FACE_UPDATING_SERVER) {
+            mImageSenderTraining.sendImage(bitmap);
+        } else {
+            mImageSenderEdge.sendImage(bitmap);                 
+            mImageSenderCloud.sendImage(bitmap);
         }
     }
 
@@ -393,12 +407,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
             menu.findItem(R.id.action_camera_training_guest).setVisible(false);
             menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
-        } else {
-            //Benchmarking is only available in FACE_DETECTION mode.
-            menu.findItem(R.id.action_benchmark_edge).setVisible(false);
-            menu.findItem(R.id.action_benchmark_local).setVisible(false);
-            menu.findItem(R.id.action_benchmark_submenu).setVisible(false);
         }
+
+        // Declutter the menu, but keep the code in place in case we need it later.
+        menu.findItem(R.id.action_camera_debug).setVisible(false);
 
     }
 
@@ -427,7 +439,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         if (id == R.id.action_camera_video) {
             mCameraToolbar.setVisibility(View.GONE);
-            mCamera2BasicFragment.startVideo();
+            mCamera2BasicFragment.startVideo(mVideoFilename);
             return true;
         }
 
@@ -507,14 +519,28 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_benchmark_edge) {
-            mCameraToolbar.setVisibility(View.GONE);
-            mBenchmarkActive = true;
-            prefRemoteProcessing = true;
             mCloudLatency.setVisibility(View.GONE);
             mCloudLatency2.setVisibility(View.GONE);
             mCloudStd.setVisibility(View.GONE);
             mCloudStd2.setVisibility(View.GONE);
+            mCameraToolbar.setVisibility(View.GONE);
+
+            mImageSenderCloud.setInactiveBenchmark(true);
+            mCamera2BasicFragment.startVideo(mVideoFilename);
             mCamera2BasicFragment.runBenchmark(getContext(), "Edge");
+            return true;
+        }
+
+        if (id == R.id.action_benchmark_cloud) {
+            mEdgeLatency.setVisibility(View.GONE);
+            mEdgeLatency2.setVisibility(View.GONE);
+            mEdgeStd.setVisibility(View.GONE);
+            mEdgeStd2.setVisibility(View.GONE);
+            mCameraToolbar.setVisibility(View.GONE);
+
+            mImageSenderEdge.setInactiveBenchmark(true);
+            mCamera2BasicFragment.startVideo(mVideoFilename);
+            mCamera2BasicFragment.runBenchmark(getContext(), "Cloud");
             return true;
         }
 
@@ -755,6 +781,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mImageSenderCloud.setCameraMode(mCameraMode);
         mImageSenderEdge.setCameraMode(mCameraMode);
 
+        mVideoFilename = VIDEO_FILE_NAME;
+
         //One more call to get preferences for ImageSenders
         onSharedPreferenceChanged(prefs, "ALL");
 
@@ -807,6 +835,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public void onDetach() {
         super.onDetach();
         mCamera2BasicFragment = null;
+        if (mImageSenderEdge != null) {
+            mImageSenderEdge.closeConnection();
+        }
+        if (mImageSenderCloud != null) {
+            mImageSenderCloud.closeConnection();
+        }
     }
 
     public ImageSender getImageSenderEdge() {
