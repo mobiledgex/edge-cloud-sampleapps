@@ -368,9 +368,6 @@ public class Camera2BasicFragment extends Fragment
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
             Log.i(TAG, "Video onSurfaceTextureAvailable: mVideoMode="+mVideoMode+" "+width+","+height);
-//            if(mVideoMode) {
-//                prepareVideo();
-//            }
         }
 
         @Override
