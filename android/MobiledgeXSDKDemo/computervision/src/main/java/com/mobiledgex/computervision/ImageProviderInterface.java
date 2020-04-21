@@ -39,4 +39,6 @@ public interface ImageProviderInterface {
      * @param status  The status to show.
      */
     void setStatus(String status);
+
+    String getStatsText();
 }

@@ -45,6 +45,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     private static final String TAG = "PoseProcessorFragment";
     public static final String EXTRA_POSE_STROKE_WIDTH = "EXTRA_POSE_STROKE_WIDTH";
     public static final String EXTRA_POSE_JOINT_RADIUS = "EXTRA_POSE_JOINT_RADIUS";
+    private static final String VIDEO_FILE_NAME = "Jason.mp4";
     private PoseRenderer mPoseRenderer;
 
     private TextView mLatencyFull;
@@ -250,6 +251,8 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.socket);
         mCameraMode = ImageSender.CameraMode.POSE_DETECTION;
         mCameraToolbar.setTitle(R.string.title_activity_pose_detection);
+
+        mVideoFilename = VIDEO_FILE_NAME;
     }
 
     @Override
@@ -265,10 +268,11 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
 
-        menu.findItem(R.id.action_benchmark_edge).setVisible(false);
-        menu.findItem(R.id.action_benchmark_local).setVisible(false);
-        menu.findItem(R.id.action_benchmark_submenu).setVisible(false);
+        //No Cloud available for benchmarking
+        menu.findItem(R.id.action_benchmark_cloud).setVisible(false);
 
+        // Declutter the menu, but keep the code in place in case we need it later.
+        menu.findItem(R.id.action_camera_debug).setVisible(false);
     }
 
     @Override
