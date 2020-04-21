@@ -24,6 +24,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -72,6 +73,8 @@ public class ImageSender {
     private RollingAverage mLatencyNetOnlyRollingAvg;
     private int mTrainingCount;
     private boolean mBusy;
+    private boolean mInactiveBenchmark;
+    private boolean mInactiveFailure;
     private long mLatency = 0;
     private boolean mDoNetLatency = true;
     private final int mRollingAvgSize = 100;
@@ -245,13 +248,19 @@ public class ImageSender {
         }
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, okhttp3.Response response) {
-            Log.e(TAG, "Error: " + t.getMessage());
+            String message = "WebSocket Error: " + t.getMessage();
+            Log.e(TAG, message);
+            if (response != null && response.code() == 404) {
+                mImageServerInterface.showError("WebSockets support not yet deployed to "+mCloudLetType+" server.");
+                mInactiveFailure = true;
+            } else {
+                mImageServerInterface.showMessage(message, Toast.LENGTH_LONG);
+            }
             mWebSocketClient.dispatcher().cancelAll();
         }
     }
 
     private void startWebSocketClient() {
-        //mHost = "192.168.1.86;" //laptop
         String url = "ws://"+mHost+":8008/ws"+mDjangoUrl;
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
         ResultWebSocketListener listener = new ResultWebSocketListener();
@@ -259,11 +268,6 @@ public class ImageSender {
         mWebSocket = mWebSocketClient.newWebSocket(request, listener);
         mWebSocketClient.dispatcher().executorService().shutdown();
         Log.i(TAG, "Started WebSocket client. url: " + url);
-    }
-
-    private void disconnectWebSocketClient() {
-        Log.i(TAG, "Disconnecting WebSocket client");
-        mWebSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
     }
 
     /*receive the message from server with asyncTask*/
@@ -289,6 +293,16 @@ public class ImageSender {
             Log.i(TAG, "mSocketClientTcp="+ mSocketClientTcp);
             mSocketClientTcp.run();
             return null;
+        }
+    }
+
+    public void closeConnection() {
+        Log.i(TAG, "Disconnecting socket for "+mCloudLetType+" mConnectionMode="+mConnectionMode);
+        if (mWebSocket != null) {
+            mWebSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
+        }
+        if (mSocketClientTcp != null) {
+            mSocketClientTcp.stopClient();
         }
     }
 
@@ -363,7 +377,8 @@ public class ImageSender {
      * @param bitmap  The image to encode and send.
      */
     public void sendImage(Bitmap bitmap) {
-        if(mBusy) {
+        Log.i(TAG, "sendImage()");
+        if(mBusy || mInactiveBenchmark || mInactiveFailure) {
             return;
         }
 
@@ -421,7 +436,7 @@ public class ImageSender {
                 public void onErrorResponse(VolleyError error) {
                     mBusy = false;
                     String message = "sendImage received error=" + error;
-                    mImageServerInterface.showMessage(message);
+                    mImageServerInterface.showMessage(message, Toast.LENGTH_SHORT);
                     Log.e(TAG, message);
                 }
             }) {
@@ -679,7 +694,7 @@ public class ImageSender {
 
                     } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
                         mLatencyTestMethod = LatencyTestMethod.socket;
-                        mImageServerInterface.showMessage("Ping failed. Switching to socket latency test mode.");
+                        mImageServerInterface.showMessage("Ping failed. Switching to socket latency test mode.", Toast.LENGTH_SHORT);
                         break;
                     }
                     inputLine = bufferedReader.readLine();
@@ -738,6 +753,10 @@ public class ImageSender {
      * @return  The statistics text.
      */
     public String getStatsText() {
+        if (mInactiveBenchmark || mInactiveFailure) {
+            // We don't want any results in this case.
+            return "";
+        }
         String statsText = mCloudLetType +" hostname: "+mHost+ "\n" +
                 "Connection mode="+mConnectionMode + "\n" +
                 "Latency test method="+mLatencyTestMethod+"\n\n" +
@@ -761,6 +780,14 @@ public class ImageSender {
      */
     public void setHost(String host) {
         mHost = host;
+    }
+
+    public boolean isInactiveBenchmark() {
+        return mInactiveBenchmark;
+    }
+
+    public void setInactiveBenchmark(boolean inactiveBenchmark) {
+        this.mInactiveBenchmark = inactiveBenchmark;
     }
 
     /**

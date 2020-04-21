@@ -116,20 +116,16 @@ public class Camera2BasicFragment extends Fragment
 
     private String mDebugInfo;
 
-    private List<String> mAssetImageFileList = new ArrayList<>();
-    private String mAssetImagePath;
-    private int mAssetImageFileIndex;
     private boolean mRunningBenchmark;
     private CountDownTimer mBenchmarkTimer;
     private String mBenchmarkType;
     private long mBenchmarkStartTime;
-    private long mBenchmarkDurationMillis = 15*60*1000; //15 minutes
+    private long mBenchmarkDurationMillis = 1*60*1000; //1 minute
     private long mBenchmarkTickMillis = 200;
     private int mBenchmarkFrameCount;
     private long mFrameLastTime;
     private long mFrameStartTime;
     private int mFrameCount;
-    private boolean mBenchmarkMaxCpuFlag = false;
 
     private MediaPlayer mMediaPlayer;
     private TextureView mVideoView;
@@ -372,9 +368,6 @@ public class Camera2BasicFragment extends Fragment
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
             Log.i(TAG, "Video onSurfaceTextureAvailable: mVideoMode="+mVideoMode+" "+width+","+height);
-            if(mVideoMode) {
-                prepareVideo();
-            }
         }
 
         @Override
@@ -498,8 +491,8 @@ public class Camera2BasicFragment extends Fragment
     }
 
     /**
-     * This method runs the face detection process on a fixed set of images, cycling through them
-     * one after the other. Because battery stats are no longer available to apps on non-rooted
+     * This method runs the face detection process on an included video file.
+     * Because battery stats are no longer available to apps on non-rooted
      * devices, the way to measure battery use is to reset the stats through ADB, run the benchmark,
      * then view battery usage either through the on-phone App Manager, or with the Battery Historian
      * tool.
@@ -511,42 +504,23 @@ public class Camera2BasicFragment extends Fragment
      * @param context
      */
     public void runBenchmark(Context context, String benchmarkType) {
-        closeCamera();
-        stopBackgroundThread();
-
         mBenchmarkType = benchmarkType;
-
         mRunningBenchmark = true;
-        mAssetImageFileIndex = 0;
-        mAssetImagePath = "images/singleface";
-        try {
-            AssetManager assetManager = context.getAssets();
-            mAssetImageFileList.addAll(Arrays.asList(assetManager.list(mAssetImagePath)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         mBenchmarkFrameCount = 0;
         mBenchmarkStartTime = System.currentTimeMillis();
         mBenchmarkTimer = new CountDownTimer(mBenchmarkDurationMillis, mBenchmarkTickMillis) {
             @Override
             public void onTick(long millisUntilFinished) {
                 long secondsRemaining = (mBenchmarkDurationMillis - (System.currentTimeMillis() - mBenchmarkStartTime))/1000;
-
                 mImageProviderInterface.setStatus(convertSecondsToHMmSs(secondsRemaining) + " remains");
-
-                if(!mBenchmarkMaxCpuFlag) {
-                    loadImageAsset();
-                }
             }
             @Override
             public void onFinish() {
-                mBenchmarkMaxCpuFlag = false;
-                Log.i(TAG, "mBenchmarkFrameCount = " + mBenchmarkFrameCount);
-
                 //Write the results to a timestamped text file.
-                String data = mBenchmarkType+" mBenchmarkFrameCount = " + mBenchmarkFrameCount;
+                String data = mImageProviderInterface.getStatsText();
                 DateFormat df = new SimpleDateFormat("yyyyMMddhhmmss");
                 String fileName = df.format(new Date())+"_results.txt";
+                Log.i(TAG, "Writing benchmark results to "+fileName);
                 final File file = new File(getContext().getExternalFilesDir(null), fileName);
                 try {
                     file.createNewFile();
@@ -561,15 +535,9 @@ public class Camera2BasicFragment extends Fragment
                     Log.e("Exception", "File write failed: " + e.toString());
                 }
 
-                //Completely quit out of this app so that it doesn't use additional CPU/battery.
-                getActivity().moveTaskToBack(true);
                 getActivity().finish();
             }
         }.start();
-
-        // Comment out the next 2 lines to use 200ms throttled "apples to apples" method.
-//        mBenchmarkMaxCpuFlag = true;
-//        new maxCpuLoop().execute();
     }
 
     public int getCameraLensFacingDirection() {
@@ -578,75 +546,6 @@ public class Camera2BasicFragment extends Fragment
 
     public void setCameraLensFacingDirection(int cameraLensFacingDirection) {
         mCameraLensFacingDirection = cameraLensFacingDirection;
-    }
-
-    private class maxCpuLoop extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... params) {
-            while(mBenchmarkMaxCpuFlag) {
-                loadImageAsset();
-            }
-            return "Executed";
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            Log.i(TAG, "maxCpuLoop done");
-        }
-
-        @Override
-        protected void onPreExecute() {}
-
-        @Override
-        protected void onProgressUpdate(Void... values) {}
-    }
-
-    public void loadImageAsset() {
-        try {
-            if(getContext() == null) {
-                Log.w(TAG, "getContext() is null. Aborting image load.");
-                return;
-            }
-            AssetManager assetManager = getContext().getAssets();
-            String imageFile = mAssetImageFileList.get(mAssetImageFileIndex);
-            InputStream is = assetManager.open(mAssetImagePath +"/"+imageFile);
-            Bitmap bitmap = BitmapFactory.decodeStream(is);
-            Rect rect = new Rect(mTextureView.getLeft(),
-                    mTextureView.getTop(), mTextureView.getRight(), mTextureView.getBottom());
-            if(mImageProviderInterface != null) {
-                mImageProviderInterface.onBitmapAvailable(bitmap, rect);
-            }
-
-            // Draw the image on the screen using the camera preview TextureView.
-            Canvas canvas = mTextureView.lockCanvas();
-            if(canvas == null) {
-                Log.i(TAG, "canvas is null :(");
-            } else {
-                //TODO: Pre-calculate these
-                Rect src = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
-                Rect dst = new Rect(0, 0, mTextureView.getWidth(), mTextureView.getHeight());
-
-                if(mCameraLensFacingDirection == CameraCharacteristics.LENS_FACING_FRONT) {
-                    // Mirror the image
-                    Matrix m = new Matrix();
-                    m.preScale(-1, 1);
-                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, false);
-                    // You must move your bitmap back to its place. otherwise you will not see it
-                    m.postTranslate(canvas.getWidth(), 0);
-                }
-                canvas.drawBitmap(bitmap, src, dst, null);
-                mTextureView.unlockCanvasAndPost(canvas);
-            }
-
-            mAssetImageFileIndex++;
-            if (mAssetImageFileIndex >= mAssetImageFileList.size()) {
-                mAssetImageFileIndex = 0;
-            }
-            mBenchmarkFrameCount++;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public static String convertSecondsToHMmSs(long seconds) {
@@ -911,7 +810,6 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onPause() {
         Log.d(TAG, "onPause()");
-        mBenchmarkMaxCpuFlag = false;
         closeCamera();
         stopBackgroundThread();
         if(mMediaPlayer != null) {
@@ -923,7 +821,6 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onStop() {
         Log.d(TAG, "onStop()");
-        mBenchmarkMaxCpuFlag = false;
         closeCamera();
         stopBackgroundThread();
         if(mBenchmarkTimer != null) {
@@ -1613,7 +1510,7 @@ public class Camera2BasicFragment extends Fragment
         }
     };
 
-    public void startVideo() {
+    public void startVideo(String filename) {
         Log.i(TAG, "startVideo()");
         mTextureView.setVisibility(View.INVISIBLE);
         mImageSendWidth = 320; //Widescreen: 1.77:1
@@ -1622,14 +1519,16 @@ public class Camera2BasicFragment extends Fragment
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
 
-        prepareVideo();
+        prepareVideo(filename);
     }
 
     /**
      * Select appropriate video file and start it playing on mVideoView's surface.
      * A background thread is started to pull the current video frame every 66 ms.
+     *
+     * @param filename  The video file name.
      */
-    private void prepareVideo() {
+    private void prepareVideo(String filename) {
         Log.i(TAG, "prepareVideo()");
         String videoFileName;
         mVideoMode = true;
@@ -1641,9 +1540,9 @@ public class Camera2BasicFragment extends Fragment
 
         int orientation = getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            videoFileName = "Jason_720.mp4";
+            videoFileName = "landscape/"+filename;
         } else {
-            videoFileName = "Jason_portrait.mp4";
+            videoFileName = "portrait/"+filename;
         }
 
         try {
