@@ -2,4 +2,4 @@
 Sample apps demonstrating use of the MobiledgeX SDK
 
 
-To get started, please visit https://sites.google.com/mobiledgex.com/doc.
+To get started, please visit https://developers.mobiledgex.com/
