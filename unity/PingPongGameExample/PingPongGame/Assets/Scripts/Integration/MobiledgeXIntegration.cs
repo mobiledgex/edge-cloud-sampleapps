@@ -212,33 +212,75 @@ public class MobiledgeXIntegration
   // Typical developer workflow to get connection to application backend
   public async Task<ClientWebSocket> GetWebsocketConnection(string path)
   {
+    if (!IsEdgeEnabled(GetConnectionProtocols.Websocket))
+    {
+      throw new Exception("Device is not edge enabled. Please switch to cellular connection or use server in public cloud");
+    }
+
     Loc loc = await GetLocationFromDevice();
 
-    string aCarrierName = GetCarrierName();
-    string eCarrierName;
-    if (me.useOnlyWifi)
+    carrierName = GetCarrierName();
+    if (carrierName == null)
     {
-      eCarrierName = carrierName;
-    }
-    else
-    {
-      if (aCarrierName == null)
-      {
-        Debug.Log("Missing CarrierName for RegisterClient.");
-        return null;
-      }
-      eCarrierName = aCarrierName;
+      throw new Exception("Unable to find carrier information for edge connection");
     }
 
-    FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(eCarrierName, orgName, appName, appVers, authToken, loc, cellID, uniqueIDType, uniqueID, tags);
+    FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(carrierName, orgName, appName, appVers, authToken, loc, cellID, uniqueIDType, uniqueID, tags);
     if (findCloudletReply == null)
     {
-      Debug.Log("cannot find findCloudletReply");
+      throw new Exception("Unable to find cloudlet to connect to");
     }
 
     Dictionary<int, AppPort> appPortsDict = me.GetTCPAppPorts(findCloudletReply);
     int public_port = findCloudletReply.ports[0].public_port; // We happen to know it's the first one.
     AppPort appPort = appPortsDict[public_port];
     return await me.GetWebsocketConnection(findCloudletReply, appPort, public_port, 5000, path);
+  }
+
+  // Edge requires connections to run over cellular interface
+  public  bool IsEdgeEnabled(GetConnectionProtocols proto)
+  {
+    me.useOnlyWifi = false;
+    if (me.useOnlyWifi)
+    {
+      Debug.Log("useOnlyWifi must be false to enable edge connection");
+      return false;
+    }
+
+    if (proto == GetConnectionProtocols.TCP || proto == GetConnectionProtocols.UDP)
+    {
+      if (!me.netInterface.HasCellular())
+      {
+        Debug.Log(proto + " connection requires a cellular interface to run connection over edge.");
+        return false;
+      }
+    }
+    else
+    {
+      // Connections where we cannot bind to cellular interface default to wifi if wifi is up
+      // We need to make sure wifi is off
+      if (!me.netInterface.HasCellular() || me.netInterface.HasWifi())
+      {
+        Debug.Log(proto + " connection requires the cellular interface to be up and the wifi interface to be off to run connection over edge.");
+        return false;
+      }
+    }
+    
+    string cellularIPAddress = me.netInterface.GetIPAddress(me.netInterface.GetNetworkInterfaceName().CELLULAR);
+    if (cellularIPAddress == null)
+    {
+      Debug.Log("Unable to find ip address for local cellular interface.");
+      return false;
+    }
+
+    return true;
+  }
+
+  public enum GetConnectionProtocols
+  {
+    TCP,
+    UDP,
+    HTTP,
+    Websocket
   }
 }
