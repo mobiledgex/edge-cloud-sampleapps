@@ -73,7 +73,7 @@ class FaceRecognizer(object):
         # of /recognizer/predict.
 
     def training_data_startup(self):
-        logger.info("traing_data_startup()")
+        logger.info("training_data_startup()")
         try:
             while self.is_update_in_progress():
                 logger.info("Sleeping while another worker updates training data")
@@ -270,7 +270,7 @@ class FaceRecognizer(object):
 
     def set_db_timestamps(self, last_download_timestamp=None):
         from tracker.models import CentralizedTraining
-        ct = CentralizedTraining.objects.get(
+        ct, created = CentralizedTraining.objects.get_or_create(
             server_name = self.training_data_hostname)
         ct.last_check_timestamp = time.time()
         if last_download_timestamp != None:
