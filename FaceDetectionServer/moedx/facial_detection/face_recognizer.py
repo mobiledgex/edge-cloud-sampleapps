@@ -66,6 +66,14 @@ class FaceRecognizer(object):
         self.training_data_auth = HTTPBasicAuth('mexf4ceuser555', 'p4ssw0dmexf4c3999')
         self.training_data_timestamp = 0
 
+        # self.training_data_startup()
+        # This is commented out because at startup, uvicorn calls this __init__
+        # function in async mode, and db access is not allowed. Training data
+        # will be checked for updates, and downloaded if necessary on first call
+        # of /recognizer/predict.
+
+    def training_data_startup(self):
+        logger.info("traing_data_startup()")
         try:
             while self.is_update_in_progress():
                 logger.info("Sleeping while another worker updates training data")
