@@ -240,7 +240,6 @@ public class MobiledgeXIntegration
   // Edge requires connections to run over cellular interface
   public  bool IsEdgeEnabled(GetConnectionProtocols proto)
   {
-    me.useOnlyWifi = false;
     if (me.useOnlyWifi)
     {
       Debug.Log("useOnlyWifi must be false to enable edge connection");
