@@ -188,7 +188,7 @@ class RestClient(Client):
             content = response.content
             if response.status_code != 200:
                 logger.error("non-200 response: %d: %s" %(response.status_code, content))
-                return
+                continue
             self.process_result(content)
 
             if (x+1) % PING_INTERVAL == 0:

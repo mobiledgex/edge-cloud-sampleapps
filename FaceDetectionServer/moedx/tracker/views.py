@@ -172,6 +172,7 @@ def recognizer_update(request):
     logger.debug(prepend_ip("Request received: %s" %request, request))
     if request.method != 'POST':
         return HttpResponseBadRequest("Must send request as a POST")
+
     ret = myFaceRecognizer.download_training_data_if_needed()
     return HttpResponse("%s\n" %ret)
 
@@ -417,4 +418,3 @@ def object_detect(request):
     logger.info(prepend_ip("%s ms to detect objects: %s" %(elapsed, ret), request))
     json_ret = json.dumps(ret)
     return HttpResponse(json_ret)
-
