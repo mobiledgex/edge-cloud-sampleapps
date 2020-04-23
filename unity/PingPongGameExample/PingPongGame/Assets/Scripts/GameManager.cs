@@ -207,7 +207,17 @@ namespace MobiledgeXPingPongGame {
       }
       else
       {
-        await client.Connect(queryParams);
+        try
+        {
+          await client.Connect(queryParams);
+        }
+        catch (Exception e)
+        {
+          clog("Unable to get websocket connection. Exception: " + e.Message  + ". Switching to AltServer.");
+          useAltServer = true;
+          ConnectToServerWithRoomId(roomId);
+          return;
+        }
       }
       clog("Connection to status: " + client.isOpen());
     }
