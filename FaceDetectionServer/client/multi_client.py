@@ -30,6 +30,7 @@ import struct
 import json
 import time
 import logging
+import cv2
 from threading import Thread
 from utils import RunningStats
 
@@ -82,18 +83,53 @@ class Client:
         self.filename_list_index = 0
         self.json_params = None
         self.base64 = False
+        self.video = None
+        self.resize_w = 180
+        self.resize_h = 240
         logger.debug("host:port = %s:%d" %(self.host, self.port))
 
     def start(self):
-        logger.debug("image file(s) %s %s" %(self.image_file_name, self.filename_list))
+        logger.debug("image file(s) %s" %(self.filename_list))
+        video_extensions = ('mp4','avi', 'mov')
+        if self.filename_list[0].endswith(video_extensions):
+            logger.debug("It's a video")
+            self.image_file_name = self.filename_list[0]
+            self.video = cv2.VideoCapture(self.image_file_name)
 
-    def next_file_name(self):
-        """ If the filename_list array is has more than 1, get the next value. """
-        if len(self.filename_list) > 1:
-            self.filename_list_index += 1
-            if self.filename_list_index >= len(self.filename_list):
+    def get_next_image(self):
+        if self.video is not None:
+            ret, image = self.video.read()
+            if not ret:
+                logger.debug("End of video")
+                return None
+            vw = image.shape[1]
+            vh = image.shape[0]
+            logger.debug("Video size: %dx%d" %(vw,vh))
+            image = cv2.resize(image, (self.resize_w, self.resize_h))
+            res, image = cv2.imencode('.JPEG', image)
+            image = image.tostring()
+        else:
+            # If the filename_list array has more than 1, get the next value.
+            if len(self.filename_list) > 1:
+                self.filename_list_index += 1
+                if self.filename_list_index >= len(self.filename_list):
+                    self.filename_list_index = 0
+            else:
                 self.filename_list_index = 0
+
+            if self.stats_latency_full_process.n >= self.num_repeat:
+                return None
+
             self.image_file_name = self.filename_list[self.filename_list_index]
+            with open(self.image_file_name, "rb") as f:
+                image = f.read()
+
+        logger.debug("Image data (first 32 bytes logged): %s" %image[:32])
+        return image
+
+    def get_server_stats(self):
+        url = "http://%s:%d%s" %(self.host, self.port, "/server/usage/")
+        logger.info(requests.get(url).content)
 
     def time_open_socket(self):
         now = time.time()
@@ -133,7 +169,12 @@ class Client:
 
     def process_result(self, result):
         global TEST_PASS
-        decoded_json = json.loads(result)
+        try:
+            decoded_json = json.loads(result)
+        except Exception as e:
+            logger.error("Could not decode result. Exception: %s. Result: %s" %(e, result))
+            TEST_PASS = False
+            return
         if 'success' in decoded_json:
             if decoded_json['success'] == "true":
                 TEST_PASS = True
@@ -177,9 +218,11 @@ class RestClient(Client):
         Client.start(self)
         self.url = "http://%s:%d%s" %(self.host, self.port, self.endpoint)
 
-        for x in range(self.num_repeat):
-            with open(self.image_file_name, "rb") as f:
-                image = f.read()
+        while True:
+            image = self.get_next_image()
+            if image is None:
+                break
+
             self.latency_start_time = time.time()
             if self.base64:
                 response = self.send_image_json(image)
@@ -191,13 +234,13 @@ class RestClient(Client):
                 continue
             self.process_result(content)
 
-            if (x+1) % PING_INTERVAL == 0:
+            if (self.stats_latency_full_process.n) % PING_INTERVAL == 0:
+                if self.do_server_stats:
+                    self.get_server_stats()
                 if self.net_latency_method == "SOCKET":
                     self.time_open_socket()
                 else:
                     self.icmp_ping()
-
-            self.next_file_name()
 
         logger.debug("Done")
         self.display_results()
@@ -206,7 +249,8 @@ class RestClient(Client):
         """
         Sends the raw image data with a 'Content-Type' of 'image/jpeg'.
         """
-        headers = {'Content-Type': 'image/jpeg'}
+        # headers = {'Content-Type': 'image/jpeg'}
+        headers = {'Content-Type': 'image/jpeg', "Mobiledgex-Debug": "true"} # Enable saving debug images
         return requests.post(self.url, data=image, headers=headers)
 
     def send_image_json(self, image):
@@ -247,9 +291,11 @@ class PersistentTcpClient(Client):
         sock.connect((self.host, self.port))
 
         logger.debug("repeating %s %d times" %(op_code, self.num_repeat))
-        for x in range(self.num_repeat):
-            with open(self.image_file_name, "rb") as f:
-                data = f.read()
+        while True:
+            data = self.get_next_image()
+            if data is None:
+                break
+
             length = len(data)
             logger.debug("data length = %d" %length)
             self.latency_start_time = time.time()
@@ -262,13 +308,13 @@ class PersistentTcpClient(Client):
             result = str(sock.recv(length), "utf-8")
 
             self.process_result(result)
-            if (x+1) % PING_INTERVAL == 0:
+            if (self.stats_latency_full_process.n) % PING_INTERVAL == 0:
+                if self.do_server_stats:
+                    self.get_server_stats()
                 if self.net_latency_method == "SOCKET":
                     self.time_open_socket()
                 else:
                     self.icmp_ping()
-
-            self.next_file_name()
 
         logger.debug("Done")
         self.display_results()
@@ -305,14 +351,11 @@ class WebSocketClient(Client):
         # logger.info("on_message: %s loop_count: %s", %(message,self.loop_count))
         self.process_result(message)
 
-        if self.stats_latency_full_process.n >= self.num_repeat:
-            logger.debug("repeating done")
-            self.display_results()
-            ws.close()
-            return
-
         self.loop_count += 1
         if self.loop_count % (PING_INTERVAL+1) == 0:
+            if self.do_server_stats:
+                self.get_server_stats()
+
             # ignore self.net_latency_method because any other type of
             # network activity seems to lock up the websocket.
 
@@ -321,10 +364,13 @@ class WebSocketClient(Client):
             ws.send(payload)
             return
 
-        self.next_file_name()
-        logger.debug("image_file_name: %s filename_list_index: %s num_repeat: %s count_latency_full_process: %s" %(self.image_file_name, self.filename_list_index, self.num_repeat, self.stats_latency_full_process.n))
-        with open(self.image_file_name, "rb") as f:
-            image = f.read()
+        image = self.get_next_image()
+        if image is None:
+            logger.debug("repeating done")
+            self.display_results()
+            ws.close()
+            return
+        logger.debug("loop_count: %d image_file_name: %s filename_list_index: %s num_repeat: %s count_latency_full_process: %s" %(self.loop_count, self.image_file_name, self.filename_list_index, self.num_repeat, self.stats_latency_full_process.n))
         self.latency_start_time = time.time()
         ws.send(image, WEBSOCKET_OPCODE_BINARY)
 
@@ -336,8 +382,7 @@ class WebSocketClient(Client):
 
     def on_open(self, ws):
         # As soon as the websocket is open, send the first image.
-        with open(self.image_file_name, "rb") as f:
-            image = f.read()
+        image = self.get_next_image()
         self.loop_count += 1
         self.latency_start_time = time.time()
         ws.send(image, WEBSOCKET_OPCODE_BINARY)
@@ -398,9 +443,8 @@ if __name__ == "__main__":
             parser.print_usage()
             sys.exit()
 
-        client.image_file_name = client.filename_list[0]
+        client.filename_list_index = -1
         client.num_repeat = args.repeat * len(client.filename_list)
-
         client.do_server_stats = args.server_stats
         client.show_responses = args.show_responses
         client.endpoint = args.endpoint
