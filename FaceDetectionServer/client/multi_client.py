@@ -105,7 +105,6 @@ class Client:
                 if not ret:
                     logger.debug("End of video")
                     return None
-            self.frame_count += 1
             vw = image.shape[1]
             vh = image.shape[0]
             logger.debug("Video size: %dx%d" %(vw, vh))
