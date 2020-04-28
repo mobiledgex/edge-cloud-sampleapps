@@ -46,12 +46,7 @@ public class MobiledgeXIntegration
   public string carrierName { get; set; } = MatchingEngine.wifiCarrier; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string orgName { get; set; } = "MobiledgeX"; // Your organization name.
   public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
-  public string appVers { get; set; } = "2020-02-03"; // Your app version uploaded to the docker registry.
-  public string authToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
-  public uint cellID { get; set; } = 0;
-  public string uniqueIDType { get; set; } = "";
-  public string uniqueID { get; set; } = "";
-  public Tag[] tags { get; set; } = new Tag[0];
+  public string appVers { get; set; } = "2020-04-28"; // Your app version uploaded to the docker registry.
 
   public MobiledgeXIntegration()
   {
@@ -112,8 +107,7 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    RegisterClientRequest req = me.CreateRegisterClientRequest(eCarrierName, orgName, appName, appVers, authToken, cellID, uniqueIDType, uniqueID, tags);
-    Debug.Log("CarrierName: " + req.carrier_name);
+    RegisterClientRequest req = me.CreateRegisterClientRequest(orgName, appName, appVers);
     Debug.Log("orgName: " + req.org_name);
     Debug.Log("AppName: " + req.app_name);
     Debug.Log("AppVers: " + req.app_vers);
@@ -147,7 +141,7 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    FindCloudletRequest req = me.CreateFindCloudletRequest(eCarrierName, loc);
+    FindCloudletRequest req = me.CreateFindCloudletRequest(loc, eCarrierName);
 
     FindCloudletReply reply = await me.FindCloudlet(req);
 
@@ -170,7 +164,7 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    VerifyLocationRequest req = me.CreateVerifyLocationRequest(eCarrierName, loc, cellID, tags);
+    VerifyLocationRequest req = me.CreateVerifyLocationRequest(loc);
 
     VerifyLocationReply reply = await me.VerifyLocation(req);
 
@@ -225,7 +219,7 @@ public class MobiledgeXIntegration
       throw new Exception("Unable to find carrier information for edge connection");
     }
 
-    FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(carrierName, orgName, appName, appVers, authToken, loc, cellID, uniqueIDType, uniqueID, tags);
+    FindCloudletReply findCloudletReply = await me.RegisterAndFindCloudlet(orgName, appName, appVers, loc, carrierName);
     if (findCloudletReply == null)
     {
       throw new Exception("Unable to find cloudlet to connect to");
