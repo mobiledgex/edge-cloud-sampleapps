@@ -160,9 +160,7 @@ def detector_detect(request):
         ret = {"success": "true", "server_processing_time": elapsed, "rects": rects.tolist()}
     logger.info(prepend_ip("%s ms to detect rectangles: %s" %(elapsed, ret), request))
     json_ret = json.dumps(ret)
-    resp = HttpResponse(json_ret)
-    resp['Access-Control-Allow-Origin'] = '*'
-    return resp
+    return HttpResponse(json_ret)
 
 @csrf_exempt
 def recognizer_update(request):

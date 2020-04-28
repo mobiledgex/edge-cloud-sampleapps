@@ -260,8 +260,8 @@ class RestClient(Client):
         """
         Sends the raw image data with a 'Content-Type' of 'image/jpeg'.
         """
-        # headers = {'Content-Type': 'image/jpeg'}
-        headers = {'Content-Type': 'image/jpeg', "Mobiledgex-Debug": "true"} # Enable saving debug images
+        # headers = {'Content-Type': 'image/jpeg', "Mobiledgex-Debug": "true"} # Enable saving debug images
+        headers = {'Content-Type': 'image/jpeg'}
         return requests.post(self.url, data=image, headers=headers)
 
     def send_image_json(self, image):
