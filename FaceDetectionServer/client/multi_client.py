@@ -84,8 +84,10 @@ class Client:
         self.json_params = None
         self.base64 = False
         self.video = None
-        self.resize_w = 180
-        self.resize_h = 240
+        self.resize = True
+        self.resize_long = 240
+        self.resize_short = 180
+        self.skip_frames = 1
         logger.debug("host:port = %s:%d" %(self.host, self.port))
 
     def start(self):
@@ -98,14 +100,24 @@ class Client:
 
     def get_next_image(self):
         if self.video is not None:
-            ret, image = self.video.read()
-            if not ret:
-                logger.debug("End of video")
-                return None
+            for x in range(self.skip_frames):
+                ret, image = self.video.read()
+                if not ret:
+                    logger.debug("End of video")
+                    return None
+            self.frame_count += 1
             vw = image.shape[1]
             vh = image.shape[0]
-            logger.debug("Video size: %dx%d" %(vw,vh))
-            image = cv2.resize(image, (self.resize_w, self.resize_h))
+            logger.debug("Video size: %dx%d" %(vw, vh))
+            if self.resize:
+                if vw > vh:
+                    resize_w = self.resize_long
+                    resize_h = self.resize_short
+                else:
+                    resize_w = self.resize_short
+                    resize_h = self.resize_long
+                image = cv2.resize(image, (resize_w, resize_h))
+                logger.debug("Resized image to: %dx%d" %(resize_w, resize_h))
             res, image = cv2.imencode('.JPEG', image)
             image = image.tostring()
         else:
@@ -399,8 +411,10 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--directory", required=False, help="Directory containing image files to send (*.jpg, *.png).")
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
     parser.add_argument("-t", "--threads", type=int, default=1, help="Number of concurrent execution threads.")
+    parser.add_argument("--skip-frames", type=int, default=1, help="For video, send every Nth frame.")
     parser.add_argument("-p", "--port", type=int, help="Port number")
     parser.add_argument("-j", "--json-params", required=False, help='Extra parameters to include with image. Ex: {"subject":"Max Door", "owner":"Bruce Armstrong"}')
+    parser.add_argument("--fullsize", action='store_true', help="Maintain original image size. Default is to shrink the image before sending.")
     parser.add_argument("--base64", action='store_true', help="Base64 encode image")
     parser.add_argument("--show-responses", action='store_true', help="Show responses.")
     parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
@@ -451,6 +465,8 @@ if __name__ == "__main__":
         client.json_params = args.json_params
         client.base64 = args.base64
         client.net_latency_method = args.network_latency
+        client.resize = not args.fullsize
+        client.skip_frames = args.skip_frames
 
         thread = Thread(target=client.start)
         thread.start()
@@ -461,7 +477,7 @@ if __name__ == "__main__":
 
     if Client.stats_latency_full_process.n + Client.stats_latency_network_only.n + Client.stats_server_processing_time.n > 0:
         header1 = "Grand totals for %s %s %s" %(args.server, args.endpoint, args.connection_method)
-        header2 = "%d threads repeated %d times on %d files" %(args.threads, args.repeat, len(client.filename_list))
+        header2 = "%d threads repeated %d times on %d files. %d total frames." %(args.threads, args.repeat, len(client.filename_list), Client.stats_latency_full_process.n)
         separator = ""
         for s in header1: separator += "="
         logger.info(separator)
