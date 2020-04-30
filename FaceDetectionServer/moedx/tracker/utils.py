@@ -12,9 +12,9 @@ def usage_gpu():
     """
     nvidia_smi = "nvidia-smi"
     try:
-        p = Popen([nvidia_smi,"-q", "-d", "UTILIZATION"], stdout=PIPE)
+        p = Popen([nvidia_smi, "-q", "-d", "UTILIZATION"], stdout=PIPE)
     except FileNotFoundError:
-        logger.error("%s not found. GPU usage not supported." %nvidia_smi)
+        logger.error("%s not found. Check if your Nvidia driver install is correct. GPU usage not supported." %nvidia_smi)
         return {} # Empty dict
 
     stdout, stderror = p.communicate()

@@ -75,7 +75,7 @@ class Client:
         self.stats_latency_full_process = RunningStats()
         self.stats_latency_network_only = RunningStats()
         self.stats_server_processing_time = RunningStats()
-        self.image_file_name = None
+        self.media_file_name = None
         self.latency_start_time = 0
         self.loop_count = 0
         self.num_repeat = 0
@@ -91,12 +91,12 @@ class Client:
         logger.debug("host:port = %s:%d" %(self.host, self.port))
 
     def start(self):
-        logger.debug("image file(s) %s" %(self.filename_list))
-        video_extensions = ('mp4','avi', 'mov')
+        logger.debug("media file(s) %s" %(self.filename_list))
+        video_extensions = ('mp4', 'avi', 'mov')
         if self.filename_list[0].endswith(video_extensions):
             logger.debug("It's a video")
-            self.image_file_name = self.filename_list[0]
-            self.video = cv2.VideoCapture(self.image_file_name)
+            self.media_file_name = self.filename_list[0]
+            self.video = cv2.VideoCapture(self.media_file_name)
 
     def get_next_image(self):
         if self.video is not None:
@@ -131,8 +131,8 @@ class Client:
             if self.stats_latency_full_process.n >= self.num_repeat:
                 return None
 
-            self.image_file_name = self.filename_list[self.filename_list_index]
-            with open(self.image_file_name, "rb") as f:
+            self.media_file_name = self.filename_list[self.filename_list_index]
+            with open(self.media_file_name, "rb") as f:
                 image = f.read()
 
         logger.debug("Image data (first 32 bytes logged): %s" %image[:32])
@@ -381,7 +381,7 @@ class WebSocketClient(Client):
             self.display_results()
             ws.close()
             return
-        logger.debug("loop_count: %d image_file_name: %s filename_list_index: %s num_repeat: %s count_latency_full_process: %s" %(self.loop_count, self.image_file_name, self.filename_list_index, self.num_repeat, self.stats_latency_full_process.n))
+        logger.debug("loop_count: %d media_file_name: %s filename_list_index: %s num_repeat: %s count_latency_full_process: %s" %(self.loop_count, self.media_file_name, self.filename_list_index, self.num_repeat, self.stats_latency_full_process.n))
         self.latency_start_time = time.time()
         ws.send(image, WEBSOCKET_OPCODE_BINARY)
 
