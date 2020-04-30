@@ -164,7 +164,7 @@ public class MobiledgeXIntegration
       eCarrierName = aCarrierName;
     }
 
-    VerifyLocationRequest req = me.CreateVerifyLocationRequest(loc);
+    VerifyLocationRequest req = me.CreateVerifyLocationRequest(loc, eCarrierName);
 
     VerifyLocationReply reply = await me.VerifyLocation(req);
 
