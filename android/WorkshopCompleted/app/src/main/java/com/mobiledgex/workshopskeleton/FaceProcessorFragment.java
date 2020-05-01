@@ -110,8 +110,8 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.EDGE)
-                .setHost(mHostDetectionEdge)
-                .setPort(FACE_DETECTION_HOST_PORT)
+                .setHost(mHost)
+                .setPort(mPort)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.FACE_DETECTION);
