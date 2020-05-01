@@ -17,12 +17,13 @@
 
 package com.mobiledgex.workshopskeleton;
 
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import androidx.core.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.view.WindowManager;
 import android.util.Log;
 
@@ -77,13 +78,12 @@ public class FaceProcessorActivity extends AppCompatActivity {
 
         String appName = "MobiledgeX SDK Demo";
         String appVersion = "2.0";
-        String carrierName = "wifi";
-        String devName = "MobiledgeX";
+        String orgName = "MobiledgeX";
         Location location = new Location("MEX");
         location.setLatitude(52.52);
         location.setLongitude(13.4040);    //Berlin
 
-        Future<AppClient.FindCloudletReply> future = me.registerAndFindCloudlet(this, devName, appName, appVersion, carrierName, location, "", 0, "", "", null);
+        Future<AppClient.FindCloudletReply> future = me.registerAndFindCloudlet(this, orgName, appName, appVersion,  location, "", 0, "", "", null);
         AppClient.FindCloudletReply findCloudletReply;
         try {
             findCloudletReply = future.get();
