@@ -32,7 +32,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
-// import android.widget.ProgressBar;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
     private CheckBox checkboxLocationVerified;
-    // private ProgressBar progressBar;
+    private ProgressBar progressBar;
 
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity
         checkboxRegistered = findViewById(R.id.checkBoxRegistered);
         checkboxCloudletFound = findViewById(R.id.checkBoxCloudletFound);
         checkboxLocationVerified = findViewById(R.id.checkBoxLocationVerified);
-        // progressBar = findViewById(R.id.progressBar);
+        progressBar = findViewById(R.id.progressBar);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
