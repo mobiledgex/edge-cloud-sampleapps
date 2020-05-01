@@ -75,9 +75,6 @@ import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 import io.grpc.StatusRuntimeException;
 
-// Matching Engine API:
-
-
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 

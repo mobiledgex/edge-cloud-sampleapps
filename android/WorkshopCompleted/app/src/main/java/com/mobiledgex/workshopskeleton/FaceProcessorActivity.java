@@ -142,5 +142,4 @@ public class FaceProcessorActivity extends AppCompatActivity {
             }
         }
     }
-
 }
