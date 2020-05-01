@@ -132,12 +132,8 @@ class LoginViewController: UIViewController {
         let registerClientRequest = matchingEngine.createRegisterClientRequest(
                                                 orgName: orgName,
                                                 appName: appName,
-                                                appVers: appVers,
-                                                authToken: authToken,
-                                                uniqueIDType: uniqueIDType,
-                                                uniqueID: uniqueID,
-                                                cellID: cellID,
-                                                tags: tags)
+                                                appVers: appVers
+                                                )
         
         matchingEngine.registerClient(request: registerClientRequest)
         .then { registerClientReply in
@@ -150,16 +146,14 @@ class LoginViewController: UIViewController {
             
             let findCloudletRequest = self.matchingEngine.createFindCloudletRequest(
                                             gpsLocation: self.location!,
-                                            carrierName: self.carrierName!,
-                                            cellID: self.cellID,
-                                            tags: self.tags)
+                                            carrierName: self.carrierName!
+                                            )
             self.findCloudletPromise = self.matchingEngine.findCloudlet(request: findCloudletRequest)
               
             let verifyLocationRequest = self.matchingEngine.createVerifyLocationRequest(
                                             gpsLocation: self.location!,
-                                            carrierName: self.carrierName!,
-                                            cellID: self.cellID,
-                                            tags: self.tags)
+                                            carrierName: self.carrierName!
+                                            )
                 
             self.verifyLocationPromise = self.matchingEngine.verifyLocation(request: verifyLocationRequest)
             
@@ -185,12 +179,8 @@ class LoginViewController: UIViewController {
                                                                     gpsLocation: location!,
                                                                     appName: appName,
                                                                     appVers: appVers,
-                                                                    carrierName: carrierName,
-                                                                    authToken: authToken,
-                                                                    uniqueIDType: uniqueIDType,
-                                                                    uniqueID: uniqueID,
-                                                                    cellID: cellID,
-                                                                    tags: tags)
+                                                                    carrierName: carrierName
+                                                                    )
             
         .then { findCloudletReply -> Promise<SocketManager> in
             // Get Dictionary: key -> internal port, value -> AppPort Dictionary
