@@ -21,19 +21,17 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import androidx.core.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.WindowManager;
 import android.util.Log;
 
 import com.mobiledgex.matchingengine.AppConnectionManager;
-import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
