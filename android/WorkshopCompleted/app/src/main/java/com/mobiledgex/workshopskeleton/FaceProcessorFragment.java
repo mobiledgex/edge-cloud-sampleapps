@@ -17,6 +17,10 @@
 
 package com.mobiledgex.workshopskeleton;
 
+import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -26,9 +30,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -105,7 +106,14 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to define an ImageSender
-        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.CLOUD, mHost, mPort, PERSISTENT_TCP_PORT); // mHost and mPort come from GetConnectionWorkflow in FaceProcessorActivity
+        mImageSenderEdge = new ImageSender.Builder()
+                .setActivity(getActivity())
+                .setImageServerInterface(this)
+                .setCloudLetType(CloudletType.EDGE)
+                .setHost(mHostDetectionEdge)
+                .setPort(FACE_DETECTION_HOST_PORT)
+                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .build();
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.FACE_DETECTION);
         mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
         mCameraToolbar.setTitle("Face Detection");
@@ -236,7 +244,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
             return true;
         } else if (id == R.id.action_camera_video) {
             mCameraToolbar.setVisibility(View.GONE);
-            mCamera2BasicFragment.startVideo();
+            mCamera2BasicFragment.startVideo("portrait/Jason.mp4");
             return true;
         } else if (id == R.id.action_camera_debug) {
             mCamera2BasicFragment.showDebugInfo();
