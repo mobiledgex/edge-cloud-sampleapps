@@ -17,6 +17,10 @@
 
 package com.mobiledgex.workshopskeleton;
 
+import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -26,9 +30,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -60,6 +61,9 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
     private TextView mStdNet;
     private TextView mStatusText;
     private Toolbar mCameraToolbar;
+
+    public String mHost;
+    public int mPort;
 
     public static FaceProcessorFragment newInstance() {
         return new FaceProcessorFragment();
@@ -102,8 +106,14 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to define an ImageSender
-        String host = mHostDetectionEdge; //The default from the base class.
-        mImageSenderEdge = new ImageSender(getActivity(), this, CloudletType.EDGE, host, FACE_DETECTION_HOST_PORT, PERSISTENT_TCP_PORT);
+        mImageSenderEdge = new ImageSender.Builder()
+                .setActivity(getActivity())
+                .setImageServerInterface(this)
+                .setCloudLetType(CloudletType.EDGE)
+                .setHost(mHost)
+                .setPort(mPort)
+                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .build();
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.FACE_DETECTION);
         mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
         mCameraToolbar.setTitle("Face Detection");
@@ -234,7 +244,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
             return true;
         } else if (id == R.id.action_camera_video) {
             mCameraToolbar.setVisibility(View.GONE);
-            mCamera2BasicFragment.startVideo();
+            mCamera2BasicFragment.startVideo("portrait/Jason.mp4");
             return true;
         } else if (id == R.id.action_camera_debug) {
             mCamera2BasicFragment.showDebugInfo();

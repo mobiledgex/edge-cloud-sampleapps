@@ -26,16 +26,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.NetworkOnMainThreadException;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,6 +36,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.annotation.NonNull;
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -53,7 +52,11 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.maps.android.SphericalUtil;
+
 
 // Matching Engine API:
 import com.mobiledgex.matchingengine.MatchingEngine;
@@ -62,9 +65,6 @@ import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
-import java.net.HttpRetryException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -75,9 +75,6 @@ import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 import io.grpc.StatusRuntimeException;
 
-// Matching Engine API:
-
-
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -86,7 +83,6 @@ public class MainActivity extends AppCompatActivity
     public static final int RC_STATS = 2;
     private MatchingEngine matchingEngine;
     private RequestPermissions mRpUtil;
-    private String statusText = null;
     private AppClient.FindCloudletReply mClosestCloudlet;
     private Activity ctx;
     private String host;
@@ -97,22 +93,35 @@ public class MainActivity extends AppCompatActivity
     private String appVersion;
 
     private TextView cloudletNameTv;
+    private String cloudletNameTvStr = "";
     private TextView appNameTv;
+    private String appNameTvStr = "";
     private TextView fqdnTv;
+    private String fqdnTvStr = "";
     private TextView portNumberTv;
+    private String portNumberTvStr = "";
     private TextView carrierNameTv;
     private TextView distanceTv;
+    private String distanceTvStr = "";
     private TextView latitudeTv;
+    private String latitudeTvStr = "";
     private TextView longitudeTv;
+    private String longitudeTvStr = "";
+    private String mClosestCloudletHostname;
+
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
     private CheckBox checkboxLocationVerified;
     private ProgressBar progressBar;
-    private String mClosestCloudletHostname;
 
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
     private MenuItem signOutMenuItem;
+
+    private String registerStatusText;
+    private String findCloudletStatusText;
+    private String verifyLocStatusText;
+    private String getQosPosStatusText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,7 +151,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                registerClientAndFindCloudletInBackground();
+                registerClientInBackground();
             }
         });
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -288,20 +297,19 @@ public class MainActivity extends AppCompatActivity
         host = matchingEngine.generateDmeHostAddress();
         if(host == null) {
             Log.e(TAG, "Could not generate host");
-            host = "sdkdemo.dme.mobiledgex.net";   //fallback host
+            host = "wifi.dme.mobiledgex.net";   //fallback host
         }
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest;
         registerClientRequest = matchingEngine.createDefaultRegisterClientRequest(ctx, orgName)
-                .setAppName(appName).setAppVers(appVersion).setCarrierName(carrierName).build();
+                .setAppName(appName).setAppVers(appVersion).build();
         AppClient.RegisterClientReply registerStatus
                 = matchingEngine.registerClient (registerClientRequest, host, port, 10000);
         /////////////////////////////////////////////////////////////////////////////////////
 
         if(matchingEngine == null) {
-            statusText = "matchingEngine uninitialized";
-            Log.e(TAG, statusText);
-            showErrorMsg(statusText);
+            registerStatusText = "matchingEngine uninitialized";
+            Log.e(TAG, registerStatusText);
             return false;
         }
 
@@ -309,9 +317,8 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "registerStatus.getStatus()="+registerStatus.getStatus());
 
         if (registerStatus.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
-            statusText = "Registration Failed. Error: " + registerStatus.getStatus();
-            Log.e(TAG, statusText);
-            showErrorMsg(statusText);
+            registerStatusText = "Registration Failed. Error: " + registerStatus.getStatus();
+            Log.e(TAG, registerStatusText);
             return false;
         }
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
@@ -336,34 +343,30 @@ public class MainActivity extends AppCompatActivity
 
         Log.i(TAG, "mClosestCloudlet="+mClosestCloudlet);
         if(mClosestCloudlet == null) {
-            statusText = "findCloudlet call is not successfully coded. Search for TODO in code.";
-            Log.e(TAG, statusText);
-            showErrorMsg(statusText);
+            findCloudletStatusText = "findCloudlet call is not successfully coded. Search for TODO in code.";
+            Log.e(TAG, findCloudletStatusText);
             return false;
         }
         if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
-            statusText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
-            Log.e(TAG, statusText);
-            showErrorMsg(statusText);
+            findCloudletStatusText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
+            Log.e(TAG, findCloudletStatusText);
             return false;
         }
         Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFqdn());
-        checkboxCloudletFound.setChecked(true);
-        checkboxCloudletFound.setText(R.string.cloudlet_found);
 
         // Populate cloudlet details.
-        latitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLatitude());
-        longitudeTv.setText(""+mClosestCloudlet.getCloudletLocation().getLongitude());
-        fqdnTv.setText(mClosestCloudlet.getFqdn());
+        latitudeTvStr = ""+mClosestCloudlet.getCloudletLocation().getLatitude();
+        longitudeTvStr = ""+mClosestCloudlet.getCloudletLocation().getLongitude();
+        fqdnTvStr = mClosestCloudlet.getFqdn();
         LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         LatLng cloudletLatLng = new LatLng(mClosestCloudlet.getCloudletLocation().getLatitude(),
                 mClosestCloudlet.getCloudletLocation().getLongitude());
         double distance = SphericalUtil.computeDistanceBetween(userLatLng, cloudletLatLng)/1000;
-        distanceTv.setText(String.format("%.2f", distance)+" km");
+        distanceTvStr = String.format("%.2f", distance)+" km";
 
-        //Extract cloudlet name from FQDN
+        // Extract cloudlet name from FQDN
         String[] parts = mClosestCloudlet.getFqdn().split("\\.");
-        cloudletNameTv.setText(parts[0]);
+        cloudletNameTvStr = parts[0];
 
         //Find FqdnPrefix from Port structure.
         String FqdnPrefix = "";
@@ -371,6 +374,10 @@ public class MainActivity extends AppCompatActivity
         String appPortFormat = "{Protocol: %d, FqdnPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
         for (Appcommon.AppPort aPort : ports) {
             FqdnPrefix = aPort.getFqdnPrefix();
+            // assign first port number to portNumberTvStr
+            if (portNumberTvStr == "") {
+                portNumberTvStr = String.valueOf(aPort.getPublicPort());
+            }
             Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                     aPort.getProto().getNumber(),
                     aPort.getFqdnPrefix(),
@@ -393,7 +400,8 @@ public class MainActivity extends AppCompatActivity
 
     private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
         AppClient.VerifyLocationRequest verifyLocationRequest
-                = matchingEngine.createDefaultVerifyLocationRequest(ctx, loc).build();
+                = matchingEngine.createDefaultVerifyLocationRequest(ctx, loc)
+                .setCarrierName(carrierName).build();
         if (verifyLocationRequest != null) {
             try {
                 AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
@@ -402,11 +410,13 @@ public class MainActivity extends AppCompatActivity
                         ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() + " ]\n");
                 return true;
             } catch(NetworkOnMainThreadException ne) {
-                Log.e(TAG, "Network thread exception");
+                verifyLocStatusText = "Network thread exception";
+                Log.e(TAG, verifyLocStatusText);
                 return false;
             }
         } else {
-            Log.e(TAG, "Cannot verify location");
+            verifyLocStatusText = "Cannot verify location";
+            Log.e(TAG, verifyLocStatusText);
             return false;
         }
     }
@@ -414,7 +424,8 @@ public class MainActivity extends AppCompatActivity
     private boolean getQoSPositionKpi(LocOuterClass.Loc loc) throws InterruptedException, ExecutionException{
         List<AppClient.QosPosition> requests = createPositionList(loc, 45, 200, 1);
         if (requests.isEmpty()) {
-            Log.e(TAG, "No items added to the position list");
+            getQosPosStatusText = "No items added to the position list";
+            Log.e(TAG, getQosPosStatusText);
             return false;
         }
         AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createDefaultQosPositionRequest(requests, 0, null).build();
@@ -423,6 +434,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionRequest, host, port, 20000);
                 if (!qosPositionKpiReplies.hasNext()) {
+                    getQosPosStatusText = "Replies is empty";
                     Log.e(TAG, "Replies is empty");
                     return false;
                 }
@@ -431,18 +443,25 @@ public class MainActivity extends AppCompatActivity
                 }
                 return true;
             } catch (NetworkOnMainThreadException ne) {
-                Log.e(TAG, "Network thread exception");
+                getQosPosStatusText = "Network thread exception";
+                Log.e(TAG, getQosPosStatusText);
                 return false;
             }
         } else {
-            Log.e(TAG, "QoS request is null");
+            getQosPosStatusText = "QoS request is null";
+            Log.e(TAG, getQosPosStatusText);
             return false;
         }
     }
 
-    private void registerClientAndFindCloudletInBackground() {
-        // Creates new BackgroundRequest object which will call registerClient (the findCloudlet if registerClient is successful) to run on background thread
-        new RegisterClientAndFindCloudletBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    private void registerClientInBackground() {
+        // Creates new BackgroundRequest object which will call registerClient (then findCloudlet if registerClient is successful) to run on background thread
+        new RegisterClientBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    private void findCloudletInBackground() {
+        // Creates new BackgroundRequest object which will call findCloudlet
+        new FindCloudletBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     private void verifyLocationInBackground(Location loc) {
@@ -564,18 +583,18 @@ public class MainActivity extends AppCompatActivity
         }
         // Ensures that user can switch from wifi to cellular network data connection (required to verifyLocation)
         matchingEngine = new MatchingEngine(ctx);
-        matchingEngine.setNetworkSwitchingEnabled(true);  //false-> wifi (Use wifi for demo)
+        matchingEngine.setNetworkSwitchingEnabled(false);  //false-> wifi (Use wifi for demo)
     }
 
-    public class RegisterClientAndFindCloudletBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+    public class RegisterClientBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
         @Override
         protected Boolean doInBackground(Object... params) {
             try {
                 return registerClient();
             } catch (ExecutionException | InterruptedException | StatusRuntimeException | DmeDnsException | PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
-                statusText = "Registration Failed. Exception="+e.getLocalizedMessage();
-                showErrorMsg(statusText);
+                registerStatusText = "Registration Failed. Exception="+e.getLocalizedMessage();
+                showErrorMsg(registerStatusText);
                 return false;
             }
         }
@@ -588,17 +607,43 @@ public class MainActivity extends AppCompatActivity
                 // Populate app details.
                 carrierNameTv.setText(carrierName);
                 appNameTv.setText(appName);
-                try {
-                    findCloudlet();
-                } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
-                    e.printStackTrace();
-                    statusText = "FindCloudlet Failed. Exception=" + e.getLocalizedMessage();
-                    showErrorMsg(statusText);
-                }
+                findCloudletInBackground();
             } else {
-                statusText = "Failed to register client";
-                Log.e(TAG, statusText);
-                showErrorMsg(statusText);
+                registerStatusText = "Failed to register client. " + registerStatusText;
+                Log.e(TAG, registerStatusText);
+                showErrorMsg(registerStatusText);
+            }
+        }
+    }
+
+    public class FindCloudletBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Object... params) {
+            try {
+                return findCloudlet();
+            } catch (ExecutionException | InterruptedException | StatusRuntimeException | PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+                findCloudletStatusText = ". Exception="+e.getLocalizedMessage();
+                showErrorMsg(findCloudletStatusText);
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean cloudletFound) {
+            if(cloudletFound) {
+                checkboxCloudletFound.setChecked(true);
+                checkboxCloudletFound.setText(R.string.cloudlet_found);
+                cloudletNameTv.setText(cloudletNameTvStr);
+                fqdnTv.setText(fqdnTvStr);
+                portNumberTv.setText(portNumberTvStr);
+                latitudeTv.setText(latitudeTvStr);
+                longitudeTv.setText(longitudeTvStr);
+                distanceTv.setText(distanceTvStr);
+            } else {
+                findCloudletStatusText = "Failed to find cloudlet. " + findCloudletStatusText;
+                Log.e(TAG, findCloudletStatusText);
+                showErrorMsg(findCloudletStatusText);
             }
         }
     }
@@ -615,13 +660,13 @@ public class MainActivity extends AppCompatActivity
             } catch (InterruptedException ie) {
                 ie.printStackTrace();
             } catch (IOException ioe) {
-                statusText = ioe.getMessage();
-                Log.e(TAG, statusText);
-                showErrorMsg(statusText);
+                verifyLocStatusText = ioe.getMessage();
+                Log.e(TAG, verifyLocStatusText);
+                showErrorMsg(verifyLocStatusText);
             } catch (ExecutionException ee) {
-                statusText = ee.getMessage();
-                Log.e(TAG, statusText);
-                showErrorMsg(statusText);
+                verifyLocStatusText = ee.getMessage();
+                Log.e(TAG, verifyLocStatusText);
+                showErrorMsg(verifyLocStatusText);
             }
             return false;
         }
@@ -632,9 +677,9 @@ public class MainActivity extends AppCompatActivity
                 checkboxLocationVerified.setChecked(true);
                 checkboxLocationVerified.setText(R.string.location_verified);
             } else {
-                statusText = "Failed to verify location";
-                Log.e(TAG, statusText);
-                showErrorMsg(statusText);
+                verifyLocStatusText = "Failed to verify location. " + verifyLocStatusText;
+                Log.e(TAG, verifyLocStatusText);
+                showErrorMsg(verifyLocStatusText);
             }
         }
     }
@@ -657,8 +702,8 @@ public class MainActivity extends AppCompatActivity
             } catch (InterruptedException ie) {
                 ie.printStackTrace();
             } catch (ExecutionException ee) {
-                statusText = ee.getMessage();
-                Log.e(TAG, statusText);
+                getQosPosStatusText = ee.getMessage();
+                Log.e(TAG, getQosPosStatusText);
             }
             return false;
         }
@@ -666,9 +711,9 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(Boolean gotQoSPositions) {
             if (!gotQoSPositions) {
-                statusText = "Failed to get qosPositions";
-                Log.e(TAG, statusText);
-                showErrorMsg(statusText);
+                getQosPosStatusText = "Failed to get qosPositions. " + getQosPosStatusText;
+                Log.e(TAG, getQosPosStatusText);
+                showErrorMsg(getQosPosStatusText);
             }
         }
     }
