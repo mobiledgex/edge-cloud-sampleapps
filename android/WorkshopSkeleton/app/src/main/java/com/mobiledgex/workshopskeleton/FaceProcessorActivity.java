@@ -80,7 +80,7 @@ public class FaceProcessorActivity extends AppCompatActivity {
         ////////////////////////////////////////////////////////////////////////////////////////////
     }
 
-    private void exampleDevloperWorkflowBackground() {
+    private void exampleDeveloperWorkflowBackground() {
         // Creates new BackgroundRequest object which will call exampleDeveloperWorkflow
         new ExampleDeveloperWorkflowBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
