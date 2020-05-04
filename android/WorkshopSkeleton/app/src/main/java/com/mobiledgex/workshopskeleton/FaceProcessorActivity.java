@@ -17,27 +17,43 @@
 
 package com.mobiledgex.workshopskeleton;
 
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.Intent;
+import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.view.WindowManager;
+import android.util.Log;
+
+import com.mobiledgex.matchingengine.AppConnectionManager;
+import com.mobiledgex.matchingengine.MatchingEngine;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import distributed_match_engine.AppClient;
+import distributed_match_engine.Appcommon;
 
 public class FaceProcessorActivity extends AppCompatActivity {
 
     private FaceProcessorFragment mFaceProcessorFragment;
 
+    private static final String TAG = "FaceProcessorFragment";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_face_processor);
 
+        setContentView(R.layout.fragment_face_processor);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         if (null == savedInstanceState) {
-            mFaceProcessorFragment = FaceProcessorFragment.newInstance();
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, mFaceProcessorFragment)
-                    .commit();
+            exampleDevloperWorkflowBackground();
         }
     }
 
@@ -57,4 +73,39 @@ public class FaceProcessorActivity extends AppCompatActivity {
         super.finish();
     }
 
+    public Socket exampleDeveloperWorkflow() {
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        // TODO: Copy/paste the code to follow example developer workflow and get FaceDetection started.
+        return null;
+        ////////////////////////////////////////////////////////////////////////////////////////////
+    }
+
+    private void exampleDeveloperWorkflowBackground() {
+        // Creates new BackgroundRequest object which will call exampleDeveloperWorkflow
+        new ExampleDeveloperWorkflowBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    public class ExampleDeveloperWorkflowBackgroundRequest extends AsyncTask<Object, Void, Socket> {
+        @Override
+        protected Socket doInBackground(Object... params) {
+            return exampleDeveloperWorkflow();
+        }
+
+        @Override
+        protected void onPostExecute(Socket socket) {
+            if (socket != null) {
+                mFaceProcessorFragment = FaceProcessorFragment.newInstance();
+                mFaceProcessorFragment.mHost = socket.getInetAddress().getHostName();
+                mFaceProcessorFragment.mPort = socket.getPort();
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.container, mFaceProcessorFragment)
+                        .commit();
+                try {
+                    socket.close();
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Unable to close socket. IOException: " + ioe.getMessage());
+                }
+            }
+        }
+    }
 }

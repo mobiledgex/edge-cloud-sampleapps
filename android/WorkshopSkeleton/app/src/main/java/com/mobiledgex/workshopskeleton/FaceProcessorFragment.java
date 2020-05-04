@@ -17,7 +17,11 @@
 
 package com.mobiledgex.workshopskeleton;
 
-import android.content.Intent;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -27,10 +31,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -41,7 +41,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import org.json.JSONArray;
-
 import java.text.DecimalFormat;
 
 public class FaceProcessorFragment extends Fragment {
@@ -53,6 +52,9 @@ public class FaceProcessorFragment extends Fragment {
     private TextView mStdNet;
     private TextView mStatusText;
     private Toolbar mCameraToolbar;
+
+    public String mHost;
+    public int mPort;
 
     public static FaceProcessorFragment newInstance() {
         return new FaceProcessorFragment();
