@@ -47,11 +47,6 @@ public class MobiledgeXIntegration
   public string orgName { get; set; } = "MobiledgeX"; // Your organization name.
   public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
   public string appVers { get; set; } = "2020-02-03"; // Your app version uploaded to the docker registry.
-  public string authToken { get; set; } = ""; // This is an opaque string value supplied by the developer.
-  public uint cellID { get; set; } = 0;
-  public string uniqueIDType { get; set; } = "";
-  public string uniqueID { get; set; } = "";
-  public Tag[] tags { get; set; } = new Tag[0];
 
   public MobiledgeXIntegration()
   {
@@ -118,5 +113,51 @@ public class MobiledgeXIntegration
   {
     Debug.Log("GetWebsocketConnection is NOT IMPLEMENTED");
     return null;
+  }
+
+  // Edge requires connections to run over cellular interface
+  public  bool IsEdgeEnabled(GetConnectionProtocols proto)
+  {
+    if (me.useOnlyWifi)
+    {
+      Debug.Log("useOnlyWifi must be false to enable edge connection");
+      return false;
+    }
+
+    if (proto == GetConnectionProtocols.TCP || proto == GetConnectionProtocols.UDP)
+    {
+      if (!me.netInterface.HasCellular())
+      {
+        Debug.Log(proto + " connection requires a cellular interface to run connection over edge.");
+        return false;
+      }
+    }
+    else
+    {
+      // Connections where we cannot bind to cellular interface default to wifi if wifi is up
+      // We need to make sure wifi is off
+      if (!me.netInterface.HasCellular() || me.netInterface.HasWifi())
+      {
+        Debug.Log(proto + " connection requires the cellular interface to be up and the wifi interface to be off to run connection over edge.");
+        return false;
+      }
+    }
+    
+    string cellularIPAddress = me.netInterface.GetIPAddress(me.netInterface.GetNetworkInterfaceName().CELLULAR);
+    if (cellularIPAddress == null)
+    {
+      Debug.Log("Unable to find ip address for local cellular interface.");
+      return false;
+    }
+
+    return true;
+  }
+
+  public enum GetConnectionProtocols
+  {
+    TCP,
+    UDP,
+    HTTP,
+    Websocket
   }
 }
