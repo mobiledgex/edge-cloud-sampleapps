@@ -4,7 +4,7 @@ WORKDIR /tmp
 RUN pip install -r requirements.txt
 # Download weights file required for object detection
 WORKDIR /usr/src/app/moedx/pytorch_objectdetecttrack/config
-RUN wget https://pjreddie.com/media/files/yolov3.weights
+RUN wget http://opencv.facetraining.mobiledgex.net/files/yolov3.weights
 WORKDIR /usr/src/app/moedx
 # Initialize the database.
 RUN python manage.py makemigrations tracker

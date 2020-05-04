@@ -65,8 +65,8 @@ class TrackerConfig(AppConfig):
         supportOpenPose = False
 
         # Our docker container has the openpose libraries at the root
-        # Note that the "docker run" command must include the --runtime=nvidia parameter. Example:
-        # sudo docker run --runtime=nvidia --net=host mobiledgex/openpose-docker:20200116
+        # Note that the "docker run" command must include the "--gpus all" parameter. Example:
+        # sudo docker run --gpus all --net=host mobiledgex/mobiledgexsdkdemo20:20200423
         sys.path.append('/openpose/build/python')
         try:
             from openpose import pyopenpose as myOpenPose
