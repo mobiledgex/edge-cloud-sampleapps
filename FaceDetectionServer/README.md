@@ -26,7 +26,7 @@ pip install -r requirements.txt
 cd moedx/
 python manage.py makemigrations tracker
 python manage.py migrate
-gunicorn moedx.wsgi:application --bind 0.0.0.0:8008
+uvicorn moedx.asgi:application --host 0.0.0.0 --port 8008
 ```
 ### How to install OpenPose on a GPU-enabled server
 This assumes CUDA and CUDNN are already installed.
