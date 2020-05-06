@@ -43,10 +43,10 @@ public class MobiledgeXIntegration
   /*
    * These are "carrier independent" settings for demo use:
    */
-  public string carrierName { get; set; } = MatchingEngine.wifiCarrier; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API.
   public string orgName { get; set; } = "MobiledgeX"; // Your organization name.
   public string appName { get; set; } = "PingPong"; // Your appName, if you have created this in the MobiledgeX console.
-  public string appVers { get; set; } = "2020-04-28"; // Your app version uploaded to the docker registry.
+  public string appVers { get; set; } = "2.0"; // Your app version uploaded to the docker registry.
+  public string carrierName { get; set; } = "TDG"; // carrierName depends on the available subscriber SIM card and roaming carriers, and must be supplied by platform API. (if in US, use "TELUS")
 
   public MobiledgeXIntegration()
   {
