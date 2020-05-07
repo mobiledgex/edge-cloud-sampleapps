@@ -15,7 +15,7 @@ DEPENDENCIES:
   - MobiledgeXiOSLibrary (= 2.0)
 
 SPEC REPOS:
-  https://artifactory-qa.mobiledgex.net/artifactory/api/pods/cocoapods-releases:
+  https://artifactory.mobiledgex.net/artifactory/api/pods/cocoapods-releases:
     - MobiledgeXiOSLibrary
   https://github.com/CocoaPods/Specs.git:
     - PromisesObjC
