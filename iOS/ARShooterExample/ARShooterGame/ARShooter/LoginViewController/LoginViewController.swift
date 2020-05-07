@@ -200,7 +200,7 @@ class LoginViewController: UIViewController {
         }.then { manager in
             self.manager = manager
         }.catch { error in
-            print("Error is \(error.localizedDescription)")
+            print("Error is \(error)")
         }
     }
     
