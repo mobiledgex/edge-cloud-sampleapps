@@ -42,6 +42,59 @@ def test_connection(request):
         return HttpResponse("Valid GET Request to server")
     return HttpResponseBadRequest("Please send response as a GET")
 
+def save_debug_image(image, request, type):
+    """ Save current image with timestamp. """
+    logger.debug(prepend_ip("Saving image for debugging (first 32 bytes logged): %s" %image[:32], request))
+    extension = imghdr.what("XXX", image)
+    if extension is None or extension == "jpeg":
+        extension = "jpg"
+    now = time.time()
+    mlsec = repr(now).split('.')[1][:3]
+    timestr = time.strftime("%Y%m%d-%H%M%S")+"."+mlsec
+    fileName = "/tmp/"+type+"_"+timestr+"."+extension
+    with open(fileName, "wb") as fh:
+        fh.write(image)
+    #Delete all old files except the 20 most recent
+    logger.debug(prepend_ip("Deleting all but 20 newest images", request))
+    try:
+        files = sorted(glob.glob("/tmp/"+type+"_*.*"), key=os.path.getctime, reverse=True)
+        for file in files[20:]:
+            os.remove(file)
+    except FileNotFoundError:
+        logger.warn("Cleanup of /tmp/"+type+"* failed. Next request will retry.")
+
+def get_image_from_request(request, type):
+    """ Based on the content type, get the image data from the request. """
+    logger.debug(prepend_ip("get_image_from_request method=%s content_type=%s" %(request.method, request.content_type), request))
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Must send frame as a POST")
+
+    if request.content_type == "image/png" or request.content_type == "image/jpeg":
+        if request.body == "":
+            return HttpResponseBadRequest("No image data")
+        image = request.body
+    elif request.content_type == "multipart/form-data":
+        # Image data is expected as if it came from a form with <input type="file" name="image">
+        if not "image" in request.FILES.keys():
+            return HttpResponseBadRequest("Image file must be uploaded with key of 'image'")
+        uploaded_file = request.FILES["image"]
+        logger.info("Uploaded file type=%s size=%d" %(uploaded_file.content_type, uploaded_file.size))
+        if uploaded_file.content_type != "image/png" and uploaded_file.content_type != "image/jpeg" and uploaded_file.content_type != "application/octet-stream":
+            return HttpResponseBadRequest("Uploaded file Content-Type must be 'image/png', 'image/jpeg'")
+        image = uploaded_file.read()
+    elif request.content_type == "application/x-www-form-urlencoded":
+        if request.POST.get("image", "") == "":
+            return HttpResponseBadRequest("Missing 'image' parameter")
+        image = base64.b64decode(request.POST.get("image"))
+    else:
+        return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'")
+
+    if request.headers.get("Mobiledgex-Debug", "") == "true":
+        save_debug_image(image, request, type)
+
+    image = imread(io.BytesIO(image)) # convert to numpy array
+    return image
+
 @csrf_exempt
 def download(request):
     file = gzip.compress(open(myFaceRecognizer.training_data_filepath, 'rb').read())
@@ -75,14 +128,12 @@ def add(request):
     subject's training data directory.
     """
     logger.debug("Request received: %s" %request)
-    if request.method != 'POST':
-        error = "Must send frame as a POST"
-        logger.error(error)
-        return HttpResponseBadRequest(error)
-    if request.content_type != 'application/x-www-form-urlencoded':
-        error = "Content-Type must be 'application/x-www-form-urlencoded'"
-        logger.error(error)
-        return HttpResponseBadRequest(error)
+
+    image = get_image_from_request(request, "face")
+    if not isinstance(image, np.ndarray):
+        # If it's not an image in numpy array format, it is an
+        # HttpResponseBadRequest which we will return to the caller.
+        return image
 
     owner_id = request.POST.get("owner_id", "")
     if owner_id == "":
@@ -109,12 +160,9 @@ def add(request):
     else:
         logger.info("Received image for subject '%s'" %subject)
 
-    image = base64.b64decode(request.POST.get("image"))
-    myFaceRecognizer.save_debug_image(image)
     logger.debug("Performing detection process")
     start = time.time()
-    image2 = imread(io.BytesIO(image))
-    rects = myFaceRecognizer.detect_faces(image2)
+    rects = myFaceRecognizer.detect_faces(image)
     elapsed = "%.3f" %((time.time() - start)*1000)
 
     # Create a JSON response to be returned in a consistent manner
@@ -132,7 +180,6 @@ def add(request):
             owner_record, created = Owner.objects.get_or_create(id = owner_id, name = owner_name)
             owner_record.save()
             subject_record, created = Subject.objects.get_or_create(name = subject, owner = owner_record)
-            # subject_record.owner = owner_record
             subject_record.save()
         except Exception as e:
             logger.error(e)
@@ -272,18 +319,13 @@ def predict(request):
     Returns subject name, and rectangle coordinates of recognized face.
     """
     logger.debug("Request received: %s" %request)
-    if request.method != 'POST':
-        return HttpResponseBadRequest("Must send frame as a POST")
-    if request.content_type != 'application/x-www-form-urlencoded':
-        return HttpResponseBadRequest("Content-Type must be 'application/x-www-form-urlencoded'")
 
-    if request.POST.get("image", "") == "":
-        return HttpResponseBadRequest("Missing 'image' parameter")
-    image = base64.b64decode(request.POST.get("image"))
-    # save_debug_image(image, request)
+    image = get_image_from_request(request, "face")
+    if not isinstance(image, np.ndarray):
+        return image
+
     logger.debug("Performing recognition process")
     now = time.time()
-    image = imread(io.BytesIO(image))
     subject, confidence, rect = myFaceRecognizer.predict(image)
     elapsed = "%.3f" %((time.time() - now)*1000)
 
