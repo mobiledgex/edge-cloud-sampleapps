@@ -69,19 +69,24 @@ class ImageConsumerFaceRecognizer(WebsocketConsumer):
     def receive(self, text_data=None, bytes_data=None):
         if bytes_data != None:
             logger.info("bytes_data length=%d" %(len(bytes_data)))
-            start = time.time()
-            image = imread(io.BytesIO(bytes_data))
-            predicted_img, subject, confidence, rect = myFaceRecognizer.predict(image)
-            elapsed = "%.3f" %((time.time() - start)*1000)
-            # Create a JSON response to be returned in a consistent manner
-            if subject is None:
-                ret = {"success": "false", "server_processing_time": elapsed}
+            if myFaceRecognizer.is_update_in_progress() or myFaceRecognizer.read_training_data_if_needed():
+                error = "Training data update in progress"
+                ret = {"success": "false", "error": error, "server_processing_time": 0}
+                response = json.dumps(ret)
             else:
-                # Convert rect from [x, y, width, height] to [x, y, right, bottom]
-                rect2 = rect.tolist()
-                rect2 = [int(rect[0]), int(rect[1]), int(rect[0]+rect[2]), int(rect[1]+rect[3])]
-                ret = {"success": "true", "subject": subject, "confidence":"%.3f" %confidence, "server_processing_time": elapsed, "rect": rect2}
-            response = json.dumps(ret)
+                start = time.time()
+                image = imread(io.BytesIO(bytes_data))
+                predicted_img, subject, confidence, rect = myFaceRecognizer.predict(image)
+                elapsed = "%.3f" %((time.time() - start)*1000)
+                # Create a JSON response to be returned in a consistent manner
+                if subject is None:
+                    ret = {"success": "false", "server_processing_time": elapsed}
+                else:
+                    # Convert rect from [x, y, width, height] to [x, y, right, bottom]
+                    rect2 = rect.tolist()
+                    rect2 = [int(rect[0]), int(rect[1]), int(rect[0]+rect[2]), int(rect[1]+rect[3])]
+                    ret = {"success": "true", "subject": subject, "confidence":"%.3f" %confidence, "server_processing_time": elapsed, "rect": rect2}
+                response = json.dumps(ret)
         else:
             logger.info("text_data=%s" %(text_data))
             # If text is received, just echo back what we received.

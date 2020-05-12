@@ -27,6 +27,7 @@ import imghdr
 import struct
 import logging
 from PIL import Image
+from tracker.apps import myFaceDetector, myFaceRecognizer, myOpenPose, myOpWrapper, myObjectDetector
 
 opcodes = {0:'server_response', 1:'face_det', 2:'face_rec', 3:'pose_det', 4:'obj_det', 4:'ping_rtt'}
 
@@ -155,20 +156,20 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
-    def setFaceDetector(self, faceDetector):
-        global myFaceDetector
-        myFaceDetector = faceDetector
-    def setFaceRecognizer(self, faceRecognizer):
-        global myFaceRecognizer
-        myFaceRecognizer = faceRecognizer
-    def setOpenPose(self, openPose, opWrapper):
-        global myOpenPose
-        myOpenPose = openPose
-        global myOpWrapper
-        myOpWrapper = opWrapper
-    def setObjectDetector(self, objectDetector):
-        global myObjectDetector
-        myObjectDetector = objectDetector
+    # def setFaceDetector(self, faceDetector):
+    #     global myFaceDetector
+    #     myFaceDetector = faceDetector
+    # def setFaceRecognizer(self, faceRecognizer):
+    #     global myFaceRecognizer
+    #     myFaceRecognizer = faceRecognizer
+    # def setOpenPose(self, openPose, opWrapper):
+    #     global myOpenPose
+    #     myOpenPose = openPose
+    #     global myOpWrapper
+    #     myOpWrapper = opWrapper
+    # def setObjectDetector(self, objectDetector):
+    #     global myObjectDetector
+    #     myObjectDetector = objectDetector
 
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 8011

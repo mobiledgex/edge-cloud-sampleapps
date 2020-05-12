@@ -21,7 +21,6 @@ from tracker.apps import myFaceDetector, myFaceRecognizer, myOpenPose, myOpWrapp
 from tracker.apps import myObjectDetector
 
 import ast
-import cv2
 import numpy as np
 import json
 import base64

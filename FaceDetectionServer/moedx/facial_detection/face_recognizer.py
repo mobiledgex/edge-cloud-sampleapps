@@ -1,4 +1,4 @@
-# Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+# Copyright 2019-2020 MobiledgeX, Inc. All rights and licenses reserved.
 # MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 
 import cv2
 import os
+import io
 import time
 import numpy as np
 import json
@@ -22,10 +23,9 @@ import sys
 import glob
 import logging
 import requests
-from requests.auth import HTTPBasicAuth
 import imghdr
-from threading import Thread
-import zlib
+import imageio
+from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ class FaceRecognizer(object):
 
         #create our LBPH face recognizer
         self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+        # Other types of recognizers that we might try out someday:
         #face_recognizer = cv2.face.EigenFaceRecognizer_create()
         #face_recognizer = cv2.face.FisherFaceRecognizer_create()
 
@@ -153,9 +154,8 @@ class FaceRecognizer(object):
 
                 #sample image path = training-data/Bruce/face1.png
                 image_path = subject_dir_path + "/" + image_name
-
                 image = cv2.imread(image_path)
-
+                logger.info("file size: %d. cv2 image size: %d" %(os.path.getsize(image_path), len(image)))
                 face, rect = self.detect_face(image)
 
                 #we will ignore faces that are not detected
@@ -165,6 +165,73 @@ class FaceRecognizer(object):
                     #add label for this face
                     labels.append(label)
 
+        return faces, labels, subjects
+
+    def prepare_training_data_from_redis(self, redis):
+        """
+        this function will read all persons' training images, detect face from each image
+        and will return two lists of exactly same size, one list
+        of faces and another list of labels for each face
+        """
+
+        num_subjects = int(redis.get('subject_key_index'))
+
+        #list to hold all subject faces
+        faces = []
+        #list to hold labels for all subjects
+        labels = []
+        #List to hold subject names
+        subjects = []
+
+        label = -1;
+        total_bytes = 0
+        total_images = 0
+        pipeline = redis.pipeline()
+
+        start = time.time()
+
+        for index in range(0, num_subjects):
+            index = str(index+1).zfill(4)
+            subject_name_key = 'subject_name:%s' % index
+            pipeline.get(subject_name_key)
+        subject_list = pipeline.execute()
+        logger.info("subject_list=%s" %subject_list)
+
+        for subject in subject_list:
+            subjects.append(subject.decode('utf-8'))
+
+        start2 = time.time()
+        for index in range(0, num_subjects):
+            index = str(index+1).zfill(4)
+            subject_images_key = 'subject_images:%s' % index
+            pipeline.lrange(subject_images_key, 0, -1)
+        subject_images = pipeline.execute()
+        elapsed = "%.3f" %((time.time() - start2)*1000)
+        logger.info("%s ms to download images for %d subjects in a batch from redis" %(elapsed, len(subject_images)))
+        logger.info("len(subject_images)=%s" %len(subject_images))
+
+        for subject_image_set in subject_images:
+            logger.info("len(subject_image_set)=%s" %len(subject_image_set))
+
+            for image_bytes in subject_image_set:
+            # for i in range(0, num_images):
+            #     image_bytes = redis.lindex(subject_images_key, i)
+                total_bytes += len(image_bytes)
+                total_images += 1
+                image = imageio.imread(io.BytesIO(image_bytes)) # convert to numpy array
+                logger.info("image size: %d. cv2 image size: %d" %(len(image_bytes), len(image)))
+                face, rect = self.detect_face(image)
+
+                #we will ignore faces that are not detected
+                if face is not None:
+                    logger.info("face, rect: %s, %s"%(len(face), rect))
+                    #add face to list of faces
+                    faces.append(face)
+                    #add label for this face
+                    labels.append(label)
+
+        elapsed = "%.3f" %((time.time() - start)*1000)
+        logger.info("%s ms to download and process %d images totaling %d bytes from redis" %(elapsed, total_images, total_bytes))
         return faces, labels, subjects
 
     def prepare_training_data_single(self, data_folder_path, subject):
@@ -225,7 +292,25 @@ class FaceRecognizer(object):
             self.face_recognizer.setLabelInfo(index, subject)
             index += 1
 
+        logger.info("Performing training on %d subjects (%d images total)" %(len(subjects), len(labels)))
         self.face_recognizer.train(faces, np.array(labels))
+        logger.info("Saving trained data to %s" %self.training_data_filename)
+        self.face_recognizer.save(self.training_data_filename)
+
+    def update_training_data_from_redis(self, redis):
+        faces, labels, subjects = self.prepare_training_data_from_redis(redis)
+        logger.info("subjects=%s len(subjects)=%d len(labels)=%d" %(subjects, len(subjects), len(labels)))
+
+        # Save the subjects (directory names) to their corresponding labels.
+        index = 0
+        for subject in subjects:
+            logger.info("setLabelInfo(%d, %s)" %(index, subject))
+            self.face_recognizer.setLabelInfo(index, subject)
+            index += 1
+
+        logger.info("Performing training on %d subjects (%d images total)" %(len(subjects), len(labels)))
+        self.face_recognizer.train(faces, np.array(labels))
+        logger.info("Saving trained data to %s" %self.training_data_filename)
         self.face_recognizer.save(self.training_data_filename)
 
     def save_subject_image(self, subject, image):
