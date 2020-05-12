@@ -32,7 +32,6 @@ class LoginViewController: UIViewController {
     var gameID: String?
     
     // MatchingEngine variables
-    var matchingEngine: MobiledgeXiOSLibrary.MatchingEngine!
     
     var dmeHost: String?
     var dmePort: UInt16?
@@ -54,7 +53,9 @@ class LoginViewController: UIViewController {
     var demo = true
     
     var manager: SocketManager?
-    
+    enum LoginViewControllerError: Error {
+        case runtimeError(String)
+    }
     // MatchingEngine API return objects
     var registerPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.RegisterClientReply>?
     var findCloudletPromise: Promise<MobiledgeXiOSLibrary.MatchingEngine.FindCloudletReply>?
