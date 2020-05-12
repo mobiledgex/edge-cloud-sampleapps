@@ -132,13 +132,8 @@ class LoginViewController: UIViewController {
         let registerClientRequest = matchingEngine.createRegisterClientRequest(
                                                 orgName: orgName,
                                                 appName: appName,
-                                                appVers: appVers,
-                                                carrierName: carrierName,
-                                                authToken: authToken,
-                                                uniqueIDType: uniqueIDType,
-                                                uniqueID: uniqueID,
-                                                cellID: cellID,
-                                                tags: tags)
+                                                appVers: appVers
+                                                )
         
         matchingEngine.registerClient(request: registerClientRequest)
         .then { registerClientReply in
@@ -150,20 +145,15 @@ class LoginViewController: UIViewController {
             }
             
             let findCloudletRequest = self.matchingEngine.createFindCloudletRequest(
-                                            carrierName: self.carrierName!,
                                             gpsLocation: self.location!,
-                                            orgName: self.orgName!,
-                                            appName: self.appName!,
-                                            appVers: self.appVers!,
-                                            cellID: self.cellID,
-                                            tags: self.tags)
+                                            carrierName: self.carrierName!
+                                            )
             self.findCloudletPromise = self.matchingEngine.findCloudlet(request: findCloudletRequest)
               
             let verifyLocationRequest = self.matchingEngine.createVerifyLocationRequest(
-                                            carrierName: self.carrierName!,
                                             gpsLocation: self.location!,
-                                            cellID: self.cellID,
-                                            tags: self.tags)
+                                            carrierName: self.carrierName!
+                                            )
                 
             self.verifyLocationPromise = self.matchingEngine.verifyLocation(request: verifyLocationRequest)
             
@@ -184,11 +174,17 @@ class LoginViewController: UIViewController {
     
     // This function shows the GetConnection workflow
     func getWebsocketConnection() {
-        let replyPromise = matchingEngine.registerAndFindCloudlet(orgName: orgName, appName: appName, appVers: appVers, carrierName: carrierName, authToken: authToken, gpsLocation: location!, uniqueIDType: uniqueIDType, uniqueID: uniqueID, cellID: cellID, tags: tags)
+        let replyPromise = matchingEngine.registerAndFindCloudlet(
+                                                                    orgName: orgName,
+                                                                    gpsLocation: location!,
+                                                                    appName: appName,
+                                                                    appVers: appVers,
+                                                                    carrierName: carrierName
+                                                                    )
             
         .then { findCloudletReply -> Promise<SocketManager> in
             // Get Dictionary: key -> internal port, value -> AppPort Dictionary
-            guard let appPortsDict = self.matchingEngine.getTCPAppPorts(findCloudletReply: findCloudletReply) else {
+            guard let appPortsDict = try self.matchingEngine.getTCPAppPorts(findCloudletReply: findCloudletReply) else {
                 throw LoginViewControllerError.runtimeError("GetTCPPorts returned nil")
             }
             if appPortsDict.capacity == 0 {
@@ -204,7 +200,7 @@ class LoginViewController: UIViewController {
         }.then { manager in
             self.manager = manager
         }.catch { error in
-            print("Error is \(error.localizedDescription)")
+            print("Error is \(error)")
         }
     }
     

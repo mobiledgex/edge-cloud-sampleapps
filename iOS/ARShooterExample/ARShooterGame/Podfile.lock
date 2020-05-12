@@ -1,5 +1,5 @@
 PODS:
-  - MobiledgeXiOSLibrary (1.5):
+  - MobiledgeXiOSLibrary (2.0):
     - PromisesSwift (~> 1.2.8)
     - Socket.IO-Client-Swift (~> 15.2.0)
     - SwiftyJSON (~> 5.0.0)
@@ -12,7 +12,7 @@ PODS:
   - SwiftyJSON (5.0.0)
 
 DEPENDENCIES:
-  - MobiledgeXiOSLibrary (= 1.5)
+  - MobiledgeXiOSLibrary (= 2.0)
 
 SPEC REPOS:
   https://artifactory.mobiledgex.net/artifactory/api/pods/cocoapods-releases:
@@ -25,13 +25,13 @@ SPEC REPOS:
     - SwiftyJSON
 
 SPEC CHECKSUMS:
-  MobiledgeXiOSLibrary: 784f68f2ccfa73103fd2ea35d86b89ed50832eeb
-  PromisesObjC: c119f3cd559f50b7ae681fa59dc1acd19173b7e6
-  PromisesSwift: 37bad6f4daddb02f7c9c531efe91e8b21c13ee2f
-  Socket.IO-Client-Swift: 1e3e3a1f09f3312a167f0d781eb2f383d477357c
-  Starscream: 4bb2f9942274833f7b4d296a55504dcfc7edb7b0
-  SwiftyJSON: 36413e04c44ee145039d332b4f4e2d3e8d6c4db7
+  MobiledgeXiOSLibrary: 5f5a31614650f1e3609c98ea6e6cb162b95eb022
+  PromisesObjC: 630a0cbeebe7176a26b8921088b31a8a7dd5e855
+  PromisesSwift: ae0c31bf49f0e030886c067153f0b4e6dc7d704d
+  Socket.IO-Client-Swift: b90a6913f20585d87ecef28f05490784f01a2cfd
+  Starscream: 0bfc29f7e22db71e5f9fcea894665e93b561543a
+  SwiftyJSON: 58f5e2faedded0d4d222e85f7fed37bb6ee58ff1
 
-PODFILE CHECKSUM: edf496c1491b98f852679d0c19cafe76df2f7a7c
+PODFILE CHECKSUM: 2a41229ae85b74ca2b2297d96338d13ae60825a0
 
-COCOAPODS: 1.8.4
+COCOAPODS: 1.9.1
