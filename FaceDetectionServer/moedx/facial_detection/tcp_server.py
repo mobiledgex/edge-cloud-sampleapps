@@ -154,22 +154,20 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         return buf
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    pass
-
-    # def setFaceDetector(self, faceDetector):
-    #     global myFaceDetector
-    #     myFaceDetector = faceDetector
-    # def setFaceRecognizer(self, faceRecognizer):
-    #     global myFaceRecognizer
-    #     myFaceRecognizer = faceRecognizer
-    # def setOpenPose(self, openPose, opWrapper):
-    #     global myOpenPose
-    #     myOpenPose = openPose
-    #     global myOpWrapper
-    #     myOpWrapper = opWrapper
-    # def setObjectDetector(self, objectDetector):
-    #     global myObjectDetector
-    #     myObjectDetector = objectDetector
+    def setFaceDetector(self, faceDetector):
+        global myFaceDetector
+        myFaceDetector = faceDetector
+    def setFaceRecognizer(self, faceRecognizer):
+        global myFaceRecognizer
+        myFaceRecognizer = faceRecognizer
+    def setOpenPose(self, openPose, opWrapper):
+        global myOpenPose
+        myOpenPose = openPose
+        global myOpWrapper
+        myOpWrapper = opWrapper
+    def setObjectDetector(self, objectDetector):
+        global myObjectDetector
+        myObjectDetector = objectDetector
 
 if __name__ == "__main__":
     HOST, PORT = "0.0.0.0", 8011

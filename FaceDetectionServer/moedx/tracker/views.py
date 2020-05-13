@@ -186,7 +186,7 @@ def recognizer_predict(request):
     if not isinstance(image, np.ndarray):
         return image
 
-    if myFaceRecognizer.is_update_in_progress() or myFaceRecognizer.read_training_data_if_needed():
+    if myFaceRecognizer.is_update_in_progress():
         error = "Training data update in progress"
         logger.error(prepend_ip("%s" %error, request))
         return HttpResponse(error, status=503)
