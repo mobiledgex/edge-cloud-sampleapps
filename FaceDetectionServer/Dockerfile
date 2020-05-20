@@ -1,5 +1,5 @@
 FROM python:3.7-slim AS compile-image
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential gcc
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 # Use a virtualenv for all of our Python requirements.
 RUN python -m venv /opt/venv
 # Make sure we use the virtualenv:
