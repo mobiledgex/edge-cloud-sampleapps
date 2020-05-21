@@ -1,5 +1,22 @@
 # MobiledgeX Computer Vision Server REST API
 
+This document describes the REST API for the MobiledgeX Computer Vision server.
+In general, all requests require an "image" parameter, that includes the image
+to be processed. This image can be in either PNG or JPEG format.
+
+The server supports several different `Content-Type` values in the HTTP request.
+For each Content-Type, there are different rules for how the "image" data must be included. In all cases, using JPEG is encouraged because of its smaller image size
+which results in faster overall processing.
+
+| Content-Type | image data |
+| - | - |
+| image/png | The request body is made up of raw image bytes in the PNG format. |
+| image/jpg | The request body is made up of raw image bytes in the JPEG format. |
+| multipart/form-data |  Raw image bytes are included as part of a multi-part form with an input type of "file" and a name of "image", and that part's `Content-Type` must be "image/png" or "image/jpeg". |
+| application/x-www-form-urlencoded | The image is Base64-encoded and included as a POST parameter named "image". |
+
+In the `curl` examples included below, the "multipart/form-data" format is used. Different HTTP libraries in different languages may use one of the other Content-Type formats, so we have added support for the most common ones.
+
 ## Face Detection
 `/detector/detect/`
 
@@ -20,7 +37,7 @@ JSON string with the following attributes.
 | - | - |
 | success | "True" if face detected, otherwise "false". |
 | server_processing_time | The time in milliseconds that it took the server to process this image. |
-| rects | A JSON array of coordinates containing the detected faces. Only included if "success"="true". |
+| rects | A JSON array of coordinates containing the detected faces. Rectangle format is left, top, right, bottom, in relation to the upper-left origin of 0, 0. Only included if "success"="true". |
 
 #### Examples:
 ##### Single face detected:
@@ -94,7 +111,7 @@ If this state is encountered, it should only last a few seconds.
 ## Pose Detection
 `/openpose/detect`
 
-Used to send an image with one or more human bodies to the server and get back a set of coordinates for any detected poses. In the our implementation, pose detection requires a GPU in order to run. If the server executing this call does not have GPU support, a `501 Not Implemented` response will be returned along with the message "OpenPose not supported on this server".
+Used to send an image with one or more human bodies to the server and get back a set of coordinates for any detected poses, where a pose is a list of bones for a given a human body in the image. In the our implementation, pose detection requires a GPU in order to run. If the server executing this call does not have GPU support, a `501 Not Implemented` response will be returned along with the message "OpenPose not supported on this server".
 
 ### POST
 ```
@@ -207,9 +224,9 @@ JSON string with the following attributes.
 | server_processing_time | The time in milliseconds that it took the server to process this image. |
 | gpu_support | Whether the server is using a GPU to accelerate image processing. |
 | objects | A JSON array which may contain a nested JSON array with the following attributes: |
-|  | `rect`: Coordinate of the object |
+|  | `rect`: Coordinates of the object. Rectangle format is left, top, right, bottom, in relation to the upper-left origin of 0, 0. |
 |  | `class`: Class name of the object, e.g. "ball", "dog", etc. |
-|  | `confidence`: Confidence level that the object was identified correctly. Range is 0 to 1. |
+|  | `confidence`: Confidence level that the object was identified correctly. This is different than the confidence value for face recognition. Here the range is 0 to 1, with 1 being 100% confidence. |
 
 #### Examples:
 ##### Single object detected:
@@ -230,7 +247,6 @@ curl http://posedetection.defaultedge.mobiledgex.net:8008/object/detect/ -F "ima
 ```
 
 ##### No objects detected on non-GPU server:
-
 ```
 curl http://facedetection.defaultedge.mobiledgex.net:8008/object/detect/ -F "image=@single_pixel.png"
 {"success": "false", "server_processing_time": "3827.654", "gpu_support": false}
