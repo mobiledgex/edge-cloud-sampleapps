@@ -29,6 +29,7 @@ import android.util.Pair;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.auth0.android.jwt.DecodeException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
@@ -40,6 +41,7 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import com.auth0.android.jwt.JWT;
 
 import distributed_match_engine.AppClient;
 import io.grpc.StatusRuntimeException;
@@ -177,6 +179,18 @@ public class RegisterClientTest {
             } else {
                 reply = me.registerClient(request, me.generateDmeHostAddress(), me.getPort(), GRPC_TIMEOUT_MS);
             }
+
+            JWT jwt = null;
+            try {
+                jwt = new JWT(reply.getSessionCookie());
+            } catch (DecodeException e) {
+                Log.e(TAG, Log.getStackTraceString(e));
+                assertFalse("registerClientTest: DecodeException!", true);
+            }
+
+            boolean isExpired = jwt.isExpired(10); // 10 seconds leeway
+            assertTrue(!isExpired);
+
             // TODO: Validate JWT
             Log.i(TAG, "registerReply.getSessionCookie()="+reply.getSessionCookie());
             assertTrue(reply != null);

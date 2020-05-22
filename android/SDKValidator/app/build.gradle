@@ -40,6 +40,9 @@ dependencies {
     // For Google Location Services.
     implementation 'com.google.android.gms:play-services-location:15.0.1'
 
+    // For JWT validation
+    implementation 'com.auth0.android:jwtdecode:2.0.0'
+
     // Matching Engine SDK
     implementation 'com.mobiledgex:matchingengine:2.0'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
