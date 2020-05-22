@@ -66,7 +66,10 @@ public class RegisterClientTest {
     public static String findCloudletCarrierOverride = "TDG"; // Allow "Any" if using "", but this likely breaks test cases.
 
     public boolean useHostOverride = true;
-    public boolean useWifiOnly = true; // This also disables network switching, since the android default is WiFi.
+
+    // "useWifiOnly = true" also disables network switching, since the android default is WiFi.
+    // Must be set to true if you are running tests without a SIM card.
+    public boolean useWifiOnly = true;
 
     private int getCellId(Context context, MatchingEngine me) {
         int cellId = 0;
@@ -149,6 +152,7 @@ public class RegisterClientTest {
     public void mexDisabledTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(false);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);
@@ -203,6 +207,7 @@ public class RegisterClientTest {
     public void registerClientTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -264,6 +269,7 @@ public class RegisterClientTest {
     public void registerClientEmptyAppVersion() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -306,6 +312,7 @@ public class RegisterClientTest {
     public void registerClientEmptyOrgName() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -352,6 +359,7 @@ public class RegisterClientTest {
     public void registerClientBadAppName() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -393,6 +401,7 @@ public class RegisterClientTest {
     public void registerClientBadAppVersion() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -434,6 +443,7 @@ public class RegisterClientTest {
     public void registerClientFutureTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 

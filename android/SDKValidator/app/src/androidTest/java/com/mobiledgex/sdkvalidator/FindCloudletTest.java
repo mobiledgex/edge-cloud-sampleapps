@@ -67,7 +67,10 @@ public class FindCloudletTest {
     public static String findCloudletCarrierOverride = "TDG"; // Allow "Any" if using "", but this likely breaks test cases.
 
     public boolean useHostOverride = true;
-    public boolean useWifiOnly = true; // This also disables network switching, since the android default is WiFi.
+
+    // "useWifiOnly = true" also disables network switching, since the android default is WiFi.
+    // Must be set to true if you are running tests without a SIM card.
+    public boolean useWifiOnly = true;
 
     private int getCellId(Context context, MatchingEngine me) {
         int cellId = 0;
@@ -188,6 +191,7 @@ public class FindCloudletTest {
         AppClient.FindCloudletReply findCloudletReply1 = null;
         AppClient.FindCloudletReply findCloudletReply2 = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);
@@ -254,6 +258,7 @@ public class FindCloudletTest {
         AppClient.FindCloudletReply findCloudletReply1 = null;
         AppClient.FindCloudletReply findCloudletReply2 = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);
@@ -322,6 +327,7 @@ public class FindCloudletTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AppClient.FindCloudletReply findCloudletReply = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);
@@ -382,6 +388,7 @@ public class FindCloudletTest {
         AppClient.FindCloudletReply findCloudletReply1 = null;
         AppClient.FindCloudletReply findCloudletReply2 = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);

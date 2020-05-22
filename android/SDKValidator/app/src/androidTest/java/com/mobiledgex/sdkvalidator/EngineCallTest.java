@@ -82,8 +82,10 @@ public class EngineCallTest {
     public static String findCloudletCarrierOverride = "TDG"; // Allow "Any" if using "", but this likely breaks test cases.
 
     public boolean useHostOverride = true;
-    public boolean useWifiOnly = true; // This also disables network switching, since the android default is WiFi.
 
+    // "useWifiOnly = true" also disables network switching, since the android default is WiFi.
+    // Must be set to true if you are running tests without a SIM card.
+    public boolean useWifiOnly = true;
 
     @Before
     public void LooperEnsure() {
@@ -186,7 +188,7 @@ public class EngineCallTest {
                     .setOrgName(organizationName)
                     .setAppName(applicationName)
                     .setAppVers(appVersion);
-            if (ids.size() > 0) {
+            if (ids != null && ids.size() > 0) {
                 regRequestBuilder.setCellId(me.retrieveCellId(context).get(0).second.intValue());
             }
             regRequest = regRequestBuilder.build();
@@ -213,6 +215,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);
@@ -269,6 +272,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);
@@ -325,8 +329,8 @@ public class EngineCallTest {
 
         Location mockLoc = MockUtils.createLocation("verifyMockedLocationTest_NorthPole", 90d, 1d);
 
-
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
         MeLocation meLoc = new MeLocation(me);
@@ -377,6 +381,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -434,6 +439,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -490,6 +496,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -553,6 +560,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -620,6 +628,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         AppConnectionManager appConnect = me.getAppConnectionManager();
 
         enableMockLocation(context, true);
@@ -766,6 +775,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         AppConnectionManager appConnect = me.getAppConnectionManager();
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
@@ -879,6 +889,7 @@ public class EngineCallTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         AppConnectionManager appConnect = me.getAppConnectionManager();
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
@@ -1007,6 +1018,7 @@ public class EngineCallTest {
     public void testRegisterAndFindCloudlet_001() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
