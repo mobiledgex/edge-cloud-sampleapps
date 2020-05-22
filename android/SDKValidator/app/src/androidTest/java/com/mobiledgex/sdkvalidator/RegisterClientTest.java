@@ -24,6 +24,7 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -37,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -66,6 +68,14 @@ public class RegisterClientTest {
     public boolean useHostOverride = true;
     public boolean useWifiOnly = true; // This also disables network switching, since the android default is WiFi.
 
+    private int getCellId(Context context, MatchingEngine me) {
+        int cellId = 0;
+        List<Pair<String, Long>> cellIdList = me.retrieveCellId(context);
+        if (cellIdList != null && cellIdList.size() > 0) {
+            cellId = cellIdList.get(0).second.intValue();
+        }
+        return cellId;
+    }
 
     @Before
     public void LooperEnsure() {
@@ -213,7 +223,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -263,7 +273,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers("")
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -315,7 +325,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, "")
                     .setAppName(applicationName)
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, Log.getStackTraceString(nnfe));
@@ -351,7 +361,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName("Leon's Bogus App")
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -392,7 +402,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers("-999")
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -439,12 +449,12 @@ public class RegisterClientTest {
             setMockLocation(context, loc);
 
             location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
-            assertFalse(location == null);
+            assertFalse("location is null", location == null);
 
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .setUniqueIdType("applicationInstallId")
                     .setUniqueId(me.getUniqueId(context))
                     .build();

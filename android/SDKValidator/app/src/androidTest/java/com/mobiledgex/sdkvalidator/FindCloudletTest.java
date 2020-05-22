@@ -69,6 +69,14 @@ public class FindCloudletTest {
     public boolean useHostOverride = true;
     public boolean useWifiOnly = true; // This also disables network switching, since the android default is WiFi.
 
+    private int getCellId(Context context, MatchingEngine me) {
+        int cellId = 0;
+        List<Pair<String, Long>> cellIdList = me.retrieveCellId(context);
+        if (cellIdList != null && cellIdList.size() > 0) {
+            cellId = cellIdList.get(0).second.intValue();
+        }
+        return cellId;
+    }
 
     @Before
     public void LooperEnsure() {
@@ -151,10 +159,8 @@ public class FindCloudletTest {
             AppClient.RegisterClientRequest.Builder regRequestBuilder = AppClient.RegisterClientRequest.newBuilder()
                     .setOrgName(organizationName)
                     .setAppName(applicationName)
-                    .setAppVers(appVersion);
-            if (ids.size() > 0) {
-                regRequestBuilder.setCellId(me.retrieveCellId(context).get(0).second.intValue());
-            }
+                    .setAppVers(appVersion)
+                    .setCellId(getCellId(context, me));
             regRequest = regRequestBuilder.build();
             if (useHostOverride) {
                 registerReply = me.registerClient(regRequest, hostOverride, portOverride, GRPC_TIMEOUT_MS);
