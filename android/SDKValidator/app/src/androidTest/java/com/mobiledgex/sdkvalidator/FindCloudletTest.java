@@ -32,7 +32,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
-import com.mobiledgex.matchingengine.util.MeLocation;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -67,8 +66,26 @@ public class FindCloudletTest {
     public static String findCloudletCarrierOverride = "GDDT"; // Allow "Any" if using "", but this likely breaks test cases.
 
     public boolean useHostOverride = true;
-    public boolean useWifiOnly = true; // This also disables network switching, since the android default is WiFi.
 
+    // "useWifiOnly = true" also disables network switching, since the android default is WiFi.
+    // Must be set to true if you are running tests without a SIM card.
+    public boolean useWifiOnly = true;
+
+    private int getCellId(Context context, MatchingEngine me) {
+        int cellId = 0;
+        List<Pair<String, Long>> cellIdList = me.retrieveCellId(context);
+        if (cellIdList != null && cellIdList.size() > 0) {
+            cellId = cellIdList.get(0).second.intValue();
+        }
+        return cellId;
+    }
+
+    private Location getTestLocation(double latitude, double longitude) {
+        Location location = new Location("MobiledgeX_Test");
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+        return location;
+    }
 
     @Before
     public void LooperEnsure() {
@@ -151,10 +168,8 @@ public class FindCloudletTest {
             AppClient.RegisterClientRequest.Builder regRequestBuilder = AppClient.RegisterClientRequest.newBuilder()
                     .setOrgName(organizationName)
                     .setAppName(applicationName)
-                    .setAppVers(appVersion);
-            if (ids.size() > 0) {
-                regRequestBuilder.setCellId(me.retrieveCellId(context).get(0).second.intValue());
-            }
+                    .setAppVers(appVersion)
+                    .setCellId(getCellId(context, me));
             regRequest = regRequestBuilder.build();
             if (useHostOverride) {
                 registerReply = me.registerClient(regRequest, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -174,25 +189,18 @@ public class FindCloudletTest {
         }
     }
 
-
-
     @Test
     public void findCloudletTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AppClient.FindCloudletReply findCloudletReply1 = null;
         AppClient.FindCloudletReply findCloudletReply2 = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
-        MeLocation meLoc = new MeLocation(me);
-
-        Location loc = MockUtils.createLocation("findCloudletTest", 122.3321, 47.6062);
 
         try {
-            enableMockLocation(context, true);
-            setMockLocation(context, loc);
-
-            Location location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             String carrierName = me.retrieveNetworkCarrierName(context);
             registerClient(me);
@@ -231,8 +239,6 @@ public class FindCloudletTest {
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, Log.getStackTraceString(nnfe));
             assertFalse("FindCloudlet: PackageManager.NameNotFoundException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
 
         assertNotNull("FindCloudletReply1 is null!", findCloudletReply1);
@@ -248,17 +254,12 @@ public class FindCloudletTest {
         AppClient.FindCloudletReply findCloudletReply1 = null;
         AppClient.FindCloudletReply findCloudletReply2 = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
-        MeLocation meLoc = new MeLocation(me);
-
-        Location loc = MockUtils.createLocation("findCloudletTest", 122.3321, 47.6062);
 
         try {
-            enableMockLocation(context, true);
-            setMockLocation(context, loc);
-
-            Location location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             String carrierName = me.retrieveNetworkCarrierName(context);
             registerClient(me);
@@ -297,8 +298,6 @@ public class FindCloudletTest {
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, Log.getStackTraceString(nnfe));
             assertFalse("FindCloudlet: PackageManager.NameNotFoundException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
 
         Log.i(TAG, "findCloudletReply1="+findCloudletReply1);
@@ -316,18 +315,13 @@ public class FindCloudletTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AppClient.FindCloudletReply findCloudletReply = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
-        MeLocation meLoc = new MeLocation(me);
-
-        Location loc = MockUtils.createLocation("findCloudletTestSetCarrierNameOverride", 122.3321, 47.6062);
 
         boolean expectedExceptionHit = false;
         try {
-            enableMockLocation(context, true);
-            setMockLocation(context, loc);
-
-            Location location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             String carrierName = me.retrieveNetworkCarrierName(context);
             registerClient(me);
@@ -362,8 +356,6 @@ public class FindCloudletTest {
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, Log.getStackTraceString(nnfe));
             assertFalse("FindCloudlet: NameNotFoundException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
 
         assertFalse("findCloudletTestSetAllOptionalDevAppNameVers: NO Expected StatusRunTimeException about 'NO PERMISSION'", expectedExceptionHit);
@@ -376,17 +368,12 @@ public class FindCloudletTest {
         AppClient.FindCloudletReply findCloudletReply1 = null;
         AppClient.FindCloudletReply findCloudletReply2 = null;
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
-        MeLocation meLoc = new MeLocation(me);
-
-        Location loc = MockUtils.createLocation("findCloudletTest", 122.3321, 47.6062);
 
         try {
-            enableMockLocation(context, true);
-            setMockLocation(context, loc);
-
-            Location location = meLoc.getBlocking(context, 10000);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             registerClient(me);
 

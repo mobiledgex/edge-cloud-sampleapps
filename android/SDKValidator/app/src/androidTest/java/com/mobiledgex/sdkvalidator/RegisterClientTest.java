@@ -24,21 +24,24 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.auth0.android.jwt.DecodeException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
-import com.mobiledgex.matchingengine.util.MeLocation;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import com.auth0.android.jwt.JWT;
 
 import distributed_match_engine.AppClient;
 import io.grpc.StatusRuntimeException;
@@ -64,8 +67,26 @@ public class RegisterClientTest {
     public static String findCloudletCarrierOverride = "GDDT"; // Allow "Any" if using "", but this likely breaks test cases.
 
     public boolean useHostOverride = true;
-    public boolean useWifiOnly = true; // This also disables network switching, since the android default is WiFi.
 
+    // "useWifiOnly = true" also disables network switching, since the android default is WiFi.
+    // Must be set to true if you are running tests without a SIM card.
+    public boolean useWifiOnly = true;
+
+    private int getCellId(Context context, MatchingEngine me) {
+        int cellId = 0;
+        List<Pair<String, Long>> cellIdList = me.retrieveCellId(context);
+        if (cellIdList != null && cellIdList.size() > 0) {
+            cellId = cellIdList.get(0).second.intValue();
+        }
+        return cellId;
+    }
+
+    private Location getTestLocation(double latitude, double longitude) {
+        Location location = new Location("MobiledgeX_Test");
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+        return location;
+    }
 
     @Before
     public void LooperEnsure() {
@@ -92,64 +113,16 @@ public class RegisterClientTest {
         }
     }
 
-    /**
-     * Enable or Disable MockLocation.
-     * @param context
-     * @param enableMock
-     * @return
-     */
-    public boolean enableMockLocation(Context context, boolean enableMock) {
-        if (fusedLocationClient == null) {
-            fusedLocationClient = new FusedLocationProviderClient(context);
-        }
-        if (enableMock == false) {
-            fusedLocationClient.setMockMode(false);
-            return false;
-        } else {
-            fusedLocationClient.setMockMode(true);
-            return true;
-        }
-    }
-
-    /**
-     * Utility Func. Single point mock location, fills in some extra fields. Does not calculate speed, nor update interval.
-     * @param context
-     * @param location
-     */
-    public void setMockLocation(Context context, Location location) throws InterruptedException {
-        if (fusedLocationClient == null) {
-            fusedLocationClient = new FusedLocationProviderClient(context);
-        }
-
-        location.setTime(System.currentTimeMillis());
-        location.setElapsedRealtimeNanos(1000);
-        location.setAccuracy(3f);
-        fusedLocationClient.setMockLocation(location);
-        synchronized (location) {
-            try {
-                location.wait(1500); // Give Mock a bit of time to take effect.
-            } catch (InterruptedException ie) {
-                throw ie;
-            }
-        }
-        fusedLocationClient.flushLocations();
-    }
-
     @Test
     public void mexDisabledTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(false);
         me.setAllowSwitchIfNoSubscriberInfo(true);
-        MeLocation meLoc = new MeLocation(me);
-
-        Location loc = MockUtils.createLocation("mexDisabledTest", 122.3321, 47.6062);
 
         try {
-            enableMockLocation(context, true);
-            setMockLocation(context, loc);
-
-            Location location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             AppClient.RegisterClientRequest registerClientRequest = me.createDefaultRegisterClientRequest(context, organizationName).build();
             assertTrue(registerClientRequest == null);
@@ -172,20 +145,12 @@ public class RegisterClientTest {
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, Log.getStackTraceString(nnfe));
             assertFalse("mexDisabledTest: NameNotFoundException", true);
-        } catch (ExecutionException ee) {
-            Log.e(TAG, Log.getStackTraceString(ee));
-            assertFalse("mexDisabledTest: ExecutionException!", true);
         } catch (StatusRuntimeException sre) {
             Log.e(TAG, Log.getStackTraceString(sre));
             assertFalse("mexDisabledTest: StatusRuntimeException!", true);
-        } catch (InterruptedException ie) {
-            Log.e(TAG, Log.getStackTraceString(ie));
-            assertFalse("mexDisabledTest: InterruptedException!", true);
         }  catch (Exception e) {
             Log.e(TAG, "Creation of request is not supposed to succeed!");
             Log.e(TAG, Log.getStackTraceString(e));
-        } finally {
-            enableMockLocation(context,false);
         }
     }
 
@@ -193,33 +158,39 @@ public class RegisterClientTest {
     public void registerClientTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
-        MeLocation meLoc = new MeLocation(me);
-        Location location;
         AppClient.RegisterClientReply reply = null;
         String appName = applicationName;
 
-        enableMockLocation(context,true);
-        Location loc = MockUtils.createLocation("registerClientTest", 122.3321, 47.6062);
 
         try {
-            setMockLocation(context, loc);
-
-            location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
-            assertFalse(location == null);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
             } else {
                 reply = me.registerClient(request, me.generateDmeHostAddress(), me.getPort(), GRPC_TIMEOUT_MS);
             }
+
+            JWT jwt = null;
+            try {
+                jwt = new JWT(reply.getSessionCookie());
+            } catch (DecodeException e) {
+                Log.e(TAG, Log.getStackTraceString(e));
+                assertFalse("registerClientTest: DecodeException!", true);
+            }
+
+            boolean isExpired = jwt.isExpired(10); // 10 seconds leeway
+            assertTrue(!isExpired);
+
             // TODO: Validate JWT
             Log.i(TAG, "registerReply.getSessionCookie()="+reply.getSessionCookie());
             assertTrue(reply != null);
@@ -241,8 +212,6 @@ public class RegisterClientTest {
         } catch (InterruptedException ie) {
             Log.e(TAG, Log.getStackTraceString(ie));
             assertFalse("registerClientTest: InterruptedException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
 
         Log.i(TAG, "registerClientTest reply: " + reply.toString());
@@ -254,6 +223,7 @@ public class RegisterClientTest {
     public void registerClientEmptyAppVersion() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -263,7 +233,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers("")
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -287,8 +257,6 @@ public class RegisterClientTest {
         } catch (InterruptedException ie) {
             Log.e(TAG, Log.getStackTraceString(ie));
             assertFalse("registerClientTest: InterruptedException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
     }
 
@@ -296,45 +264,30 @@ public class RegisterClientTest {
     public void registerClientEmptyOrgName() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
-        MeLocation meLoc = new MeLocation(me);
-        Location location;
         AppClient.RegisterClientReply reply = null;
 
-        enableMockLocation(context,true);
-        Location loc = MockUtils.createLocation("registerClientTest", 122.3321, 47.6062);
-
         try {
-            setMockLocation(context, loc);
-
-            location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
-            assertFalse(location == null);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, "")
                     .setAppName(applicationName)
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, Log.getStackTraceString(nnfe));
             assertFalse("ExecutionException registering using PackageManager.", true);
-        } catch (ExecutionException ee) {
-            Log.e(TAG, Log.getStackTraceString(ee));
-            assertFalse("registerClientTest: ExecutionException!", true);
         } catch (StatusRuntimeException sre) {
             Log.e(TAG, Log.getStackTraceString(sre));
             assertFalse("registerClientTest: StatusRuntimeException!", true);
-        } catch (InterruptedException ie) {
-            Log.e(TAG, Log.getStackTraceString(ie));
-            assertFalse("registerClientTest: InterruptedException!", true);
         } catch (IllegalArgumentException iae) {
             Log.e(TAG, Log.getStackTraceString(iae));
             // This is expected when OrgName is empty.
             assertEquals("RegisterClientRequest requires a organization name.", iae.getLocalizedMessage());
-        } finally {
-            enableMockLocation(context,false);
         }
     }
 
@@ -342,6 +295,7 @@ public class RegisterClientTest {
     public void registerClientBadAppName() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -351,7 +305,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName("Leon's Bogus App")
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -374,8 +328,6 @@ public class RegisterClientTest {
         } catch (InterruptedException ie) {
             Log.e(TAG, Log.getStackTraceString(ie));
             assertFalse("registerClientTest: InterruptedException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
     }
 
@@ -383,6 +335,7 @@ public class RegisterClientTest {
     public void registerClientBadAppVersion() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
@@ -392,7 +345,7 @@ public class RegisterClientTest {
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers("-999")
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .build();
             if (useHostOverride) {
                 reply = me.registerClient(request, hostOverride, portOverride, GRPC_TIMEOUT_MS);
@@ -415,8 +368,6 @@ public class RegisterClientTest {
         } catch (InterruptedException ie) {
             Log.e(TAG, Log.getStackTraceString(ie));
             assertFalse("registerClientTest: InterruptedException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
     }
 
@@ -424,27 +375,20 @@ public class RegisterClientTest {
     public void registerClientFutureTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(context);
+        me.setUseWifiOnly(useWifiOnly);
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
-        MeLocation meLoc = new MeLocation(me);
-        Location location;
         Future<AppClient.RegisterClientReply> registerReplyFuture;
         AppClient.RegisterClientReply reply = null;
 
-        enableMockLocation(context,true);
-        Location loc = MockUtils.createLocation("RegisterClientFutureTest", 122.3321, 47.6062);
-
         try {
-            setMockLocation(context, loc);
-
-            location = meLoc.getBlocking(context, GRPC_TIMEOUT_MS);
-            assertFalse(location == null);
+            Location location = getTestLocation( 47.6062,122.3321);
 
             AppClient.RegisterClientRequest request = me.createDefaultRegisterClientRequest(context, organizationName)
                     .setAppName(applicationName)
                     .setAppVers(appVersion)
-                    .setCellId(me.retrieveCellId(context).get(0).second.intValue())
+                    .setCellId(getCellId(context, me))
                     .setUniqueIdType("applicationInstallId")
                     .setUniqueId(me.getUniqueId(context))
                     .build();
@@ -467,8 +411,6 @@ public class RegisterClientTest {
         } catch (InterruptedException ie) {
             Log.e(TAG, Log.getStackTraceString(ie));
             assertFalse("registerClientFutureTest: InterruptedException!", true);
-        } finally {
-            enableMockLocation(context,false);
         }
 
         // TODO: Validate JWT
