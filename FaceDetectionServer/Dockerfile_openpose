@@ -1,9 +1,9 @@
-FROM nvidia/cuda:10.0-cudnn7-devel
+FROM nvidia/cuda:10.0-cudnn7-devel AS compile-image
 
 #get deps
 RUN apt-get update && \
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-python3-dev python3-pip git g++ wget make libprotobuf-dev protobuf-compiler libopencv-dev \
+python3.7-dev python3-pip git g++ wget make libprotobuf-dev protobuf-compiler libopencv-dev \
 libgoogle-glog-dev libboost-all-dev libcaffe-cuda-dev libhdf5-dev libatlas-base-dev
 
 #replace cmake as old version has CUDA variable bugs
@@ -18,28 +18,50 @@ RUN git clone https://github.com/CMU-Perceptual-Computing-Lab/openpose.git .
 
 #build it
 WORKDIR /openpose/build
+#patch because dataset server posefs1.perception.cs.cmu.edu is unavailable (2020-05-15)
+RUN sed 's/posefs1.perception.cs.cmu.edu/opencv.facetraining.mobiledgex.net/g' /openpose/models/getModels.sh
 RUN cmake -DBUILD_PYTHON=ON .. && make -j `nproc`
-WORKDIR /openpose
 
-# Dependencies for our Django app.
+# Use a virtualenv for all of our Python requirements.
+RUN apt-get install -y python3.7-venv
+# Giant list of dependencies for imagecodecs package. See https://pypi.org/project/imagecodecs/
+RUN apt-get install -y python3-blosc python3-brotli python3-snappy python3-lz4 libz-dev libblosc-dev \
+liblzma-dev liblz4-dev libzstd-dev libpng-dev libwebp-dev libbz2-dev libopenjp2-7-dev libjpeg-turbo8-dev \
+libjxr-dev liblcms2-dev libcharls-dev libaec-dev libbrotli-dev libsnappy-dev libzopfli-dev libgif-dev libtiff-dev
+
+# Not sure why it can't find these headers. Copy them where they can be found.
+RUN cp /usr/include/openjpeg-2.3/*.h /usr/include/
+RUN python3.7 -m venv /opt/venv
+# Make sure we use the virtualenv:
+ENV PATH="/opt/venv/bin:$PATH"
 RUN pip3 install wheel
-RUN apt-get install python3-setuptools -y
-COPY requirements.txt /tmp
-WORKDIR /tmp
-RUN pip3 install -r requirements.txt
+# Dependencies for our Django app.
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+FROM nvidia/cuda:10.0-cudnn7-runtime AS build-image
+COPY --from=compile-image /openpose /openpose
+COPY --from=compile-image /opt/venv /opt/venv
+RUN apt-get update && \
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+python3.7-dev python3-pip git g++ wget make libopencv-dev \
+libgoogle-glog-dev libboost-all-dev libcaffe-cuda-dev libhdf5-dev libatlas-base-dev
+
+# Make sure we use the virtualenv:
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Download weights file required for object detection
 WORKDIR /usr/src/app/moedx/pytorch_objectdetecttrack/config
 RUN wget http://opencv.facetraining.mobiledgex.net/files/yolov3.weights
 WORKDIR /usr/src/app/moedx
 COPY . /usr/src/app
 # Initialize the database.
-RUN python3 manage.py makemigrations tracker
-RUN python3 manage.py migrate
+RUN python manage.py makemigrations tracker
+RUN python manage.py migrate
 # port for REST
 EXPOSE 8008/tcp
 # port for persistent TCP server
 EXPOSE 8011/tcp
-ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Fix for "click" Python library, a uvicorn dependency.
 ENV LC_ALL=C.UTF-8

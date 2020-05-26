@@ -1,11 +1,25 @@
-FROM python:3.6.6-onbuild
-COPY requirements.txt /tmp
-WORKDIR /tmp
+FROM python:3.7-slim AS compile-image
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential
+# Use a virtualenv for all of our Python requirements.
+RUN python -m venv /opt/venv
+# Make sure we use the virtualenv:
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip3 install wheel
+# Dependencies for our Django app.
+COPY requirements.txt .
 RUN pip install -r requirements.txt
+
+FROM python:3.7-slim AS build-image
+COPY --from=compile-image /opt/venv /opt/venv
+RUN apt-get update && apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 wget
+# Make sure we use the virtualenv:
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Download weights file required for object detection
 WORKDIR /usr/src/app/moedx/pytorch_objectdetecttrack/config
 RUN wget http://opencv.facetraining.mobiledgex.net/files/yolov3.weights
 WORKDIR /usr/src/app/moedx
+COPY . /usr/src/app
 # Initialize the database.
 RUN python manage.py makemigrations tracker
 RUN python manage.py migrate
@@ -13,7 +27,6 @@ RUN python manage.py migrate
 EXPOSE 8008/tcp
 # port for persistent TCP server
 EXPOSE 8011/tcp
-ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Fix for "click" Python library, a uvicorn dependency.
 ENV LC_ALL=C.UTF-8
