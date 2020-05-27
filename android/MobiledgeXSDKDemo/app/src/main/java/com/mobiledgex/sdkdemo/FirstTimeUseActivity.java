@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,8 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -127,7 +127,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
         Log.d(TAG, "mobiledgeXLocationAllowed: " + mobiledgeXLocationAllowed);
         Log.d(TAG, "Needs More Permissions: " + mRpUtil.getNeededPermissions(self).size());
         if (mobiledgeXLocationAllowed &&
-            (mRpUtil.getNeededPermissions(activity).size() == 0)) {
+            (mRpUtil.getNeededPermissions((AppCompatActivity) activity).size() == 0)) {
 
             // Nothing to ask for. Close FirstTimeUseActivity.
             return true;

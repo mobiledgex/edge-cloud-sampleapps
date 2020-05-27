@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
+import com.google.android.material.snackbar.Snackbar;
 import android.telephony.SubscriptionInfo;
 import android.util.Log;
 import android.view.View;
@@ -76,7 +76,6 @@ public class MatchingEngineHelper {
         mHostname = hostname;
         mCarrierName = carrierName;
         mMatchingEngine = new MatchingEngine(mContext);
-        // mMatchingEngine.setHost(mHostname);
     }
 
     /**

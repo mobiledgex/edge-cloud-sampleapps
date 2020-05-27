@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,11 +32,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -483,7 +483,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 return true;
             }
             //Show a dialog to verify the user really wants to delete their data.
-            new android.support.v7.app.AlertDialog.Builder(getContext())
+            new androidx.appcompat.app.AlertDialog.Builder(getContext())
                     .setTitle(R.string.verify_delete_title)
                     .setMessage(R.string.verify_delete_message)
                     .setNegativeButton(android.R.string.cancel,
@@ -552,7 +552,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public boolean verifySignedIn() {
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getContext());
         if(account == null) {
-            new android.support.v7.app.AlertDialog.Builder(getContext())
+            new androidx.appcompat.app.AlertDialog.Builder(getContext())
                     .setTitle(R.string.sign_in_required_title)
                     .setMessage(R.string.sign_in_required_message)
                     .setPositiveButton("OK", null)

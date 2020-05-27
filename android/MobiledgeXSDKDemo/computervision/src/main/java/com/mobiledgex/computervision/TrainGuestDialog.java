@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,8 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.DialogFragment;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -123,7 +123,7 @@ public class TrainGuestDialog extends DialogFragment {
                     errorMessage = "Name cannot start or end with a space";
                 }
                 if(errorMessage != null) {
-                    new android.support.v7.app.AlertDialog.Builder(getContext())
+                    new androidx.appcompat.app.AlertDialog.Builder(getContext())
                             .setTitle("Error")
                             .setMessage(errorMessage)
                             .setPositiveButton(R.string.ok, null)

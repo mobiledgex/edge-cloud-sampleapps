@@ -6,8 +6,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.os.Build;
 import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.DmeDnsException;
@@ -60,18 +60,18 @@ public class MatchingEngineUnitTest {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
             uiAutomation.grantRuntimePermission(
-                    InstrumentationRegistry.getTargetContext().getPackageName(),
+                    InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName(),
                     "android.permission.READ_PHONE_STATE");
             uiAutomation.grantRuntimePermission(
-                    InstrumentationRegistry.getTargetContext().getPackageName(),
-                    "android.permission.ACCESS_COARSE_LOCATION"); // FINE_LOCATION??
+                    InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName(),
+                    "android.permission.ACCESS_COARSE_LOCATION");
         }
     }
 
     @Test
     public void useAppContext() {
         // Context of the app under test.
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         assertEquals("com.mobiledgex.sdkdemo", appContext.getPackageName());
     }
 
@@ -103,7 +103,7 @@ public class MatchingEngineUnitTest {
 
     @Test
     public void testRegisterClient() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -115,7 +115,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testFindCloudlet() {
 
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -150,7 +150,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testVerifyLocation() {
 
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -163,7 +163,7 @@ public class MatchingEngineUnitTest {
         location.setLongitude(longitude);
 
         try {
-            AppClient.VerifyLocationRequest request = me.createVerifyLocationRequest(ctx, carrierName, location, cellID, tags);
+            AppClient.VerifyLocationRequest request = me.createVerifyLocationRequest(ctx, location, cellID, tags);
             AppClient.VerifyLocationReply reply = me.verifyLocation(request, GRPC_TIMEOUT_MS);
 
             assertTrue("Unable to get VerifyLocation", reply != null);
@@ -171,7 +171,7 @@ public class MatchingEngineUnitTest {
             assertEquals("VerifyLocation GPS Location status is " + reply.getGpsLocationStatus(), AppClient.VerifyLocationReply.GPSLocationStatus.LOC_VERIFIED,  reply.getGpsLocationStatus());
 
         } catch (DmeDnsException dde) {
-            assertTrue("ExecutionException verifying location. " + dde.getMessage(), false);
+            assertTrue("DmeDnsException verifying location. " + dde.getMessage(), false);
         } catch (ExecutionException ee) {
             assertTrue("ExecutionException verifying location. " + ee.getMessage(), false);
         } catch (InterruptedException ie) {
@@ -184,7 +184,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testGetAppInstList() {
 
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -215,7 +215,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testGetQosPositionKpi() {
 
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
