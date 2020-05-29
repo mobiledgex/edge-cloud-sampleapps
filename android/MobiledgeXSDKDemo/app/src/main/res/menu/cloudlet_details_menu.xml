@@ -10,10 +10,10 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_copy_cloud_host"
-        android:title="Use as Face Recognition Cloud Host"
+        android:title="Use as Computer Vision Cloud Host"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_copy_edge_host"
-        android:title="Use as Face Recognition Edge Host"
+        android:title="Use as Computer Vision Edge Host"
         app:showAsAction="never" />
 </menu>
