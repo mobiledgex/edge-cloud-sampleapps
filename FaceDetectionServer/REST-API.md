@@ -111,7 +111,7 @@ If this state is encountered, it should only last a few seconds.
 ## Pose Detection
 `/openpose/detect`
 
-Used to send an image with one or more human bodies to the server and get back a set of coordinates for any detected poses, where a pose is a list of bones for a given a human body in the image. In the our implementation, pose detection requires a GPU in order to run. If the server executing this call does not have GPU support, a `501 Not Implemented` response will be returned along with the message "OpenPose not supported on this server".
+Used to send an image with one or more human bodies to the server and get back a set of coordinates for any detected poses, where a pose is a list of bones for a given human body in the image. In our implementation, pose detection requires a GPU in order to run. If the server executing this call does not have GPU support, a `501 Not Implemented` response will be returned along with the message "OpenPose not supported on this server".
 
 ### POST
 ```
