@@ -26,7 +26,6 @@ urlpatterns = [
     path('recognizer/add/', recognizer_add),
     path('recognizer/train/', recognizer_train),
     path('recognizer/predict/', recognizer_predict),
-    path('recognizer/update/', recognizer_update),
     path('openpose/detect/', openpose_detect),
     path('object/detect/', object_detect),
     path('server/usage/', server_usage),

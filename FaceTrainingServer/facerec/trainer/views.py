@@ -24,6 +24,7 @@ import time
 import io
 import json
 from imageio import imread, imwrite
+import numpy as np
 from facerec.FaceRecognizer import FaceRecognizer
 from trainer.apps import myFaceRecognizer
 from trainer.models import Subject, Owner
@@ -41,6 +42,58 @@ def test_connection(request):
         logger.info("/test/ Valid GET Request received")
         return HttpResponse("Valid GET Request to server")
     return HttpResponseBadRequest("Please send response as a GET")
+
+def save_debug_image(image, request, type):
+    """ Save current image with timestamp. """
+    logger.debug("Saving image for debugging (first 32 bytes logged): %s" %image[:32])
+    extension = imghdr.what("XXX", image)
+    if extension is None or extension == "jpeg":
+        extension = "jpg"
+    now = time.time()
+    mlsec = repr(now).split('.')[1][:3]
+    timestr = time.strftime("%Y%m%d-%H%M%S")+"."+mlsec
+    fileName = "/tmp/"+type+"_"+timestr+"."+extension
+    with open(fileName, "wb") as fh:
+        fh.write(image)
+    #Delete all old files except the 20 most recent
+    logger.debug("Deleting all but 20 newest images")
+    try:
+        files = sorted(glob.glob("/tmp/"+type+"_*.*"), key=os.path.getctime, reverse=True)
+        for file in files[20:]:
+            os.remove(file)
+    except FileNotFoundError:
+        logger.warn("Cleanup of /tmp/"+type+"* failed. Next request will retry.")
+
+def get_image_from_request(request, type):
+    """ Based on the content type, get the image data from the request. """
+    logger.debug("get_image_from_request method=%s content_type=%s" %(request.method, request.content_type))
+    if request.method != 'POST':
+        return False, HttpResponseBadRequest("Must send frame as a POST")
+
+    if request.content_type == "image/png" or request.content_type == "image/jpeg":
+        if request.body == "":
+            return False, HttpResponseBadRequest("No image data")
+        image = request.body
+    elif request.content_type == "multipart/form-data":
+        # Image data is expected as if it came from a form with <input type="file" name="image">
+        if not "image" in request.FILES.keys():
+            return False, HttpResponseBadRequest("Image file must be uploaded with key of 'image'")
+        uploaded_file = request.FILES["image"]
+        logger.info("Uploaded file type=%s size=%d" %(uploaded_file.content_type, uploaded_file.size))
+        if uploaded_file.content_type != "image/png" and uploaded_file.content_type != "image/jpeg" and uploaded_file.content_type != "application/octet-stream":
+            return False, HttpResponseBadRequest("Uploaded file Content-Type must be 'image/png', 'image/jpeg'")
+        image = uploaded_file.read()
+    elif request.content_type == "application/x-www-form-urlencoded":
+        if request.POST.get("image", "") == "":
+            return False, HttpResponseBadRequest("Missing 'image' parameter")
+        image = base64.b64decode(request.POST.get("image"))
+    else:
+        return False, HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'")
+
+    if request.headers.get("Mobiledgex-Debug", "") == "true":
+        save_debug_image(image, request, type)
+
+    return True, image
 
 @csrf_exempt
 def download(request):
@@ -75,14 +128,6 @@ def add(request):
     subject's training data directory.
     """
     logger.debug("Request received: %s" %request)
-    if request.method != 'POST':
-        error = "Must send frame as a POST"
-        logger.error(error)
-        return HttpResponseBadRequest(error)
-    if request.content_type != 'application/x-www-form-urlencoded':
-        error = "Content-Type must be 'application/x-www-form-urlencoded'"
-        logger.error(error)
-        return HttpResponseBadRequest(error)
 
     owner_id = request.POST.get("owner_id", "")
     if owner_id == "":
@@ -109,12 +154,17 @@ def add(request):
     else:
         logger.info("Received image for subject '%s'" %subject)
 
-    image = base64.b64decode(request.POST.get("image"))
-    myFaceRecognizer.save_debug_image(image)
+    ret, image = get_image_from_request(request, "face")
+    if not ret:
+        # If ret is False, image contains an
+        # HttpResponseBadRequest which we will return to the caller.
+        return image
+
     logger.debug("Performing detection process")
+
     start = time.time()
-    image2 = imread(io.BytesIO(image))
-    rects = myFaceRecognizer.detect_faces(image2)
+    np_image = imread(io.BytesIO(image)) # convert to numpy array
+    rects = myFaceRecognizer.detect_faces(np_image)
     elapsed = "%.3f" %((time.time() - start)*1000)
 
     # Create a JSON response to be returned in a consistent manner
@@ -132,10 +182,10 @@ def add(request):
             owner_record, created = Owner.objects.get_or_create(id = owner_id, name = owner_name)
             owner_record.save()
             subject_record, created = Subject.objects.get_or_create(name = subject, owner = owner_record)
-            # subject_record.owner = owner_record
             subject_record.save()
+
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             return HttpResponseBadRequest(e)
 
     json_ret = json.dumps(ret)
@@ -164,58 +214,18 @@ def train(request):
         logger.error(e)
         return HttpResponseBadRequest(e)
 
+    myFaceRecognizer.redis_save_subject_images(subject)
+
     logger.info("Owner '%s' performing training for subject '%s'" %(owner_name, subject))
 
     start = time.time()
 
-    myFaceRecognizer.update_training_data()
+    myFaceRecognizer.update_training_data(subject)
     subject_record.in_training = True
     subject_record.save()
 
-    myFaceRecognizer.read_trained_data()
-
     elapsed = "%.3f" %((time.time() - start)*1000)
     ret = {"success": "true", "server_processing_time": elapsed}
-    json_ret = json.dumps(ret)
-    logger.info("Returning %s" %(json_ret))
-    return HttpResponse(json_ret)
-
-@csrf_exempt
-def train_SINGLE_BROKEN(request):
-    # TODO: update_training_data_single is broken. Either fix the "single()"
-    # stuff, or remove it entirely.
-    if request.method != 'POST':
-        return HttpResponseBadRequest("/train/ must be a POST")
-
-    subject = request.POST.get("subject", "")
-    if subject == "":
-        error = "Missing 'subject' parameter"
-        logger.error(error)
-        return HttpResponseBadRequest(error)
-
-    try:
-        subject_record = Subject.objects.get(name = subject)
-    except Exception as e:
-        logger.error(e)
-        return HttpResponseBadRequest(e)
-
-    start = time.time()
-
-    existing_subject = False
-    if subject_record.in_training:
-        existing_subject = True
-        logger.info("Subject %s already in training. Do full re-train." %subject)
-        myFaceRecognizer.update_training_data()
-    else:
-        logger.info("%s is a new subject. Do update only." %subject)
-        myFaceRecognizer.update_training_data_single(subject)
-        subject_record.in_training = True
-        subject_record.save()
-
-    myFaceRecognizer.read_trained_data()
-
-    elapsed = "%.3f" %((time.time() - start)*1000)
-    ret = {"success": "true", "existing_subject": existing_subject, "server_processing_time": elapsed}
     json_ret = json.dumps(ret)
     logger.info("Returning %s" %(json_ret))
     return HttpResponse(json_ret)
@@ -256,8 +266,7 @@ def remove(request):
             subject_record.delete()
             myFaceRecognizer.remove_subject(subject_name)
 
-        myFaceRecognizer.update_training_data()
-        myFaceRecognizer.read_trained_data()
+        myFaceRecognizer.redis_delete_subject_images(subject_name)
 
     except Exception as e:
         logger.error(e)
@@ -277,14 +286,14 @@ def predict(request):
     if request.content_type != 'application/x-www-form-urlencoded':
         return HttpResponseBadRequest("Content-Type must be 'application/x-www-form-urlencoded'")
 
-    if request.POST.get("image", "") == "":
-        return HttpResponseBadRequest("Missing 'image' parameter")
-    image = base64.b64decode(request.POST.get("image"))
-    # save_debug_image(image, request)
+    ret, image = get_image_from_request(request, "face")
+    if not ret:
+        return image
+
     logger.debug("Performing recognition process")
     now = time.time()
-    image = imread(io.BytesIO(image))
-    subject, confidence, rect = myFaceRecognizer.predict(image)
+    np_image = imread(io.BytesIO(image)) # convert to numpy array
+    subject, confidence, rect = myFaceRecognizer.predict(np_image)
     elapsed = "%.3f" %((time.time() - now)*1000)
 
     # Create a JSON response to be returned in a consistent manner

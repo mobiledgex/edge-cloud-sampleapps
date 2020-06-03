@@ -1,4 +1,4 @@
-# Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+# Copyright 2019-2020 MobiledgeX, Inc. All rights and licenses reserved.
 # MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 
 import cv2
 import os
+import io
 import time
 import numpy as np
 import json
@@ -22,16 +23,22 @@ import sys
 import glob
 import logging
 import requests
-from requests.auth import HTTPBasicAuth
 import imghdr
-from threading import Thread
-import zlib
+import imageio
+from requests.auth import HTTPBasicAuth
+import threading
+import redis
+from redis.exceptions import ConnectionError
+from tracker.models import CentralizedTraining
 
 logger = logging.getLogger(__name__)
 
 TRAINING_DATA_HOSTNAME = 'opencv.facetraining.mobiledgex.net'
 TRAINING_DATA_PORT_DEFAULT = 8009 # Can be overridden with envvar FD_TRAINING_DATA_PORT
 TRAINING_SERVER_TIMEOUT = 20 # Seconds
+REDIS_UPDATED_TIMESTAMP = 'last_updated_timestamp'
+SUBJECT_KEY_INDEX = 'subject_key_index'
+PUBSUB_CHANNEL = 'training.*'
 
 class FaceRecognizer(object):
     """
@@ -46,6 +53,7 @@ class FaceRecognizer(object):
 
         #create our LBPH face recognizer
         self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+        # Other types of recognizers that we might try out someday:
         #face_recognizer = cv2.face.EigenFaceRecognizer_create()
         #face_recognizer = cv2.face.FisherFaceRecognizer_create()
 
@@ -60,17 +68,64 @@ class FaceRecognizer(object):
 
         logger.info("Using training_data_port %d" %self.training_data_port)
 
-        # TODO: Update this when we have a different auth method.
         self.training_data_hostname = TRAINING_DATA_HOSTNAME
-        self.training_data_url = 'http://%s:%d' %(self.training_data_hostname, self.training_data_port)
-        self.training_data_auth = HTTPBasicAuth('mexf4ceuser555', 'p4ssw0dmexf4c3999')
-        self.training_data_timestamp = 0
 
-        # self.training_data_startup()
-        # This is commented out because at startup, uvicorn calls this __init__
-        # function in async mode, and db access is not allowed. Training data
-        # will be checked for updates, and downloaded if necessary on first call
-        # of /recognizer/predict.
+        self.channel = PUBSUB_CHANNEL
+        self.redis = None
+        self.pubsub = None
+        self.training_update_in_progress = False
+        self.redis_updated_timestamp = 0
+        redis_thread = threading.Thread(target=self.redis_loop)
+        redis_thread.daemon = True
+        redis_thread.start()
+        logger.info("Redis pubsub loop running in thread: %s" %redis_thread.name)
+
+    def redis_loop(self):
+        self.redis_connect()
+        while True:
+            try:
+                for item in self.pubsub.listen():
+                    if item['type'] == 'pmessage':
+                        logger.info("item: %s" %item)
+                        self.redis_handle_message(item)
+                        # data = json.loads(item['data'].decode('utf-8'))
+                        # self.broadcast_message(data)
+            except ConnectionError:
+                logger.error('Lost connection to redis.')
+                self.redis_connect()
+
+    def redis_connect(self):
+        while True:
+            # logger.debug('Trying to connect to redis ...')
+            logger.info('Trying to connect to redis ...')
+            try:
+                self.redis = redis.StrictRedis(host=self.training_data_hostname, password='S@ndhi11')
+                self.redis.ping()
+            except (ConnectionError, ConnectionRefusedError):
+                time.sleep(1)
+            else:
+                break
+        logger.info('Connected to redis on %s.' %self.training_data_hostname)
+        self.pubsub = self.redis.pubsub()
+        self.pubsub.psubscribe(self.channel)
+        logger.info('Pattern subscribed to channel %s' %self.channel)
+        self.redis_update_training_data("") # Blank means all subjects
+
+    def redis_handle_message(self, message):
+        # {'type': 'pmessage', 'pattern': b'training.*', 'channel': b'training.removed', 'data': b'Mary'}
+        if message['channel'] == b'training.added':
+            subject = message['data'].decode('utf8')
+            if subject == "":
+                logger.info("Updating training images for all subjects")
+            else:
+                logger.info("Updating training images for %s" %subject)
+            self.redis_update_training_data(subject)
+
+        elif message['channel'] == b'training.removed':
+            subject = message['data'].decode('utf8')
+            logger.info("Training images removed for %s" %subject)
+            self.redis_update_training_data("") # Blank means all subjects
+
 
     def training_data_startup(self):
         logger.info("training_data_startup()")
@@ -89,7 +144,7 @@ class FaceRecognizer(object):
 
     def read_trained_data(self):
         logger.info("read_trained_data()")
-        # self.set_update_in_progress(True)
+        self.training_update_in_progress = True
 
         # Create a new instance and load the trained data
         # Note: New instance is required when starting the server with --preload,
@@ -105,7 +160,7 @@ class FaceRecognizer(object):
         self.training_data_local_timestamp = time.time()
         dataFileTs = os.path.getmtime(self.training_data_filename)
         logger.info("training_data_local_timestamp=%d dataFileTs=%d" %(self.training_data_local_timestamp,dataFileTs))
-        # self.set_update_in_progress(False)
+        self.training_update_in_progress = False
 
     def prepare_training_data(self, data_folder_path):
         """
@@ -153,9 +208,8 @@ class FaceRecognizer(object):
 
                 #sample image path = training-data/Bruce/face1.png
                 image_path = subject_dir_path + "/" + image_name
-
                 image = cv2.imread(image_path)
-
+                logger.info("file size: %d. numpy image size: %d" %(os.path.getsize(image_path), len(image)))
                 face, rect = self.detect_face(image)
 
                 #we will ignore faces that are not detected
@@ -164,53 +218,6 @@ class FaceRecognizer(object):
                     faces.append(face)
                     #add label for this face
                     labels.append(label)
-
-        return faces, labels, subjects
-
-    def prepare_training_data_single(self, data_folder_path, subject):
-        """
-        this function will read a single person's training images, detect face from each image
-        and will return two lists of exactly same size, one list
-        of faces and another list of labels for each face
-        """
-
-        #get the directories (one directory for each subject) in data folder
-        dirs = os.listdir(data_folder_path)
-
-        #list to hold all subject faces
-        faces = []
-        #list to hold labels for all subjects
-        labels = []
-        #List to hold single subject name
-        subjects = [subject]
-
-        label = 0
-
-        #build path of directory containing images for current subject subject
-        #sample subject_dir_path = "training-data/Bruce"
-        subject_dir_path = data_folder_path + "/" + subject
-
-        #get the images names that are inside the given subject directory
-        subject_images_names = os.listdir(subject_dir_path)
-
-        #go through each image name, read image,
-        #detect face and add face to list of faces
-        for image_name in subject_images_names:
-
-            #ignore system files like .DS_Store
-            if image_name.startswith("."):
-                continue;
-
-            image_path = subject_dir_path + "/" + image_name
-            image = cv2.imread(image_path)
-            face, rect = self.detect_face(image)
-
-            #we will ignore faces that are not detected
-            if face is not None:
-                #add face to list of faces
-                faces.append(face)
-                #add label for this face
-                labels.append(label)
 
         return faces, labels, subjects
 
@@ -225,8 +232,148 @@ class FaceRecognizer(object):
             self.face_recognizer.setLabelInfo(index, subject)
             index += 1
 
+        logger.info("Performing training on %d subjects (%d images total)" %(len(subjects), len(labels)))
         self.face_recognizer.train(faces, np.array(labels))
+        logger.info("Saving trained data to %s" %self.training_data_filename)
         self.face_recognizer.save(self.training_data_filename)
+
+    def get_label_for_subject(self, subject):
+        # Loop through LabelInfo values and see if subject name exists.
+        # If found, return existing index otherwise return -1.
+        index = 0
+        label_info = self.face_recognizer.getLabelInfo(index)
+        while label_info != "":
+            logger.debug("getLabelInfo(%d)=%s" %(index, label_info))
+            if label_info == subject:
+                logger.info("%s found in training data. Label #%d" %(subject, index))
+                return index
+            index += 1
+            label_info = self.face_recognizer.getLabelInfo(index)
+        logger.info("%s is not in training data. Set size is #%d" %(subject, index))
+        return -1
+
+    def get_label_set_size(self):
+        # Loop through LabelInfo values to count them.
+        index = 0
+        label_info = self.face_recognizer.getLabelInfo(index)
+        while label_info != "":
+            index += 1
+            label_info = self.face_recognizer.getLabelInfo(index)
+        logger.info("get_label_set_size() is #%d" %(index))
+        return index
+
+    def redis_update_training_data(self, subject_name):
+        self.training_update_in_progress = True
+        faces, labels, subjects = self.redis_prepare_training_data(subject_name)
+        if faces is None:
+            logger.warn("No faces to process")
+            self.training_update_in_progress = False
+            return
+
+        logger.info("subjects=%s len(subjects)=%d len(labels)=%d" %(subjects, len(subjects), len(labels)))
+        logger.info("Performing training on %d subjects (%d images total)" %(len(subjects), len(labels)))
+
+        if len(subjects) > 1:
+            # Create a new instance to start clean.
+            self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+            # Save the subjects to their corresponding labels.
+            index = 0
+            for subject in subjects:
+                logger.info("setLabelInfo(%d, %s)" %(index, subject))
+                self.face_recognizer.setLabelInfo(index, subject)
+                index += 1
+            self.face_recognizer.train(faces, np.array(labels))
+        else:
+            index = self.get_label_set_size()
+            logger.info("setLabelInfo(%d, %s)" %(index, subjects[0]))
+            self.face_recognizer.setLabelInfo(index, subjects[0])
+            # update is like train, but for a single subject.
+            self.face_recognizer.update(faces, np.array(labels))
+
+        # This save step is no necessary since everything is in memory, but
+        # the output file could come in handy for debugging.
+        logger.info("Saving trained data to %s" %self.training_data_filename)
+        self.face_recognizer.save(self.training_data_filename)
+        self.training_update_in_progress = False
+
+    def redis_prepare_training_data(self, subject_name):
+        """
+        this function will read all persons' training images, detect face from each image
+        and will return two lists of exactly the same size, one list
+        of faces and another list of labels for each face
+        """
+        if self.redis == None:
+            logger.error("No connection to Redis server on %s" %self.training_data_hostname)
+            return None, None
+
+        try:
+            timestamp = float(self.redis.get(REDIS_UPDATED_TIMESTAMP))
+            logger.info("timestamp=%s redis_updated_timestamp=%s" %(timestamp, self.redis_updated_timestamp))
+            if self.redis_updated_timestamp == timestamp:
+                logger.info("Training data already up to date.")
+                return None, None, None
+            self.redis_updated_timestamp = timestamp
+        except Exception as e:
+            logger.error("Error getting REDIS_UPDATED_TIMESTAMP: %s" %e)
+
+        #list to hold all subject faces
+        faces = []
+        #list to hold labels for all subjects
+        labels = []
+        #List to hold subject names
+        subjects = []
+
+        label = -1;
+        total_bytes = 0
+        total_images = 0
+        pipeline = self.redis.pipeline()
+
+        start = time.time()
+
+        if subject_name == "":
+            # this means update the entire set of subjects
+            for key in self.redis.scan_iter("subject_images:*"):
+                subject_images_key = key.decode('utf-8')
+                subject = subject_images_key.split("subject_images:")[1]
+                subjects.append(subject)
+                logger.info("subject=[%s] subject_images_key=[%s]" %(subject, subject_images_key))
+                pipeline.lrange(subject_images_key, 0, -1)
+
+        else:
+            # We got a single subject name.
+            subjects.append(subject_name)
+            subject_images_key = "subject_images:%s" %subject_name
+            logger.info("subject_name=[%s] subject_images_key=[%s]" %(subject_name, subject_images_key))
+            pipeline.lrange(subject_images_key, 0, -1)
+
+            # Count existing LabelInfo values. Subtract 1 because we increment it below.
+            label = self.get_label_set_size() - 1
+
+        subject_images = pipeline.execute()
+        elapsed = "%.3f" %((time.time() - start)*1000)
+        logger.info("%s ms to download images for %d subjects in a batch from redis" %(elapsed, len(subject_images)))
+
+        for subject_image_set in subject_images:
+            logger.debug("len(subject_image_set)=%s" %len(subject_image_set))
+            label += 1
+
+            for image_bytes in subject_image_set:
+                total_bytes += len(image_bytes)
+                total_images += 1
+                image = imageio.imread(io.BytesIO(image_bytes)) # convert to numpy array
+                # logger.info("image size: %d. numpy image size: %d" %(len(image_bytes), len(image)))
+                face, rect = self.detect_face(image)
+
+                #we will ignore faces that are not detected
+                if face is not None:
+                    #add face to list of faces
+                    faces.append(face)
+                    #add label for this face
+                    labels.append(label)
+
+        elapsed = "%.3f" %((time.time() - start)*1000)
+        logger.info("%s ms to download and process %d images totaling %d bytes from redis" %(elapsed, total_images, total_bytes))
+        return faces, labels, subjects
 
     def save_subject_image(self, subject, image):
         #Save current image with timestamp
@@ -308,21 +455,18 @@ class FaceRecognizer(object):
                 ct.save()
         return ct.update_in_progress
 
-    def predict(self, test_img):
+    def predict(self, img):
         """
-        this function recognizes the person in image passed
-        and draws a rectangle around detected face with name of the
-        subject
+        this function recognizes the person in image passed and returns coordinates
+        of a rectangle around the detected face and the name of the subject.
         """
-        self.read_training_data_if_needed()
+        logger.info("predict() for %s" %threading.current_thread())
 
-        #make a copy of the image as we don't want to change original image
-        img = test_img.copy()
         #detect face from the image
         face, rect = self.detect_face(img)
 
         if face is None or rect is None:
-            #print("No face found for test_image ", type(test_img))
+            #print("No face found for img ", type(img))
             return None, None, None, None
 
         #predict the image using our face recognizer
@@ -333,75 +477,6 @@ class FaceRecognizer(object):
 
         # print(label_text, confidence, rect)
         return img, label_text, confidence, rect
-
-    def download_training_data_if_needed(self):
-        # Is training data current with server?
-        logger.info("Checking with FaceTrainingServer")
-        if not self.is_training_data_file_current():
-            self.download_training_data()
-            self.read_trained_data()
-            ret = "Downloaded and re-read training data"
-            logger.info(ret)
-            return ret
-        return "No update needed"
-
-    def read_training_data_if_needed(self):
-        if self.is_training_data_read_required():
-            logger.info("read_training_data_if_needed() Yes, read training data")
-            self.read_trained_data()
-            logger.info("Loaded training data")
-            return True
-        else:
-            return False
-
-    def is_training_data_read_required(self):
-        # Is loaded version of local training data current?
-        dataFileTs = os.path.getmtime(self.training_data_filename)
-        diff = dataFileTs - self.training_data_local_timestamp
-        logger.debug("is_training_data_read_required() diff=%d. Do we need to read training data?" %(diff))
-        return diff > 0
-
-    def is_training_data_file_current(self):
-        """
-        Makes call to centralized training data server to see if our copy is up to date.
-        Returns True if our copy is up to date, False if newer data is available.
-        """
-        self.set_update_in_progress(True)
-        self.training_data_timestamp, last_check_timestamp = self.get_db_timestamps()
-        now = time.time()
-        url = self.training_data_url + '/trainer/lastupdate/'
-        logger.info("is_training_data_file_current() url=%s" %url)
-        timestamp = int(requests.get(url, auth=self.training_data_auth, timeout=TRAINING_SERVER_TIMEOUT).content)
-        elapsed = "%.3f" %((time.time() - now)*1000)
-        logger.info("%s ms to get centralized training data timestamp: %d. local=%d" %(elapsed, timestamp, self.training_data_timestamp))
-        self.set_db_timestamps() #Updates last_check_timestamp only
-        self.set_update_in_progress(False)
-        if timestamp > self.training_data_timestamp:
-            logger.info("Newer training data available.")
-            return False
-        else:
-            logger.info("Local copy of centralized training data is current")
-            return True
-
-    def download_training_data(self):
-        """
-        Downloads centralized training data.
-        """
-        self.set_update_in_progress(True)
-        now = time.time()
-        url = self.training_data_url + '/trainer/download'
-        logger.info("Downloading from %s..." %url)
-        r = requests.get(url, auth=self.training_data_auth, timeout=TRAINING_SERVER_TIMEOUT)
-        if r.status_code != 200:
-            logger.error("Error downloading centralized training data. status_code=%d" %r.status_code)
-            return False
-        self.training_data_timestamp = int(r.headers.get('Last-Modified'))
-        open(self.training_data_filename, 'wb').write(r.content)
-        elapsed = "%.3f" %((time.time() - now)*1000)
-        logger.info("%s ms to download centralized training data. training_data_timestamp=%d" %(elapsed, self.training_data_timestamp))
-        self.set_db_timestamps(self.training_data_timestamp)
-        self.set_update_in_progress(False)
-        return True
 
 if __name__ == "__main__":
 

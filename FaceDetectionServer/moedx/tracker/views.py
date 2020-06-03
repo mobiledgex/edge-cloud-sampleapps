@@ -21,7 +21,6 @@ from tracker.apps import myFaceDetector, myFaceRecognizer, myOpenPose, myOpWrapp
 from tracker.apps import myObjectDetector
 
 import ast
-import cv2
 import numpy as np
 import json
 import base64
@@ -183,14 +182,14 @@ def recognizer_predict(request):
     """
     logger.debug(prepend_ip("Request received: %s" %request, request))
 
-    image = get_image_from_request(request, "face")
-    if not isinstance(image, np.ndarray):
-        return image
-
-    if myFaceRecognizer.is_update_in_progress() or myFaceRecognizer.read_training_data_if_needed():
+    if myFaceRecognizer.training_update_in_progress:
         error = "Training data update in progress"
         logger.error(prepend_ip("%s" %error, request))
         return HttpResponse(error, status=503)
+
+    image = get_image_from_request(request, "face")
+    if not isinstance(image, np.ndarray):
+        return image
 
     logger.debug(prepend_ip("Performing recognition process", request))
     now = time.time()
@@ -225,10 +224,6 @@ def recognizer_train(request):
         myFaceRecognizer.update_training_data(subject)
         elapsed = "%.3f" %((time.time() - start)*1000)
         logger.info(prepend_ip("%s ms to update training data" %elapsed, request))
-        start = time.time()
-        myFaceRecognizer.read_trained_data()
-        elapsed = "%.3f" %((time.time() - start)*1000)
-        logger.info(prepend_ip("%s ms to read trained data" %elapsed, request))
 
         return HttpResponse("OK\n")
 
