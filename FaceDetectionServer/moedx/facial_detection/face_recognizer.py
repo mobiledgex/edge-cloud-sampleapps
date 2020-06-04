@@ -46,6 +46,13 @@ class FaceRecognizer(object):
     """
 
     def __init__(self):
+        # Get password from environment variable.
+        try:
+            self.redis_server_password = os.environ['REDIS_SERVER_PASSWORD']
+        except (ValueError, KeyError) as e:
+            logger.error("Fatal error: REDIS_SERVER_PASSWORD environment variable is not available.")
+            sys.exit(1)
+
         self.working_dir = os.path.dirname(os.path.realpath(__file__))
 
         #Create face detector
@@ -96,10 +103,9 @@ class FaceRecognizer(object):
 
     def redis_connect(self):
         while True:
-            # logger.debug('Trying to connect to redis ...')
             logger.info('Trying to connect to redis ...')
             try:
-                self.redis = redis.StrictRedis(host=self.training_data_hostname, password='S@ndhi11')
+                self.redis = redis.StrictRedis(host=self.training_data_hostname, password=self.redis_server_password)
                 self.redis.ping()
             except (ConnectionError, ConnectionRefusedError):
                 time.sleep(1)
@@ -112,6 +118,7 @@ class FaceRecognizer(object):
         self.redis_update_training_data("") # Blank means all subjects
 
     def redis_handle_message(self, message):
+        # Example message:
         # {'type': 'pmessage', 'pattern': b'training.*', 'channel': b'training.removed', 'data': b'Mary'}
         if message['channel'] == b'training.added':
             subject = message['data'].decode('utf8')
@@ -125,22 +132,6 @@ class FaceRecognizer(object):
             subject = message['data'].decode('utf8')
             logger.info("Training images removed for %s" %subject)
             self.redis_update_training_data("") # Blank means all subjects
-
-
-    def training_data_startup(self):
-        logger.info("training_data_startup()")
-        try:
-            while self.is_update_in_progress():
-                logger.info("Sleeping while another worker updates training data")
-                time.sleep(2)
-            self.download_training_data_if_needed()
-        except Exception as e:
-            logger.error(e)
-
-        try:
-            self.read_training_data_if_needed()
-        except Exception as e:
-            logger.error(e)
 
     def read_trained_data(self):
         logger.info("read_trained_data()")

@@ -46,6 +46,13 @@ class FaceRecognizer(object):
     """
 
     def __init__(self):
+        # Get password from environment variable.
+        try:
+            self.redis_server_password = os.environ['REDIS_SERVER_PASSWORD']
+        except (ValueError, KeyError) as e:
+            logger.error("Fatal error: REDIS_SERVER_PASSWORD environment variable is not available.")
+            sys.exit(1)
+
         self.working_dir = os.path.dirname(os.path.realpath(__file__))
         self.training_data_filename = 'trained.yml'
         self.training_data_filepath = self.working_dir+"/"+self.training_data_filename
@@ -117,7 +124,7 @@ class FaceRecognizer(object):
         while True:
             logger.debug('Trying to connect to redis ...')
             try:
-                self.redis = redis.StrictRedis(host=self.training_data_hostname, password='S@ndhi11')
+                self.redis = redis.StrictRedis(host=self.training_data_hostname, password=self.redis_server_password)
                 self.redis.ping()
             except (ConnectionError, ConnectionRefusedError):
                 time.sleep(1)
