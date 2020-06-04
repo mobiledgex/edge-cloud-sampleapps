@@ -72,6 +72,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
     implementation "com.mobiledgex:matchingengine:${matchingengineVersion}"
+    implementation "com.mobiledgex:mel:${melVersion}"
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"

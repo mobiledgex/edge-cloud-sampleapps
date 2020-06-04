@@ -314,12 +314,8 @@ public class MatchingEngineHelper {
     private boolean findCloudlet(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
         // Find the closest cloudlet for your application to use. (Blocking call, or use findCloudletFuture):
         AppClient.FindCloudletRequest findCloudletRequest = null;
-        try {
-            findCloudletRequest
-                    = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).setCarrierName(carrierName).build();
-        } catch (PackageManager.NameNotFoundException nnfe) {
-            Log.e(TAG, "NameNotFoundException in create default find cloudlet request. " + nnfe.getMessage());
-        }
+        findCloudletRequest
+                = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).setCarrierName(carrierName).build();
         if(findCloudletRequest != null) {
             mClosestCloudlet = mMatchingEngine.findCloudlet(findCloudletRequest,
                     host, port, 10000);

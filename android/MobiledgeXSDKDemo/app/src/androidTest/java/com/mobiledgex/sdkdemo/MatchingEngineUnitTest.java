@@ -142,8 +142,6 @@ public class MatchingEngineUnitTest {
             assertTrue("ExecutionException finding cloudlet. " + ee.getMessage(), false);
         } catch (InterruptedException ie) {
             assertTrue("InterruptedException finding cloudlet. " + ie.getMessage(),  false);
-        } catch (NameNotFoundException nnfe) {
-            assertTrue("NameNotFoundException finding cloudlet. " + nnfe.getMessage(),  false);
         }
     }
 
@@ -163,7 +161,7 @@ public class MatchingEngineUnitTest {
         location.setLongitude(longitude);
 
         try {
-            AppClient.VerifyLocationRequest request = me.createVerifyLocationRequest(ctx, location, cellID, tags);
+            AppClient.VerifyLocationRequest request = me.createDefaultVerifyLocationRequest(ctx, location).build();
             AppClient.VerifyLocationReply reply = me.verifyLocation(request, GRPC_TIMEOUT_MS);
 
             assertTrue("Unable to get VerifyLocation", reply != null);
