@@ -29,8 +29,11 @@ import android.util.Pair;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.auth0.android.jwt.Claim;
 import com.auth0.android.jwt.DecodeException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
@@ -188,10 +191,20 @@ public class RegisterClientTest {
                 assertFalse("registerClientTest: DecodeException!", true);
             }
 
+            // Validate JWT
             boolean isExpired = jwt.isExpired(10); // 10 seconds leeway
             assertTrue(!isExpired);
+            Log.i(TAG, "Claims count: "+jwt.getClaims().keySet().size());
+            for (String key: jwt.getClaims().keySet()) {
+                Claim claim = jwt.getClaims().get(key);
+                Log.i(TAG, "key: "+key+" Claim: "+claim.asString());
+            }
 
-            // TODO: Validate JWT
+            Claim c = jwt.getClaim("key");
+            JsonObject claimJson = c.asObject(JsonObject.class);
+            String orgName = claimJson.get("orgname").getAsString();
+            assertEquals("orgname doesn't match!", "MobiledgeX", orgName);
+
             Log.i(TAG, "registerReply.getSessionCookie()="+reply.getSessionCookie());
             assertTrue(reply != null);
             assertTrue(reply.getStatus() == AppClient.ReplyStatus.RS_SUCCESS);
