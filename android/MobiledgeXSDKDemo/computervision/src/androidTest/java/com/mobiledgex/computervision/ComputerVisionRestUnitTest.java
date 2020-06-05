@@ -82,8 +82,12 @@ public class ComputerVisionRestUnitTest {
         me.setAllowSwitchIfNoSubscriberInfo(true);
 
         try {
-            AppClient.RegisterClientRequest registerRequest = me.createRegisterClientRequest(ctx, orgName, appName, appVers, carrierName, authToken, cellID, uniqueIDType, uniqueID, tags);
+            AppClient.RegisterClientRequest registerRequest = me.createDefaultRegisterClientRequest(ctx, orgName)
+                    .setAppName(appName)
+                    .setAppVers(appVers)
+                    .build();
             AppClient.RegisterClientReply registerReply = me.registerClient(registerRequest, GRPC_TIMEOUT_MS);
+            Thread.sleep(4000);
 
             if (registerReply == null) {
                 Log.e(TAG, "Register Client reply is null");
@@ -215,7 +219,7 @@ public class ComputerVisionRestUnitTest {
      */
     @Test()
     public void testDetectorDetectEndpoint() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = registerAndFindCloudlet(ctx);
 
@@ -243,7 +247,7 @@ public class ComputerVisionRestUnitTest {
      */
     @Test
     public void testRecognizerPredictEndpoint() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = registerAndFindCloudlet(ctx);
 
@@ -272,7 +276,7 @@ public class ComputerVisionRestUnitTest {
      */
     @Test
     public void testRecognizerAddEndpoint() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = registerAndFindCloudlet(ctx);
 
@@ -302,7 +306,7 @@ public class ComputerVisionRestUnitTest {
      */
     @Test
     public void testRecognizerTrainEndpoint() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = "http://opencv.facetraining.mobiledgex.net/8009";
 
@@ -319,7 +323,7 @@ public class ComputerVisionRestUnitTest {
      */
     @Test
     public void testOpenposeDetectEndpoint() {
-        Context ctx = InstrumentationRegistry.getTargetContext();
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = "http://posedetection.defaultedge.mobiledgex.net:8008";
 
