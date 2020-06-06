@@ -30,6 +30,7 @@ using System.Net.Http;
 
 using DistributedMatchEngine;
 using DistributedMatchEngine.PerformanceMetrics;
+using MobiledgeX;
 using System.Diagnostics;
 using System.Threading;
 using System.Net;
@@ -75,7 +76,7 @@ namespace MobiledgeXPingPongGame {
     GameObject[] players;
     GameObject ghostBall; // Just one.
     GameObject ghostPlayer; // Local player.
-    WsClient client;
+    MobiledgeXSocketClient webSocketClient;
 
     GameSession gameSession = new GameSession();
 
@@ -103,14 +104,16 @@ namespace MobiledgeXPingPongGame {
     public InputField roomIdInput;
 
     // Use this for initialization
-    async Task Start()
+    void Start()
     {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
       integration = new MobiledgeXIntegration();
-      integration.useWifiOnly(true);
 
+#if UNITY_EDITOR
+      integration.UseWifiOnly(true);
+#endif
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
       {
@@ -120,7 +123,7 @@ namespace MobiledgeXPingPongGame {
       server = "ws://" + host + ":" + port;
       theBall = GameObject.FindGameObjectWithTag("Ball");
       players = GameObject.FindGameObjectsWithTag("Player");
-      client = new WsClient(integration);
+      webSocketClient = new MobiledgeXSocketClient();
       gameSession.currentGs = new GameState();
       gameSession.status = STATUS.LOBBY;
 
@@ -135,6 +138,22 @@ namespace MobiledgeXPingPongGame {
       roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
       roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
 
+      StartCoroutine(DMECoroutine());
+    }
+
+    IEnumerator DMECoroutine()
+    {
+      if (Input.location.status != LocationServiceStatus.Running || Input.location.status != LocationServiceStatus.Initializing)
+      {
+        // (re)start location with a coroutine:
+        yield return StartCoroutine(MobiledgeX.LocationService.InitalizeLocationService(continuousLocationService: false));
+      }
+
+      DMECalls();
+    }
+
+    async void DMECalls()
+    {
       try
       {
         // Register and find cloudlet:
@@ -193,23 +212,23 @@ namespace MobiledgeXPingPongGame {
       clog("useAltServer=" + useAltServer + " host=" + host + " edgeCloudletStr=" + edgeCloudletStr);
       queryParams = "?roomid=" + roomId;
 
-      if (client.isOpen())
+      if (webSocketClient.isOpen())
       {
-        client.Dispose();
-        client = new WsClient(integration);
+        webSocketClient.Dispose();
+        webSocketClient = new MobiledgeXSocketClient();
       }
 
       if (useAltServer)
       {
         server = "ws://" + host + ":" + port;
         edgeCloudletUri = new Uri(server + queryParams);
-        await client.Connect(edgeCloudletUri);
+        await webSocketClient.Connect(edgeCloudletUri);
       }
       else
       {
         try
         {
-          await client.Connect(queryParams);
+          await webSocketClient.Connect(queryParams);
         }
         catch (Exception e)
         {
@@ -219,23 +238,23 @@ namespace MobiledgeXPingPongGame {
           return;
         }
       }
-      clog("Connection to status: " + client.isOpen());
+      clog("Connection to status: " + webSocketClient.isOpen());
     }
 
     void Update()
     {
       // Receive runs in a background filling the receive concurrent queue.
-      if (client == null)
+      if (webSocketClient == null)
       {
         return;
       }
 
-      stopWatch.Start();
+      /*stopWatch.Start();
       // If Ping is running, print:
-      if (integration.netTest.runTest)
+      if (integration.matchingEngine.netTest.runTest)
       {
         long elapsed = (long)stopWatch.Elapsed.TotalMilliseconds;
-        if (elapsed > integration.netTest.TestTimeoutMS)
+        if (elapsed > integration.matchingEngine.netTest.TestTimeoutMS)
         {
           stopWatch.Reset();
           foreach(NetTest.Site s in integration.netTest.sites)
@@ -248,9 +267,9 @@ namespace MobiledgeXPingPongGame {
             }
           }
         }
-      }
+      }*/
 
-      var cqueue = client.receiveQueue;
+      var cqueue = webSocketClient.receiveQueue;
       string msg;
       while (cqueue.TryPeek(out msg))
       {
@@ -281,7 +300,7 @@ namespace MobiledgeXPingPongGame {
     // TODO: Should manage the thread runnables.
     private void OnApplicationFocus(bool focus)
     {
-      if (client != null)
+      /*if (webSocketClient != null)
       {
         try
         {
@@ -294,20 +313,20 @@ namespace MobiledgeXPingPongGame {
         {
           clog("Exception hit: " + e.Message);
         }
-      }
+      }*/
     }
     // TODO: Should manage the thread runnables.
     void OnApplicationPause(bool pauseStatus)
     {
       isPaused = pauseStatus;
-      if (client != null)
+      /*if (webSocketClient != null)
       {
         if (integration != null && integration.netTest != null)
         {
           integration.netTest.doTest(!isPaused);
           clog("NetTest pauseStatus: " + integration.netTest.runTest);
         }
-      }
+      }*/
     }
 
     // Start() is a time to do this, but can change if the device moves to a new location.
@@ -317,10 +336,6 @@ namespace MobiledgeXPingPongGame {
     {
       // For Demo App purposes, it's the TCP app port. Your app may point somewhere else:
       NetTest.Site site;
-
-      string aCarrierName = integration.GetCarrierName();
-      clog("aCarrierName: " + aCarrierName);
-
 
       clog("Calling DME to register client...");
       bool registered = false;
@@ -333,84 +348,73 @@ namespace MobiledgeXPingPongGame {
       }
       else
       {
-        FindCloudletReply reply;
+        bool foundCloudlet;
         clog("Finding Cloudlet...");
-        reply = await integration.FindCloudlet();
+        foundCloudlet = await integration.FindCloudlet();
 
 
         // Handle reply status:
-        bool found = false;
-        if (reply == null)
+        if (!foundCloudlet)
         {
           clog("FindCloudlet call failed.");
           return "";
         }
 
-        switch (reply.status)
+        FindCloudletReply reply = integration.FindCloudletReply;
+        if (reply == null)
         {
-          case FindCloudletReply.FindStatus.FIND_UNKNOWN:
-            clog("FindCloudlet status unknown. No edge cloudlets.");
-            break;
-          case FindCloudletReply.FindStatus.FIND_NOTFOUND:
-            clog("FindCloudlet Found no edge cloudlets in range.");
-            break;
-          case FindCloudletReply.FindStatus.FIND_FOUND:
-            found = true;
-            break;
-
+          clog("FindCloudletReply is null");
+          return "";
         }
+        // Edge cloudlets found!
+        clog("Edge cloudlets found!");
 
-        if (found)
+        // Where is this app specific edge enabled cloud server:
+        clog("GPS location of cloudlet: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
+
+        // Where is the URI for this app specific edge enabled cloud server:
+        clog("fqdn: " + reply.fqdn);
+        // AppPorts?
+        clog("On ports: ");
+
+        foreach (AppPort ap in reply.ports)
         {
-          // Edge cloudlets found!
-          clog("Edge cloudlets found!");
+          clog("Port: proto: " + ap.proto + ", prefix: " +
+              ap.fqdn_prefix + ", path_prefix: " + ap.path_prefix + ", port: " +
+              ap.public_port);
 
-          // Where is this app specific edge enabled cloud server:
-          clog("GPS location: longitude: " + reply.cloudlet_location.longitude + ", latitude: " + reply.cloudlet_location.latitude);
-
-          // Where is the URI for this app specific edge enabled cloud server:
-          clog("fqdn: " + reply.fqdn);
-          // AppPorts?
-          clog("On ports: ");
-
-          foreach (AppPort ap in reply.ports)
+          // We're looking for one of the TCP app ports:
+          if (ap.proto == LProto.L_PROTO_TCP)
           {
-            clog("Port: proto: " + ap.proto + ", prefix: " +
-                ap.fqdn_prefix + ", path_prefix: " + ap.path_prefix + ", port: " +
-                ap.public_port);
-
-            // We're looking for one of the TCP app ports:
-            if (ap.proto == LProto.L_PROTO_TCP)
+            // Add to test targets.
+            if (ap.path_prefix == "")
             {
-              // Add to test targets.
-              if (ap.path_prefix == "")
-              {
-                site = new NetTest.Site {
-                  host = ap.fqdn_prefix + reply.fqdn,
-                  port = ap.public_port };
-                site.testType = NetTest.TestType.CONNECT;
-              }
-              else
-              {
-                site = new NetTest.Site {
-                  L7Path = ap.fqdn_prefix + reply.fqdn + ":" + ap.public_port + ap.path_prefix
-                };
-                site.testType = NetTest.TestType.CONNECT;
-              }
-              if (useAltServer)
-              {
-                site.host = host;
-              }
-              l7Path = site.L7Path;
-              integration.netTest.sites.Enqueue(site);
+              site = new NetTest.Site {
+                host = ap.fqdn_prefix + reply.fqdn,
+                port = ap.public_port };
+              site.testType = NetTest.TestType.CONNECT;
             }
+            else
+            {
+              site = new NetTest.Site {
+                L7Path = ap.fqdn_prefix + reply.fqdn + ":" + ap.public_port + ap.path_prefix
+              };
+              site.testType = NetTest.TestType.CONNECT;
+            }
+            if (useAltServer)
+            {
+              site.host = host;
+            }
+            l7Path = site.L7Path;
+            // integration.netTest.sites.Enqueue(site);
           }
-          integration.netTest.doTest(true);
-
-          // We happen to know it's the first port for this App:
-          host = reply.ports[0].fqdn_prefix + reply.fqdn;
-          port = reply.ports[0].public_port;
         }
+        // integration.netTest.doTest(true);
+
+        // We happen to know it's the first port for this App:
+        host = reply.ports[0].fqdn_prefix + reply.fqdn;
+        port = reply.ports[0].public_port;
+        
       }
 
       // The WebSocket URI:
@@ -439,7 +443,7 @@ namespace MobiledgeXPingPongGame {
         playerScore2 = PlayerScore2
       };
 
-      client.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
+      webSocketClient.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
     }
 
     public void UpdateBall()
@@ -459,7 +463,7 @@ namespace MobiledgeXPingPongGame {
         velocity = new Velocity(ball.velocity)
       };
 
-      client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+      webSocketClient.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
 
     public void UpdatePlayer()
@@ -495,7 +499,7 @@ namespace MobiledgeXPingPongGame {
         velocity = new Velocity(selected.velocity)
       };
 
-      client.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+      webSocketClient.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
 
     public void SendContactEvent(PlayerControls c, BallControl b, Collision2D collision)
@@ -511,7 +515,7 @@ namespace MobiledgeXPingPongGame {
         position = new Position(b.rb2d.position),
         velocity = new Velocity(b.rb2d.velocity)
       };
-      client.Send(Messaging<ContactEvent>.Serialize(ce));
+      webSocketClient.Send(Messaging<ContactEvent>.Serialize(ce));
     }
 
     void SendRestart()
@@ -520,7 +524,7 @@ namespace MobiledgeXPingPongGame {
       gr.gameId = gameSession.gameId;
       gr.balls = new Ball[1];
       gr.balls[0] = Ball.CopyBall(theBall.GetComponent<BallControl>());
-      client.Send(Messaging<GameRestart>.Serialize(gr));
+      webSocketClient.Send(Messaging<GameRestart>.Serialize(gr));
     }
 
     // Separate from Update()
@@ -806,12 +810,12 @@ namespace MobiledgeXPingPongGame {
     {
       GameState gameState = GatherGameState();
       gameState.type = "gameState";
-      gameState.source = "client";
+      gameState.source = "webSocketClient";
 
       string jsonStr = Messaging<GameState>.Serialize(gameState);
       clog("UpdateServer: " + jsonStr);
       MessageWrapper wrapped = MessageWrapper.WrapTextMessage(jsonStr);
-      client.Send(Messaging<MessageWrapper>.Serialize(wrapped));
+      webSocketClient.Send(Messaging<MessageWrapper>.Serialize(wrapped));
 
       gameSession.currentGs = gameState;
 
