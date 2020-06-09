@@ -103,7 +103,7 @@ namespace MobiledgeXPingPongGame {
     public Text uiConsole;
     public InputField roomIdInput;
 
-    NetTest netTest;
+    NetTest netTest = null;
 
     // Use this for initialization
     async void Start()
@@ -218,6 +218,8 @@ namespace MobiledgeXPingPongGame {
       {
           edgeCloudletStr = integration.GetUrl("ws");
           clog("Found Cloudlet from DME result: [" + edgeCloudletStr + "]");
+          // host = integration.GetHost();
+          // port = integration.GetPort();
       }
       catch (GetConnectionException gce)
       {
@@ -293,7 +295,8 @@ namespace MobiledgeXPingPongGame {
       {
         try
         {
-          await webSocketClient.Connect(queryParams);
+          edgeCloudletUri = new Uri(edgeCloudletStr + queryParams);
+          await webSocketClient.Connect(edgeCloudletUri);
         }
         catch (Exception e)
         {
@@ -310,6 +313,10 @@ namespace MobiledgeXPingPongGame {
     {
       // Receive runs in a background filling the receive concurrent queue.
       if (webSocketClient == null)
+      {
+        return;
+      }
+      if (netTest == null)
       {
         return;
       }
