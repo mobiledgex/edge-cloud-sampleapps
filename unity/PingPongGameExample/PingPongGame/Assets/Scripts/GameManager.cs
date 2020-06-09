@@ -104,7 +104,7 @@ namespace MobiledgeXPingPongGame {
     public InputField roomIdInput;
 
     // Use this for initialization
-    void Start()
+    async void Start()
     {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
@@ -138,17 +138,7 @@ namespace MobiledgeXPingPongGame {
       roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
       roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
 
-      StartCoroutine(DMECoroutine());
-    }
-
-    IEnumerator DMECoroutine()
-    {
-      if (Input.location.status != LocationServiceStatus.Running || Input.location.status != LocationServiceStatus.Initializing)
-      {
-        // (re)start location with a coroutine:
-        yield return StartCoroutine(MobiledgeX.LocationService.InitalizeLocationService(continuousLocationService: false));
-      }
-
+      MobiledgeX.LocationService.ensurePermissions();
       DMECalls();
     }
 
@@ -166,7 +156,6 @@ namespace MobiledgeXPingPongGame {
         // This might be inside a thread update loop. Re-register client and check periodically.
         // VerifyLocation will fail if verification is unavailable at the carrier.
         bool verifiedLocation = await integration.VerifyLocation();
-        //bool verifiedLocation = false;
 
         // Decide what to do with location status.
         clog("VerifiedLocation: " + verifiedLocation);
