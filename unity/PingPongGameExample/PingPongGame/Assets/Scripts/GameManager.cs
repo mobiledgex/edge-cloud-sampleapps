@@ -106,7 +106,7 @@ namespace MobiledgeXPingPongGame {
     NetTest netTest = null;
 
     // Use this for initialization
-    async void Start()
+    async Task Start()
     {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
