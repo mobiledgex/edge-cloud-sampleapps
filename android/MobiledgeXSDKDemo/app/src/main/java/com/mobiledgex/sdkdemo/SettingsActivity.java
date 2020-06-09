@@ -24,6 +24,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -47,6 +48,9 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.mobiledgex.sdkdemo.MainActivity.DEFAULT_CARRIER_NAME;
+import static com.mobiledgex.sdkdemo.MainActivity.DEFAULT_DME_HOSTNAME;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -83,7 +87,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                                 ? listPreference.getEntries()[index]
                                 : null);
             } else {
-                // For all other preferences, set the summary to the value's
+\                // For all other preferences, set the summary to the value's
                 // simple string representation.
                 preference.setSummary(stringValue);
             }
@@ -223,12 +227,31 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     }
 
     // General Preferences.
-    public static class GeneralSettingsFragment extends PreferenceFragment {
+    public static class GeneralSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+        String prefKeyDmeHostname;
+        String prefKeyOperatorName;
+        String prefKeyDefaultDmeHostname;
+        String prefKeyDefaultOperatorName;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
+            Log.i(TAG, "onCreate()");
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
             setHasOptionsMenu(true);
+
+            prefKeyDefaultOperatorName = getResources().getString(R.string.pref_default_operator_name);
+            prefKeyDefaultDmeHostname = getResources().getString(R.string.pref_default_dme_hostname);
+            prefKeyOperatorName = getResources().getString(R.string.pref_operator_name);
+            prefKeyDmeHostname = getResources().getString(R.string.pref_dme_hostname);
+
+            // Initialize summary values for these keys.
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            onSharedPreferenceChanged(prefs, prefKeyDefaultOperatorName);
+            onSharedPreferenceChanged(prefs, prefKeyDefaultDmeHostname);
+            onSharedPreferenceChanged(prefs, prefKeyOperatorName);
+            // prefKeyDmeHostname does not need initialized here, because it is initialized with
+            // the results of the dme-list.html call below.
 
             // Instantiate the RequestQueue.
             RequestQueue queue = Volley.newRequestQueue(getActivity());
@@ -241,27 +264,29 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
-                            Log.i(TAG, "dme-inventory response="+response);
+                            Log.i(TAG, "dme-inventory response=" + response);
                             try {
                                 List<String> listNames = new ArrayList<String>();
                                 List<String> listAddresses = new ArrayList<String>();
                                 JSONArray jsonArray = new JSONArray(response);
-                                Log.d(TAG, "jsonArray="+jsonArray);
+                                Log.d(TAG, "jsonArray=" + jsonArray);
                                 for(int i = 0; i < jsonArray.length(); i++) {
                                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                                     String name = jsonObject.getString("name");
                                     String address = jsonObject.getString("address");
                                     listNames.add(name);
                                     listAddresses.add(address);
-                                    Log.d(TAG, "name="+name+" address="+address);
+                                    Log.d(TAG, "name=" + name + " address=" + address);
                                 }
                                 CharSequence[] charSequenceNames = listNames.toArray(new CharSequence[listNames.size()]);
                                 CharSequence[] charSequenceAddresses = listAddresses.toArray(new CharSequence[listAddresses.size()]);
-                                String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
+                                String prefKeyDmeHostname = getResources().getString(R.string.pref_dme_hostname);
                                 PreferenceScreen screen = getPreferenceScreen();
                                 ListPreference dmeListPref = (ListPreference) screen.findPreference(prefKeyDmeHostname);
                                 dmeListPref.setEntries(charSequenceNames);
                                 dmeListPref.setEntryValues(charSequenceAddresses);
+                                String summary = getResources().getString(R.string.pref_summary_dme_hostname);
+                                dmeListPref.setSummary(summary + ": " + getRegionFromDme(dmeListPref));
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -269,7 +294,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    Log.e(TAG, "That didn't work! error="+error);
+                    Log.e(TAG, "That didn't work! error=" + error);
                 }
             });
 
@@ -286,6 +311,64 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             }
             return super.onOptionsItemSelected(item);
         }
+
+        @Override
+        public void onResume() {
+            Log.i(TAG, "onResume()");
+            super.onResume();
+            // Set up a listener whenever a key changes
+            getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            // Set up a listener whenever a key changes
+            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            Log.i(TAG, "onSharedPreferenceChanged(" + key + ")");
+            Preference pref = findPreference(key);
+            if (key.equals(prefKeyDefaultDmeHostname)) {
+                String summary = getResources().getString(R.string.pref_summary_default_dme_hostname);
+                String prefKeyValueDefaultDmeHostname = getResources().getString(R.string.pref_value_default_dme_hostname);
+                String dmeHostname = sharedPreferences.getString(prefKeyValueDefaultDmeHostname, DEFAULT_DME_HOSTNAME);
+                summary = summary + ": " + dmeHostname;
+                pref.setSummary(summary);
+            }
+
+            if (key.equals(prefKeyDefaultOperatorName)) {
+                String summary = getResources().getString(R.string.pref_summary_default_operator_name);
+                String prefKeyValueDefaultOperatorName = getResources().getString(R.string.pref_value_default_operator_name);
+                String operatorName = sharedPreferences.getString(prefKeyValueDefaultOperatorName, DEFAULT_CARRIER_NAME);
+                summary = summary + ": " + operatorName;
+                pref.setSummary(summary);
+            }
+
+            if (key.equals(prefKeyDmeHostname)) {
+                String summary = getResources().getString(R.string.pref_summary_dme_hostname);
+                pref.setSummary(summary + ": " + getRegionFromDme((ListPreference) pref));
+            }
+
+            if (key.equals(prefKeyOperatorName)) {
+                String summary = getResources().getString(R.string.pref_summary_operator_name);
+                pref.setSummary(summary + ": " + ((EditTextPreference)pref).getText());
+            }
+        }
+    }
+
+    private static String getRegionFromDme(ListPreference dmeListPref) {
+        String region;
+        // See if we can get a simplified version of the selected region.
+        int index = dmeListPref.findIndexOfValue(dmeListPref.getValue());
+        if (index >= 0) {
+            region = (String) dmeListPref.getEntries()[index];
+        } else {
+            region = dmeListPref.getValue();
+        }
+        return region;
     }
 
     // Face Detection Preferences.

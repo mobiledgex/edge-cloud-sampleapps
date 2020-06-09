@@ -33,6 +33,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.mobiledgex.matchingengine.ChannelIterator;
+import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import java.io.IOException;
@@ -122,7 +123,6 @@ public class MatchingEngineHelper {
             final Activity ctx = (Activity) mContext;
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
             boolean locationVerificationAllowed = prefs.getBoolean(mContext.getResources().getString(R.string.preference_matching_engine_location_verification), false);
-            Log.i(TAG, "carrierName:" + mCarrierName);
 
             if(!locationVerificationAllowed) {
                 Snackbar snackbar = Snackbar.make(mView, "Enhanced Location not enabled", Snackbar.LENGTH_LONG);
@@ -285,9 +285,10 @@ public class MatchingEngineHelper {
     }
 
     private boolean getAppInstList(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
-        // Location Verification (Blocking, or use verifyLocationFuture):
+        // getAppInstList (Blocking, or use getAppInstListFuture):
         AppClient.AppInstListRequest appInstListRequest
-                = mMatchingEngine.createDefaultAppInstListRequest(ctx, location).setCarrierName(carrierName).build();
+                = mMatchingEngine.createDefaultAppInstListRequest(ctx, location).setCarrierName(carrierName).setLimit(6).build();
+        // TODO: Make setLimit value a preference.
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     host, port, 10000);

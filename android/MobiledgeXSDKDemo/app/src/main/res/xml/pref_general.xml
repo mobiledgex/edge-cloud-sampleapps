@@ -5,17 +5,33 @@
     android:layout_width="match_parent"
     android:id="@+id/matching_engine_general_preference_screen">
 
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:disableDependentsState="true"
+        android:key="@string/pref_default_dme_hostname"
+        android:summary="@string/pref_summary_default_dme_hostname"
+        android:title="@string/pref_title_default_dme_hostname" />
+
     <ListPreference
+        android:dependency="@string/pref_default_dme_hostname"
         android:defaultValue="eu-mexdemo.dme.mobiledgex.net:50051"
         android:entries="@array/pref_dme_hostname_titles"
         android:entryValues="@array/pref_dme_hostname_values"
-        android:key="@string/dme_hostname"
+        android:key="@string/pref_dme_hostname"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:summary="@string/pref_summary_dme_hostname"
         android:title="@string/pref_title_dme_hostname" />
 
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:disableDependentsState="true"
+        android:key="@string/pref_default_operator_name"
+        android:summary="@string/pref_summary_default_operator_name"
+        android:title="@string/pref_title_default_operator_name" />
+
     <EditTextPreference
+        android:dependency="@string/pref_default_operator_name"
         android:defaultValue="TDG"
         android:key="@string/pref_operator_name"
         android:selectAllOnFocus="true"
