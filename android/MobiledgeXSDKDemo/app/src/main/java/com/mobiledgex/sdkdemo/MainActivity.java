@@ -43,6 +43,8 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import android.preference.PreferenceScreen;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.Menu;
@@ -103,6 +105,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -138,6 +141,8 @@ public class MainActivity extends AppCompatActivity
     public static final int RC_STATS = 2;
     public static final String DEFAULT_DME_HOSTNAME = "eu-mexdemo.dme.mobiledgex.net";
     public static final String DEFAULT_CARRIER_NAME = "GDDT";
+    private String mDefaultCarrierName;
+    private String mDefaultDmeHostname;
     private String mHostname;
     private String mCarrierName;
     private boolean mNetworkSwitchingAllowed;
@@ -271,8 +276,10 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
-        onSharedPreferenceChanged(prefs, getResources().getString(R.string.dme_hostname));
-        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_operator_name));
+//        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_dme_hostname));
+//        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_operator_name));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_dme_hostname));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_operator_name));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.upload_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
@@ -605,7 +612,8 @@ public class MainActivity extends AppCompatActivity
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e(TAG, "Non-200 response for checkForLocSimulator. error="+error);
+                Log.e(TAG, "Non-200 response for checkForLocSimulator. error="+error+". " +
+                        "This is OK and just means there's no location simulator for this DME.");
                 mAllowLocationSimulatorUpdate = false;
             }
         });
@@ -1141,8 +1149,10 @@ public class MainActivity extends AppCompatActivity
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
         String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
-        String prefKeyDmeHostname = getResources().getString(R.string.dme_hostname);
+        String prefKeyDmeHostname = getResources().getString(R.string.pref_dme_hostname);
         String prefKeyOperatorName = getResources().getString(R.string.pref_operator_name);
+        String prefKeyDefaultDmeHostname = getResources().getString(R.string.pref_default_dme_hostname);
+        String prefKeyDefaultOperatorName = getResources().getString(R.string.pref_default_operator_name);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
@@ -1174,43 +1184,61 @@ public class MainActivity extends AppCompatActivity
             CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
         }
 
+        if (key.equals(prefKeyDefaultDmeHostname) || key.equals(prefKeyDefaultOperatorName)) {
+            // Temporary instance just to get these values.
+            MatchingEngine me = new MatchingEngine(this);
+            mDefaultCarrierName = me.getCarrierName(this);
+            mDefaultDmeHostname = new StringBuilder(mDefaultCarrierName)
+                    .insert(3, "-").append(".dme.mobiledgex.net").toString();
+            Log.i(TAG, "mDefaultCarrierName="+mDefaultCarrierName+" mDefaultDmeHostname="+mDefaultDmeHostname);
+        }
+
+        if (key.equals(prefKeyDefaultDmeHostname)) {
+            boolean useDefault = sharedPreferences.getBoolean(prefKeyDefaultDmeHostname, true);
+            if (useDefault) {
+                String prefKeyValueDefaultDmeHostname = getResources().getString(R.string.pref_value_default_dme_hostname);
+                sharedPreferences.edit().putString(prefKeyValueDefaultDmeHostname, mDefaultDmeHostname).apply();
+                setDmeHostname(mDefaultDmeHostname);
+            } else {
+                // Change the key name so the normal DME hostname handling code will be used below.
+                key = prefKeyDmeHostname;
+            }
+        }
+
+        if (key.equals(prefKeyDefaultOperatorName)) {
+            boolean useDefault = sharedPreferences.getBoolean(prefKeyDefaultOperatorName, true);
+            if (useDefault) {
+                String prefKeyValueDefaultOperatorName = getResources().getString(R.string.pref_value_default_operator_name);
+                sharedPreferences.edit().putString(prefKeyValueDefaultOperatorName, mDefaultCarrierName).apply();
+                setCarrierName(mDefaultCarrierName);
+            } else {
+                // Change the key name so the normal Operator name handling code will be used below.
+                key = prefKeyOperatorName;
+            }
+        }
+
         if (key.equals(prefKeyDmeHostname)) {
             String hostAndPort = sharedPreferences.getString(prefKeyDmeHostname, DEFAULT_DME_HOSTNAME+":"+"50051");
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+hostAndPort);
-            mClosestCloudletHostname = null;
+            String dmeHostname;
 
-            //Value is in this format: eu-mexdemo.dme.mobiledgex.net:50051
-            String domainAndPortRegex = "^(((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}):\\d+$";
-            Pattern domainAndPortPattern = Pattern.compile(domainAndPortRegex);
-            Matcher matcher = domainAndPortPattern.matcher(hostAndPort);
-            if(matcher.find()) {
-                mHostname = matcher.group(1);
-            } else {
-                String message = "Invalid DME hostname and port: "+hostAndPort+" Default value will be used.";
+            try {
+                dmeHostname = parseDmeHost(hostAndPort);
+            } catch (HostParseException e) {
+                String message = e.getLocalizedMessage()+" Default value will be used.";
                 Log.e(TAG, message);
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-                mHostname = DEFAULT_DME_HOSTNAME;
+                dmeHostname = DEFAULT_DME_HOSTNAME;
             }
-            Log.i(TAG, "mHostname from preferences: "+mHostname);
-            if(mMatchingEngineHelper != null) {
-                mMatchingEngineHelper.setHostname(mHostname);
-                //Clear list so we don't show old cloudlets as transparent
-                CloudletListHolder.getSingleton().getCloudletList().clear();
-                getCloudlets();
-            }
-            checkForLocSimulator(mHostname);
+
+            Log.i(TAG, "dmeHostname from preferences: "+dmeHostname);
+            setDmeHostname(dmeHostname);
         }
 
         if (key.equals(prefKeyOperatorName)) {
-            mCarrierName = sharedPreferences.getString(prefKeyOperatorName, DEFAULT_CARRIER_NAME);
-            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mCarrierName);
-            mClosestCloudletHostname = null;
-            if(mMatchingEngineHelper != null) {
-                mMatchingEngineHelper.setCarrierName(mCarrierName);
-                //Clear list so we don't show old cloudlets as transparent
-                CloudletListHolder.getSingleton().getCloudletList().clear();
-                getCloudlets();
-            }
+            String carrierName = sharedPreferences.getString(prefKeyOperatorName, DEFAULT_CARRIER_NAME);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+carrierName);
+            setCarrierName(carrierName);
         }
 
         if (key.equals(prefKeyDownloadSize)) {
@@ -1259,6 +1287,42 @@ public class MainActivity extends AppCompatActivity
             //Always set the value back to something so that either clicking Yes or No in the dialog
             //will activate this "changed" call.
             sharedPreferences.edit().putString(prefKeyResetFdHosts, "XXX_garbage_value").apply();
+        }
+    }
+
+    public void setCarrierName(String carrierName) {
+        mCarrierName = carrierName;
+        mClosestCloudletHostname = null;
+        if(mMatchingEngineHelper != null) {
+            mMatchingEngineHelper.setCarrierName(carrierName);
+            //Clear list so we don't show old cloudlets as transparent
+            CloudletListHolder.getSingleton().getCloudletList().clear();
+            getCloudlets();
+        }
+    }
+
+    public void setDmeHostname(String hostname) {
+        mHostname = hostname;
+        mClosestCloudletHostname = null;
+        if(mMatchingEngineHelper != null) {
+            mMatchingEngineHelper.setHostname(mHostname);
+            //Clear list so we don't show old cloudlets as transparent
+            CloudletListHolder.getSingleton().getCloudletList().clear();
+            getCloudlets();
+        }
+        checkForLocSimulator(mHostname);
+    }
+
+    public static String parseDmeHost(String hostAndPort) throws HostParseException {
+        //Value is in this format: eu-mexdemo.dme.mobiledgex.net:50051
+        String domainAndPortRegex = "^(((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}):\\d+$";
+        Pattern domainAndPortPattern = Pattern.compile(domainAndPortRegex);
+        Matcher matcher = domainAndPortPattern.matcher(hostAndPort);
+        if(matcher.find()) {
+            return matcher.group(1);
+        } else {
+            String message = "Invalid DME hostname and port: "+hostAndPort;
+            throw new HostParseException(message);
         }
     }
 
