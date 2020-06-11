@@ -16,6 +16,7 @@
 from django.apps import AppConfig
 from facerec.FaceRecognizer import FaceRecognizer
 import logging
+import redis
 
 logger = logging.getLogger(__name__)
 

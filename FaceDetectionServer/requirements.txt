@@ -3,6 +3,7 @@ djangorestframework
 gunicorn
 numpy
 opencv-contrib-python
+imagecodecs
 imageio
 psutil
 requests

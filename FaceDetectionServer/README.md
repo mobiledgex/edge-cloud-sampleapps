@@ -26,6 +26,9 @@ pip install -r requirements.txt
 cd moedx/
 python manage.py makemigrations tracker
 python manage.py migrate
+cd pytorch_objectdetecttrack/config/
+wget http://opencv.facetraining.mobiledgex.net/files/yolov3.weights
+cd ../..
 uvicorn moedx.asgi:application --host 0.0.0.0 --port 8008
 ```
 ### How to install OpenPose on a GPU-enabled server

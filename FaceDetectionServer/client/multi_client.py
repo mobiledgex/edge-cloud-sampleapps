@@ -132,8 +132,8 @@ class Client:
                 return None
 
             self.media_file_name = self.filename_list[self.filename_list_index]
-            with open(self.media_file_name, "rb") as f:
-                image = f.read()
+            f = open(self.media_file_name, "rb")
+            image = f.read()
 
         logger.debug("Image data (first 32 bytes logged): %s" %image[:32])
         return image
@@ -170,7 +170,7 @@ class Client:
             logger.info(p_ping_out)
             # rtt min/avg/max/mdev = 61.994/61.994/61.994/0.000 ms
             search = re.search(PING_REGEX, p_ping_out, re.M|re.I)
-            ping_rtt = search.group(2)
+            ping_rtt = float(search.group(2))
             if self.show_responses:
                 logger.info("%s ms ICMP ping" %(ping_rtt))
             self.stats_latency_network_only.push(ping_rtt)
@@ -242,6 +242,7 @@ class RestClient(Client):
             content = response.content
             if response.status_code != 200:
                 logger.error("non-200 response: %d: %s" %(response.status_code, content))
+                self.num_repeat -= 1
                 continue
             self.process_result(content)
 
@@ -271,7 +272,7 @@ class RestClient(Client):
         """
         data = {'image': base64.b64encode(image)}
         if self.json_params != None:
-            params = json.loads(json_params.decode('utf-8'))
+            params = json.loads(self.json_params)
             data.update(params)
 
         return requests.post(self.url, data=data)
@@ -403,7 +404,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-s", "--server", required=True, help="Server host name or IP address.")
-    parser.add_argument("-e", "--endpoint", required=True, choices=["/detector/detect/", "/recognizer/predict/", "/openpose/detect/", "/object/detect/"], help="Endpoint of web service to call.")
+    parser.add_argument("-e", "--endpoint", required=True, choices=["/detector/detect/", "/recognizer/predict/", "/openpose/detect/", "/object/detect/", "/trainer/add/", "/trainer/predict/"], help="Endpoint of web service to call.")
     parser.add_argument("-n", "--network-latency", required=False, choices=["PING", "SOCKET"], default="SOCKET", help="Network-only latency test method.")
     parser.add_argument("-c", "--connection-method", required=True, choices=["rest", "socket", "websocket"], help="Connection type.")
     parser.add_argument("-f", "--filename", required=False, help="Name of image file to send.")
