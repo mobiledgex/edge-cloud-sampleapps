@@ -151,7 +151,6 @@ class ObjectDetector(object):
             #plt.show()
             plt.close('all')
 
-        print("returning objects:", objects)
         return objects
 
 if __name__ == "__main__":
