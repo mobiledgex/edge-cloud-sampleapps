@@ -133,9 +133,6 @@ class FaceRecognizer(object):
         self.pubsub = self.redis.pubsub()
         logger.info('Connected to redis on %s.' %self.training_data_hostname)
 
-    def redis_remove_subject_images(self, subject_dir):
-        pass
-
     def init_database(self):
         """
         This function scans the training-data directory and if no DB entry

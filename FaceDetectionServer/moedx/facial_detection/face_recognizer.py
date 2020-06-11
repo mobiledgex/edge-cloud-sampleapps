@@ -327,14 +327,14 @@ class FaceRecognizer(object):
                 subject_images_key = key.decode('utf-8')
                 subject = subject_images_key.split("subject_images:")[1]
                 subjects.append(subject)
-                logger.info("subject=[%s] subject_images_key=[%s]" %(subject, subject_images_key))
+                logger.debug("subject=[%s] subject_images_key=[%s]" %(subject, subject_images_key))
                 pipeline.lrange(subject_images_key, 0, -1)
 
         else:
             # We got a single subject name.
             subjects.append(subject_name)
             subject_images_key = "subject_images:%s" %subject_name
-            logger.info("subject_name=[%s] subject_images_key=[%s]" %(subject_name, subject_images_key))
+            logger.debug("subject_name=[%s] subject_images_key=[%s]" %(subject_name, subject_images_key))
             pipeline.lrange(subject_images_key, 0, -1)
 
             # Count existing LabelInfo values. Subtract 1 because we increment it below.

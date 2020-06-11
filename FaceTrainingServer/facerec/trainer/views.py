@@ -23,6 +23,7 @@ import base64
 import time
 import io
 import json
+import threading
 from imageio import imread, imwrite
 import numpy as np
 from facerec.FaceRecognizer import FaceRecognizer
@@ -256,17 +257,20 @@ def remove(request):
                 if subject_record.name != owner_name:
                     logger.info("Removing owner %s's subject: %s" %(owner_name, subject_record.name))
                     myFaceRecognizer.remove_subject(subject_record.name)
+                    myFaceRecognizer.redis_delete_subject_images(subject_record.name)
                 else:
                     logger.info("Skipping owner %s's self" %(owner_name))
             myFaceRecognizer.remove_subject(owner_record.name)
+            myFaceRecognizer.redis_delete_subject_images(owner_record.name)
             owner_record.delete()
         else:
             logger.info("subject %s supplied. Only deleting subject." %subject_name)
             subject_record = Subject.objects.get(name = subject_name)
             subject_record.delete()
             myFaceRecognizer.remove_subject(subject_name)
+            myFaceRecognizer.redis_delete_subject_images(subject_name)
 
-        myFaceRecognizer.redis_delete_subject_images(subject_name)
+        update_training_in_background()
 
     except Exception as e:
         logger.error(e)
@@ -309,3 +313,14 @@ def predict(request):
     logger.info("Returning: %s" %(ret))
     json_ret = json.dumps(ret)
     return HttpResponse(json_ret)
+
+def start_new_thread(function):
+    def decorator(*args, **kwargs):
+        t = threading.Thread(target = function, args=args, kwargs=kwargs)
+        t.daemon = True
+        t.start()
+    return decorator
+
+@start_new_thread
+def update_training_in_background():
+    myFaceRecognizer.update_training_data()
