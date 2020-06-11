@@ -281,7 +281,7 @@ public class Camera2BasicFragment extends Fragment
 
             Rect rect = new Rect(mTextureView.getLeft(),
                     mTextureView.getTop(), mTextureView.getRight(), mTextureView.getBottom());
-            Log.i(TAG, "mTextureView rect="+rect.toShortString()+" ImageReader.OnImageAvailable");
+            Log.d(TAG, "mTextureView rect="+rect.toShortString()+" ImageReader.OnImageAvailable");
             if(mImageProviderInterface != null) {
                 mImageProviderInterface.onBitmapAvailable(prepareImage(bitmap), rect);
             }

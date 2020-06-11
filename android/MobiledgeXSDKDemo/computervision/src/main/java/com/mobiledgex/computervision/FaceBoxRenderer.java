@@ -159,7 +159,7 @@ public class FaceBoxRenderer extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        Log.i(TAG, "onDraw() " + getWidth() + "," + getHeight() + " rectJsonArray=" + (rectJsonArray != null));
+        Log.d(TAG, "onDraw() " + getWidth() + "," + getHeight() + " rectJsonArray=" + (rectJsonArray != null));
         super.onDraw(canvas);
 
         if (rectJsonArray == null) {
