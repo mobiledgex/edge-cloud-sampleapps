@@ -377,7 +377,7 @@ public class ImageSender {
      * @param bitmap  The image to encode and send.
      */
     public void sendImage(Bitmap bitmap) {
-        Log.i(TAG, "sendImage()");
+        Log.d(TAG, "sendImage()");
         if(mBusy || mInactiveBenchmark || mInactiveFailure) {
             return;
         }
@@ -508,60 +508,7 @@ public class ImageSender {
         }
         mLatencyFullProcessRollingAvg.add(latency);
         mImageServerInterface.updateFullProcessStats(mCloudLetType, mLatencyFullProcessRollingAvg);
-        Log.i(TAG, mCloudLetType + " mCameraMode=" + mCameraMode + " mLatency=" + (mLatency / 1000000.0)+" mHost="+mHost);
-    }
-
-    /**
-     * Sends request to the FaceDetectionServer to perform the update procedure.
-     */
-    public void recognizerUpdate() {
-        Log.i(TAG, mCloudLetType +" recognizerUpdate mCameraMode="+mCameraMode);
-        setCameraMode(CameraMode.FACE_RECOGNITION);
-
-        String url = "http://"+ mHost +":"+mPort+"/recognizer/update/";
-        Log.i(TAG, mCloudLetType +" url="+url);
-
-        //Show indeterminate progress bar
-        mImageServerInterface.updateTrainingProgress(mTrainingCount, CameraMode.FACE_UPDATING_SERVER);
-
-        final long startTime = System.nanoTime();
-
-        // Request a byte response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, mCloudLetType +" recognizerUpdate response="+response);
-                        long endTime = System.nanoTime();
-                        long elapsed = endTime - startTime;
-                        Log.i(TAG, mCloudLetType +" recognizerUpdate elapsed="+(elapsed/1000000.0));
-                        setCameraMode(CameraMode.FACE_RECOGNITION);
-                        //Remove indeterminate progress bar
-                        mImageServerInterface.updateTrainingProgress(mTrainingCount, CameraMode.FACE_UPDATE_SERVER_COMPLETE);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e(TAG, "recognizerUpdate received error="+error);
-                //Even though this call failed, set these values to continue processing.
-                mBusy = false;
-                setCameraMode(CameraMode.FACE_RECOGNITION);
-                //Remove indeterminate progress bar
-                mImageServerInterface.updateTrainingProgress(mTrainingCount, CameraMode.FACE_UPDATE_SERVER_COMPLETE);
-            }
-        }) {
-            @Override
-            protected Map<String,String> getParams(){
-                return getUserParams();
-            }
-        };
-
-        // Add the request to the RequestQueue.
-        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
-                0,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        mRequestQueue.add(stringRequest);
+        Log.d(TAG, mCloudLetType + " mCameraMode=" + mCameraMode + " mLatency=" + (mLatency / 1000000.0)+" mHost="+mHost);
     }
 
     /**
@@ -585,7 +532,7 @@ public class ImageSender {
                         long endTime = System.nanoTime();
                         long elapsed = endTime - startTime;
                         Log.i(TAG, mCloudLetType +" trainerTrain elapsed="+(elapsed/1000000.0));
-                        setCameraMode(CameraMode.FACE_RECOGNITION);
+                        setCameraMode(CameraMode.FACE_UPDATE_SERVER_COMPLETE);
                         mImageServerInterface.updateTrainingProgress(mTrainingCount, mCameraMode);
                     }
                 }, new Response.ErrorListener() {

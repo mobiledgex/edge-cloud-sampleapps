@@ -87,7 +87,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                                 ? listPreference.getEntries()[index]
                                 : null);
             } else {
-\                // For all other preferences, set the summary to the value's
+                Log.i(TAG, "Not a ListPreference " + preference.getTitle());
+                // For all other preferences, set the summary to the value's
                 // simple string representation.
                 preference.setSummary(stringValue);
             }
