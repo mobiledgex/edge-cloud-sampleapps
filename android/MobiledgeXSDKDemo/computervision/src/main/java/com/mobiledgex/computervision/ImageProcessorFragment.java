@@ -175,7 +175,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if(bitmap == null) {
             return;
         }
-        Log.i(TAG, "onBitmapAvailable mCameraMode="+mCameraMode);
+        Log.d(TAG, "onBitmapAvailable mCameraMode="+mCameraMode);
 
         mImageRect = imageRect;
         mServerToDisplayRatioX = (float) mImageRect.width() / bitmap.getWidth();
@@ -275,8 +275,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mProgressBarTraining.setIndeterminate(true);
             mProgressText.setText("Updating server...");
         } else if(mode == ImageSender.CameraMode.FACE_RECOGNITION) {
-            mImageSenderCloud.recognizerUpdate();
-            mImageSenderEdge.recognizerUpdate();
+            // Back to normal
         } else if(mode == ImageSender.CameraMode.FACE_UPDATE_SERVER_COMPLETE) {
             mProgressBarTraining.setVisibility(View.GONE);
             mProgressText.setVisibility(View.GONE);
@@ -774,8 +773,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (faceRecognition) {
             mCameraMode = ImageSender.CameraMode.FACE_RECOGNITION;
             mCameraToolbar.setTitle(R.string.title_activity_face_recognition);
-            mImageSenderCloud.recognizerUpdate();
-            mImageSenderEdge.recognizerUpdate();
         } else {
             mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
