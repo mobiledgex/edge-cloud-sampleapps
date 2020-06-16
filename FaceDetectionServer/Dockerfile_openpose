@@ -24,17 +24,15 @@ RUN cmake -DBUILD_PYTHON=ON .. && make -j `nproc`
 
 # Use a virtualenv for all of our Python requirements.
 RUN apt-get install -y python3.7-venv
-# Giant list of dependencies for imagecodecs package. See https://pypi.org/project/imagecodecs/
-RUN apt-get install -y python3-blosc python3-brotli python3-snappy python3-lz4 libz-dev libblosc-dev \
-liblzma-dev liblz4-dev libzstd-dev libpng-dev libwebp-dev libbz2-dev libopenjp2-7-dev libjpeg-turbo8-dev \
-libjxr-dev liblcms2-dev libcharls-dev libaec-dev libbrotli-dev libsnappy-dev libzopfli-dev libgif-dev libtiff-dev
-
-# Not sure why it can't find these headers. Copy them where they can be found.
-RUN cp /usr/include/openjpeg-2.3/*.h /usr/include/
 RUN python3.7 -m venv /opt/venv
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip3 install wheel
+
+RUN pip install wheel
+# Special handling for imagecodecs package. See https://pypi.org/project/imagecodecs/
+RUN python -m pip install --upgrade pip setuptools
+RUN python -m pip install --upgrade imagecodecs
+
 # Dependencies for our Django app.
 COPY requirements.txt .
 RUN pip install -r requirements.txt
