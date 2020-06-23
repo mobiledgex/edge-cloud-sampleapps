@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">MobiledgeX SDK Demo</string>
+    <string name="app_version">2.0</string>
+    <string name="org_name">MobiledgeX</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -17,7 +19,7 @@
     <string name="enhanced_location_permission">This application uses enhanced features of carrier networks to validate your device location. Please enable in app settings.</string>
     <string name="preference_matching_engine_location_verification">location_verification</string>
     <string name="preference_matching_engine_location_verification_title">Location Verification</string>
-    <string name="preference_matching_engine_location_verification_summary">Enhanced Network Location Services</string>
+    <string name="preference_matching_engine_location_verification_summary">Matching Engine Settings</string>
     <string name="preference_net_switching_allowed">net_switching_allowed</string>
     <string name="preference_net_switching_allowed_title">Network Switching Enabled</string>
     <string name="preference_net_switching_allowed_summary">Wifi to Cell network switching</string>
@@ -107,9 +109,32 @@
         <item>socket</item>
     </string-array>
 
+    <string name="pref_find_cloudlet_mode">find_cloudlet_mode</string>
+    <string name="pref_find_cloudlet_title">FindCloudlet Mode</string>
+    <string name="pref_find_cloudlet_summary">%s</string>
+    <string-array name="pref_find_cloudlet_method_titles">
+        <item>Proximity</item>
+        <item>Performance</item>
+    </string-array>
+    <string-array name="pref_find_cloudlet_method_values">
+        <item>PROXIMITY</item>
+        <item>PERFORMANCE</item>
+    </string-array>
+
     <string name="pref_latency_autostart">latency_autostart</string>
     <string name="pref_latency_autostart_title">Latency Test Auto-Start</string>
     <string name="pref_latency_autostart_summary">Automatically start latency test when cloudlet is discovered.</string>
+
+    <string name="pref_default_app_definition">pref_default_app_definition</string>
+    <string name="pref_value_default_app_definition">pref_value_default_app_definition</string>
+    <string name="pref_title_default_app_definition">Use Default App Definition</string>
+    <string name="pref_summary_default_app_definition">These values may be overridden to show a different set of app instances.</string>
+    <string name="pref_app_name">pref_app_name</string>
+    <string name="pref_title_app_name">App Name</string>
+    <string name="pref_app_version">pref_app_version</string>
+    <string name="pref_title_app_version">App Version</string>
+    <string name="pref_org_name">pref_org_name</string>
+    <string name="pref_title_org_name">Organization Name</string>
 
     <string name="pref_operator_name">pref_operator</string>
     <string name="pref_title_operator_name">Operator</string>

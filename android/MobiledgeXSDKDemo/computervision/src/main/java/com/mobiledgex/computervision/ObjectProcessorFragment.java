@@ -218,17 +218,11 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         // TODO: Create separate preference for Object Detection Host
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
         mHostDetectionEdge = prefs.getString(prefKeyOpenPoseHostEdge, DEF_OBJECT_DETECTION_HOST_EDGE);
-        Log.i(TAG, "prefKeyOpenPoseHostEdge="+prefKeyOpenPoseHostEdge+" mHostDetectionEdge="+mHostDetectionEdge);
+        Log.i(TAG, "prefKeyOpenPoseHostEdge="+prefKeyOpenPoseHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
 
-        // See if we have an Extra with the closest cloudlet passed in to override the preference.
         Intent intent = getActivity().getIntent();
-        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
-        Log.i(TAG, "Extra "+EXTRA_EDGE_CLOUDLET_HOSTNAME+"="+edgeCloudletHostname);
-        if(edgeCloudletHostname != null) {
-            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
-            mHostDetectionEdge = edgeCloudletHostname;
-        }
-        
+        getCommonIntentExtras(intent);
+
         mImageSenderEdge = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
@@ -260,6 +254,8 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         menu.findItem(R.id.action_camera_training_guest).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
+        menu.findItem(R.id.action_find_cloudlet).setVisible(false);
+        menu.findItem(R.id.action_get_app_inst_list).setVisible(false);
 
         //No Cloud available for benchmarking
         menu.findItem(R.id.action_benchmark_cloud).setVisible(false);

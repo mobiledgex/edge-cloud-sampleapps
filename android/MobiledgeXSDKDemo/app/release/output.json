@@ -1,1 +1,20 @@
-[{"outputType":{"type":"APK"},"apkData":{"type":"MAIN","splits":[],"versionCode":55,"versionName":"1.1.6","enabled":true,"outputFile":"MobiledgeXSDKDemo-release.apk","fullName":"release","baseName":"release","dirName":""},"path":"MobiledgeXSDKDemo-release.apk","properties":{}}]
+{
+  "version": 1,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.mobiledgex.sdkdemo",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "properties": [],
+      "versionCode": 56,
+      "versionName": "56",
+      "enabled": true,
+      "outputFile": "MobiledgeXSDKDemo-release.apk"
+    }
+  ]
+}

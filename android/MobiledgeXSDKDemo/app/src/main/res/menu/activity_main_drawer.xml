@@ -11,13 +11,13 @@
             android:icon="@drawable/googleg_color"
             android:title="@string/menu_sign_out" />
         <item
-            android:id="@+id/nav_face_recognition"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="@string/title_activity_face_recognition" />
-        <item
             android:id="@+id/nav_face_detection"
             android:icon="@drawable/ic_menu_camera"
             android:title="@string/title_activity_face_detection" />
+        <item
+            android:id="@+id/nav_face_recognition"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="@string/title_activity_face_recognition" />
         <item
             android:id="@+id/nav_object_detection"
             android:icon="@drawable/ic_menu_camera"

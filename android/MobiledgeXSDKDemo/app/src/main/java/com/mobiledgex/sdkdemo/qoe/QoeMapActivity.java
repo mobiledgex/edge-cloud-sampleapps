@@ -155,7 +155,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         View mapView = findViewById(R.id.map);
-        mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, carrierName, mapView);
+        mMatchingEngineHelper = new MatchingEngineHelper(this, mapView);
         mMatchingEngineHelper.registerClientInBackground();
 
         // Build Legend Table View programmatically, based on colors and speed description values.

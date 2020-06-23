@@ -219,17 +219,11 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
 
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
         mHostDetectionEdge = prefs.getString(prefKeyOpenPoseHostEdge, DEF_OPENPOSE_HOST_EDGE);
-        Log.i(TAG, "prefKeyOpenPoseHostEdge="+prefKeyOpenPoseHostEdge+" mHostDetectionEdge="+mHostDetectionEdge);
+        Log.i(TAG, "prefKeyOpenPoseHostEdge="+prefKeyOpenPoseHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
 
-        // See if we have an Extra with the closest cloudlet passed in to override the preference.
         Intent intent = getActivity().getIntent();
-        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
-        Log.i(TAG, "Extra "+EXTRA_EDGE_CLOUDLET_HOSTNAME+"="+edgeCloudletHostname);
-        if(edgeCloudletHostname != null) {
-            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
-            mHostDetectionEdge = edgeCloudletHostname;
-        }
-        
+        getCommonIntentExtras(intent);
+
         // Check for other optional parameters
         int strokeWidth = intent.getIntExtra(EXTRA_POSE_STROKE_WIDTH, PoseRenderer.DEFAULT_STROKE_WIDTH);
         int jointRadius = intent.getIntExtra(EXTRA_POSE_JOINT_RADIUS, PoseRenderer.DEFAULT_JOINT_RADIUS);
@@ -267,6 +261,8 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         menu.findItem(R.id.action_camera_training_guest).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
+        menu.findItem(R.id.action_find_cloudlet).setVisible(false);
+        menu.findItem(R.id.action_get_app_inst_list).setVisible(false);
 
         //No Cloud available for benchmarking
         menu.findItem(R.id.action_benchmark_cloud).setVisible(false);

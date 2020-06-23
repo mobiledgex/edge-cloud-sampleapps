@@ -17,16 +17,17 @@
 
 package com.mobiledgex.computervision;
 
-import android.app.Activity;
-import android.app.AlertDialog;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -37,6 +38,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -51,10 +55,26 @@ import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.mobiledgex.matchingengine.MatchingEngine;
 
 import org.json.JSONArray;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import distributed_match_engine.AppClient;
+import distributed_match_engine.Appcommon;
+
+import static com.mobiledgex.computervision.EventItem.EventType.ERROR;
+import static com.mobiledgex.computervision.EventItem.EventType.INFO;
 
 public class ImageProcessorFragment extends Fragment implements ImageServerInterface, ImageProviderInterface,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -64,6 +84,18 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private static final String TAG = "ImageProcessorFragment";
     public static final String EXTRA_FACE_STROKE_WIDTH = "EXTRA_FACE_STROKE_WIDTH";
     private static final String VIDEO_FILE_NAME = "Jason.mp4";
+
+    private MatchingEngine mMatchingEngine;
+    //The following defaults may be overridden by passing EXTRA values to the Intent.
+    public String mAppName = "MobiledgeX SDK Demo";
+    public String mAppVersion = "2.0";
+    public String mOrgName = "MobiledgeX";
+    public String mCarrierName = "TDG";
+    public String mDmeHostname = "wifi.dme.mobiledgex.net";
+    public int mDmePort = 50051;
+    private double mLatitude;
+    private double mLongitude;
+    private AppClient.FindCloudletReply mClosestCloudlet;
 
     protected Camera2BasicFragment mCamera2BasicFragment;
     protected Menu mOptionsMenu;
@@ -78,9 +110,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected TextView mCloudStd2;
     protected TextView mEdgeStd2;
     protected TextView mStatusText;
+    protected RecyclerView mEventsRecyclerView;
     private TextView mProgressText;
     private ProgressBar mProgressBarTraining;
     protected Toolbar mCameraToolbar;
+    public List<EventItem> mEventItemList = new ArrayList<>();
 
     protected Rect mImageRect;
     private FaceBoxRenderer mCloudFaceBoxRenderer;
@@ -93,6 +127,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefShowNetLatency;
     protected boolean prefShowStdDev;
     protected boolean prefUseRollingAvg;
+    protected boolean prefShowCloudOutput;
     protected int prefCameraLensFacingDirection;
     protected ImageSender.CameraMode mCameraMode;
     protected float mServerToDisplayRatioX;
@@ -113,10 +148,26 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private String mHostDetectionCloud;
     protected String mHostDetectionEdge;
     private String mHostTraining;
+    private List<String> mEdgeHostList = new ArrayList<>();
+    private int mEdgeHostListIndex;
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
     public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
+    public static final String EXTRA_FIND_CLOUDLET_MODE = "EXTRA_FIND_CLOUDLET_MODE";
+    public static final String EXTRA_APP_NAME = "EXTRA_APP_NAME";
+    public static final String EXTRA_APP_VERSION = "EXTRA_APP_VERSION";
+    public static final String EXTRA_ORG_NAME = "EXTRA_ORG_NAME";
+    public static final String EXTRA_DME_HOSTNAME = "EXTRA_DME_HOSTNAME";
+    public static final String EXTRA_CARRIER_NAME = "EXTRA_CARRIER_NAME";
+    public static final String EXTRA_LATITUDE = "EXTRA_LATITUDE";
+    public static final String EXTRA_LONGITUDE = "EXTRA_LONGITUDE";
     protected String mVideoFilename;
+    private MyEventRecyclerViewAdapter mEventRecyclerViewAdapter;
+    private FloatingActionButton mLogExpansionButton;
+    private MatchingEngine.FindCloudletMode mFindCloudletMode;
+    private boolean registerClientComplete;
+    private boolean isLogExpanded = false;
+    private int mLogViewHeight;
 
     /**
      * Return statistics information to be displayed in dialog after activity -- a combination
@@ -132,35 +183,68 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      * Shows a {@link Toast} on the UI thread.
      *
      * @param text The message to show.
-     * @param length  The length of time to show it for.
      */
     @Override
-    public void showMessage(final String text, final int length) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
+    public void showMessage(final String text) {
+        addEventItem(INFO, text);
+    }
+
+    @Override
+    public void showError(final String text) {
+        addEventItem(ERROR, text);
+    }
+
+    public void addEventItem(EventItem.EventType type, String text) {
+        if (!isLogExpanded) {
+            logViewAnimate(0, mLogViewHeight);
+            isLogExpanded = true;
+        }
+
+        mEventItemList.add(new EventItem(type, text));
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(activity, text, length).show();
+                    mEventRecyclerViewAdapter.itemAdded();
                 }
             });
         }
     }
 
-    public void showError(final String text) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    new AlertDialog.Builder(getContext())
-                            .setTitle(R.string.error)
-                            .setMessage(text)
-                            .setPositiveButton("OK", null)
-                            .show();
-                }
-            });
+    @Override
+    public void reportConnectionError(String text, ImageSender imageSender) {
+        Log.i(TAG, "reportConnectionError from "+imageSender.getHost()+": "+text);
+        showError(text);
+        if (imageSender == mImageSenderEdge) {
+            mImageSenderEdge.setInactive(true);
+            Log.i(TAG, "Restarting mImageSenderEdge due to reportConnectionError: "+text);
+            mEdgeHostListIndex++;
+            if (mEdgeHostList.size() > mEdgeHostListIndex) {
+                mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
+                restartImageSenderEdge();
+            } else {
+                mImageSenderEdge.setInactive(true);
+                String message = "Available hosts exhausted. Please perform 'Find Closest Cloudlet' or 'Find App Instances'.";
+                Log.e(TAG, message);
+                showError(message);
+            }
         }
+    }
+
+    public void restartImageSenderEdge() {
+        String message = "Restarting mImageSenderEdge on host: " + mHostDetectionEdge;
+        Log.i(TAG, message);
+        showMessage(message);
+        mImageSenderEdge.closeConnection();
+        mImageSenderEdge = new ImageSender.Builder()
+                .setActivity(getActivity())
+                .setImageServerInterface(this)
+                .setCloudLetType(CloudletType.EDGE)
+                .setHost(mHostDetectionEdge)
+                .setPort(FACE_DETECTION_HOST_PORT)
+                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .build();
+        mImageSenderEdge.setCameraMode(mCameraMode);
     }
 
     /**
@@ -199,6 +283,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      */
     @Override
     public void setStatus(String status) {
+//        mEventItemList.add(new EventItem(INFO, status));
+        if (status.isEmpty()) {
+            mStatusText.setVisibility(View.GONE);
+        } else {
+            mStatusText.setVisibility(View.VISIBLE);
+        }
         mStatusText.setText(status);
     }
 
@@ -437,13 +527,54 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_camera_video) {
-            mCameraToolbar.setVisibility(View.GONE);
+//            mCameraToolbar.setVisibility(View.GONE);
             mCamera2BasicFragment.startVideo(mVideoFilename);
             return true;
         }
 
         if (id == R.id.action_camera_debug) {
             mCamera2BasicFragment.showDebugInfo();
+            return true;
+        }
+
+        if (id == R.id.action_find_cloudlet) {
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        if (registerClientComplete || registerClient()) {
+                            registerClientComplete = true;
+                            findCloudlet();
+                        }
+                    } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+            return true;
+        }
+
+        if (id == R.id.action_get_app_inst_list) {
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        if (registerClientComplete || registerClient()) {
+                            registerClientComplete = true;
+                            getAppInstList();
+                        }
+                    } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+            return true;
+        }
+
+        if (id == R.id.action_manual_failover) {
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    reportConnectionError("Manual Failover", mImageSenderEdge);
+                }
+            }).start();
             return true;
         }
 
@@ -583,6 +714,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String prefKeyShowNetLatency = getResources().getString(R.string.preference_fd_show_net_latency);
         String prefKeyShowStdDev = getResources().getString(R.string.preference_fd_show_stddev);
         String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
+        String prefKeyShowCloudOutput = getResources().getString(R.string.preference_fd_show_cloud_output);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
         String prefKeyHostTraining = getResources().getString(R.string.preference_fd_host_training);
@@ -593,7 +725,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         if (key.equals(prefKeyHostEdge) || key.equals("ALL")) {
             mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_FACE_HOST_EDGE);
-            Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge="+mHostDetectionEdge);
+            Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge1="+ mHostDetectionEdge);
         }
         if (key.equals(prefKeyHostTraining) || key.equals("ALL")) {
             mHostTraining = sharedPreferences.getString(prefKeyHostTraining, DEF_FACE_HOST_TRAINING);
@@ -642,8 +774,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (key.equals(prefKeyUseRollingAvg) || key.equals("ALL")) {
             prefUseRollingAvg = sharedPreferences.getBoolean(prefKeyUseRollingAvg, false);
         }
+        if (key.equals(prefKeyShowCloudOutput) || key.equals("ALL")) {
+            prefShowCloudOutput = sharedPreferences.getBoolean(prefKeyShowCloudOutput, true);
+        }
 
-        Log.i(TAG, "prefKeyShowNetLatency=" + prefKeyShowNetLatency);
         if(mImageSenderCloud != null) {
             mImageSenderCloud.setDoNetLatency(prefShowNetLatency);
         }
@@ -668,12 +802,17 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.i(TAG, "onCreateView");
-        return inflater.inflate(R.layout.fragment_image_processor, container, false);
+        final View root = inflater.inflate(R.layout.fragment_image_processor, container, false);
+
+
+        return root;
     }
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated savedInstanceState="+savedInstanceState);
+
+        mMatchingEngine = new MatchingEngine(getContext());
 
         mCameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
@@ -719,6 +858,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mProgressText.setVisibility(View.GONE);
 
         mStatusText = view.findViewById(R.id.statusTextView);
+        mStatusText.setVisibility(View.GONE);
+        mStatusText.setText("");
+
+        setupLogViewer(view);
 
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
@@ -730,13 +873,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         // Get preferences for everything we've instantiated so far.
         onSharedPreferenceChanged(prefs, "ALL");
 
-        // See if we have an Extra with the closest cloudlet passed in to override the preference.
         Intent intent = getActivity().getIntent();
-        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
-        if(edgeCloudletHostname != null) {
-            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
-            mHostDetectionEdge = edgeCloudletHostname;
-        }
+        getCommonIntentExtras(intent);
 
         // Check for other optional parameters
         int strokeWidth = intent.getIntExtra(EXTRA_FACE_STROKE_WIDTH, FaceBoxRenderer.DEFAULT_STROKE_WIDTH);
@@ -779,49 +917,162 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         mImageSenderCloud.setCameraMode(mCameraMode);
         mImageSenderEdge.setCameraMode(mCameraMode);
+        showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
+        showMessage("Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge);
 
         mVideoFilename = VIDEO_FILE_NAME;
 
         //One more call to get preferences for ImageSenders
         onSharedPreferenceChanged(prefs, "ALL");
+    }
 
+    protected void setupLogViewer(View view) {
+        mLogViewHeight = (int) (getResources().getDisplayMetrics().heightPixels*.4);
+        mEventsRecyclerView = view.findViewById(R.id.events_recycler_view);
+        final LinearLayoutManager layout = new LinearLayoutManager(view.getContext());
+        mEventsRecyclerView.setLayoutManager(layout);
+        mEventRecyclerViewAdapter = new MyEventRecyclerViewAdapter(mEventItemList);
+        mEventRecyclerViewAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                layout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
+            }
+
+        });
+        mEventsRecyclerView.setAdapter(mEventRecyclerViewAdapter);
+        mLogExpansionButton = view.findViewById(R.id.fab);
+        mLogExpansionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i(TAG, "mEventsRecyclerView.getLayoutParams().height="+mEventsRecyclerView.getLayoutParams().height);
+                Log.i(TAG, "mLogExpansionButton.getHeight()="+mLogExpansionButton.getHeight());
+                Log.i(TAG, "isLogExpanded="+isLogExpanded);
+                layout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
+                if(!isLogExpanded){
+                    logViewAnimate(0, mLogViewHeight);
+                    isLogExpanded = true;
+                }
+                else{
+                    logViewAnimate(mLogViewHeight, 0);
+                    isLogExpanded = false;
+                }
+            }
+        });
+        Timer myTimer = new Timer();
+        myTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (isLogExpanded) {
+                    logViewAnimate(mLogViewHeight, 0);
+                    isLogExpanded = false;
+                }
+            }
+        }, 2000);
+    }
+
+    protected void logViewAnimate(final int start, final int end) {
+        Log.i(TAG, "logViewAnimate start="+start+" end="+end);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ValueAnimator va = ValueAnimator.ofInt(start, end);
+                va.setDuration(500);
+                va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        Integer value = (Integer) animation.getAnimatedValue();
+                        Log.i(TAG, "value="+value);
+                        mEventsRecyclerView.getLayoutParams().height = value.intValue();
+                        mEventsRecyclerView.requestLayout();
+                    }
+                });
+                va.start();
+            }
+        });
+    }
+
+    protected void getCommonIntentExtras(Intent intent) {
+        // See if we have an Extra with the closest cloudlet passed in to override the preference.
+        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
+        if(edgeCloudletHostname != null) {
+            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
+            mHostDetectionEdge = edgeCloudletHostname;
+        }
+        mAppName = intent.getStringExtra(EXTRA_APP_NAME);
+        mAppVersion = intent.getStringExtra(EXTRA_APP_VERSION);
+        mOrgName = intent.getStringExtra(EXTRA_ORG_NAME);
+        mCarrierName = intent.getStringExtra(EXTRA_CARRIER_NAME);
+        mDmeHostname = intent.getStringExtra(EXTRA_DME_HOSTNAME);
+        mLatitude = intent.getDoubleExtra(EXTRA_LATITUDE, 1);
+        mLongitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 1);
+
+        String findCloudletMode = intent.getStringExtra(EXTRA_FIND_CLOUDLET_MODE);
+        Log.i(TAG, "EXTRA_FIND_CLOUDLET_MODE: "+findCloudletMode);
+        if (findCloudletMode != null && !findCloudletMode.isEmpty()) {
+            mFindCloudletMode = MatchingEngine.FindCloudletMode.valueOf(findCloudletMode);
+        } else {
+            mFindCloudletMode = MatchingEngine.FindCloudletMode.PROXIMITY;
+        }
+        Log.i(TAG, "mFindCloudletMode: "+mFindCloudletMode);
     }
 
     protected void toggleViews() {
-        if(prefShowStdDev) {
-            mEdgeStd.setVisibility(View.VISIBLE);
+        Log.i(TAG, "toggleViews prefShowCloudOutput=" + prefShowCloudOutput);
+        if (prefShowCloudOutput) {
+            if (mImageSenderCloud != null) {
+                mImageSenderCloud.setInactive(false);
+            }
+            mCloudLatency.setVisibility(View.VISIBLE);
+            mCloudLatency2.setVisibility(View.VISIBLE);
             mCloudStd.setVisibility(View.VISIBLE);
-            mEdgeStd2.setVisibility(View.VISIBLE);
             mCloudStd2.setVisibility(View.VISIBLE);
         } else {
-            mEdgeStd.setVisibility(View.GONE);
+            if (mImageSenderCloud != null) {
+                mImageSenderCloud.setInactive(true);
+            }
+            mCloudLatency.setVisibility(View.GONE);
+            mCloudLatency2.setVisibility(View.GONE);
             mCloudStd.setVisibility(View.GONE);
+            mCloudStd2.setVisibility(View.GONE);
+        }
+        if(prefShowStdDev) {
+            mEdgeStd.setVisibility(View.VISIBLE);
+            mEdgeStd2.setVisibility(View.VISIBLE);
+            if (prefShowCloudOutput) {
+                mCloudStd.setVisibility(View.VISIBLE);
+                mCloudStd2.setVisibility(View.VISIBLE);
+            }
+        } else {
+            mEdgeStd.setVisibility(View.GONE);
             mEdgeStd2.setVisibility(View.GONE);
+            mCloudStd.setVisibility(View.GONE);
             mCloudStd2.setVisibility(View.GONE);
         }
         if(prefShowFullLatency) {
             mLatencyFullTitle.setVisibility(View.VISIBLE);
-            mCloudLatency.setVisibility(View.VISIBLE);
             mEdgeLatency.setVisibility(View.VISIBLE);
+            if (prefShowCloudOutput) {
+                mCloudLatency.setVisibility(View.VISIBLE);
+            }
         } else {
-            mLatencyFullTitle.setVisibility(View.INVISIBLE);
-            mCloudLatency.setVisibility(View.INVISIBLE);
-            mEdgeLatency.setVisibility(View.INVISIBLE);
+            mLatencyFullTitle.setVisibility(View.GONE);
+            mEdgeLatency.setVisibility(View.GONE);
             mEdgeStd.setVisibility(View.GONE);
+            mCloudLatency.setVisibility(View.GONE);
             mCloudStd.setVisibility(View.GONE);
         }
         if(prefShowNetLatency) {
             mLatencyNetTitle.setVisibility(View.VISIBLE);
-            mCloudLatency2.setVisibility(View.VISIBLE);
             mEdgeLatency2.setVisibility(View.VISIBLE);
+            if (prefShowCloudOutput) {
+                mCloudLatency2.setVisibility(View.VISIBLE);
+            }
         } else {
-            mLatencyNetTitle.setVisibility(View.INVISIBLE);
-            mCloudLatency2.setVisibility(View.INVISIBLE);
-            mEdgeLatency2.setVisibility(View.INVISIBLE);
+            mLatencyNetTitle.setVisibility(View.GONE);
+            mEdgeLatency2.setVisibility(View.GONE);
             mEdgeStd2.setVisibility(View.GONE);
+            mCloudLatency2.setVisibility(View.GONE);
             mCloudStd2.setVisibility(View.GONE);
         }
-
     }
 
     @Override
@@ -841,6 +1092,142 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mImageSenderCloud.closeConnection();
         }
     }
+
+    public class DistanceComparator implements Comparator<AppClient.CloudletLocation>
+    {
+        public int compare(AppClient.CloudletLocation left, AppClient.CloudletLocation right) {
+            return (int) (left.getDistance() - right.getDistance());
+        }
+    }
+
+    public boolean registerClient() throws ExecutionException, InterruptedException,
+            io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
+
+        AppClient.RegisterClientRequest registerClientRequest;
+        Future<AppClient.RegisterClientReply> registerReplyFuture;
+        AppClient.RegisterClientReply reply = null;
+        registerClientRequest = mMatchingEngine.createDefaultRegisterClientRequest(getActivity(), mOrgName)
+                .setAppName(mAppName).setAppVers(mAppVersion).setCarrierName(mCarrierName).build();
+        registerReplyFuture = mMatchingEngine.registerClientFuture(registerClientRequest, mDmeHostname, mDmePort,10000);
+        reply = registerReplyFuture.get();
+
+        Log.i(TAG, "registerClientRequest="+registerClientRequest);
+        Log.i(TAG, "registerStatus.getStatus()="+reply.getStatus());
+
+        if (reply.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
+            String registerStatusText = "registerClient Failed. Error: " + reply.getStatus();
+            Log.e(TAG, registerStatusText);
+            showError(registerStatusText);
+            return false;
+        }
+        Log.i(TAG, "SessionCookie:" + reply.getSessionCookie());
+        showMessage("registerClient successful.");
+        return true;
+    }
+
+    public boolean findCloudlet() throws ExecutionException, InterruptedException {
+        Location location = new Location("MEX");
+        location.setLatitude(mLatitude);
+        location.setLongitude(mLongitude);
+        Log.i(TAG, "findCloudlet location="+location);
+
+        AppClient.FindCloudletRequest findCloudletRequest;
+        findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(getContext(), location).build();
+        Future<AppClient.FindCloudletReply> reply = mMatchingEngine.findCloudletFuture(findCloudletRequest, mDmeHostname, mDmePort,10000, mFindCloudletMode);
+
+        mClosestCloudlet = reply.get();
+
+        Log.i(TAG, "findCloudlet mClosestCloudlet="+mClosestCloudlet);
+        if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
+            String findCloudletStatusText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
+            Log.e(TAG, findCloudletStatusText);
+            return false;
+        }
+        Log.i(TAG, "mClosestCloudlet.getFqdn()=" + mClosestCloudlet.getFqdn());
+
+        // Extract cloudlet name from FQDN
+        String[] parts = mClosestCloudlet.getFqdn().split("\\.");
+        String cloudletNameTvStr = parts[0];
+
+        //Find fqdnPrefix from Port structure.
+        String fqdnPrefix = "";
+        List<Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
+        for (Appcommon.AppPort aPort : ports) {
+            fqdnPrefix = aPort.getFqdnPrefix();
+        }
+        // Build full hostname.
+        mHostDetectionEdge = fqdnPrefix+mClosestCloudlet.getFqdn();
+        mEdgeHostList.clear();
+        mEdgeHostListIndex = 0;
+        mEdgeHostList.add(mHostDetectionEdge);
+
+        showMessage("findCloudlet successful. Host=" + mHostDetectionEdge);
+
+        restartImageSenderEdge();
+        return true;
+    }
+
+    private boolean getAppInstList() throws InterruptedException, ExecutionException {
+        Location location = new Location("MEX");
+        location.setLatitude(mLatitude);
+        location.setLongitude(mLongitude);
+        Log.i(TAG, "getAppInstList location="+location);
+        AppClient.AppInstListRequest appInstListRequest
+                = mMatchingEngine.createDefaultAppInstListRequest(getContext(), location).setCarrierName(mCarrierName).setLimit(6).build();
+        // TODO: Make setLimit value a preference.
+        if(appInstListRequest != null) {
+            AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
+                    mDmeHostname, mDmePort, 10000);
+            Log.i(TAG, "cloudletList.getStatus()="+cloudletList.getStatus());
+            if (cloudletList.getStatus() != AppClient.AppInstListReply.AIStatus.AI_SUCCESS) {
+                String message = "getAppInstList failed. Status="+cloudletList.getStatus();
+                Log.e(TAG, message);
+                showError(message);
+                return false;
+            }
+
+            mEdgeHostList.clear();
+            mEdgeHostListIndex = 0;
+            List<AppClient.CloudletLocation> sortableCloudletList = new ArrayList<>(cloudletList.getCloudletsList());
+            Collections.sort(sortableCloudletList, new Comparator<AppClient.CloudletLocation>() {
+                @Override public int compare(AppClient.CloudletLocation c1, AppClient.CloudletLocation c2) {
+                    return (int) (c1.getDistance() - c2.getDistance());
+                }
+            });
+            for (AppClient.CloudletLocation cloudlet : sortableCloudletList) {
+                AppClient.Appinstance appInst = cloudlet.getAppinstances(0);
+                Log.i(TAG, cloudlet.getCloudletName()+" Distance="+cloudlet.getDistance());
+                //Find fqdnPrefix from Port structure.
+                String fqdnPrefix = "";
+                List<Appcommon.AppPort> ports = appInst.getPortsList();
+                for (Appcommon.AppPort aPort : ports) {
+                    fqdnPrefix = aPort.getFqdnPrefix();
+                }
+                String hostname = fqdnPrefix + appInst.getFqdn();
+                mEdgeHostList.add(hostname);
+                showMessage("Found " + hostname);
+            }
+            Log.i(TAG, "getAppInstList cloudletList.getCloudletsCount()=" + cloudletList.getCloudletsCount());
+            Log.i(TAG, "getAppInstList mEdgeHostList=" + mEdgeHostList);
+
+            // TODO: Remove
+//            mEdgeHostList.clear();
+//            mEdgeHostList.add("192.168.1.66");
+//            mEdgeHostList.add("acrotopia.com");
+
+            mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
+            Log.i(TAG, "getAppInstList mHostDetectionEdge=" + mHostDetectionEdge);
+            restartImageSenderEdge();
+            return true;
+
+        } else {
+            String message = "Cannot create AppInstListRequest object";
+            Log.e(TAG, message);
+            showError(message);
+            return false;
+        }
+    }
+
 
     public ImageSender getImageSenderEdge() {
         return mImageSenderEdge;
