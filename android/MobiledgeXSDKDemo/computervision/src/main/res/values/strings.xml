@@ -34,6 +34,9 @@
     <string name="preference_fd_show_cloud_output">fd_show_cloud_output</string>
     <string name="preference_fd_show_cloud_output_title">Show Cloud Output</string>
     <string name="preference_fd_show_cloud_output_summary">Show or hide results from public cloud image processing</string>
+    <string name="preference_fd_auto_failover">fd_auto_failover</string>
+    <string name="preference_fd_auto_failover_title">Auto Failover</string>
+    <string name="preference_fd_auto_failover_summary">Automatically switch to next available server when failure encountered</string>
     <string name="preference_fd_host_training">fd_host_training</string>
     <string name="preference_fd_host_cloud">fd_host_cloud</string>
     <string name="preference_fd_host_cloud_title">Cloud Server</string>

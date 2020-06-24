@@ -24,7 +24,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -100,6 +99,7 @@ public class ImageSender {
 
     private OkHttpClient mWebSocketClient;
     private WebSocket mWebSocket;
+    private StringRequest mStringRequestMain;
 
     public enum ConnectionMode {
         REST,
@@ -303,11 +303,17 @@ public class ImageSender {
     }
 
     public void closeConnection() {
-        Log.i(TAG, "Disconnecting socket for "+mCloudLetType+" mConnectionMode="+mConnectionMode);
+        Log.i(TAG, "closeConnection for "+mCloudLetType+" mConnectionMode="+mConnectionMode);
+        if (mStringRequestMain != null) {
+            Log.i(TAG, "Cancelling REST request for "+mCloudLetType);
+            mStringRequestMain.cancel();
+        }
         if (mWebSocket != null) {
+            Log.i(TAG, "Closing WebSocket for "+mCloudLetType);
             mWebSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
         }
         if (mSocketClientTcp != null) {
+            Log.i(TAG, "Closing socket for "+mCloudLetType);
             mSocketClientTcp.stopClient();
         }
     }
@@ -427,7 +433,7 @@ public class ImageSender {
             Log.i(TAG, "url="+url+" length: "+requestBody.length());
 
             // Request a byte response from the provided URL.
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+            mStringRequestMain = new StringRequest(Request.Method.POST, url,
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
@@ -456,7 +462,7 @@ public class ImageSender {
             };
 
             // Add the request to the RequestQueue.
-            mRequestQueue.add(stringRequest);
+            mRequestQueue.add(mStringRequestMain);
         } else if(mConnectionMode == ConnectionMode.WEBSOCKET) {
             mWebSocket.send(ByteString.of(bytes));
         } else {
@@ -472,6 +478,10 @@ public class ImageSender {
      * @param latency
      */
     private void handleResponse(String response, long latency) {
+        if (mInactive) {
+            Log.i(TAG, "Inactive, aborting update.");
+            return;
+        }
         try {
             JSONObject jsonObject = new JSONObject(response);
             JSONArray rects;
@@ -671,6 +681,10 @@ public class ImageSender {
             }
         }
 
+        if (mInactive) {
+            Log.i(TAG, "Inactive, aborting update.");
+            return;
+        }
         mImageServerInterface.updateNetworkStats(cloudletType, rollingAverage);
     }
 
@@ -698,8 +712,10 @@ public class ImageSender {
             if(imageSender != null) {
                 imageSender.mBusy = true;
                 imageSender.mConnectionMode = preferencesConnectionMode;
-                imageSender.startWebSocketClient();
                 imageSender.mBusy = false;
+                if (imageSender.mConnectionMode == ConnectionMode.WEBSOCKET) {
+                    imageSender.startWebSocketClient();
+                }
             }
         }
     }
@@ -711,7 +727,7 @@ public class ImageSender {
     public String getStatsText() {
         if (mInactive || mInactiveBenchmark || mInactiveFailure) {
             // We don't want any results in this case.
-            return "";
+            return mCloudLetType + " was inactive.";
         }
         String statsText = mCloudLetType +" hostname: "+mHost+ "\n" +
                 "Connection mode="+mConnectionMode + "\n" +

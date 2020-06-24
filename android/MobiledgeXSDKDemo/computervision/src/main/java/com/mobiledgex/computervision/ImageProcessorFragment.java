@@ -127,6 +127,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected boolean prefShowNetLatency;
     protected boolean prefShowStdDev;
     protected boolean prefUseRollingAvg;
+    protected boolean prefAutoFailover;
     protected boolean prefShowCloudOutput;
     protected int prefCameraLensFacingDirection;
     protected ImageSender.CameraMode mCameraMode;
@@ -217,14 +218,20 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         showError(text);
         if (imageSender == mImageSenderEdge) {
             mImageSenderEdge.setInactive(true);
-            Log.i(TAG, "Restarting mImageSenderEdge due to reportConnectionError: "+text);
-            mEdgeHostListIndex++;
-            if (mEdgeHostList.size() > mEdgeHostListIndex) {
-                mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
-                restartImageSenderEdge();
+            RollingAverage ra = new RollingAverage(CloudletType.EDGE, "Error", 1);
+            updateFullProcessStats(CloudletType.EDGE, ra);
+            updateNetworkStats(CloudletType.EDGE, ra);
+            if (prefAutoFailover) {
+                Log.i(TAG, "Restarting mImageSenderEdge due to reportConnectionError: "+text);
+                mEdgeHostListIndex++;
+                if (mEdgeHostList.size() > mEdgeHostListIndex) {
+                    mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
+                    restartImageSenderEdge();
+                } else {
+                    findCloudletInBackground();
+                }
             } else {
-                mImageSenderEdge.setInactive(true);
-                String message = "Available hosts exhausted. Please perform 'Find Closest Cloudlet' or 'Find App Instances'.";
+                String message = "Please perform 'Find Closest Cloudlet' or 'Find App Instances'.";
                 Log.e(TAG, message);
                 showError(message);
             }
@@ -376,12 +383,17 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     @Override
     public void updateFullProcessStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
+        Log.i(TAG, "updateFullProcessStats "+cloudletType+" "+rollingAverage.getCurrent());
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
-        if(prefUseRollingAvg) {
-            latency = rollingAverage.getAverage();
+        if (rollingAverage.getCurrent() == 0) {
+            latency = (long)9999*1000*1000; //to indicate connection error.
         } else {
-            latency = rollingAverage.getCurrent();
+            if (prefUseRollingAvg) {
+                latency = rollingAverage.getAverage();
+            } else {
+                latency = rollingAverage.getCurrent();
+            }
         }
 
         if(getActivity() == null) {
@@ -409,12 +421,17 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     @Override
     public void updateNetworkStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
+        Log.i(TAG, "updateNetworkStats "+cloudletType+" "+rollingAverage.getCurrent());
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
-        if(prefUseRollingAvg) {
-            latency = rollingAverage.getAverage();
+        if (rollingAverage.getCurrent() == 0) {
+            latency = (long)9999*1000*1000; //to indicate connection error.
         } else {
-            latency = rollingAverage.getCurrent();
+            if (prefUseRollingAvg) {
+                latency = rollingAverage.getAverage();
+            } else {
+                latency = rollingAverage.getCurrent();
+            }
         }
 
         if(getActivity() == null) {
@@ -538,34 +555,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_find_cloudlet) {
-            new Thread(new Runnable() {
-                @Override public void run() {
-                    try {
-                        if (registerClientComplete || registerClient()) {
-                            registerClientComplete = true;
-                            findCloudlet();
-                        }
-                    } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
+            findCloudletInBackground();
             return true;
         }
 
         if (id == R.id.action_get_app_inst_list) {
-            new Thread(new Runnable() {
-                @Override public void run() {
-                    try {
-                        if (registerClientComplete || registerClient()) {
-                            registerClientComplete = true;
-                            getAppInstList();
-                        }
-                    } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
+            getAppInstListInBackground();
             return true;
         }
 
@@ -714,6 +709,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String prefKeyShowNetLatency = getResources().getString(R.string.preference_fd_show_net_latency);
         String prefKeyShowStdDev = getResources().getString(R.string.preference_fd_show_stddev);
         String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
+        String prefKeyAutoFailover = getResources().getString(R.string.preference_fd_auto_failover);
         String prefKeyShowCloudOutput = getResources().getString(R.string.preference_fd_show_cloud_output);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
@@ -773,6 +769,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         if (key.equals(prefKeyUseRollingAvg) || key.equals("ALL")) {
             prefUseRollingAvg = sharedPreferences.getBoolean(prefKeyUseRollingAvg, false);
+        }
+        if (key.equals(prefKeyAutoFailover) || key.equals("ALL")) {
+            prefAutoFailover = sharedPreferences.getBoolean(prefKeyAutoFailover, true);
         }
         if (key.equals(prefKeyShowCloudOutput) || key.equals("ALL")) {
             prefShowCloudOutput = sharedPreferences.getBoolean(prefKeyShowCloudOutput, true);
@@ -1083,6 +1082,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     @Override
     public void onDetach() {
+        Log.i(TAG, "onDetach()");
         super.onDetach();
         mCamera2BasicFragment = null;
         if (mImageSenderEdge != null) {
@@ -1125,7 +1125,38 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         return true;
     }
 
-    public boolean findCloudlet() throws ExecutionException, InterruptedException {
+    protected void findCloudletInBackground() {
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    if (registerClientComplete || registerClient()) {
+                        registerClientComplete = true;
+                        findCloudlet();
+                    }
+                } catch (ExecutionException | InterruptedException
+                        | PackageManager.NameNotFoundException | IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    protected void getAppInstListInBackground() {
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    if (registerClientComplete || registerClient()) {
+                        registerClientComplete = true;
+                        getAppInstList();
+                    }
+                } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    public boolean findCloudlet() throws ExecutionException, InterruptedException, IllegalArgumentException {
         Location location = new Location("MEX");
         location.setLatitude(mLatitude);
         location.setLongitude(mLongitude);

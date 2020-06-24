@@ -25,6 +25,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -108,7 +109,6 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -407,7 +407,7 @@ public class MainActivity extends AppCompatActivity
             matchingEngineRequest(REQ_REGISTER_CLIENT);
         }
         if (id == R.id.action_get_app_inst_list) {
-            getCloudlets();
+            getCloudlets(false);
         }
         if (id == R.id.action_reset_location) {
             // Reset spoofed GPS
@@ -428,7 +428,7 @@ public class MainActivity extends AppCompatActivity
             locationVerified = false;
             locationVerificationAttempted = false;
             mClosestCloudletHostname = null;
-            getCloudlets();
+            getCloudlets(true);
             return true;
         }
         if (id == R.id.action_verify_location) {
@@ -669,8 +669,9 @@ public class MainActivity extends AppCompatActivity
     /**
      * Gets list of cloudlets from DME, and populates map with markers.
      *
+     * @param clearExisting
      */
-    public void getCloudlets() {
+    public void getCloudlets(boolean clearExisting) {
         Log.i(TAG, "getCloudlets() mLastKnownLocation="+mLastKnownLocation+" mMatchingEngineHelper="+mMatchingEngineHelper);
         if (mMatchingEngineHelper == null) {
             Log.i(TAG, "getCloudlets() mMatchingEngineHelper not yet initialized");
@@ -680,6 +681,11 @@ public class MainActivity extends AppCompatActivity
             startLocationUpdates();
             showGpsWarning();
             return;
+        }
+
+        if (clearExisting) {
+            //Clear list so we don't show old cloudlets as transparent
+            CloudletListHolder.getSingleton().getCloudletList().clear();
         }
 
         if(mMatchingEngineHelper.getSpoofedLocation() == null) {
@@ -782,7 +788,7 @@ public class MainActivity extends AppCompatActivity
                         mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
                         mMatchingEngineHelper.setSpoofedLocation(location);
                         locationVerificationAttempted = locationVerified = false;
-                        getCloudlets();
+                        getCloudlets(true);
                         break;
                     case 1:
                         Log.i(TAG, "Update GPS in simulator to "+location);
@@ -790,7 +796,7 @@ public class MainActivity extends AppCompatActivity
                         updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
                         mMatchingEngineHelper.setSpoofedLocation(location);
                         locationVerificationAttempted = locationVerified = false;
-                        getCloudlets();
+                        getCloudlets(true);
                         break;
                     default:
                         Log.i(TAG, "Unknown dialog selection.");
@@ -1159,10 +1165,11 @@ public class MainActivity extends AppCompatActivity
             String stats = data.getExtras().getString("STATS");
             // The TextView to show your Text
             TextView showText = new TextView(MainActivity.this);
+            showText.setBackgroundColor(Color.parseColor("#EEEEEE"));
             showText.setText(currentDateTime + "\n" + stats);
             showText.setTextIsSelectable(true);
-            int horzPadding = (int) (15 * getResources().getDisplayMetrics().density);
-            showText.setPadding(horzPadding, 0,horzPadding,0);
+            int padding = (int) (15 * getResources().getDisplayMetrics().density);
+            showText.setPadding(padding, padding, padding, padding);
             new AlertDialog.Builder(MainActivity.this)
                     .setView(showText)
                     .setTitle("Stats")
@@ -1401,26 +1408,20 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (appInfoChanged) {
-            //Clear list so we don't show old cloudlets as transparent
-            CloudletListHolder.getSingleton().getCloudletList().clear();
-            getCloudlets();
+            getCloudlets(true);
         }
     }
 
     public void setCarrierName(String carrierName) {
         mCarrierName = carrierName;
         mClosestCloudletHostname = null;
-        //Clear list so we don't show old cloudlets as transparent
-        CloudletListHolder.getSingleton().getCloudletList().clear();
-        getCloudlets();
+        getCloudlets(true);
     }
 
     public void setDmeHostname(String hostname) {
         mHostname = hostname;
         mClosestCloudletHostname = null;
-        //Clear list so we don't show old cloudlets as transparent
-        CloudletListHolder.getSingleton().getCloudletList().clear();
-        getCloudlets();
+        getCloudlets(true);
         checkForLocSimulator(mHostname);
     }
 
@@ -1464,7 +1465,11 @@ public class MainActivity extends AppCompatActivity
             } else {
                 message = "Could not reach face server at '"+newHost+"'. Resetting to default.";
             }
-            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            if (newHost.equals(ImageProcessorFragment.DEF_FACE_HOST_CLOUD) || newHost.equals(ImageProcessorFragment.DEF_FACE_HOST_EDGE)) {
+                // Don't show Toast for defaults.
+            } else {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            }
         }
         @Override
         protected void onPreExecute() {}
@@ -1546,24 +1551,29 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        try {
-            mGoogleMap.setMyLocationEnabled(true);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mGoogleMap.setMyLocationEnabled(true);
 
-            int interval = 5000; // Initially, 5 second interval to get the first update quickly
-            Log.i(TAG, "mFusedLocationClient.getLastLocation()="+mFusedLocationClient.getLastLocation()+" interval="+interval);
+                    int interval = 5000; // Initially, 5 second interval to get the first update quickly
+                    Log.i(TAG, "mFusedLocationClient.getLastLocation()="+mFusedLocationClient.getLastLocation()+" interval="+interval);
 
-            mLocationRequest = new LocationRequest();
-            mLocationRequest.setSmallestDisplacement(5);
-            mLocationRequest.setInterval(interval);
-            mLocationRequest.setFastestInterval(interval);
-            mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                    mLocationRequest = new LocationRequest();
+                    mLocationRequest.setSmallestDisplacement(5);
+                    mLocationRequest.setInterval(interval);
+                    mLocationRequest.setFastestInterval(interval);
+                    mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-            Log.i(TAG, "mFusedLocationClient.requestLocationUpdates() called");
-        } catch (SecurityException se) {
-            se.printStackTrace();
-            Log.i(TAG, "App should Request location permissions during onCreate().");
-        }
+                    mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+                    Log.i(TAG, "mFusedLocationClient.requestLocationUpdates() called");
+                } catch (SecurityException se) {
+                    se.printStackTrace();
+                    Log.i(TAG, "App should Request location permissions during onResume().");
+                }
+            }
+        });
     }
 
     private void stopLocationUpdates() {
@@ -1580,7 +1590,7 @@ public class MainActivity extends AppCompatActivity
                 Log.i(TAG, "onLocationResult() Location: " + location.getLatitude() + " " + location.getLongitude());
                 mLastKnownLocation = locationResult.getLastLocation();
                 if(!gpsInitialized) {
-                    getCloudlets();
+                    getCloudlets(true);
                     gpsInitialized = true;
                 }
 

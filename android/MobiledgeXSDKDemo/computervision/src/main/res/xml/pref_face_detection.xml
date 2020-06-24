@@ -54,6 +54,11 @@
         android:summary="@string/preference_fd_use_rolling_avg_summary"
         android:defaultValue="false" />
     <SwitchPreference
+        android:key="@string/preference_fd_auto_failover"
+        android:title="@string/preference_fd_auto_failover_title"
+        android:summary="@string/preference_fd_auto_failover_summary"
+        android:defaultValue="false" />
+    <SwitchPreference
         android:key="@string/preference_fd_show_cloud_output"
         android:title="@string/preference_fd_show_cloud_output_title"
         android:summary="@string/preference_fd_show_cloud_output_summary"
