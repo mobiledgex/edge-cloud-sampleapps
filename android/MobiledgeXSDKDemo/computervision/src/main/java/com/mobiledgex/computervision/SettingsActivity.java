@@ -30,6 +30,8 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import androidx.appcompat.app.ActionBar;
+
+import android.util.Log;
 import android.view.MenuItem;
 
 import java.util.List;
@@ -47,6 +49,7 @@ import java.util.List;
  */
 public class SettingsActivity extends AppCompatPreferenceActivity {
 
+    private static final String TAG = "CV/SettingsActivity";
     /**
      * A preference value change listener that updates the preference's summary
      * to reflect its new value.
@@ -160,6 +163,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      * Make sure to deny any unknown fragments here.
      */
     protected boolean isValidFragment(String fragmentName) {
+        Log.i(TAG, "isValidFragment("+fragmentName+")");
         return PreferenceFragment.class.getName().equals(fragmentName)
                 || FaceDetectionSettingsFragment.class.getName().equals(fragmentName);
     }
@@ -173,6 +177,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             setHasOptionsMenu(true);
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
+
+            String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+            String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+            String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
+
+            bindPreferenceSummaryToValue(findPreference(prefKeyHostCloud));
+            bindPreferenceSummaryToValue(findPreference(prefKeyHostEdge));
+            bindPreferenceSummaryToValue(findPreference(prefKeyOpenPoseHostEdge));
         }
 
         @Override

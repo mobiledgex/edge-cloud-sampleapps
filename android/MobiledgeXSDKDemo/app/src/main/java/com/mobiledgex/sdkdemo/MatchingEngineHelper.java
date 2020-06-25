@@ -33,7 +33,6 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.mobiledgex.matchingengine.ChannelIterator;
-import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import java.io.IOException;
@@ -43,6 +42,12 @@ import java.util.concurrent.ExecutionException;
 
 import distributed_match_engine.AppClient;
 import io.grpc.StatusRuntimeException;
+
+import static com.mobiledgex.sdkdemo.MainActivity.mAppName;
+import static com.mobiledgex.sdkdemo.MainActivity.mAppVersion;
+import static com.mobiledgex.sdkdemo.MainActivity.mCarrierName;
+import static com.mobiledgex.sdkdemo.MainActivity.mHostname;
+import static com.mobiledgex.sdkdemo.MainActivity.mOrgName;
 
 public class MatchingEngineHelper {
     private static final String TAG = "MatchingEngineHelper";
@@ -55,8 +60,6 @@ public class MatchingEngineHelper {
     private AppClient.FindCloudletReply mClosestCloudlet;
     private MatchingEngine mMatchingEngine;
     private String someText = null;
-    private String mHostname;
-    private String mCarrierName;
 
     /**
      * Possible actions to perform with the matching engine.
@@ -70,12 +73,10 @@ public class MatchingEngineHelper {
         REQ_GET_QOS
     }
 
-    public MatchingEngineHelper(Context context, String hostname, String carrierName, View view) {
-        Log.i(TAG, "MatchingEngineHelper mHostname="+hostname+" mCarrierName="+carrierName);
+    public MatchingEngineHelper(Context context, View view) {
+        Log.i(TAG, "MatchingEngineHelper()");
         mContext = context;
         mView = view;
-        mHostname = hostname;
-        mCarrierName = carrierName;
         mMatchingEngine = new MatchingEngine(mContext);
     }
 
@@ -194,7 +195,7 @@ public class MatchingEngineHelper {
                 }
                 Log.i(TAG, "mHost:" + host);
 
-                if (!registerClient(ctx, host, port, orgName, appVersion, mCarrierName, reportCookie)) {
+                if (!registerClient(host, port, reportCookie)) {
                     return null;
                 }
 
@@ -204,28 +205,28 @@ public class MatchingEngineHelper {
                         break;
 
                     case REQ_VERIFY_LOCATION:
-                        verifyLocation(location, ctx, host, port, mCarrierName);
+                        verifyLocation(location, host, port);
                         break;
 
                     case REQ_FIND_CLOUDLET:
-                        findCloudlet(location, ctx, host, port, mCarrierName);
+                        findCloudlet(location, host, port);
                         break;
 
                     case REQ_GET_CLOUDLETS:
-                        getAppInstList(location, ctx, host, port, mCarrierName);
+                        getAppInstList(location, host, port);
                         break;
 
                     case REQ_DO_ALL:
                         //In this case, we do all actions in order as long as each one is successful.
-                        if(!getAppInstList(location, ctx, host, port, mCarrierName)) {
+                        if(!getAppInstList(location, host, port)) {
                             Log.e(TAG, "getAppInstList failed. aborting REQ_DO_ALL");
                             return null;
                         }
-                        if(!verifyLocation(location, ctx, host, port, mCarrierName)) {
+                        if(!verifyLocation(location, host, port)) {
                             Log.e(TAG, "verifyLocation failed. aborting REQ_DO_ALL");
                             return null;
                         }
-                        if(!findCloudlet(location, ctx, host, port, mCarrierName)) {
+                        if(!findCloudlet(location, host, port)) {
                             Log.e(TAG, "findCloudlet failed. aborting REQ_DO_ALL");
                             return null;
                         }
@@ -242,20 +243,23 @@ public class MatchingEngineHelper {
 
                 Log.i(TAG, "someText=" + someText);
             } catch (IOException | StatusRuntimeException | IllegalArgumentException
-                    | ExecutionException | InterruptedException ioe) {
-                ioe.printStackTrace();
-                toastOnUiThread(ioe.getMessage(), Toast.LENGTH_LONG);
+                    | ExecutionException | InterruptedException ex) {
+                ex.printStackTrace();
+                toastOnUiThread(ex.getMessage(), Toast.LENGTH_LONG);
             }
             return null;
         }
     }
 
-    private boolean registerClient(Activity ctx, String host, int port, String orgName, String appVersion,
-                                   String carrierName, boolean reportCookie) throws InterruptedException, ExecutionException {
+    private boolean registerClient(String host, int port, boolean reportCookie)
+            throws InterruptedException, ExecutionException {
         AppClient.RegisterClientRequest registerClientRequest;
         try {
             registerClientRequest =
-                    mMatchingEngine.createDefaultRegisterClientRequest(ctx, orgName).setCarrierName(carrierName).setAppVers(appVersion).build();
+                    mMatchingEngine.createDefaultRegisterClientRequest(mContext, mOrgName)
+                            .setCarrierName(mCarrierName)
+                            .setAppName(mAppName)
+                            .setAppVers(mAppVersion).build();
         } catch (PackageManager.NameNotFoundException nnfe) {
             Log.e(TAG, "NameNotFoundException in create default register client request. " + nnfe.getMessage());
             return false;
@@ -284,10 +288,10 @@ public class MatchingEngineHelper {
         return true;
     }
 
-    private boolean getAppInstList(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
+    private boolean getAppInstList(Location location, String host, int port) throws InterruptedException, ExecutionException {
         // getAppInstList (Blocking, or use getAppInstListFuture):
         AppClient.AppInstListRequest appInstListRequest
-                = mMatchingEngine.createDefaultAppInstListRequest(ctx, location).setCarrierName(carrierName).setLimit(6).build();
+                = mMatchingEngine.createDefaultAppInstListRequest(mContext, location).setCarrierName(mCarrierName).setLimit(6).build();
         // TODO: Make setLimit value a preference.
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
@@ -312,11 +316,11 @@ public class MatchingEngineHelper {
         return true;
     }
 
-    private boolean findCloudlet(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, ExecutionException {
+    private boolean findCloudlet(Location location, String host, int port) throws InterruptedException, ExecutionException {
         // Find the closest cloudlet for your application to use. (Blocking call, or use findCloudletFuture):
         AppClient.FindCloudletRequest findCloudletRequest = null;
         findCloudletRequest
-                = mMatchingEngine.createDefaultFindCloudletRequest(ctx, location).setCarrierName(carrierName).build();
+                = mMatchingEngine.createDefaultFindCloudletRequest(mContext, location).setCarrierName(mCarrierName).build();
         if(findCloudletRequest != null) {
             mClosestCloudlet = mMatchingEngine.findCloudlet(findCloudletRequest,
                     host, port, 10000);
@@ -339,10 +343,10 @@ public class MatchingEngineHelper {
         return true;
     }
 
-    private boolean verifyLocation(Location location, Activity ctx, String host, int port, String carrierName) throws InterruptedException, IOException, ExecutionException {
+    private boolean verifyLocation(Location location, String host, int port) throws InterruptedException, IOException, ExecutionException {
         // Location Verification (Blocking, or use verifyLocationFuture):
         AppClient.VerifyLocationRequest verifyRequest =
-                mMatchingEngine.createDefaultVerifyLocationRequest(ctx, location).setCarrierName(carrierName).build();
+                mMatchingEngine.createDefaultVerifyLocationRequest(mContext, location).setCarrierName(mCarrierName).build();
         if (verifyRequest != null) {
             AppClient.VerifyLocationReply verifiedLocation =
                     mMatchingEngine.verifyLocation(verifyRequest, host, port, 10000);
@@ -419,17 +423,5 @@ public class MatchingEngineHelper {
     public void setSpoofedLocation(Location mSpoofLocation) {
         Log.i(TAG, "setSpoofedLocation("+mSpoofLocation+")");
         this.mSpoofLocation = mSpoofLocation;
-    }
-
-    public String getHostname() {
-        return mHostname;
-    }
-
-    public void setHostname(String mHostname) {
-        this.mHostname = mHostname;
-    }
-
-    public void setCarrierName(String carrierName) {
-        mCarrierName = carrierName;
     }
 }
