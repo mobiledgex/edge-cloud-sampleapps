@@ -1,23 +1,31 @@
-<p>Version: ${appVersion}</p>
+<p>Version: ${androidAppVersion}</p>
 <p>This app uses the MobiledgeX Matching Engine SDK to find and display on a map all of the
-Cloudlets running the backend app that provides the speed test and computer vision services
-needed by this app. It uses the following information for the SDK API calls:</p>
+ Cloudlets running the backend app that provides the speed test and computer vision services
+ needed by this app. It uses the following information for the SDK API calls:</p>
 <table border="2">
     <tbody>
     <tr>
         <td><strong>appName</strong></td>
-        <td>MobiledgeX SDK Demo</td>
+        <td>${appName}</td>
     </tr>
     <tr>
-        <td><strong>devName</strong></td>
-        <td>MobiledgeX</td>
+        <td><strong>orgName</strong></td>
+        <td>${orgName}</td>
     </tr>
     <tr>
         <td><strong>appVer</strong></td>
-        <td>2.0</td>
+        <td>${appVersion}</td>
+    </tr>
+    <tr>
+        <td><strong>Operator</strong></td>
+        <td>${operator}</td>
+    </tr>
+    <tr>
+        <td><strong>Region</strong></td>
+        <td>${region}</td>
     </tr>
     </tbody>
 </table>
-<p>The Operator name and Region selection values can be changed in the General Settings of the app.</p>
+<p>These values can be changed in the General Settings of the app.</p>
 <p>To learn more about the MobiledgeX SDK, see <a href="https://developers.mobiledgex.com/">developers.mobiledgex.com</a> for documentation and a Getting Started guide.</p>
 <p>Source code for this app is available on <a href="https://github.com/mobiledgex/edge-cloud-sampleapps/tree/master/android/MobiledgeXSDKDemo">Github</a>.</p>

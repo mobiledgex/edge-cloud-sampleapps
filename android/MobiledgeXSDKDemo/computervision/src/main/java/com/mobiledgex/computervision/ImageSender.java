@@ -24,7 +24,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -60,7 +59,7 @@ import okio.ByteString;
 public class ImageSender {
     private static final String TAG = "ImageSender";
     public static final int TRAINING_COUNT_TARGET = 10;
-    private static final double RECOGNITION_CONFIDENCE_THRESHOLD = 105;
+    private static final double RECOGNITION_CONFIDENCE_THRESHOLD = 120;
     private static final int NORMAL_CLOSURE_STATUS = 1000;
 
     private ImageServerInterface mImageServerInterface;
@@ -72,7 +71,8 @@ public class ImageSender {
     private RollingAverage mLatencyFullProcessRollingAvg;
     private RollingAverage mLatencyNetOnlyRollingAvg;
     private int mTrainingCount;
-    private boolean mBusy;
+    protected boolean mBusy;
+    private boolean mInactive;
     private boolean mInactiveBenchmark;
     private boolean mInactiveFailure;
     private long mLatency = 0;
@@ -99,6 +99,7 @@ public class ImageSender {
 
     private OkHttpClient mWebSocketClient;
     private WebSocket mWebSocket;
+    private StringRequest mStringRequestMain;
 
     public enum ConnectionMode {
         REST,
@@ -250,24 +251,29 @@ public class ImageSender {
         public void onFailure(WebSocket webSocket, Throwable t, okhttp3.Response response) {
             String message = "WebSocket Error: " + t.getMessage();
             Log.e(TAG, message);
+            mWebSocketClient.dispatcher().cancelAll();
             if (response != null && response.code() == 404) {
                 mImageServerInterface.showError("WebSockets support not yet deployed to "+mCloudLetType+" server.");
                 mInactiveFailure = true;
             } else {
-                mImageServerInterface.showMessage(message, Toast.LENGTH_LONG);
+                mImageServerInterface.reportConnectionError("WebSocket connection error: "+message, ImageSender.this);
             }
-            mWebSocketClient.dispatcher().cancelAll();
         }
     }
 
     private void startWebSocketClient() {
+        if (mHost == null) {
+            Log.i(TAG, mCloudLetType+" can't start WebSocket client with null host");
+            return;
+        }
         String url = "ws://"+mHost+":8008/ws"+mDjangoUrl;
+        Log.i(TAG, mCloudLetType+" attempting to start WebSocket client. url: " + url);
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
         ResultWebSocketListener listener = new ResultWebSocketListener();
         mWebSocketClient = new OkHttpClient();
         mWebSocket = mWebSocketClient.newWebSocket(request, listener);
         mWebSocketClient.dispatcher().executorService().shutdown();
-        Log.i(TAG, "Started WebSocket client. url: " + url);
+        Log.i(TAG, mCloudLetType+" started WebSocket client. url: " + url);
     }
 
     /*receive the message from server with asyncTask*/
@@ -297,11 +303,17 @@ public class ImageSender {
     }
 
     public void closeConnection() {
-        Log.i(TAG, "Disconnecting socket for "+mCloudLetType+" mConnectionMode="+mConnectionMode);
+        Log.i(TAG, "closeConnection for "+mCloudLetType+" mConnectionMode="+mConnectionMode);
+        if (mStringRequestMain != null) {
+            Log.i(TAG, "Cancelling REST request for "+mCloudLetType);
+            mStringRequestMain.cancel();
+        }
         if (mWebSocket != null) {
+            Log.i(TAG, "Closing WebSocket for "+mCloudLetType);
             mWebSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
         }
         if (mSocketClientTcp != null) {
+            Log.i(TAG, "Closing socket for "+mCloudLetType);
             mSocketClientTcp.stopClient();
         }
     }
@@ -378,7 +390,7 @@ public class ImageSender {
      */
     public void sendImage(Bitmap bitmap) {
         Log.d(TAG, "sendImage()");
-        if(mBusy || mInactiveBenchmark || mInactiveFailure) {
+        if(mBusy || mInactive || mInactiveBenchmark || mInactiveFailure) {
             return;
         }
 
@@ -421,7 +433,7 @@ public class ImageSender {
             Log.i(TAG, "url="+url+" length: "+requestBody.length());
 
             // Request a byte response from the provided URL.
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+            mStringRequestMain = new StringRequest(Request.Method.POST, url,
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
@@ -436,8 +448,8 @@ public class ImageSender {
                 public void onErrorResponse(VolleyError error) {
                     mBusy = false;
                     String message = "sendImage received error=" + error;
-                    mImageServerInterface.showMessage(message, Toast.LENGTH_SHORT);
                     Log.e(TAG, message);
+                    mImageServerInterface.reportConnectionError(error.toString(), ImageSender.this);
                 }
             }) {
 
@@ -450,7 +462,7 @@ public class ImageSender {
             };
 
             // Add the request to the RequestQueue.
-            mRequestQueue.add(stringRequest);
+            mRequestQueue.add(mStringRequestMain);
         } else if(mConnectionMode == ConnectionMode.WEBSOCKET) {
             mWebSocket.send(ByteString.of(bytes));
         } else {
@@ -466,6 +478,10 @@ public class ImageSender {
      * @param latency
      */
     private void handleResponse(String response, long latency) {
+        if (mInactive) {
+            Log.i(TAG, "Inactive, aborting update.");
+            return;
+        }
         try {
             JSONObject jsonObject = new JSONObject(response);
             JSONArray rects;
@@ -641,7 +657,7 @@ public class ImageSender {
 
                     } else if (inputLine.contains("100% packet loss")) {  // when we get to the last line of executed ping command (all packets lost)
                         mLatencyTestMethod = LatencyTestMethod.socket;
-                        mImageServerInterface.showMessage("Ping failed. Switching to socket latency test mode.", Toast.LENGTH_SHORT);
+                        mImageServerInterface.showMessage("Ping failed. Switching to socket latency test mode.");
                         break;
                     }
                     inputLine = bufferedReader.readLine();
@@ -665,6 +681,10 @@ public class ImageSender {
             }
         }
 
+        if (mInactive) {
+            Log.i(TAG, "Inactive, aborting update.");
+            return;
+        }
         mImageServerInterface.updateNetworkStats(cloudletType, rollingAverage);
     }
 
@@ -690,7 +710,12 @@ public class ImageSender {
         for(ImageSender imageSender: imageSenders) {
             Log.i(TAG, "setPreferencesConnectionMode imageSender="+imageSender);
             if(imageSender != null) {
+                imageSender.mBusy = true;
                 imageSender.mConnectionMode = preferencesConnectionMode;
+                imageSender.mBusy = false;
+                if (imageSender.mConnectionMode == ConnectionMode.WEBSOCKET) {
+                    imageSender.startWebSocketClient();
+                }
             }
         }
     }
@@ -700,9 +725,9 @@ public class ImageSender {
      * @return  The statistics text.
      */
     public String getStatsText() {
-        if (mInactiveBenchmark || mInactiveFailure) {
+        if (mInactive || mInactiveBenchmark || mInactiveFailure) {
             // We don't want any results in this case.
-            return "";
+            return mCloudLetType + " was inactive.";
         }
         String statsText = mCloudLetType +" hostname: "+mHost+ "\n" +
                 "Connection mode="+mConnectionMode + "\n" +
@@ -735,6 +760,11 @@ public class ImageSender {
 
     public void setInactiveBenchmark(boolean inactiveBenchmark) {
         this.mInactiveBenchmark = inactiveBenchmark;
+    }
+
+    public void setInactive(boolean inactive) {
+        this.mInactive = inactive;
+        this.mBusy = inactive;
     }
 
     /**

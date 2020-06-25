@@ -15,7 +15,6 @@
 
     <string name="preference_fd_settings">Computer Vision Settings</string>
 
-    <string name="pref_summary_latency_method">Select socket connection or ICMP ping</string>
     <string name="preference_fd_front_camera">fd_front_camera</string>
     <string name="preference_fd_multi_face">fd_multi_face</string>
     <string name="preference_fd_multi_face_title">Multi-face</string>
@@ -32,6 +31,12 @@
     <string name="preference_fd_use_rolling_avg">fd_use_rolling_avg</string>
     <string name="preference_fd_use_rolling_avg_title">Use Rolling Average</string>
     <string name="preference_fd_use_rolling_avg_summary">Show individual measurements or rolling average</string>
+    <string name="preference_fd_show_cloud_output">fd_show_cloud_output</string>
+    <string name="preference_fd_show_cloud_output_title">Show Cloud Output</string>
+    <string name="preference_fd_show_cloud_output_summary">Show or hide results from public cloud image processing</string>
+    <string name="preference_fd_auto_failover">fd_auto_failover</string>
+    <string name="preference_fd_auto_failover_title">Auto Failover</string>
+    <string name="preference_fd_auto_failover_summary">Automatically switch to next available server when failure encountered</string>
     <string name="preference_fd_host_training">fd_host_training</string>
     <string name="preference_fd_host_cloud">fd_host_cloud</string>
     <string name="preference_fd_host_cloud_title">Cloud Server</string>
@@ -54,7 +59,7 @@
     </string-array>
     <string name="fd_latency_method">fd_latency_method</string>
     <string name="preference_openpose_host_edge">fd_openpose_host_edge</string>
-    <string name="preference_openpose_host_edge_title">OpenPose GPU Server</string>
+    <string name="preference_openpose_host_edge_title">GPU Server (OpenPose, PyTorch)</string>
     <string name="preference_openpose_host_edge_summary">Enter a custom IP or hostname.</string>
     <string name="train_guest_start">Start</string>
     <string name="train_guest_title">Guest Name</string>
@@ -65,8 +70,9 @@
     <string name="verify_delete_title">Delete Training Data</string>
     <string name="verify_delete_message">Are you sure you want to delete your face training data from the server?</string>
 
-    <string name="pref_title_latency_method">Latency Test Method</string>
-    <string name="latency_method">latency_method</string>
+    <string name="pref_latency_method">latency_method</string>
+    <string name="pref_latency_method_title">Latency Test Method</string>
+    <string name="pref_latency_method_summary">%s</string>
     <string-array name="pref_latency_test_method_titles">
         <item>System Ping (ICMP)</item>
         <item>Socket</item>
@@ -78,7 +84,7 @@
 
     <string name="preference_fd_connection_mode">fd_connection_mode</string>
     <string name="preference_fd_connection_mode_title">Connection Mode</string>
-    <string name="preference_fd_connection_mode_summary">Choose how to connect to the server.</string>
+    <string name="preference_fd_connection_mode_summary">%s</string>
     <string-array name="pref_fd_connection_mode_titles">
         <item>REST</item>
         <item>Persistent TCP</item>

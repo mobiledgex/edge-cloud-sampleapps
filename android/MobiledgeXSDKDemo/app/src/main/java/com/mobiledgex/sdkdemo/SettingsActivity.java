@@ -192,7 +192,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.location_preferences);
+            addPreferencesFromResource(R.xml.pref_matching_engine);
             setHasOptionsMenu(true);
         }
 
@@ -233,6 +233,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         String prefKeyOperatorName;
         String prefKeyDefaultDmeHostname;
         String prefKeyDefaultOperatorName;
+        String prefKeyDefaultAppInfo;
+        String prefKeyAppName;
+        String prefKeyAppVersion;
+        String prefKeyOrgName;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -245,14 +249,23 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             prefKeyDefaultDmeHostname = getResources().getString(R.string.pref_default_dme_hostname);
             prefKeyOperatorName = getResources().getString(R.string.pref_operator_name);
             prefKeyDmeHostname = getResources().getString(R.string.pref_dme_hostname);
+            prefKeyDefaultAppInfo = getResources().getString(R.string.pref_default_app_definition);
+            prefKeyAppName = getResources().getString(R.string.pref_app_name);
+            prefKeyAppVersion = getResources().getString(R.string.pref_app_version);
+            prefKeyOrgName = getResources().getString(R.string.pref_org_name);
 
             // Initialize summary values for these keys.
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             onSharedPreferenceChanged(prefs, prefKeyDefaultOperatorName);
             onSharedPreferenceChanged(prefs, prefKeyDefaultDmeHostname);
             onSharedPreferenceChanged(prefs, prefKeyOperatorName);
+            onSharedPreferenceChanged(prefs, prefKeyDefaultAppInfo);
             // prefKeyDmeHostname does not need initialized here, because it is initialized with
             // the results of the dme-list.html call below.
+
+            bindPreferenceSummaryToValue(findPreference(prefKeyAppName));
+            bindPreferenceSummaryToValue(findPreference(prefKeyAppVersion));
+            bindPreferenceSummaryToValue(findPreference(prefKeyOrgName));
 
             // Instantiate the RequestQueue.
             RequestQueue queue = Volley.newRequestQueue(getActivity());
@@ -344,6 +357,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 String summary = getResources().getString(R.string.pref_summary_default_operator_name);
                 String prefKeyValueDefaultOperatorName = getResources().getString(R.string.pref_value_default_operator_name);
                 String operatorName = sharedPreferences.getString(prefKeyValueDefaultOperatorName, DEFAULT_CARRIER_NAME);
+                if (operatorName.isEmpty()) {
+                    operatorName = "<blank>";
+                }
                 summary = summary + ": " + operatorName;
                 pref.setSummary(summary);
             }
@@ -357,6 +373,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 String summary = getResources().getString(R.string.pref_summary_operator_name);
                 pref.setSummary(summary + ": " + ((EditTextPreference)pref).getText());
             }
+
+            if (key.equals(prefKeyDefaultAppInfo)) {
+                String summary = getResources().getString(R.string.pref_summary_default_app_definition);
+                String appName = getResources().getString(R.string.app_name);
+                String appVersion = getResources().getString(R.string.app_version);
+                String orgName = getResources().getString(R.string.org_name);
+                summary = summary + "\n    Name=" + appName + "\n    Version=" + appVersion + "\n    Org=" + orgName;
+                pref.setSummary(summary);
+            }
+
+
         }
     }
 
@@ -381,6 +408,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             setHasOptionsMenu(true);
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
+
+            String prefKeyHostCloud = getResources().getString(com.mobiledgex.computervision.R.string.preference_fd_host_cloud);
+            String prefKeyHostEdge = getResources().getString(com.mobiledgex.computervision.R.string.preference_fd_host_edge);
+            String prefKeyOpenPoseHostEdge = getResources().getString(com.mobiledgex.computervision.R.string.preference_openpose_host_edge);
+
+            bindPreferenceSummaryToValue(findPreference(prefKeyHostCloud));
+            bindPreferenceSummaryToValue(findPreference(prefKeyHostEdge));
+            bindPreferenceSummaryToValue(findPreference(prefKeyOpenPoseHostEdge));
         }
 
         @Override

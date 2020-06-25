@@ -25,6 +25,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -44,7 +45,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import android.preference.PreferenceScreen;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.Menu;
@@ -91,6 +91,7 @@ import com.mobiledgex.computervision.ImageSender;
 import com.mobiledgex.computervision.ObjectProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorFragment;
+import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.sdkdemo.qoe.QoeMapActivity;
@@ -105,7 +106,6 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -139,12 +139,17 @@ public class MainActivity extends AppCompatActivity
 
     private static final int RC_SIGN_IN = 1;
     public static final int RC_STATS = 2;
-    public static final String DEFAULT_DME_HOSTNAME = "eu-mexdemo.dme.mobiledgex.net";
-    public static final String DEFAULT_CARRIER_NAME = "GDDT";
+    public static final String DEFAULT_DME_HOSTNAME = "wifi.dme.mobiledgex.net";
+    public static final String DEFAULT_CARRIER_NAME = "";
+    public static final String DEFAULT_FIND_CLOUDLET_MODE = "PROXIMITY";
     private String mDefaultCarrierName;
     private String mDefaultDmeHostname;
-    private String mHostname;
-    private String mCarrierName;
+    protected static String mHostname;
+    protected static String mCarrierName;
+    protected static String mRegionName;
+    protected static String mAppName;
+    protected static String mAppVersion;
+    protected static String mOrgName;
     private boolean mNetworkSwitchingAllowed;
 
     private GoogleMap mGoogleMap;
@@ -173,6 +178,8 @@ public class MainActivity extends AppCompatActivity
     private MenuItem signOutMenuItem;
     private AlertDialog mAlertDialog;
     private boolean mAllowLocationSimulatorUpdate = false;
+    private boolean uiHasBeenTouched;
+    private MatchingEngine.FindCloudletMode mFindCloudletMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -276,18 +283,22 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
-//        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_dme_hostname));
-//        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_operator_name));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_dme_hostname));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_operator_name));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_find_cloudlet_mode));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.upload_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
-        onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_method));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_method));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_autostart));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_app_definition));
 
         // Watch for any updated preferences:
         prefs.registerOnSharedPreferenceChangeListener(this);
+
+        // TODO: If GDDT ever restores their PQoE backend, unhide this menu item
+        MenuItem qoeMenuItem = navigationView.getMenu().findItem(R.id.nav_qoe_map);
+        qoeMenuItem.setVisible(false);
     }
 
     /**
@@ -311,7 +322,7 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "matchingEngineRequest("+reqType+") mLastKnownLocation="+mLastKnownLocation);
         if(mLastKnownLocation == null) {
             startLocationUpdates();
-            Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
+            showGpsWarning();
             return;
         }
         mMatchingEngineHelper.doRequestInBackground(reqType, mLocationForMatching);
@@ -344,7 +355,13 @@ public class MainActivity extends AppCompatActivity
                 sb.append(str);
             }
             String htmlData = sb.toString();
-            htmlData = htmlData.replace("${appVersion}", appVersion);
+            htmlData = htmlData.replace("${androidAppVersion}", appVersion)
+                    .replace("${appName}", mAppName)
+                    .replace("${appVersion}", mAppVersion)
+                    .replace("${orgName}", mOrgName)
+                    .replace("${operator}", mCarrierName)
+                    .replace("${region}", mHostname)
+                    .replace(".dme.mobiledgex.net", "");
 
             // The WebView to show our HTML.
             WebView webView = new WebView(MainActivity.this);
@@ -383,19 +400,20 @@ public class MainActivity extends AppCompatActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+        uiHasBeenTouched = true;
         int id = item.getItemId();
 
         if (id == R.id.action_register_client) {
             matchingEngineRequest(REQ_REGISTER_CLIENT);
         }
         if (id == R.id.action_get_app_inst_list) {
-            getCloudlets();
+            getCloudlets(false);
         }
         if (id == R.id.action_reset_location) {
             // Reset spoofed GPS
             if(mLastKnownLocation == null) {
                 startLocationUpdates();
-                Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
+                showGpsWarning();
                 return true;
             }
             if(mUserLocationMarker == null) {
@@ -410,7 +428,7 @@ public class MainActivity extends AppCompatActivity
             locationVerified = false;
             locationVerificationAttempted = false;
             mClosestCloudletHostname = null;
-            getCloudlets();
+            getCloudlets(true);
             return true;
         }
         if (id == R.id.action_verify_location) {
@@ -427,6 +445,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
+        uiHasBeenTouched = true;
         int id = item.getItemId();
 
         if (id == R.id.nav_settings) {
@@ -442,6 +461,7 @@ public class MainActivity extends AppCompatActivity
             // Start the face detection Activity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
+            putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_face_recognition) {
@@ -449,6 +469,7 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_FACE_RECOGNITION, true);
             intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
+            putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_pose_detection) {
@@ -457,14 +478,16 @@ public class MainActivity extends AppCompatActivity
             //Due to limited GPU availabilty, we don't want to override the default yet.
             //It's still possible to override the default via preferences.
             //TODO: Add this back when we have more cloudlets with GPU support.
-//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
+//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname1);
+            putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_object_detection) {
             // Start the object detection Activity
             Intent intent = new Intent(this, ObjectProcessorActivity.class);
             //TODO: Add this back when we have more cloudlets with GPU support.
-//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname);
+//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname1);
+            putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_qoe_map) {
@@ -500,6 +523,27 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void putCommonIntentExtras(Intent intent) {
+        intent.putExtra(ImageProcessorFragment.EXTRA_APP_NAME, mAppName);
+        intent.putExtra(ImageProcessorFragment.EXTRA_APP_VERSION, mAppVersion);
+        intent.putExtra(ImageProcessorFragment.EXTRA_ORG_NAME, mOrgName);
+        intent.putExtra(ImageProcessorFragment.EXTRA_FIND_CLOUDLET_MODE, mFindCloudletMode.name());
+        intent.putExtra(ImageProcessorFragment.EXTRA_DME_HOSTNAME, mHostname);
+        intent.putExtra(ImageProcessorFragment.EXTRA_CARRIER_NAME, mCarrierName);
+        Log.i(TAG, "mLastKnownLocation="+mLastKnownLocation);
+        Location cvLocation;
+        if(mMatchingEngineHelper.getSpoofedLocation() == null) {
+            cvLocation = mLastKnownLocation;
+        } else {
+            cvLocation = mMatchingEngineHelper.getSpoofedLocation();
+        }
+        if (cvLocation != null) {
+            Log.i(TAG, "cvLocation="+cvLocation);
+            intent.putExtra(ImageProcessorFragment.EXTRA_LATITUDE, cvLocation.getLatitude());
+            intent.putExtra(ImageProcessorFragment.EXTRA_LONGITUDE, cvLocation.getLongitude());
+        }
     }
 
     @Override
@@ -625,13 +669,23 @@ public class MainActivity extends AppCompatActivity
     /**
      * Gets list of cloudlets from DME, and populates map with markers.
      *
+     * @param clearExisting
      */
-    public void getCloudlets() {
-        Log.i(TAG, "getCloudletList() mLastKnownLocation="+mLastKnownLocation);
+    public void getCloudlets(boolean clearExisting) {
+        Log.i(TAG, "getCloudlets() mLastKnownLocation="+mLastKnownLocation+" mMatchingEngineHelper="+mMatchingEngineHelper);
+        if (mMatchingEngineHelper == null) {
+            Log.i(TAG, "getCloudlets() mMatchingEngineHelper not yet initialized");
+            return;
+        }
         if(mLastKnownLocation == null) {
             startLocationUpdates();
-            Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_LONG).show();
+            showGpsWarning();
             return;
+        }
+
+        if (clearExisting) {
+            //Clear list so we don't show old cloudlets as transparent
+            CloudletListHolder.getSingleton().getCloudletList().clear();
         }
 
         if(mMatchingEngineHelper.getSpoofedLocation() == null) {
@@ -641,6 +695,12 @@ public class MainActivity extends AppCompatActivity
         }
 
         mMatchingEngineHelper.doRequestInBackground(REQ_GET_CLOUDLETS, mLocationForMatching);
+    }
+
+    public void showGpsWarning() {
+        if (uiHasBeenTouched) {
+            Toast.makeText(MainActivity.this, "Waiting for GPS signal. Please retry in a moment.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @NonNull
@@ -728,7 +788,7 @@ public class MainActivity extends AppCompatActivity
                         mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
                         mMatchingEngineHelper.setSpoofedLocation(location);
                         locationVerificationAttempted = locationVerified = false;
-                        getCloudlets();
+                        getCloudlets(true);
                         break;
                     case 1:
                         Log.i(TAG, "Update GPS in simulator to "+location);
@@ -736,7 +796,7 @@ public class MainActivity extends AppCompatActivity
                         updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
                         mMatchingEngineHelper.setSpoofedLocation(location);
                         locationVerificationAttempted = locationVerified = false;
-                        getCloudlets();
+                        getCloudlets(true);
                         break;
                     default:
                         Log.i(TAG, "Unknown dialog selection.");
@@ -872,7 +932,7 @@ public class MainActivity extends AppCompatActivity
                             .color(COLOR_VERIFIED));
                     //Save the hostname for use by Face Detection Activity.
                     mClosestCloudletHostname = cloudlet.getHostName();
-                    Log.i(TAG, "mClosestCloudletHostname: "+mClosestCloudletHostname);
+                    Log.i(TAG, "mClosestCloudletHostname1: "+ mClosestCloudletHostname);
                 }
             }
         });
@@ -920,7 +980,7 @@ public class MainActivity extends AppCompatActivity
                     String cloudletName = cloudletLocation.getCloudletName();
                     List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
                     //TODO: What if there is more than 1 appInstance in the list?
-                    //There shouldn't be since we use all of appName, appVer, and devName in the
+                    //There shouldn't be since we use all of appName, appVer, and orgName in the
                     //request. There should only be a single match.
                     String uri = appInstances.get(0).getFqdn();
                     String appName = appInstances.get(0).getAppName();
@@ -957,7 +1017,6 @@ public class MainActivity extends AppCompatActivity
                     cloudlet.update(cloudletName, appName, carrierName, latLng, distance, uri, marker, FQDNPrefix, publicPort);
                     tempCloudlets.put(cloudletName, cloudlet);
                     builder.include(marker.getPosition());
-
                 }
 
                 //Now see if all cloudlets still exist. If removed, show as transparent.
@@ -1106,10 +1165,11 @@ public class MainActivity extends AppCompatActivity
             String stats = data.getExtras().getString("STATS");
             // The TextView to show your Text
             TextView showText = new TextView(MainActivity.this);
+            showText.setBackgroundColor(Color.parseColor("#EEEEEE"));
             showText.setText(currentDateTime + "\n" + stats);
             showText.setTextIsSelectable(true);
-            int horzPadding = (int) (15 * getResources().getDisplayMetrics().density);
-            showText.setPadding(horzPadding, 0,horzPadding,0);
+            int padding = (int) (15 * getResources().getDisplayMetrics().density);
+            showText.setPadding(padding, padding, padding, padding);
             new AlertDialog.Builder(MainActivity.this)
                     .setView(showText)
                     .setTitle("Stats")
@@ -1140,23 +1200,29 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, String key) {
         Log.d(TAG, "onSharedPreferenceChanged("+key+")");
+        boolean appInfoChanged = false;
         String prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
         String prefKeyAllowNetSwitch = getResources().getString(R.string.preference_net_switching_allowed);
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
         String prefKeyUploadSize = getResources().getString(R.string.upload_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
-        String prefKeyLatencyMethod = getResources().getString(R.string.latency_method);
+        String prefKeyLatencyMethod = getResources().getString(R.string.pref_latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
         String prefKeyDmeHostname = getResources().getString(R.string.pref_dme_hostname);
         String prefKeyOperatorName = getResources().getString(R.string.pref_operator_name);
         String prefKeyDefaultDmeHostname = getResources().getString(R.string.pref_default_dme_hostname);
         String prefKeyDefaultOperatorName = getResources().getString(R.string.pref_default_operator_name);
+        String prefKeyFindCloudletMode = getResources().getString(R.string.pref_find_cloudlet_mode);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
         String prefKeyResetFdHosts = getResources().getString(R.string.preference_fd_reset_both_hosts);
+        String prefKeyDefaultAppInfo = getResources().getString(R.string.pref_default_app_definition);
+        String prefKeyAppName = getResources().getString(R.string.pref_app_name);
+        String prefKeyAppVersion = getResources().getString(R.string.pref_app_version);
+        String prefKeyOrgName = getResources().getString(R.string.pref_org_name);
 
         if (key.equals(prefKeyAllowMatchingEngineLocation)) {
             boolean matchingEngineLocationAllowed = sharedPreferences.getBoolean(prefKeyAllowMatchingEngineLocation, false);
@@ -1184,21 +1250,29 @@ public class MainActivity extends AppCompatActivity
             CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
         }
 
-        if (key.equals(prefKeyDefaultDmeHostname) || key.equals(prefKeyDefaultOperatorName)) {
-            // Temporary instance just to get these values.
-            MatchingEngine me = new MatchingEngine(this);
-            mDefaultCarrierName = me.getCarrierName(this);
-            mDefaultDmeHostname = new StringBuilder(mDefaultCarrierName)
-                    .insert(3, "-").append(".dme.mobiledgex.net").toString();
-            Log.i(TAG, "mDefaultCarrierName="+mDefaultCarrierName+" mDefaultDmeHostname="+mDefaultDmeHostname);
-        }
-
         if (key.equals(prefKeyDefaultDmeHostname)) {
             boolean useDefault = sharedPreferences.getBoolean(prefKeyDefaultDmeHostname, true);
             if (useDefault) {
-                String prefKeyValueDefaultDmeHostname = getResources().getString(R.string.pref_value_default_dme_hostname);
-                sharedPreferences.edit().putString(prefKeyValueDefaultDmeHostname, mDefaultDmeHostname).apply();
-                setDmeHostname(mDefaultDmeHostname);
+                if (mMatchingEngineHelper != null) {
+                    new Thread(new Runnable() {
+                        @Override public void run() {
+                            try {
+                                mDefaultDmeHostname = mMatchingEngineHelper.getMatchingEngine().generateDmeHostAddress();
+                                String prefKeyValueDefaultDmeHostname = getResources().getString(R.string.pref_value_default_dme_hostname);
+                                sharedPreferences.edit().putString(prefKeyValueDefaultDmeHostname, mDefaultDmeHostname).apply();
+                                setDmeHostname(mDefaultDmeHostname);
+                            } catch (DmeDnsException e) {
+                                mDefaultDmeHostname = DEFAULT_DME_HOSTNAME;
+                                mMatchingEngineHelper.getMatchingEngine().setUseWifiOnly(true);
+                            }
+                            Log.i(TAG, "mDefaultCarrierName="+mDefaultCarrierName+" mDefaultDmeHostname="+mDefaultDmeHostname);
+                        }
+                    }).start();
+
+                } else {
+                    Log.i(TAG, "MatchingEngine not yet available. Skipping "+key);
+                    return;
+                }
             } else {
                 // Change the key name so the normal DME hostname handling code will be used below.
                 key = prefKeyDmeHostname;
@@ -1208,9 +1282,16 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyDefaultOperatorName)) {
             boolean useDefault = sharedPreferences.getBoolean(prefKeyDefaultOperatorName, true);
             if (useDefault) {
-                String prefKeyValueDefaultOperatorName = getResources().getString(R.string.pref_value_default_operator_name);
-                sharedPreferences.edit().putString(prefKeyValueDefaultOperatorName, mDefaultCarrierName).apply();
-                setCarrierName(mDefaultCarrierName);
+                if (mMatchingEngineHelper != null) {
+                    mDefaultCarrierName = mMatchingEngineHelper.getMatchingEngine().getCarrierName(this);
+                    Log.i(TAG, "mDefaultCarrierName=" + mDefaultCarrierName);
+                    String prefKeyValueDefaultOperatorName = getResources().getString(R.string.pref_value_default_operator_name);
+                    sharedPreferences.edit().putString(prefKeyValueDefaultOperatorName, mDefaultCarrierName).apply();
+                    setCarrierName(mDefaultCarrierName);
+                } else {
+                    Log.i(TAG, "MatchingEngine not yet available. Skipping "+key);
+                    return;
+                }
             } else {
                 // Change the key name so the normal Operator name handling code will be used below.
                 key = prefKeyOperatorName;
@@ -1239,6 +1320,43 @@ public class MainActivity extends AppCompatActivity
             String carrierName = sharedPreferences.getString(prefKeyOperatorName, DEFAULT_CARRIER_NAME);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+carrierName);
             setCarrierName(carrierName);
+        }
+
+        if (key.equals(prefKeyFindCloudletMode)) {
+            String findCloudletMode = sharedPreferences.getString(prefKeyFindCloudletMode, DEFAULT_FIND_CLOUDLET_MODE);
+            mFindCloudletMode = MatchingEngine.FindCloudletMode.valueOf(findCloudletMode);
+            Log.i(TAG, "findCloudletMode="+findCloudletMode+" mFindCloudletMode="+mFindCloudletMode);
+        }
+
+        if (key.equals(prefKeyDefaultAppInfo)) {
+            boolean useDefault = sharedPreferences.getBoolean(prefKeyDefaultAppInfo, true);
+            if (useDefault) {
+                mAppName = getResources().getString(R.string.app_name);
+                mAppVersion = getResources().getString(R.string.app_version);
+                mOrgName = getResources().getString(R.string.org_name);
+            } else {
+                mAppName = sharedPreferences.getString(prefKeyAppName, getResources().getString(R.string.app_name));
+                mAppVersion = sharedPreferences.getString(prefKeyAppVersion, getResources().getString(R.string.app_version));
+                mOrgName = sharedPreferences.getString(prefKeyOrgName, getResources().getString(R.string.org_name));
+                Log.i(TAG, "onSharedPreferenceChanged("+key+")=false. Custom values: appName="+mAppName+" appVersion="+mAppVersion+" orgName="+mOrgName);
+            }
+            appInfoChanged = true;
+        }
+
+        if (key.equals(prefKeyAppName)) {
+            mAppName = sharedPreferences.getString(key, getResources().getString(R.string.app_name));
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAppName);
+            appInfoChanged = true;
+        }
+        if (key.equals(prefKeyAppVersion)) {
+            mAppVersion = sharedPreferences.getString(key, getResources().getString(R.string.app_version));
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAppVersion);
+            appInfoChanged = true;
+        }
+        if (key.equals(prefKeyOrgName)) {
+            mOrgName = sharedPreferences.getString(key, getResources().getString(R.string.org_name));
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAppName);
+            appInfoChanged = true;
         }
 
         if (key.equals(prefKeyDownloadSize)) {
@@ -1288,28 +1406,22 @@ public class MainActivity extends AppCompatActivity
             //will activate this "changed" call.
             sharedPreferences.edit().putString(prefKeyResetFdHosts, "XXX_garbage_value").apply();
         }
+
+        if (appInfoChanged) {
+            getCloudlets(true);
+        }
     }
 
     public void setCarrierName(String carrierName) {
         mCarrierName = carrierName;
         mClosestCloudletHostname = null;
-        if(mMatchingEngineHelper != null) {
-            mMatchingEngineHelper.setCarrierName(carrierName);
-            //Clear list so we don't show old cloudlets as transparent
-            CloudletListHolder.getSingleton().getCloudletList().clear();
-            getCloudlets();
-        }
+        getCloudlets(true);
     }
 
     public void setDmeHostname(String hostname) {
         mHostname = hostname;
         mClosestCloudletHostname = null;
-        if(mMatchingEngineHelper != null) {
-            mMatchingEngineHelper.setHostname(mHostname);
-            //Clear list so we don't show old cloudlets as transparent
-            CloudletListHolder.getSingleton().getCloudletList().clear();
-            getCloudlets();
-        }
+        getCloudlets(true);
         checkForLocSimulator(mHostname);
     }
 
@@ -1353,7 +1465,11 @@ public class MainActivity extends AppCompatActivity
             } else {
                 message = "Could not reach face server at '"+newHost+"'. Resetting to default.";
             }
-            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            if (newHost.equals(ImageProcessorFragment.DEF_FACE_HOST_CLOUD) || newHost.equals(ImageProcessorFragment.DEF_FACE_HOST_EDGE)) {
+                // Don't show Toast for defaults.
+            } else {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            }
         }
         @Override
         protected void onPreExecute() {}
@@ -1388,9 +1504,14 @@ public class MainActivity extends AppCompatActivity
     public void initMatchingEngineHelper() {
         Log.i(TAG, "initMatchingEngineHelper()");
         Log.i(TAG, "mHostname="+mHostname+" networkSwitchingAllowed="+mNetworkSwitchingAllowed+" mCarrierName="+mCarrierName);
-        mMatchingEngineHelper = new MatchingEngineHelper(this, mHostname, mCarrierName , mMapFragment.getView());
+        mMatchingEngineHelper = new MatchingEngineHelper(this, mMapFragment.getView());
         mMatchingEngineHelper.setMatchingEngineResultsListener(this);
         mMatchingEngineHelper.getMatchingEngine().setNetworkSwitchingEnabled(mNetworkSwitchingAllowed);
+
+        // Initialize default dme hostname and operator.
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_dme_hostname));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_operator_name));
     }
 
     @Override
@@ -1430,24 +1551,29 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        try {
-            mGoogleMap.setMyLocationEnabled(true);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mGoogleMap.setMyLocationEnabled(true);
 
-            int interval = 5000; // Initially, 5 second interval to get the first update quickly
-            Log.i(TAG, "mFusedLocationClient.getLastLocation()="+mFusedLocationClient.getLastLocation()+" interval="+interval);
+                    int interval = 5000; // Initially, 5 second interval to get the first update quickly
+                    Log.i(TAG, "mFusedLocationClient.getLastLocation()="+mFusedLocationClient.getLastLocation()+" interval="+interval);
 
-            mLocationRequest = new LocationRequest();
-            mLocationRequest.setSmallestDisplacement(5);
-            mLocationRequest.setInterval(interval);
-            mLocationRequest.setFastestInterval(interval);
-            mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                    mLocationRequest = new LocationRequest();
+                    mLocationRequest.setSmallestDisplacement(5);
+                    mLocationRequest.setInterval(interval);
+                    mLocationRequest.setFastestInterval(interval);
+                    mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-            Log.i(TAG, "mFusedLocationClient.requestLocationUpdates() called");
-        } catch (SecurityException se) {
-            se.printStackTrace();
-            Log.i(TAG, "App should Request location permissions during onCreate().");
-        }
+                    mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+                    Log.i(TAG, "mFusedLocationClient.requestLocationUpdates() called");
+                } catch (SecurityException se) {
+                    se.printStackTrace();
+                    Log.i(TAG, "App should Request location permissions during onResume().");
+                }
+            }
+        });
     }
 
     private void stopLocationUpdates() {
@@ -1464,7 +1590,7 @@ public class MainActivity extends AppCompatActivity
                 Log.i(TAG, "onLocationResult() Location: " + location.getLatitude() + " " + location.getLongitude());
                 mLastKnownLocation = locationResult.getLastLocation();
                 if(!gpsInitialized) {
-                    getCloudlets();
+                    getCloudlets(true);
                     gpsInitialized = true;
                 }
 

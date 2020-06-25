@@ -13,6 +13,12 @@
         android:icon="@drawable/ic_menu_settings"
         android:title="Settings"
         app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_find_cloudlet"
+        android:title="Find Closest Cloudlet" />
+    <item android:id="@+id/action_get_app_inst_list"
+        android:title="Get App Instances" />
+    <item android:id="@+id/action_manual_failover"
+        android:title="Manual Failover" />
     <item android:id="@+id/action_camera_training"
         android:title="Training Mode" />
     <item android:id="@+id/action_camera_remove_training_data"
