@@ -38,7 +38,7 @@ namespace MobiledgeXComputerVision
         [DataMember]
         public float server_processing_time;
         [DataMember]
-        public int[][][] poses;
+        public float[][][] poses;
     }
 
     [DataContract]
