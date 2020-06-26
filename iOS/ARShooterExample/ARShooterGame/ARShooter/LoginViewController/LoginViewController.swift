@@ -22,7 +22,7 @@ import Promises
 import SocketIO
 import CoreLocation
 
-class LoginViewController: UIViewController {
+class LoginViewController: UIViewController, CLLocationManagerDelegate {
     
     @IBOutlet weak var gameIDField: UITextField!
     @IBOutlet weak var userNameField: UITextField!
@@ -41,17 +41,12 @@ class LoginViewController: UIViewController {
     var appVers: String?
     var orgName: String!
     var carrierName: String?
-    var authToken: String?
-    var uniqueIDType: MobiledgeXiOSLibrary.MatchingEngine.IDTypes?
-    var uniqueID: String?
-    var cellID: UInt32?
-    var tags: [MobiledgeXiOSLibrary.MatchingEngine.Tag]?
     var host: String?
     var port: UInt16?
     var internalPort: UInt16 = 3838 // internal port I specified when deploying my app
     var location: MobiledgeXiOSLibrary.MatchingEngine.Loc?
     
-    var demo = true
+    var demo = false
     
     var manager: SocketManager?
     
@@ -72,15 +67,15 @@ class LoginViewController: UIViewController {
         userNameField.delegate = self
         gameIDField.delegate = self
         
-        if !demo {
-            self.locationManager = CLLocationManager()
-            locationManager!.requestWhenInUseAuthorization()
-        }
-        
         setUpMatchingEngineParameters()
-        DispatchQueue.main.async {
-            self.callMatchingEngineAPIs()
-            self.getWebsocketConnection()
+        if !demo {
+            // Non demo mode requires getting user location
+            self.locationManager = CLLocationManager()
+            locationManager!.delegate = self
+            locationManager!.requestWhenInUseAuthorization()
+        } else {
+            // Location is already hardcoded. Jump straight to MobiledgeX API calls
+            mobiledgeXIntegration()
         }
     }
     
@@ -89,42 +84,40 @@ class LoginViewController: UIViewController {
         if demo {
             // dmeHost and dmePort can be used as parameters in overloaded API calls
             // (ie. registerClient(host: dmeHost, port: dmePort, request: request))
-            dmeHost = "sdkdemo.dme.mobiledgex.net"
+            dmeHost = "wifi.dme.mobiledgex.net"
             dmePort = 38001
             appName = "ARShooter"
             appVers = "1.0"
             orgName = "MobiledgeX"
-            carrierName = "TDG"
-            authToken = nil
-            location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: 37.459609, longitude: -122.149349)  // Get actual location and ask user for permission
-            uniqueIDType = nil
-            uniqueID = nil
-            cellID = 0
-            tags = nil
+            carrierName = ""
+            location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: 37.459609, longitude: -122.149349) // Get actual location and ask user for permission
         } else {
-            appName = matchingEngine.getAppName()
-            appVers = matchingEngine.getAppVersion()
+            appName = "ARShooter"
+            appVers = "1.0"
             orgName = "MobiledgeX"
-            carrierName = "TDG"
-            authToken = nil
-            location = getLocation()
-            uniqueIDType = MobiledgeXiOSLibrary.MatchingEngine.IDTypes.ID_UNDEFINED
-            uniqueID = matchingEngine.getUniqueID()
-            cellID = 0
-            tags = nil
+            carrierName = ""
         }
     }
     
-    func getLocation() -> MobiledgeXiOSLibrary.MatchingEngine.Loc? {
+    // Location Manager delegate. Called when Authorization Status is changed
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         var currLocation: CLLocation!
         
-        var authStatus = CLLocationManager.authorizationStatus()
-        if (authStatus == .authorizedAlways || authStatus == .authorizedWhenInUse) {
-            currLocation = locationManager?.location
-            return MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: currLocation.coordinate.latitude, longitude: currLocation.coordinate.longitude)
+        if (status == .authorizedAlways || status == .authorizedWhenInUse) {
+            currLocation = manager.location
+            location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: currLocation.coordinate.latitude, longitude: currLocation.coordinate.longitude)
         }
         
-        return nil
+        if location != nil {
+            mobiledgeXIntegration()
+        }
+    }
+    
+    func mobiledgeXIntegration() {
+        DispatchQueue.main.async {
+            self.callMatchingEngineAPIs()
+            self.getWebsocketConnection()
+        }
     }
     
     // This function shows a couple of the MatchingEngine APIs
@@ -132,8 +125,7 @@ class LoginViewController: UIViewController {
         let registerClientRequest = matchingEngine.createRegisterClientRequest(
                                                 orgName: orgName,
                                                 appName: appName,
-                                                appVers: appVers
-                                                )
+                                                appVers: appVers)
         
         matchingEngine.registerClient(request: registerClientRequest)
         .then { registerClientReply in
@@ -144,17 +136,16 @@ class LoginViewController: UIViewController {
                 return
             }
             
-            let findCloudletRequest = self.matchingEngine.createFindCloudletRequest(
+            // FindCloudlet
+            let findCloudletRequest = try self.matchingEngine.createFindCloudletRequest(
                                             gpsLocation: self.location!,
-                                            carrierName: self.carrierName!
-                                            )
+                                            carrierName: self.carrierName!)
             self.findCloudletPromise = self.matchingEngine.findCloudlet(request: findCloudletRequest)
-              
-            let verifyLocationRequest = self.matchingEngine.createVerifyLocationRequest(
+            
+            // VerifyLocation
+            let verifyLocationRequest = try self.matchingEngine.createVerifyLocationRequest(
                                             gpsLocation: self.location!,
-                                            carrierName: self.carrierName!
-                                            )
-                
+                                            carrierName: self.carrierName!)
             self.verifyLocationPromise = self.matchingEngine.verifyLocation(request: verifyLocationRequest)
             
             all(self.findCloudletPromise!, self.verifyLocationPromise!)
@@ -168,6 +159,10 @@ class LoginViewController: UIViewController {
                 let verifyLocationReply = value.1
                 SKToast.show(withMessage: "VerifyLocationReply is \(verifyLocationReply)")
                 print("VerifyLocationReply is \(verifyLocationReply)")
+            }.catch { error in
+                // Handle Errors
+                SKToast.show(withMessage: "Error occured in callMatchingEngineAPIs. Error is \(error.localizedDescription)")
+                print("Error occured in callMatchingEngineAPIs. Error is \(error.localizedDescription)")
             }
         }
     }
@@ -200,7 +195,7 @@ class LoginViewController: UIViewController {
         }.then { manager in
             self.manager = manager
         }.catch { error in
-            print("Error is \(error)")
+            print("Error in GetWebsocketConnection is \(error)")
         }
     }
     

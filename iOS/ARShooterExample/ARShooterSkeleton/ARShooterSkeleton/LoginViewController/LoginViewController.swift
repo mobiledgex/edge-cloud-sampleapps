@@ -22,7 +22,7 @@ import MobiledgeXiOSLibrary
 import Promises
 import SocketIO
 
-class LoginViewController: UIViewController {
+class LoginViewController: UIViewController, CLLocationManagerDelegate {
     
     @IBOutlet weak var gameIDField: UITextField!
     @IBOutlet weak var userNameField: UITextField!
@@ -40,11 +40,6 @@ class LoginViewController: UIViewController {
     var appVers: String?
     var orgName: String!
     var carrierName: String?
-    var authToken: String?
-    var uniqueIDType: MobiledgeXiOSLibrary.MatchingEngine.IDTypes?
-    var uniqueID: String?
-    var cellID: UInt32?
-    var tags: [MobiledgeXiOSLibrary.MatchingEngine.Tag]?
     var host: String?
     var port: UInt16?
     var internalPort: UInt16 = 3838 // internal port I specified when deploying my app
@@ -53,6 +48,9 @@ class LoginViewController: UIViewController {
     var demo = true
     
     var manager: SocketManager?
+    
+    var locationManager: CLLocationManager?
+
     enum LoginViewControllerError: Error {
         case runtimeError(String)
     }
@@ -68,6 +66,18 @@ class LoginViewController: UIViewController {
         gameIDField.delegate = self
         
         setUpMatchingEngineParameters()
+        
+        SKToast.show(withMessage: "Request location permissions not implemented yet")
+        
+        mobiledgeXIntegration()
+    }
+    
+    // Location Manager delegate. Called when Authorization Status is changed
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        SKToast.show(withMessage: "Location Manager delegate not implemented yet")
+    }
+    
+    func mobiledgeXIntegration() {
         DispatchQueue.main.async {
             self.callMatchingEngineAPIs()
             self.getWebsocketConnection()
