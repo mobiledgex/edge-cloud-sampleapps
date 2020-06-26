@@ -40,11 +40,6 @@ class LoginViewController: UIViewController {
     var appVers: String?
     var orgName: String!
     var carrierName: String?
-    var authToken: String?
-    var uniqueIDType: MobiledgeXiOSLibrary.MatchingEngine.IDTypes?
-    var uniqueID: String?
-    var cellID: UInt32?
-    var tags: [MobiledgeXiOSLibrary.MatchingEngine.Tag]?
     var host: String?
     var port: UInt16?
     var internalPort: UInt16 = 3838 // internal port I specified when deploying my app
@@ -53,6 +48,9 @@ class LoginViewController: UIViewController {
     var demo = true
     
     var manager: SocketManager?
+    
+    var locationManager: CLLocationManager?
+
     enum LoginViewControllerError: Error {
         case runtimeError(String)
     }
@@ -66,6 +64,8 @@ class LoginViewController: UIViewController {
         // Do any additional setup after loading the view.
         userNameField.delegate = self
         gameIDField.delegate = self
+        
+        SKToast.show(withMessage: "Request location permissions not implemented yet")
         
         setUpMatchingEngineParameters()
         DispatchQueue.main.async {
