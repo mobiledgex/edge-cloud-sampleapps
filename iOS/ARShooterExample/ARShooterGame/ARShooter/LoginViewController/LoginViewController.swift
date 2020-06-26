@@ -75,7 +75,7 @@ class LoginViewController: UIViewController, CLLocationManagerDelegate {
             locationManager!.requestWhenInUseAuthorization()
         } else {
             // Location is already hardcoded. Jump straight to MobiledgeX API calls
-            MobiledgeXIntegration()
+            mobiledgeXIntegration()
         }
     }
     
@@ -109,11 +109,11 @@ class LoginViewController: UIViewController, CLLocationManagerDelegate {
         }
         
         if location != nil {
-            MobiledgeXIntegration()
+            mobiledgeXIntegration()
         }
     }
     
-    func MobiledgeXIntegration() {
+    func mobiledgeXIntegration() {
         DispatchQueue.main.async {
             self.callMatchingEngineAPIs()
             self.getWebsocketConnection()

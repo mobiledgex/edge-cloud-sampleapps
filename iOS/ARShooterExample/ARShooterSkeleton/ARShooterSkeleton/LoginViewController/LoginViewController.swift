@@ -22,7 +22,7 @@ import MobiledgeXiOSLibrary
 import Promises
 import SocketIO
 
-class LoginViewController: UIViewController {
+class LoginViewController: UIViewController, CLLocationManagerDelegate {
     
     @IBOutlet weak var gameIDField: UITextField!
     @IBOutlet weak var userNameField: UITextField!
@@ -65,9 +65,19 @@ class LoginViewController: UIViewController {
         userNameField.delegate = self
         gameIDField.delegate = self
         
+        setUpMatchingEngineParameters()
+        
         SKToast.show(withMessage: "Request location permissions not implemented yet")
         
-        setUpMatchingEngineParameters()
+        mobiledgeXIntegration()
+    }
+    
+    // Location Manager delegate. Called when Authorization Status is changed
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        SKToast.show(withMessage: "Location Manager delegate not implemented yet")
+    }
+    
+    func mobiledgeXIntegration() {
         DispatchQueue.main.async {
             self.callMatchingEngineAPIs()
             self.getWebsocketConnection()
