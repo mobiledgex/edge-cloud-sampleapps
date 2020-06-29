@@ -3,7 +3,6 @@ using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
-using System.IO;
 using System;
 
 namespace MobiledgeXComputerVision
@@ -36,7 +35,7 @@ namespace MobiledgeXComputerVision
                     default:
                     case ServiceMode.FaceDetection:
                         return faceDetectionRects == null ? false : true;
-         }
+                }
 
             }
         }
@@ -114,7 +113,6 @@ namespace MobiledgeXComputerVision
         /// ImageSenderFlow Flow : Hide the GUI > CaptureScreenShot
         ///  > ShowGUI > Shrink Image > Send Image to Server > Handle Server Response > Repeat
         /// </summary>
-        /// <returns></returns>
         IEnumerator ImageSenderFlow()
         {
             showGUI = false;
@@ -134,7 +132,6 @@ namespace MobiledgeXComputerVision
                 yield return null;
             }
             StartCoroutine(SendImageToServer(imgBinary));
-            
         }
         
         IEnumerator SendImageToServer(byte[] imgBinary)
@@ -191,7 +188,6 @@ namespace MobiledgeXComputerVision
             switch (serviceMode)
             {
                 case ServiceMode.FaceDetection:
-
                     FaceDetectionResponse faceDetectionResponse = Messaging<FaceDetectionResponse>.Deserialize(response);
                     Debug.Log("Success : " + faceDetectionResponse.success);
                     Debug.Log("server_processing_time : " + faceDetectionResponse.server_processing_time);
@@ -259,9 +255,8 @@ namespace MobiledgeXComputerVision
                         width = imgScalingFactor * (faceDetectionRects[i][2] - faceDetectionRects[i][0]);
                         GUI.DrawTexture(new Rect(faceDetectionRects[i][0] * imgScalingFactor, faceDetectionRects[i][1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
                     }
-                    break;
+                    break;                   
                 case ServiceMode.FaceRecognition:
-
                     height = imgScalingFactor* (faceRecognitionRect[3] - faceRecognitionRect[1]);
                     width = imgScalingFactor * (faceRecognitionRect[2] - faceRecognitionRect[0]);
                     GUI.DrawTexture(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width/height);
@@ -298,7 +293,7 @@ namespace MobiledgeXComputerVision
         /// </summary>
         /// <param name="source">Screen Shot Texture</param>
         /// <param name="targetWidth"></param>
-        /// <returns></returns>
+        /// <returns> shrank image binary </returns>
         byte[] ShrinkAndEncode(Texture2D source, int targetWidth)
         {
             imgScalingFactor = source.width / targetWidth;
@@ -315,9 +310,6 @@ namespace MobiledgeXComputerVision
             scaledTex.Apply();
             byte[] bytes = scaledTex.EncodeToJPG();
             Destroy(scaledTex);
-            //string filepath = Path.Combine(Application.streamingAssetsPath, "ScaledSCREEN.jpg"); // fixme for testing only delete before publishing
-            //File.WriteAllBytes(filepath, bytes);
-            //Debug.Log("img Scaled");
             return bytes;
         }
 
