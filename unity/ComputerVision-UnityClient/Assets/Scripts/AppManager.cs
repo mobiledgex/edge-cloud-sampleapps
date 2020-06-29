@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Networking;
@@ -226,7 +226,6 @@ namespace MobiledgeXComputerVision
                         faceRecognitionRect = null;
                     }
                     break;
-
                 case ServiceMode.ObjectDetection:
                     ObjectDetectionResponse objectDetectionResponse = Messaging<ObjectDetectionResponse>.Deserialize(response);
                     Debug.Log("Success : " + objectDetectionResponse.success);
@@ -271,7 +270,6 @@ namespace MobiledgeXComputerVision
                     TextStyle.fontStyle = FontStyle.Bold;
                     GUI.Label(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor + 50, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
                     break;
-
                 case ServiceMode.ObjectDetection:
                     foreach (@Object obj in objectsDetected)
                     {
