@@ -3,6 +3,9 @@ using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
+using System.IO;
+using System;
+
 namespace MobiledgeXComputerVision
 {
     public class AppManager : MonoBehaviour
@@ -11,7 +14,6 @@ namespace MobiledgeXComputerVision
         public Texture rectTexture;
         public Texture nodeTexture;
         public static bool showGUI;
-        float[][][] poseDetectionNodes;
         int[][] faceDetectionRects;
         int[] faceRecognitionRect;
         static string faceRecognitionSubject;
@@ -19,6 +21,7 @@ namespace MobiledgeXComputerVision
         static @Object[] objectsDetected;
         float imgScalingFactor;
         public static int level = 0;
+        public NetworkManager networkManager;
         bool serviceAlreadyStarted
         {
             get
@@ -28,18 +31,17 @@ namespace MobiledgeXComputerVision
 
                     case ServiceMode.FaceRecognition:
                         return faceRecognitionRect == null ? false : true;
-                    case ServiceMode.PoseDetection:
-                        return poseDetectionNodes == null ? false : true;
                     case ServiceMode.ObjectDetection:
                         return objectsDetected == null ? false : true;
                     default:
                     case ServiceMode.FaceDetection:
                         return faceDetectionRects == null ? false : true;
-                }
+         }
 
             }
         }
-        static string urlSuffix
+
+        public static string urlSuffix
         {
             get
             {
@@ -47,8 +49,6 @@ namespace MobiledgeXComputerVision
                 {
                     case ServiceMode.FaceRecognition:
                         return "/recognizer/predict/";
-                    case ServiceMode.PoseDetection:
-                        return "/openpose/detect/";
                     case ServiceMode.ObjectDetection:
                         return "/object/detect/";
                     default:
@@ -57,24 +57,26 @@ namespace MobiledgeXComputerVision
                 }
             }
         }
+
         static string url;
         public enum ServiceMode
         {
             FaceDetection,
             FaceRecognition,
-            PoseDetection,
             ObjectDetection
         }
+
         public enum DataSource
         {
             VIDEO,
             CAMERA,
             nReal
         }
+
         public static ServiceMode serviceMode;
         public static DataSource source;
-
-
+        public static bool urlFound;
+        bool webRequestSent=true;
 
         #region Monobehaviour callbacks
 
@@ -88,173 +90,217 @@ namespace MobiledgeXComputerVision
 
         #endregion
 
-        public IEnumerator AppFlow()
+        public void StartCV()
+        {
+            StartCoroutine(ImageSenderFlow());
+        }
+
+        public async Task SetConnection()
+        {
+            switch (NetworkManager.connectionMode)
+            {
+                case NetworkManager.ConnectionMode.WebSocket:
+                    throw new Exception("Not Implemented Yet");
+                default:
+                case NetworkManager.ConnectionMode.Rest:
+                    string uri = await networkManager.UriBasedOnConnectionMode();
+                    url = uri + urlSuffix;
+                    urlFound = true;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// ImageSenderFlow Flow : Hide the GUI > CaptureScreenShot
+        ///  > ShowGUI > Shrink Image > Send Image to Server > Handle Server Response > Repeat
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator ImageSenderFlow()
         {
             showGUI = false;
             yield return new WaitForEndOfFrame();
-            Texture2D screenShot = TakeSnapshot();
-            showGUI = serviceAlreadyStarted;
-            byte[] imgBinary = ShrinkAndEncode(source: screenShot, targetWidth: serviceMode == ServiceMode.FaceRecognition ? 500 : 240);
-            SendImageToServer(imgBinary);
-            StartCoroutine(AppFlow());
-        }
-
-        public static async Task SetURL()
-        {
-            NetworkManager networkManager = new NetworkManager();
-            networkManager.connectionMode = NetworkManager.ConnectionMode.Rest;
-            string uri = await networkManager.UriBasedOnConnectionMode();
-            url = uri + urlSuffix;
-        }
-
-        Texture2D TakeSnapshot()
-        {
             int width = Screen.width;
             int height = Screen.height;
             Texture2D texture = new Texture2D(width, height, TextureFormat.RGB24, true);
             texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            showGUI = serviceAlreadyStarted;
             texture.Apply();
-            return texture;
+            Debug.Log("ScreenShot taken");
+            byte[] imgBinary = ShrinkAndEncode(source: texture, targetWidth: serviceMode == ServiceMode.FaceRecognition ? 500 : 240);
+            Destroy(texture);
+            Debug.Log("Image has been shrunk and encoded, Sending Image to Server");
+            while (!urlFound && webRequestSent)
+            {
+                yield return null;
+            }
+            StartCoroutine(SendImageToServer(imgBinary));
+            
         }
-
+        
         IEnumerator SendImageToServer(byte[] imgBinary)
         {
+            webRequestSent = false;
             WWWForm form = new WWWForm();
             form.AddBinaryData("image", imgBinary);
             UnityWebRequest www = UnityWebRequest.Post(url, form);
+            www.timeout = 5; // Timeout in seconds
             yield return www.SendWebRequest();
+
+            // isHttpError True on response codes greater than or equal to 400.
+            // isNetworkError True on failure to resolve a DNS entry
             if (www.isNetworkError || www.isHttpError)
             {
+                Debug.Log("Error sending Image to SERVER");
                 Debug.Log(www.error);
+                if (www.responseCode == 503)
+                {
+                    Debug.Log("Training data update in progress, Sending another request in 2 seconds.");
+                    yield return new WaitForSeconds(2);
+                    StartCoroutine(SendImageToServer(imgBinary));
+                    yield break;
+                }
+                if (www.responseCode == 501)
+                {
+                    Debug.LogError("The server executing this call does not have GPU support.");
+                    yield return new WaitForSeconds(2);
+                    StartCoroutine(SendImageToServer(imgBinary));
+                    yield break;
+                }
                 if (Application.internetReachability == NetworkReachability.NotReachable)
                 {
-                    Debug.Log("Error. Your are not connected to the Internet");
+                    Debug.LogError("Error. Your are not connected to the Internet.");
                 }
                 else
                 {
+                    yield return new WaitForEndOfFrame();
                     StartCoroutine(SendImageToServer(imgBinary));
+                    yield break;
                 }
             }
             else
             {
-                if (www.responseCode == 200)
-                {
-                    Debug.Log("ServerResponse :\n" + www.downloadHandler.text);
-                    HandleServerRespone(www.downloadHandler.text);
-                }
-                else
-                {
-                    if (serviceMode == ServiceMode.PoseDetection && www.responseCode == 501)
-                    {
-                        Debug.LogError("Pose Detection isn't supported on this server since it this server doesn't have GPU support ");
-                    }
-                    if (serviceMode == ServiceMode.FaceDetection && www.responseCode == 503)
-                    {
-                        Debug.Log("Training data update in progress, Sending another request in 2 seconds");
-                        yield return new WaitForSeconds(2);
-                        StartCoroutine(SendImageToServer(imgBinary));
-                    }
-                }
+                webRequestSent = true;
+                Debug.Log("Success sending Image to SERVER, Response Received ");
+                Debug.Log("ServerResponse :\n" + www.downloadHandler.text);
+                HandleServerRespone(www.downloadHandler.text);
             }
         }
-
-        void HandleServerRespone(string response)
+   
+        public void HandleServerRespone(string response)
         {
             switch (serviceMode)
             {
-
                 case ServiceMode.FaceDetection:
 
                     FaceDetectionResponse faceDetectionResponse = Messaging<FaceDetectionResponse>.Deserialize(response);
-                    print("Success : " + faceDetectionResponse.success);
-                    print("server_processing_time : " + faceDetectionResponse.server_processing_time);
+                    Debug.Log("Success : " + faceDetectionResponse.success);
+                    Debug.Log("server_processing_time : " + faceDetectionResponse.server_processing_time);
+                    showGUI = faceDetectionResponse.success;
                     if (faceDetectionResponse.success)
                     {
-                        print("Number of faces : " + faceDetectionResponse.rects.Length);
-                        print("Number of Rect Dims : " + faceDetectionResponse.rects[0].Length);
+                        Debug.Log("Number of faces : " + faceDetectionResponse.rects.Length);
+                        Debug.Log("Number of Rect Dims : " + faceDetectionResponse.rects[0].Length);
                         faceDetectionRects = faceDetectionResponse.rects;
-                        showGUI = true;
+                    }
+                    else
+                    {
+                        faceDetectionRects = null;
                     }
                     break;
+
                 case ServiceMode.FaceRecognition:
                     FaceRecognitionResponse faceRecognitionResponse = Messaging<FaceRecognitionResponse>.Deserialize(response);
-                    print("Success : " + faceRecognitionResponse.success);
-                    print("server_processing_time : " + faceRecognitionResponse.server_processing_time);
-                    print("Detected Face Name : " + faceRecognitionResponse.subject);
-                    print("Recognition C.L. : " + faceRecognitionResponse.confidence);
+                    Debug.Log("Success : " + faceRecognitionResponse.success);
+                    Debug.Log("server_processing_time : " + faceRecognitionResponse.server_processing_time);
                     if (faceRecognitionResponse.success && faceRecognitionResponse.confidence < 105)
                     {
+                        Debug.Log("Detected Face Name : " + faceRecognitionResponse.subject);
+                        Debug.Log("Recognition C.L. : " + faceRecognitionResponse.confidence);
                         faceRecognitionRect = faceRecognitionResponse.rect;
                         faceRecognitionSubject = faceRecognitionResponse.subject;
                         faceRecognitionConfidenceLevel = faceRecognitionResponse.confidence;
-                        showGUI = true;
+                        showGUI = faceRecognitionResponse.success;
+                    }
+                    else
+                    {
+                        faceRecognitionRect = null;
                     }
                     break;
-                case ServiceMode.PoseDetection:
-                    // not implemented yet
-                    break;
+
                 case ServiceMode.ObjectDetection:
                     ObjectDetectionResponse objectDetectionResponse = Messaging<ObjectDetectionResponse>.Deserialize(response);
-                    print("Success : " + objectDetectionResponse.success);
-                    print("server_processing_time : " + objectDetectionResponse.server_processing_time);
-                    print("Gpu Support : " + objectDetectionResponse.gpu_support);
+                    Debug.Log("Success : " + objectDetectionResponse.success);
+                    Debug.Log("server_processing_time : " + objectDetectionResponse.server_processing_time);
+                    Debug.Log("Gpu Support : " + objectDetectionResponse.gpu_support);
+                    showGUI = objectDetectionResponse.success;
                     if (objectDetectionResponse.success)
                     {
                         objectsDetected = objectDetectionResponse.objects;
-                        showGUI = true;
+                    }
+                    else
+                    {
+                        objectsDetected = null;
                     }
                     break;
             }
-
+            StartCoroutine(ImageSenderFlow());
         }
 
         void DrawRectangles()
         {
             float height = 0;
             float width = 0;
+            GUIStyle TextStyle = new GUIStyle();
             switch (serviceMode)
             {
                 case ServiceMode.FaceDetection:
                     for (int i = 0; i < faceDetectionRects.Length; i++)
                     {
-                        height = (faceDetectionRects[i][3] * imgScalingFactor) - (faceDetectionRects[i][1] * imgScalingFactor);
-                        width = (faceDetectionRects[i][2] * imgScalingFactor) - (faceDetectionRects[i][0] * imgScalingFactor);
+                        height = imgScalingFactor * (faceDetectionRects[i][3] - faceDetectionRects[i][1]);
+                        width = imgScalingFactor * (faceDetectionRects[i][2] - faceDetectionRects[i][0]);
                         GUI.DrawTexture(new Rect(faceDetectionRects[i][0] * imgScalingFactor, faceDetectionRects[i][1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
                     }
                     break;
                 case ServiceMode.FaceRecognition:
 
-                    height = (faceRecognitionRect[3] - faceRecognitionRect[1]) * imgScalingFactor;
-                    width = (faceRecognitionRect[2] - faceRecognitionRect[0]) * imgScalingFactor;
-                    GUI.DrawTexture(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor, width, height), rectTexture);
-                    GUIStyle TextStyle = new GUIStyle();
-                    TextStyle.normal.textColor = getConfidenceLevelColorFD(faceRecognitionConfidenceLevel);
-                    print(TextStyle.normal.textColor.ToString());
+                    height = imgScalingFactor* (faceRecognitionRect[3] - faceRecognitionRect[1]);
+                    width = imgScalingFactor * (faceRecognitionRect[2] - faceRecognitionRect[0]);
+                    GUI.DrawTexture(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width/height);
+                    TextStyle.normal.textColor = getConfidenceLevelColorFR(faceRecognitionConfidenceLevel);
                     TextStyle.fontSize = 50;
                     TextStyle.fontStyle = FontStyle.Bold;
                     GUI.Label(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor + 50, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
                     break;
 
-                case ServiceMode.PoseDetection:
-                    // not implemented yet
-                    break;
                 case ServiceMode.ObjectDetection:
                     foreach (@Object obj in objectsDetected)
                     {
-                        height = obj.rect[3] * 2 - obj.rect[1] * imgScalingFactor;
-                        width = obj.rect[2] * 2 - obj.rect[0] * imgScalingFactor;
-                        GUI.DrawTexture(new Rect(obj.rect[0] * imgScalingFactor, obj.rect[1] * imgScalingFactor, width, height), rectTexture);
-                        GUIStyle TxtStyle = new GUIStyle();
-                        TxtStyle.normal.textColor = getConfidenceLevelColorOD(obj.confidence);
-                        TxtStyle.fontSize = 30;
-                        TxtStyle.fontStyle = FontStyle.Bold;
-                        GUI.Label(new Rect(obj.rect[0] * imgScalingFactor, (obj.rect[1] * imgScalingFactor) + 50, width, 100), new GUIContent(obj.@class), TxtStyle);
+                        height = imgScalingFactor * (obj.rect[3] - obj.rect[1]);
+                        width = imgScalingFactor * (obj.rect[2] - obj.rect[0]);
+                        GUI.DrawTexture(new Rect((obj.rect[0] * imgScalingFactor), (obj.rect[1] * imgScalingFactor), width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
+                        TextStyle.normal.textColor = getConfidenceLevelColorOD(obj.confidence);
+                        TextStyle.fontSize = 30;
+                        TextStyle.fontStyle = FontStyle.Bold;
+                        GUI.Label(new Rect(obj.rect[0] * imgScalingFactor, (obj.rect[1] * imgScalingFactor) + 50, width, 100), new GUIContent(obj.@class), TextStyle);
                     }
                     break;
             }
 
         }
+        public void ClearGUI()
+        {
+            faceDetectionRects = null;
+            faceRecognitionRect = null;
+            objectsDetected = null;
+        }
 
+        /// <summary>
+        /// Shrinks the screen shot taken to the supplied TargetWidth, then encode the new texture a JPG format and returns the binary array
+        /// Shrinking happens by organizing the pixels of the source img into the new scaled texture using the normalized UV map
+        /// </summary>
+        /// <param name="source">Screen Shot Texture</param>
+        /// <param name="targetWidth"></param>
+        /// <returns></returns>
         byte[] ShrinkAndEncode(Texture2D source, int targetWidth)
         {
             imgScalingFactor = source.width / targetWidth;
@@ -277,6 +323,11 @@ namespace MobiledgeXComputerVision
             return bytes;
         }
 
+        /// <summary>
+        /// Returns the color of the Detected Object Name Text
+        /// </summary>
+        /// <param name="confidenceLevel"></param>
+        /// <returns><returns RGB Color/returns>
         Color getConfidenceLevelColorOD(float confidenceLevel)
         {
             if (faceRecognitionConfidenceLevel < 0.3)
@@ -297,7 +348,12 @@ namespace MobiledgeXComputerVision
             }
         }
 
-        Color getConfidenceLevelColorFD(float confidenceLevel)
+        /// <summary>
+        /// Returns the color of FaceRecogintion Subject Text 
+        /// </summary>
+        /// <param name="confidenceLevel"></param>
+        /// <returns>returns RGB Color</returns>
+        Color getConfidenceLevelColorFR(float confidenceLevel)
         {
             if (faceRecognitionConfidenceLevel < 10)
             {
@@ -319,4 +375,3 @@ namespace MobiledgeXComputerVision
 
     }
 }
-

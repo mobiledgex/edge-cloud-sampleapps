@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/ObjectDetection.unity
+    path: Assets/Scenes/ComputerVision.unity
     guid: 913458bd94db44197b23a5a1eebbdaf5
   m_configObjects: {}
