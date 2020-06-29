@@ -14,12 +14,14 @@ namespace MobiledgeXComputerVision {
         public Text infoText;
         public Button backButton;
         public AppManager appManager;
-        public double rollingAvg;
         
+        #region MonoBehaviour Callbacks
         private void Start()
         {
             backButton.onClick.AddListener(BackButton);
         }
+        #endregion
+
 
         public void SetMode(int modeSelected)
         {
