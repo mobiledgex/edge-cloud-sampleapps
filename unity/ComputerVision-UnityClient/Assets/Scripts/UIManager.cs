@@ -1,6 +1,8 @@
-﻿using UnityEngine.UI;
+using UnityEngine.UI;
 using UnityEngine;
 using System.Collections;
+using UnityEngine.Video;
+
 namespace MobiledgeXComputerVision {
 
     public class UIManager : MonoBehaviour
@@ -41,7 +43,7 @@ namespace MobiledgeXComputerVision {
                     break;
             }
             AppManager.level++;
-            SetLevel(AppManager.level);
+            UpdateUIBasedOnLevel(AppManager.level);
         }
 
         public void SetDataSource(int dataSourceSelected)
@@ -62,7 +64,7 @@ namespace MobiledgeXComputerVision {
                     break;
             }
             AppManager.level++;
-            SetLevel(AppManager.level);
+            UpdateUIBasedOnLevel(AppManager.level);
         }
 
         IEnumerator ShowInfoText()
@@ -72,27 +74,28 @@ namespace MobiledgeXComputerVision {
             infoText.gameObject.SetActive(false);
         }
 
-        public async void SetLevel(int level)
+        public async void UpdateUIBasedOnLevel(int level)
         {
+            Debug.Log("CurrentLevel : " + level);
             switch (level)
             {
-                case 1:
+                case 1: // Select Data Source
                     CameraPanel.SetActive(false);
                     VideoPanel.SetActive(false);
                     ModesPanel.SetActive(false);
                     DataSourcePanel.SetActive(true);
                     backButton.gameObject.SetActive(true);
-                    await AppManager.SetURL();
+                    await appManager.SetConnection();
                     break;
-                case 2:
+                case 2:  // Service View (FaceDetection, Face Recognition ...)
                     ModesPanel.SetActive(false);
                     DataSourcePanel.SetActive(false);
                     backButton.gameObject.SetActive(true);
-                    StartCoroutine(appManager.AppFlow());
+                    appManager.StartCV();
                     StartCoroutine(ShowInfoText());
                     break;
                 default:
-                case 0:
+                case 0: // Select Service
                     CameraPanel.SetActive(false);
                     VideoPanel.SetActive(false);
                     DataSourcePanel.SetActive(false);
@@ -113,11 +116,13 @@ namespace MobiledgeXComputerVision {
                 if(AppManager.level == 2)
                 {
                     appManager.StopAllCoroutines();
+                    appManager.ClearGUI();
                     AppManager.showGUI = false;
+                    VideoPanel.GetComponentInChildren<VideoPlayer>().Stop(); // Reset Video
                 }
                 AppManager.level--;
             }
-            SetLevel(AppManager.level);
+            UpdateUIBasedOnLevel(AppManager.level);
         }
     }
 
