@@ -1,4 +1,4 @@
-﻿using UnityEngine.UI;
+using UnityEngine.UI;
 using UnityEngine;
 using System.Collections;
 using UnityEngine.Video;
@@ -73,7 +73,11 @@ namespace MobiledgeXComputerVision {
 
         public async void UpdateUIBasedOnLevel(int level)
         {
+<<<<<<< HEAD
             //Debug.Log("CurrentLevel : " + level);
+=======
+            Debug.Log("CurrentLevel : " + level);
+>>>>>>> 32bab5c8113706402b3a9752e7b5796086744841
             switch (level)
             {
                 case 1: // Select Data Source

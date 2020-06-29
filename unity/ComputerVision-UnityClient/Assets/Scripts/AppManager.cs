@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Networking;
@@ -227,6 +227,12 @@ namespace MobiledgeXComputerVision
                     }
                     break;
 
+<<<<<<< HEAD
+=======
+                case ServiceMode.PoseDetection:
+                    throw new Exception("Not Implemented Yet");
+
+>>>>>>> 32bab5c8113706402b3a9752e7b5796086744841
                 case ServiceMode.ObjectDetection:
                     ObjectDetectionResponse objectDetectionResponse = Messaging<ObjectDetectionResponse>.Deserialize(response);
                     Debug.Log("Success : " + objectDetectionResponse.success);
@@ -272,6 +278,11 @@ namespace MobiledgeXComputerVision
                     GUI.Label(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor + 50, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
                     break;
 
+<<<<<<< HEAD
+=======
+                case ServiceMode.PoseDetection:
+                    throw new Exception("Not Implemented Yet");
+>>>>>>> 32bab5c8113706402b3a9752e7b5796086744841
                 case ServiceMode.ObjectDetection:
                     foreach (@Object obj in objectsDetected)
                     {
