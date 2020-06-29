@@ -14,12 +14,14 @@ namespace MobiledgeXComputerVision {
         public Text infoText;
         public Button backButton;
         public AppManager appManager;
-        public double rollingAvg;
         
+        #region MonoBehaviour Callbacks
         private void Start()
         {
             backButton.onClick.AddListener(BackButton);
         }
+        #endregion
+
 
         public void SetMode(int modeSelected)
         {
@@ -73,11 +75,6 @@ namespace MobiledgeXComputerVision {
 
         public async void UpdateUIBasedOnLevel(int level)
         {
-<<<<<<< HEAD
-            //Debug.Log("CurrentLevel : " + level);
-=======
-            Debug.Log("CurrentLevel : " + level);
->>>>>>> 32bab5c8113706402b3a9752e7b5796086744841
             switch (level)
             {
                 case 1: // Select Data Source
