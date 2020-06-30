@@ -32,11 +32,11 @@ namespace MobiledgeXComputerVision
                         return faceRecognitionRect == null ? false : true;
                     case ServiceMode.ObjectDetection:
                         return objectsDetected == null ? false : true;
-                    default:
                     case ServiceMode.FaceDetection:
                         return faceDetectionRects == null ? false : true;
+                    default:
+                        return false;
                 }
-
             }
         }
 
@@ -50,9 +50,10 @@ namespace MobiledgeXComputerVision
                         return "/recognizer/predict/";
                     case ServiceMode.ObjectDetection:
                         return "/object/detect/";
-                    default:
                     case ServiceMode.FaceDetection:
                         return "/detector/detect/";
+                    default:
+                        return "";
                 }
             }
         }
@@ -100,7 +101,7 @@ namespace MobiledgeXComputerVision
             {
                 case NetworkManager.ConnectionMode.WebSocket:
                     throw new Exception("Not Implemented Yet");
-                default:
+ 
                 case NetworkManager.ConnectionMode.Rest:
                     string uri = await networkManager.UriBasedOnConnectionMode();
                     url = uri + urlSuffix;
@@ -152,13 +153,6 @@ namespace MobiledgeXComputerVision
                 if (www.responseCode == 503)
                 {
                     Debug.Log("Training data update in progress, Sending another request in 2 seconds.");
-                    yield return new WaitForSeconds(2);
-                    StartCoroutine(SendImageToServer(imgBinary));
-                    yield break;
-                }
-                if (www.responseCode == 501)
-                {
-                    Debug.LogError("The server executing this call does not have GPU support.");
                     yield return new WaitForSeconds(2);
                     StartCoroutine(SendImageToServer(imgBinary));
                     yield break;
@@ -365,6 +359,5 @@ namespace MobiledgeXComputerVision
                 return Color.red;
             }
         }
-
     }
 }
