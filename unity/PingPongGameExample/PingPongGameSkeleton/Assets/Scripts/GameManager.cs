@@ -76,7 +76,7 @@ namespace MobiledgeXPingPongGame {
     GameObject[] players;
     GameObject ghostBall; // Just one.
     GameObject ghostPlayer; // Local player.
-    MobiledgeXSocketClient webSocketClient;
+    MobiledgeXWebSocketClient webSocketClient;
 
     GameSession gameSession = new GameSession();
 
@@ -125,7 +125,7 @@ namespace MobiledgeXPingPongGame {
       server = "ws://" + host + ":" + port;
       theBall = GameObject.FindGameObjectWithTag("Ball");
       players = GameObject.FindGameObjectsWithTag("Player");
-      webSocketClient = new MobiledgeXSocketClient();
+      webSocketClient = new MobiledgeXWebSocketClient();
       gameSession.currentGs = new GameState();
       gameSession.status = STATUS.LOBBY;
 
@@ -213,7 +213,7 @@ namespace MobiledgeXPingPongGame {
       if (webSocketClient.isOpen())
       {
         webSocketClient.Dispose();
-        webSocketClient = new MobiledgeXSocketClient();
+        webSocketClient = new MobiledgeXWebSocketClient();
       }
 
       if (useAltServer)
