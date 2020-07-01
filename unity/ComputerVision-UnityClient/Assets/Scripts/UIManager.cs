@@ -3,8 +3,8 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.Video;
 
-namespace MobiledgeXComputerVision {
-
+namespace MobiledgeXComputerVision
+{
     public class UIManager : MonoBehaviour
     {
         public GameObject ModesPanel;
@@ -14,7 +14,7 @@ namespace MobiledgeXComputerVision {
         public Text infoText;
         public Button backButton;
         public AppManager appManager;
-        
+
         #region MonoBehaviour Callbacks
         private void Start()
         {
@@ -27,7 +27,6 @@ namespace MobiledgeXComputerVision {
         {
             switch (modeSelected)
             {
-                default:
                 case 0:
                     AppManager.serviceMode = AppManager.ServiceMode.FaceDetection;
                     infoText.text = " FaceDetection Enabled";
@@ -49,14 +48,14 @@ namespace MobiledgeXComputerVision {
         {
             switch (dataSourceSelected)
             {
-               case 0:
-                   AppManager.source = AppManager.DataSource.CAMERA;
-                   CameraPanel.SetActive(true);
-                   break;
-               case 1:
-                   AppManager.source = AppManager.DataSource.VIDEO;
-                   VideoPanel.SetActive(true);
-                   break;
+                case 0:
+                    AppManager.source = AppManager.DataSource.CAMERA;
+                    CameraPanel.SetActive(true);
+                    break;
+                case 1:
+                    AppManager.source = AppManager.DataSource.VIDEO;
+                    VideoPanel.SetActive(true);
+                    break;
                 case 2:
                     AppManager.source = AppManager.DataSource.VIDEO;
                     VideoPanel.SetActive(true); //fixme change to nReal Later
@@ -77,6 +76,13 @@ namespace MobiledgeXComputerVision {
         {
             switch (level)
             {
+                case 0: // Select Service
+                    CameraPanel.SetActive(false);
+                    VideoPanel.SetActive(false);
+                    DataSourcePanel.SetActive(false);
+                    backButton.gameObject.SetActive(false);
+                    ModesPanel.SetActive(true);
+                    break;
                 case 1: // Select Data Source
                     CameraPanel.SetActive(false);
                     VideoPanel.SetActive(false);
@@ -91,14 +97,6 @@ namespace MobiledgeXComputerVision {
                     backButton.gameObject.SetActive(true);
                     appManager.StartCV();
                     StartCoroutine(ShowInfoText());
-                    break;
-                default:
-                case 0: // Select Service
-                    CameraPanel.SetActive(false);
-                    VideoPanel.SetActive(false);
-                    DataSourcePanel.SetActive(false);
-                    backButton.gameObject.SetActive(false);
-                    ModesPanel.SetActive(true);
                     break;
             }
         }
@@ -123,5 +121,4 @@ namespace MobiledgeXComputerVision {
             UpdateUIBasedOnLevel(AppManager.level);
         }
     }
-
 }
