@@ -106,7 +106,7 @@ namespace MobiledgeXPingPongGame {
     NetTest netTest = null;
 
     // Use this for initialization
-    async Task Start()
+    IEnumerator Start()
     {
       // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
       // and a local DME cannot be located. Set to false if using a supported
@@ -140,7 +140,30 @@ namespace MobiledgeXPingPongGame {
       roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
       roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
 
+      yield return CheckLocationIsRunning();
+    }
+
+    IEnumerator CheckLocationIsRunning()
+    {
       MobiledgeX.LocationService.ensurePermissions();
+      StartCoroutine(MobiledgeX.LocationService.InitalizeLocationService());
+
+#if UNITY_EDITOR
+      if (Input.location.status == LocationServiceStatus.Failed)
+      {
+        clog("Location service failed for some reason");
+        yield break;
+      
+      }
+#else
+      while (Input.location.status != LocationServiceStatus.Running)
+      {
+        clog("LocationService status not running yet. Status is: " + Input.location.status);
+        yield return null;
+      }
+#endif
+
+      clog("LocationService is running. Status is: " + Input.location.status);
       MobiledgeXAPICalls();
     }
 
