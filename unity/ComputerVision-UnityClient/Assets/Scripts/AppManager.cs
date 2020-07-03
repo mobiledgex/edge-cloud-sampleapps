@@ -11,7 +11,6 @@ namespace MobiledgeXComputerVision
     {
         public RawImage rawImage;
         public Texture rectTexture;
-        public Texture nodeTexture;
         public static bool showGUI;
         int[][] faceDetectionRects;
         int[] faceRecognitionRect;
@@ -27,7 +26,6 @@ namespace MobiledgeXComputerVision
             {
                 switch (serviceMode)
                 {
-
                     case ServiceMode.FaceRecognition:
                         return faceRecognitionRect == null ? false : true;
                     case ServiceMode.ObjectDetection:
@@ -58,7 +56,7 @@ namespace MobiledgeXComputerVision
             }
         }
 
-        static string url;
+        static string url; // connection url = uri>> SetConnection () >> (networkManager.UriBasedOnConnectionMode()) + urlSuffix
         public enum ServiceMode
         {
             FaceDetection,
@@ -75,8 +73,9 @@ namespace MobiledgeXComputerVision
 
         public static ServiceMode serviceMode;
         public static DataSource source;
-        public static bool urlFound;
-        bool webRequestSent=true;
+        public static bool urlFound; // trigger indicating RegisterAndFindCloudlet and  GetUrl() occured
+        public bool sendWebRequests = true; // to control the flow of sending webrequest
+        public bool wsStarted; // trigger indicating wether websocket connection intialized or not
 
         #region Monobehaviour callbacks
 
@@ -97,22 +96,29 @@ namespace MobiledgeXComputerVision
 
         public async Task SetConnection()
         {
-            switch (NetworkManager.connectionMode)
+            string uri = await networkManager.UriBasedOnConnectionMode();
+            switch (networkManager.connectionMode)
             {
                 case NetworkManager.ConnectionMode.WebSocket:
-                    throw new Exception("Not Implemented Yet");
- 
+                    url = uri +"/ws" +urlSuffix;
+                    print("url ws :" + url);
+                    networkManager.StartWs(url);
+                    urlFound = true;
+                    break;
                 case NetworkManager.ConnectionMode.Rest:
-                    string uri = await networkManager.UriBasedOnConnectionMode();
                     url = uri + urlSuffix;
                     urlFound = true;
                     break;
+                default:
+                    throw new Exception("Connection mode is not sat in UnityEditor");
             }
         }
 
         /// <summary>
         /// ImageSenderFlow Flow : Hide the GUI > CaptureScreenShot
-        ///  > ShowGUI > Shrink Image > Send Image to Server > Handle Server Response > Repeat
+        ///  > ShowGUI > Shrink Image >
+        ///  Based on Connection Mode > WebSocket Case > Add image binary to the socket queue > OnReceive > Handle Server Response
+        ///                           >  Rest Case > Send Image to Server > Handle Server Response > Repeat
         /// </summary>
         IEnumerator ImageSenderFlow()
         {
@@ -128,16 +134,32 @@ namespace MobiledgeXComputerVision
             byte[] imgBinary = ShrinkAndEncode(source: texture, targetWidth: serviceMode == ServiceMode.FaceRecognition ? 500 : 240);
             Destroy(texture);
             Debug.Log("Image has been shrunk and encoded, Sending Image to Server");
-            while (!urlFound && webRequestSent)
+            while (!urlFound)
             {
                 yield return null;
             }
-            StartCoroutine(SendImageToServer(imgBinary));
+            switch (networkManager.connectionMode)
+            {
+                case NetworkManager.ConnectionMode.Rest:
+                    while (!sendWebRequests)
+                    {
+                        yield return null;
+                    }
+                    StartCoroutine(SendImageToServer(imgBinary));
+                    break;
+                case NetworkManager.ConnectionMode.WebSocket:
+                    while (!wsStarted)
+                    {
+                        yield return null;
+                    }
+                    networkManager.SendtoServer(imgBinary);
+                    break;
+            }
         }
-        
+
         IEnumerator SendImageToServer(byte[] imgBinary)
         {
-            webRequestSent = false;
+            sendWebRequests = false;
             WWWForm form = new WWWForm();
             form.AddBinaryData("image", imgBinary);
             UnityWebRequest www = UnityWebRequest.Post(url, form);
@@ -170,15 +192,16 @@ namespace MobiledgeXComputerVision
             }
             else
             {
-                webRequestSent = true;
+                sendWebRequests = true;
                 Debug.Log("Success sending Image to SERVER, Response Received ");
                 Debug.Log("ServerResponse :\n" + www.downloadHandler.text);
                 HandleServerRespone(www.downloadHandler.text);
             }
         }
-   
+
         public void HandleServerRespone(string response)
         {
+            print("Servicemode"+serviceMode);
             switch (serviceMode)
             {
                 case ServiceMode.FaceDetection:
@@ -202,12 +225,13 @@ namespace MobiledgeXComputerVision
                     FaceRecognitionResponse faceRecognitionResponse = Messaging<FaceRecognitionResponse>.Deserialize(response);
                     Debug.Log("Success : " + faceRecognitionResponse.success);
                     Debug.Log("server_processing_time : " + faceRecognitionResponse.server_processing_time);
-                    if (faceRecognitionResponse.success && faceRecognitionResponse.confidence < 105)
+                    Debug.Log(faceRecognitionResponse.success==true ?("Recognition C.L. : " + faceRecognitionResponse.confidence):"didnt succeed");
+                    if (faceRecognitionResponse.success)
                     {
                         Debug.Log("Detected Face Name : " + faceRecognitionResponse.subject);
                         Debug.Log("Recognition C.L. : " + faceRecognitionResponse.confidence);
                         faceRecognitionRect = faceRecognitionResponse.rect;
-                        faceRecognitionSubject = faceRecognitionResponse.subject;
+                        faceRecognitionSubject =  faceRecognitionResponse.confidence < 120 ?faceRecognitionResponse.subject: "Unknown";
                         faceRecognitionConfidenceLevel = faceRecognitionResponse.confidence;
                         showGUI = faceRecognitionResponse.success;
                     }
@@ -247,17 +271,17 @@ namespace MobiledgeXComputerVision
                     {
                         height = imgScalingFactor * (faceDetectionRects[i][3] - faceDetectionRects[i][1]);
                         width = imgScalingFactor * (faceDetectionRects[i][2] - faceDetectionRects[i][0]);
-                        GUI.DrawTexture(new Rect(faceDetectionRects[i][0] * imgScalingFactor, faceDetectionRects[i][1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
+                        GUI.DrawTexture(new Rect(faceDetectionRects[i][0] * imgScalingFactor, faceDetectionRects[i][1] * imgScalingFactor, width, height), rectTexture, ScaleMode.ScaleToFit, true, width / height);
                     }
                     break;                   
                 case ServiceMode.FaceRecognition:
-                    height = imgScalingFactor* (faceRecognitionRect[3] - faceRecognitionRect[1]);
+                    height = imgScalingFactor * (faceRecognitionRect[3] - faceRecognitionRect[1]);
                     width = imgScalingFactor * (faceRecognitionRect[2] - faceRecognitionRect[0]);
-                    GUI.DrawTexture(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width/height);
+                    GUI.DrawTexture(new Rect((faceRecognitionRect[0] * imgScalingFactor), faceRecognitionRect[1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
                     TextStyle.normal.textColor = getConfidenceLevelColorFR(faceRecognitionConfidenceLevel);
                     TextStyle.fontSize = 50;
                     TextStyle.fontStyle = FontStyle.Bold;
-                    GUI.Label(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor + 50, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
+                    GUI.Label(new Rect((faceRecognitionRect[0] * imgScalingFactor)-100, faceRecognitionRect[1] * imgScalingFactor, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
                     break;
                 case ServiceMode.ObjectDetection:
                     foreach (@Object obj in objectsDetected)
@@ -272,8 +296,8 @@ namespace MobiledgeXComputerVision
                     }
                     break;
             }
-
         }
+
         public void ClearGUI()
         {
             faceDetectionRects = null;
@@ -314,15 +338,15 @@ namespace MobiledgeXComputerVision
         /// <returns><returns RGB Color/returns>
         Color getConfidenceLevelColorOD(float confidenceLevel)
         {
-            if (faceRecognitionConfidenceLevel < 0.3)
+            if (confidenceLevel < 0.3)
             {
                 return Color.red;
             }
-            if (faceRecognitionConfidenceLevel < 0.5)
+            if (confidenceLevel < 0.5)
             {
                 return new Color(1, 0.5f, 0);
             }
-            if (faceRecognitionConfidenceLevel < .8)
+            if (confidenceLevel < .8)
             {
                 return new Color(0.5f, 1f, 0);
             }
@@ -339,15 +363,15 @@ namespace MobiledgeXComputerVision
         /// <returns>returns RGB Color</returns>
         Color getConfidenceLevelColorFR(float confidenceLevel)
         {
-            if (faceRecognitionConfidenceLevel < 10)
+            if (confidenceLevel < 10)
             {
                 return Color.green;
             }
-            if (faceRecognitionConfidenceLevel < 50)
+            if (confidenceLevel < 50)
             {
                 return new Color(0.5f, 1, 0);
             }
-            if (faceRecognitionConfidenceLevel < 100)
+            if (confidenceLevel < 100)
             {
                 return new Color(1, 0.5f, 0);
             }
