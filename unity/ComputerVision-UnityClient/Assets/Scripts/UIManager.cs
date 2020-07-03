@@ -89,7 +89,8 @@ namespace MobiledgeXComputerVision
                     ModesPanel.SetActive(false);
                     DataSourcePanel.SetActive(true);
                     backButton.gameObject.SetActive(true);
-                    await appManager.SetConnection();
+                    // once the service is selected(url suffix is sat)> get mobiledgex url based on the protocol(connection mode (rest or ws) is selected in editor)
+                    await appManager.SetConnection(); 
                     break;
                 case 2:  // Service View (FaceDetection, Face Recognition ...)
                     ModesPanel.SetActive(false);
@@ -109,12 +110,15 @@ namespace MobiledgeXComputerVision
             }
             else
             {
-                if(AppManager.level == 2)
+                if (AppManager.level == 2)
                 {
                     appManager.StopAllCoroutines();
                     appManager.ClearGUI();
                     AppManager.showGUI = false;
                     VideoPanel.GetComponentInChildren<VideoPlayer>().Stop(); // Reset Video
+                    AppManager.urlFound = false; 
+                    appManager.wsStarted = false;
+                    appManager.sendWebRequests = true;
                 }
                 AppManager.level--;
             }
