@@ -22,10 +22,18 @@
 
     <ListPreference
         android:defaultValue="PROXIMITY"
-        android:entries="@array/pref_find_cloudlet_method_titles"
-        android:entryValues="@array/pref_find_cloudlet_method_values"
+        android:entries="@array/pref_find_cloudlet_mode_titles"
+        android:entryValues="@array/pref_find_cloudlet_mode_values"
         android:key="@string/pref_find_cloudlet_mode"
-        android:summary="@string/pref_find_cloudlet_summary"
-        android:title="@string/pref_find_cloudlet_title" />
+        android:summary="@string/pref_find_cloudlet_mode_summary"
+        android:title="@string/pref_find_cloudlet_mode_title" />
+
+    <ListPreference
+        android:defaultValue="4"
+        android:entries="@array/pref_app_instances_limit_titles"
+        android:entryValues="@array/pref_app_instances_limit_values"
+        android:key="@string/pref_app_instances_limit"
+        android:summary="@string/pref_app_instances_limit_summary"
+        android:title="@string/pref_app_instances_limit_title" />
 
 </PreferenceScreen>

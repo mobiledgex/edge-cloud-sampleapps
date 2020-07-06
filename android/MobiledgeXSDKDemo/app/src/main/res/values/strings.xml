@@ -110,15 +110,39 @@
     </string-array>
 
     <string name="pref_find_cloudlet_mode">find_cloudlet_mode</string>
-    <string name="pref_find_cloudlet_title">FindCloudlet Mode</string>
-    <string name="pref_find_cloudlet_summary">%s</string>
-    <string-array name="pref_find_cloudlet_method_titles">
+    <string name="pref_find_cloudlet_mode_title">FindCloudlet Mode</string>
+    <string name="pref_find_cloudlet_mode_summary">%s</string>
+    <string-array name="pref_find_cloudlet_mode_titles">
         <item>Proximity</item>
         <item>Performance</item>
     </string-array>
-    <string-array name="pref_find_cloudlet_method_values">
+    <string-array name="pref_find_cloudlet_mode_values">
         <item>PROXIMITY</item>
         <item>PERFORMANCE</item>
+    </string-array>
+
+    <string name="pref_app_instances_limit">app_instances_limit</string>
+    <string name="pref_app_instances_limit_title">Get App Instances Limit</string>
+    <string name="pref_app_instances_limit_summary">%s</string>
+    <string-array name="pref_app_instances_limit_titles">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+    <string-array name="pref_app_instances_limit_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
     </string-array>
 
     <string name="pref_latency_autostart">latency_autostart</string>

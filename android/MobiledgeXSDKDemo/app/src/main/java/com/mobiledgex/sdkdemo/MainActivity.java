@@ -142,6 +142,7 @@ public class MainActivity extends AppCompatActivity
     public static final String DEFAULT_DME_HOSTNAME = "wifi.dme.mobiledgex.net";
     public static final String DEFAULT_CARRIER_NAME = "";
     public static final String DEFAULT_FIND_CLOUDLET_MODE = "PROXIMITY";
+    public static final int DEFAULT_APP_INSTANCES_LIMIT = 4;
     private String mDefaultCarrierName;
     private String mDefaultDmeHostname;
     protected static String mHostname;
@@ -150,6 +151,8 @@ public class MainActivity extends AppCompatActivity
     protected static String mAppName;
     protected static String mAppVersion;
     protected static String mOrgName;
+    protected static  MatchingEngine.FindCloudletMode mFindCloudletMode;
+    protected static int mAppInstancesLimit;
     private boolean mNetworkSwitchingAllowed;
 
     private GoogleMap mGoogleMap;
@@ -179,7 +182,6 @@ public class MainActivity extends AppCompatActivity
     private AlertDialog mAlertDialog;
     private boolean mAllowLocationSimulatorUpdate = false;
     private boolean uiHasBeenTouched;
-    private MatchingEngine.FindCloudletMode mFindCloudletMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -286,6 +288,7 @@ public class MainActivity extends AppCompatActivity
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_dme_hostname));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_operator_name));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_find_cloudlet_mode));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_app_instances_limit));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.upload_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
@@ -530,6 +533,7 @@ public class MainActivity extends AppCompatActivity
         intent.putExtra(ImageProcessorFragment.EXTRA_APP_VERSION, mAppVersion);
         intent.putExtra(ImageProcessorFragment.EXTRA_ORG_NAME, mOrgName);
         intent.putExtra(ImageProcessorFragment.EXTRA_FIND_CLOUDLET_MODE, mFindCloudletMode.name());
+        intent.putExtra(ImageProcessorFragment.EXTRA_APP_INSTANCES_LIMIT, mAppInstancesLimit);
         intent.putExtra(ImageProcessorFragment.EXTRA_DME_HOSTNAME, mHostname);
         intent.putExtra(ImageProcessorFragment.EXTRA_CARRIER_NAME, mCarrierName);
         Log.i(TAG, "mLastKnownLocation="+mLastKnownLocation);
@@ -1215,6 +1219,7 @@ public class MainActivity extends AppCompatActivity
         String prefKeyDefaultDmeHostname = getResources().getString(R.string.pref_default_dme_hostname);
         String prefKeyDefaultOperatorName = getResources().getString(R.string.pref_default_operator_name);
         String prefKeyFindCloudletMode = getResources().getString(R.string.pref_find_cloudlet_mode);
+        String prefKeyAppInstancesLimit = getResources().getString(R.string.pref_app_instances_limit);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
         String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
@@ -1326,6 +1331,17 @@ public class MainActivity extends AppCompatActivity
             String findCloudletMode = sharedPreferences.getString(prefKeyFindCloudletMode, DEFAULT_FIND_CLOUDLET_MODE);
             mFindCloudletMode = MatchingEngine.FindCloudletMode.valueOf(findCloudletMode);
             Log.i(TAG, "findCloudletMode="+findCloudletMode+" mFindCloudletMode="+mFindCloudletMode);
+        }
+
+        if (key.equals(prefKeyAppInstancesLimit)) {
+            String appInstancesLimit = sharedPreferences.getString(key, ""+DEFAULT_APP_INSTANCES_LIMIT);
+            try {
+                mAppInstancesLimit = Integer.parseInt(appInstancesLimit);
+            } catch (NumberFormatException e) {
+                mAppInstancesLimit = DEFAULT_APP_INSTANCES_LIMIT;
+            }
+            Log.i(TAG, "appInstancesLimit="+appInstancesLimit+" mAppInstancesLimit="+mAppInstancesLimit);
+            appInfoChanged = true;
         }
 
         if (key.equals(prefKeyDefaultAppInfo)) {
