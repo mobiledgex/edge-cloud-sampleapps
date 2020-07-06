@@ -48,6 +48,8 @@ import static com.mobiledgex.sdkdemo.MainActivity.mAppVersion;
 import static com.mobiledgex.sdkdemo.MainActivity.mCarrierName;
 import static com.mobiledgex.sdkdemo.MainActivity.mHostname;
 import static com.mobiledgex.sdkdemo.MainActivity.mOrgName;
+import static com.mobiledgex.sdkdemo.MainActivity.mAppInstancesLimit;
+import static com.mobiledgex.sdkdemo.MainActivity.mFindCloudletMode;
 
 public class MatchingEngineHelper {
     private static final String TAG = "MatchingEngineHelper";
@@ -291,7 +293,8 @@ public class MatchingEngineHelper {
     private boolean getAppInstList(Location location, String host, int port) throws InterruptedException, ExecutionException {
         // getAppInstList (Blocking, or use getAppInstListFuture):
         AppClient.AppInstListRequest appInstListRequest
-                = mMatchingEngine.createDefaultAppInstListRequest(mContext, location).setCarrierName(mCarrierName).setLimit(6).build();
+                = mMatchingEngine.createDefaultAppInstListRequest(mContext, location)
+                .setCarrierName(mCarrierName).setLimit(mAppInstancesLimit).build();
         // TODO: Make setLimit value a preference.
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
@@ -323,7 +326,7 @@ public class MatchingEngineHelper {
                 = mMatchingEngine.createDefaultFindCloudletRequest(mContext, location).setCarrierName(mCarrierName).build();
         if(findCloudletRequest != null) {
             mClosestCloudlet = mMatchingEngine.findCloudlet(findCloudletRequest,
-                    host, port, 10000);
+                    host, port, 10000, mFindCloudletMode);
             if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
                 someText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
                 Log.e(TAG, someText);

@@ -155,6 +155,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
     public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
     public static final String EXTRA_FIND_CLOUDLET_MODE = "EXTRA_FIND_CLOUDLET_MODE";
+    public static final String EXTRA_APP_INSTANCES_LIMIT = "EXTRA_APP_INSTANCES_LIMIT";
     public static final String EXTRA_APP_NAME = "EXTRA_APP_NAME";
     public static final String EXTRA_APP_VERSION = "EXTRA_APP_VERSION";
     public static final String EXTRA_ORG_NAME = "EXTRA_ORG_NAME";
@@ -166,6 +167,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private MyEventRecyclerViewAdapter mEventRecyclerViewAdapter;
     private FloatingActionButton mLogExpansionButton;
     private MatchingEngine.FindCloudletMode mFindCloudletMode;
+    private int mAppInstancesLimit;
     private boolean registerClientComplete;
     private boolean isLogExpanded = false;
     private int mLogViewHeight;
@@ -1012,6 +1014,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mFindCloudletMode = MatchingEngine.FindCloudletMode.PROXIMITY;
         }
         Log.i(TAG, "mFindCloudletMode: "+mFindCloudletMode);
+
+        mAppInstancesLimit = intent.getIntExtra(EXTRA_APP_INSTANCES_LIMIT, 4);
+        Log.i(TAG, "mAppInstancesLimit: "+mAppInstancesLimit);
     }
 
     protected void toggleViews() {
@@ -1160,10 +1165,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         Location location = new Location("MEX");
         location.setLatitude(mLatitude);
         location.setLongitude(mLongitude);
+        location.setLongitude(mLongitude);
         Log.i(TAG, "findCloudlet location="+location);
 
         AppClient.FindCloudletRequest findCloudletRequest;
-        findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(getContext(), location).build();
+        findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(getContext(), location).setCarrierName(mCarrierName).build();
         Future<AppClient.FindCloudletReply> reply = mMatchingEngine.findCloudletFuture(findCloudletRequest, mDmeHostname, mDmePort,10000, mFindCloudletMode);
 
         mClosestCloudlet = reply.get();
