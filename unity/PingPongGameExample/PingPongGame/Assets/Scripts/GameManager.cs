@@ -140,7 +140,7 @@ namespace MobiledgeXPingPongGame {
       roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
       roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
 
-      yield return CheckLocationIsRunning();
+      yield return StartCoroutine(CheckLocationIsRunning());
     }
 
     IEnumerator CheckLocationIsRunning()
@@ -151,7 +151,7 @@ namespace MobiledgeXPingPongGame {
 #if UNITY_EDITOR
       if (Input.location.status == LocationServiceStatus.Failed)
       {
-        clog("Location service failed for some reason");
+        clog("Location service failed in Unity Editor");
         yield break;
       
       }
