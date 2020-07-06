@@ -140,7 +140,7 @@ namespace MobiledgeXPingPongGame {
       roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
       roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
 
-      yield return CheckLocationIsRunning();
+      yield return StartCoroutine(CheckLocationIsRunning());
     }
 
     IEnumerator CheckLocationIsRunning()
