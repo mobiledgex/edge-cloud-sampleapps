@@ -45,12 +45,12 @@ namespace MobiledgeXComputerVision {
         public async void StartWs(string url)
         {
             Uri uri = new Uri(url);
-            client = new MobiledgeXWebSocketClient(System.Net.WebSockets.WebSocketMessageType.Binary);
+            client = new MobiledgeXWebSocketClient();
             if (client.isOpen())
             {
                 client.Dispose();
 
-                client = new MobiledgeXWebSocketClient(System.Net.WebSockets.WebSocketMessageType.Binary);
+                client = new MobiledgeXWebSocketClient();
             }
             await client.Connect(uri);
             appManager.wsStarted = true;
