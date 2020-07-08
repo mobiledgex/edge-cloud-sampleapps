@@ -1464,7 +1464,7 @@ public class MainActivity extends AppCompatActivity
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
             newHost = prefs.getString(keyName, defaultHost);
             boolean reachable = ImageSender.isReachable(newHost,
-                    ImageSender.getFaceDetectionServerPort(newHost), 3000);
+                    ImageSender.getComputerVisionServerPort(newHost), 3000);
             if(!reachable) {
                 Log.e(TAG, newHost+" not reachable. Resetting "+keyName+" to default.");
                 prefs.edit().putString(keyName, defaultHost).apply();
