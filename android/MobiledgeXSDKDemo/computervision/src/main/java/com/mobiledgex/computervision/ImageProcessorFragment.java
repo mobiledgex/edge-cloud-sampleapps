@@ -183,7 +183,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     /**
-     * Shows a {@link Toast} on the UI thread.
+     * Adds a informational message to the log viewer.
      *
      * @param text The message to show.
      */
@@ -192,6 +192,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         addEventItem(INFO, text);
     }
 
+    /**
+     * Adds an error message to the log viewer.
+     *
+     * @param text The message to show.
+     */
     @Override
     public void showError(final String text) {
         addEventItem(ERROR, text);
@@ -959,6 +964,31 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 }
             }
         });
+        mLogExpansionButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                        .setTitle(R.string.verify_clear_logs_title)
+                        .setMessage(R.string.verify_clear_logs_message)
+                        .setNegativeButton(android.R.string.cancel,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                })
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                mEventItemList.clear();
+                                mEventRecyclerViewAdapter.notifyDataSetChanged();
+                                Toast.makeText(getContext(), "Log viewer cleared", Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .show();
+                return true;
+            }
+        });
         Timer myTimer = new Timer();
         myTimer.schedule(new TimerTask() {
             @Override
@@ -973,6 +1003,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     protected void logViewAnimate(final int start, final int end) {
         Log.i(TAG, "logViewAnimate start="+start+" end="+end);
+        if (getActivity() == null) {
+            Log.e(TAG, "logViewAnimate called after Activity has gone away.");
+            return;
+        }
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -980,6 +1014,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 va.setDuration(500);
                 va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     public void onAnimationUpdate(ValueAnimator animation) {
+                        if (animation == null) {
+                            Log.e(TAG, "onAnimationUpdate called with null animation.");
+                            return;
+                        }
                         Integer value = (Integer) animation.getAnimatedValue();
                         Log.i(TAG, "value="+value);
                         mEventsRecyclerView.getLayoutParams().height = value.intValue();
@@ -1247,11 +1285,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             Log.i(TAG, "getAppInstList cloudletList.getCloudletsCount()=" + cloudletList.getCloudletsCount());
             Log.i(TAG, "getAppInstList mEdgeHostList=" + mEdgeHostList);
 
-            // TODO: Remove
-//            mEdgeHostList.clear();
-//            mEdgeHostList.add("192.168.1.66");
-//            mEdgeHostList.add("acrotopia.com");
-
             mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
             Log.i(TAG, "getAppInstList mHostDetectionEdge=" + mHostDetectionEdge);
             restartImageSenderEdge();
@@ -1264,7 +1297,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             return false;
         }
     }
-
 
     public ImageSender getImageSenderEdge() {
         return mImageSenderEdge;

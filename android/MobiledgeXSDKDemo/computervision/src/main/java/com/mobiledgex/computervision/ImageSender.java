@@ -181,7 +181,11 @@ public class ImageSender {
 
         mImageServerInterface = builder.imageServerInterface;
 
-        mAccount = GoogleSignIn.getLastSignedInAccount(builder.activity);
+        try {
+            mAccount = GoogleSignIn.getLastSignedInAccount(builder.activity);
+        } catch (Exception e) {
+            Log.e(TAG, "NPE occurred in GoogleSignIn code.", e);
+        }
         if(mAccount != null) {
             Log.i(TAG, "mAccount=" + mAccount.getDisplayName()+" "+mAccount.getId());
         } else {
@@ -374,10 +378,10 @@ public class ImageSender {
     }
 
     //TODO: Get the port value from the appInst
-    public static int getFaceDetectionServerPort(String hostName) {
+    public static int getComputerVisionServerPort(String hostName) {
         int port;
         port = 8008;
-        Log.i(TAG, "getFaceDetectionServerPort("+hostName+")="+port);
+        Log.i(TAG, "getComputerVisionServerPort("+hostName+")="+port);
         return port;
     }
 
