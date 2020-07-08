@@ -69,6 +69,8 @@
     <string name="sign_in_required_message">Return to main menu and choose \"Sign in with Google\".</string>
     <string name="verify_delete_title">Delete Training Data</string>
     <string name="verify_delete_message">Are you sure you want to delete your face training data from the server?</string>
+    <string name="verify_clear_logs_title">Clear Log Viewer</string>
+    <string name="verify_clear_logs_message">Are you sure you want to clear the log entries?</string>
 
     <string name="pref_latency_method">latency_method</string>
     <string name="pref_latency_method_title">Latency Test Method</string>
