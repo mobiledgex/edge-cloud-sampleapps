@@ -162,15 +162,10 @@ namespace MobiledgeXPingPongGame {
 #endif
 
       clog("LocationService is running. Status is: " + Input.location.status);
-
-      var mobiledgexTask = MobiledgeXAPICalls();
-      while (!mobiledgexTask.IsCompleted)
-      {
-        yield return null;
-      }
+      MobiledgeXAPICalls();
     }
 
-    async Task MobiledgeXAPICalls()
+    async void MobiledgeXAPICalls()
     {
       // RegisterAndFindCloudlet and VerifyLocation:
       FindCloudletReply findCloudletReply;
