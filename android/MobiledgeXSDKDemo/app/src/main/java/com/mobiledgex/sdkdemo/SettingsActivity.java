@@ -181,14 +181,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || LocationSettingsFragment.class.getName().equals(fragmentName)
+                || MatchingEngineSettingsFragment.class.getName().equals(fragmentName)
                 || GeneralSettingsFragment.class.getName().equals(fragmentName)
                 || FaceDetectionSettingsFragment.class.getName().equals(fragmentName)
                 || SpeedTestSettingsFragment.class.getName().equals(fragmentName);
     }
 
-    // Mex Enhanced Location Preference.
-    public static class LocationSettingsFragment extends PreferenceFragment {
+    // Matching Engine Preferences.
+    public static class MatchingEngineSettingsFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);

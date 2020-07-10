@@ -133,7 +133,7 @@ public class MatchingEngineHelper {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(mContext, SettingsActivity.class);
-                        intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.LocationSettingsFragment.class.getName() );
+                        intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.MatchingEngineSettingsFragment.class.getName() );
                         intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
                         mContext.startActivity(intent);
                     }
@@ -163,7 +163,7 @@ public class MatchingEngineHelper {
                         @Override
                         public void onClick(View v) {
                             Intent intent = new Intent(mContext, SettingsActivity.class);
-                            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.LocationSettingsFragment.class.getName() );
+                            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.MatchingEngineSettingsFragment.class.getName() );
                             intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
                             mContext.startActivity(intent);
                         }
@@ -333,7 +333,7 @@ public class MatchingEngineHelper {
                 Snackbar.make(mView, someText, Snackbar.LENGTH_LONG).show();
                 return false;
             }
-            Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFqdn());
+            Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet fqdn=" + mClosestCloudlet.getFqdn()+" location="+mClosestCloudlet.getCloudletLocation().getLatitude()+","+mClosestCloudlet.getCloudletLocation().getLongitude());
             if (mMatchingEngineResultsInterface != null) {
                 mMatchingEngineResultsInterface.onFindCloudlet(mClosestCloudlet);
             }
