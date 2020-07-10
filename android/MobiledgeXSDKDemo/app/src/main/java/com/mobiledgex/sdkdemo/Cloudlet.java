@@ -86,13 +86,13 @@ public class Cloudlet implements Serializable {
     private String speedTestUploadErrorMessage = "";
     private String mFqdnPrefix;
     private String mIpAddress;
-    private String uri;
+    private String fqdn;
     private CloudletListHolder.LatencyTestMethod mLatencyTestMethod;
     private boolean mLatencyTestMethodForced = false;
 
-    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, String fqdnPrefix, int port) {
+    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, Marker marker, String fqdnPrefix, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
-        update(cloudletName, appName, carrierName, gpsLocation, distance, uri, marker, fqdnPrefix, port);
+        update(cloudletName, appName, carrierName, gpsLocation, distance, fqdn, marker, fqdnPrefix, port);
 
         if(CloudletListHolder.getSingleton().getLatencyTestAutoStart()) {
             //All AsyncTask instances are run on the same thread, so this queues up the tasks.
@@ -104,7 +104,7 @@ public class Cloudlet implements Serializable {
         mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
     }
 
-    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String uri, Marker marker, String fqdnPrefix, int port) {
+    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, Marker marker, String fqdnPrefix, int port) {
         Log.d(TAG, "Cloudlet update. cloudletName="+cloudletName);
         mCloudletName = cloudletName;
         mAppName = appName;
@@ -113,23 +113,26 @@ public class Cloudlet implements Serializable {
         mLongitude = gpsLocation.longitude;
         mDistance = distance;
         mMarker = marker;
-        setUri(fqdnPrefix, uri, port);
+        setUri(fqdnPrefix, fqdn, port);
     }
 
     /**
      * From the given string, create the hostname that will be pinged.
-     * @param uri
+     * @param fqdn
      */
-    public void setUri(String fqdnPrefix, String uri, int port) {
-        Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+fqdnPrefix+","+uri+","+port+")");
+    public void setUri(String fqdnPrefix, String fqdn, int port) {
+        Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+fqdnPrefix+","+fqdn+","+port+")");
         openPort = port;
         mFqdnPrefix = fqdnPrefix;
-        hostName = fqdnPrefix+uri;
-        this.uri = uri;
+        hostName = fqdnPrefix+fqdn;
+        this.fqdn = fqdn;
     }
 
     public String getHostName() {
         return hostName;
+    }
+    public String getFqdn() {
+        return fqdn;
     }
 
     /**

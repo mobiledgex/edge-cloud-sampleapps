@@ -162,6 +162,7 @@ public class MainActivity extends AppCompatActivity
     private Location mLocationForMatching;
     private Location mLocationInSimulator;
     private String mClosestCloudletHostname;
+    private AppClient.AppInstListReply mAppInstanceReplyList;
 
     private RequestPermissions mRpUtil;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -915,14 +916,18 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
+        if (mAppInstanceReplyList != null) {
+            // Clear any existing lines on the map, but re-add existing cloudlets.
+            onGetCloudletList(mAppInstanceReplyList);
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Cloudlet cloudlet = null;
                 for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
                     cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
-                    if(cloudlet.getMarker().getPosition().latitude == closestCloudlet.getCloudletLocation().getLatitude() &&
-                            cloudlet.getMarker().getPosition().longitude == closestCloudlet.getCloudletLocation().getLongitude() ) {
+                    Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
+                    if(cloudlet.getFqdn().equals(closestCloudlet.getFqdn()) ) {
                         Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
                         cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, getBadgeText(cloudlet)));
                         cloudlet.setBestMatch(true);
@@ -936,7 +941,7 @@ public class MainActivity extends AppCompatActivity
                             .color(COLOR_VERIFIED));
                     //Save the hostname for use by Face Detection Activity.
                     mClosestCloudletHostname = cloudlet.getHostName();
-                    Log.i(TAG, "mClosestCloudletHostname1: "+ mClosestCloudletHostname);
+                    Log.i(TAG, "mClosestCloudletHostname: "+ mClosestCloudletHostname);
                 }
             }
         });
@@ -950,6 +955,7 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public void onGetCloudletList(final AppClient.AppInstListReply cloudletList) {
+        mAppInstanceReplyList = cloudletList;
         Log.i(TAG, "onGetCloudletList()");
         runOnUiThread(new Runnable() {
             @Override
@@ -973,10 +979,6 @@ public class MainActivity extends AppCompatActivity
                     mAlertDialog = dialogBuilder.show();
                 }
 
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                int speedTestBytes = Integer.parseInt(prefs.getString(getResources().getString(R.string.download_size), "1048576"));
-                int speedTestPackets = Integer.parseInt(prefs.getString(getResources().getString(R.string.latency_packets), "5"));
-
                 //First get the new list into an ArrayMap so we can index on the cloudletName
                 for(AppClient.CloudletLocation cloudletLocation:cloudletList.getCloudletsList()) {
                     Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName()+" getCarrierName()="+cloudletLocation.getCarrierName());
@@ -986,7 +988,7 @@ public class MainActivity extends AppCompatActivity
                     //TODO: What if there is more than 1 appInstance in the list?
                     //There shouldn't be since we use all of appName, appVer, and orgName in the
                     //request. There should only be a single match.
-                    String uri = appInstances.get(0).getFqdn();
+                    String fqdn = appInstances.get(0).getFqdn();
                     String appName = appInstances.get(0).getAppName();
                     String FQDNPrefix = "";
                     int publicPort = 0;
@@ -1015,10 +1017,10 @@ public class MainActivity extends AppCompatActivity
                     if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
                         cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
                     } else {
-                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, uri, marker, FQDNPrefix, publicPort);
+                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, fqdn, marker, FQDNPrefix, publicPort);
                     }
                     marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL, getBadgeText(cloudlet)));
-                    cloudlet.update(cloudletName, appName, carrierName, latLng, distance, uri, marker, FQDNPrefix, publicPort);
+                    cloudlet.update(cloudletName, appName, carrierName, latLng, distance, fqdn, marker, FQDNPrefix, publicPort);
                     tempCloudlets.put(cloudletName, cloudlet);
                     builder.include(marker.getPosition());
                 }
@@ -1087,10 +1089,8 @@ public class MainActivity extends AppCompatActivity
                 } catch (Exception e) {
                     Log.e(TAG, "Map wasn't ready.", e);
                 }
-
             }
         });
-
     }
 
     @Override
