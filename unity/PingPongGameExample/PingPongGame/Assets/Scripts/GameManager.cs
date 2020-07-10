@@ -112,10 +112,8 @@ namespace MobiledgeXPingPongGame {
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
       integration = new MobiledgeXIntegration();
-
-#if UNITY_EDITOR
       integration.UseWifiOnly(true);
-#endif
+
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
       {
@@ -164,10 +162,15 @@ namespace MobiledgeXPingPongGame {
 #endif
 
       clog("LocationService is running. Status is: " + Input.location.status);
-      MobiledgeXAPICalls();
+
+      var mobiledgexTask = MobiledgeXAPICalls();
+      while (!mobiledgexTask.IsCompleted)
+      {
+        yield return null;
+      }
     }
 
-    async void MobiledgeXAPICalls()
+    async Task MobiledgeXAPICalls()
     {
       // RegisterAndFindCloudlet and VerifyLocation:
       FindCloudletReply findCloudletReply;
