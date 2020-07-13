@@ -112,7 +112,6 @@ namespace MobiledgeXPingPongGame {
       // and a local DME cannot be located. Set to false if using a supported
       // SIM Card.
       integration = new MobiledgeXIntegration();
-      integration.UseWifiOnly(true);
 
       // Use local server, by IP. This must be started before use:
       if (useAltServer)
@@ -203,12 +202,15 @@ namespace MobiledgeXPingPongGame {
       {
         // This app should fallback to public cloud, as the DME doesn't exist for your
         // SIM card + carrier.
-        clog("Cannot register to DME host: " + de.Message + ", Stack: " + de.StackTrace);
+        clog("Cannot register to DME host: " + de.Message + ". Falling back to Wifi DME. Stack trace: " + de.StackTrace);
+        clog("Please reach out to us on Slack or e-mail Support so that we can create a DME with your mcc-mnc value.");
         if (de.InnerException != null)
         {
           clog("Original Exception: " + de.InnerException.Message);
         }
-        // Handle fallback to public cloud application server.
+        // Fallback to Wifi DME
+        integration.UseWifiOnly(true);
+        MobiledgeXAPICalls();
         return;
       }
       catch (Exception e)
