@@ -35,7 +35,7 @@ namespace MobiledgeXPingPongGame
         string queryParams = "";
         string edgeCloudletStr = ""; // Connection url to Edge 
 
-#region
+#region MonoBehaviour Callbacks
         // Use this for initialization
         IEnumerator Start()
         {
