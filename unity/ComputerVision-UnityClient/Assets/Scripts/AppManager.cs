@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Networking;
@@ -20,6 +20,7 @@ namespace MobiledgeXComputerVision
         float imgScalingFactor;
         public static int level = 0;
         public NetworkManager networkManager;
+        public Image NerdStatsPanel;
         bool serviceAlreadyStarted
         {
             get
@@ -74,7 +75,7 @@ namespace MobiledgeXComputerVision
         public static ServiceMode serviceMode;
         public static DataSource source;
         public static bool urlFound; // trigger indicating RegisterAndFindCloudlet and  GetUrl() occured
-        public bool sendWebRequests = true; // to control the flow of sending webrequest
+        public bool webRequestsLock = true; // to control the flow of sending webrequest
         public bool wsStarted; // trigger indicating wether websocket connection intialized or not
 
         #region Monobehaviour callbacks
@@ -94,19 +95,27 @@ namespace MobiledgeXComputerVision
             StartCoroutine(ImageSenderFlow());
         }
 
-        public async Task SetConnection()
+        public void SetConnection()
         {
-            string uri = await networkManager.UriBasedOnConnectionMode();
+            string uri =  networkManager.UriBasedOnConnectionMode();
             switch (networkManager.connectionMode)
             {
                 case NetworkManager.ConnectionMode.WebSocket:
                     url = uri +"/ws" +urlSuffix;
-                    print("url ws :" + url);
+                    if (serviceMode == ServiceMode.ObjectDetection) // PoseDetection Server have GPU
+                    {
+                        url = "ws://posedetection.defaultedge.mobiledgex.net:8008/ws/object/detect/";
+                    }
                     networkManager.StartWs(url);
                     urlFound = true;
                     break;
                 case NetworkManager.ConnectionMode.Rest:
                     url = uri + urlSuffix;
+                    //url = "http://posedetection.defaultedge.mobiledgex.net:8008" + urlSuffix;
+                    if (serviceMode == ServiceMode.ObjectDetection) // PoseDetection Server have GPU
+                    {
+                        url = "http://posedetection.defaultedge.mobiledgex.net:8008/object/detect/";
+                    }
                     urlFound = true;
                     break;
                 default:
@@ -114,7 +123,7 @@ namespace MobiledgeXComputerVision
             }
         }
 
-        /// <summary>
+        /// <summary>`
         /// ImageSenderFlow Flow : Hide the GUI > CaptureScreenShot
         ///  > ShowGUI > Shrink Image >
         ///  Based on Connection Mode > WebSocket Case > Add image binary to the socket queue > OnReceive > Handle Server Response
@@ -130,10 +139,8 @@ namespace MobiledgeXComputerVision
             texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             showGUI = serviceAlreadyStarted;
             texture.Apply();
-            Debug.Log("ScreenShot taken");
             byte[] imgBinary = ShrinkAndEncode(source: texture, targetWidth: serviceMode == ServiceMode.FaceRecognition ? 500 : 240);
             Destroy(texture);
-            Debug.Log("Image has been shrunk and encoded, Sending Image to Server");
             while (!urlFound)
             {
                 yield return null;
@@ -141,15 +148,16 @@ namespace MobiledgeXComputerVision
             switch (networkManager.connectionMode)
             {
                 case NetworkManager.ConnectionMode.Rest:
-                    while (!sendWebRequests)
+                    while (!webRequestsLock)
                     {
                         yield return null;
                     }
-                    StartCoroutine(SendImageToServer(imgBinary));
+                    StartCoroutine(networkManager.SendImageToServer(imgBinary, url));
                     break;
                 case NetworkManager.ConnectionMode.WebSocket:
                     while (!wsStarted)
                     {
+                        //print("ws not started yet");
                         yield return null;
                     }
                     networkManager.SendtoServer(imgBinary);
@@ -157,62 +165,28 @@ namespace MobiledgeXComputerVision
             }
         }
 
-        IEnumerator SendImageToServer(byte[] imgBinary)
-        {
-            sendWebRequests = false;
-            WWWForm form = new WWWForm();
-            form.AddBinaryData("image", imgBinary);
-            UnityWebRequest www = UnityWebRequest.Post(url, form);
-            www.timeout = 5; // Timeout in seconds
-            yield return www.SendWebRequest();
 
-            // isHttpError True on response codes greater than or equal to 400.
-            // isNetworkError True on failure to resolve a DNS entry
-            if (www.isNetworkError || www.isHttpError)
+        private void Update()
+        {
+            if (!showGUI)
             {
-                Debug.Log("Error sending Image to SERVER");
-                Debug.Log(www.error);
-                if (www.responseCode == 503)
-                {
-                    Debug.Log("Training data update in progress, Sending another request in 2 seconds.");
-                    yield return new WaitForSeconds(2);
-                    StartCoroutine(SendImageToServer(imgBinary));
-                    yield break;
-                }
-                if (Application.internetReachability == NetworkReachability.NotReachable)
-                {
-                    Debug.LogError("Error. Your are not connected to the Internet.");
-                }
-                else
-                {
-                    yield return new WaitForEndOfFrame();
-                    StartCoroutine(SendImageToServer(imgBinary));
-                    yield break;
-                }
+                NerdStatsPanel.enabled = false;
             }
             else
             {
-                sendWebRequests = true;
-                Debug.Log("Success sending Image to SERVER, Response Received ");
-                Debug.Log("ServerResponse :\n" + www.downloadHandler.text);
-                HandleServerRespone(www.downloadHandler.text);
+                NerdStatsPanel.enabled = true;
             }
         }
-
         public void HandleServerRespone(string response)
         {
-            print("Servicemode"+serviceMode);
             switch (serviceMode)
             {
                 case ServiceMode.FaceDetection:
                     FaceDetectionResponse faceDetectionResponse = Messaging<FaceDetectionResponse>.Deserialize(response);
-                    Debug.Log("Success : " + faceDetectionResponse.success);
-                    Debug.Log("server_processing_time : " + faceDetectionResponse.server_processing_time);
+                    networkManager.ServerProcessingTimeCalculator(faceDetectionResponse.server_processing_time);
                     showGUI = faceDetectionResponse.success;
                     if (faceDetectionResponse.success)
                     {
-                        Debug.Log("Number of faces : " + faceDetectionResponse.rects.Length);
-                        Debug.Log("Number of Rect Dims : " + faceDetectionResponse.rects[0].Length);
                         faceDetectionRects = faceDetectionResponse.rects;
                     }
                     else
@@ -223,13 +197,9 @@ namespace MobiledgeXComputerVision
 
                 case ServiceMode.FaceRecognition:
                     FaceRecognitionResponse faceRecognitionResponse = Messaging<FaceRecognitionResponse>.Deserialize(response);
-                    Debug.Log("Success : " + faceRecognitionResponse.success);
-                    Debug.Log("server_processing_time : " + faceRecognitionResponse.server_processing_time);
-                    Debug.Log(faceRecognitionResponse.success==true ?("Recognition C.L. : " + faceRecognitionResponse.confidence):"didnt succeed");
+                    networkManager.ServerProcessingTimeCalculator(faceRecognitionResponse.server_processing_time);
                     if (faceRecognitionResponse.success)
                     {
-                        Debug.Log("Detected Face Name : " + faceRecognitionResponse.subject);
-                        Debug.Log("Recognition C.L. : " + faceRecognitionResponse.confidence);
                         faceRecognitionRect = faceRecognitionResponse.rect;
                         faceRecognitionSubject =  faceRecognitionResponse.confidence < 120 ?faceRecognitionResponse.subject: "Unknown";
                         faceRecognitionConfidenceLevel = faceRecognitionResponse.confidence;
@@ -242,9 +212,7 @@ namespace MobiledgeXComputerVision
                     break;
                 case ServiceMode.ObjectDetection:
                     ObjectDetectionResponse objectDetectionResponse = Messaging<ObjectDetectionResponse>.Deserialize(response);
-                    Debug.Log("Success : " + objectDetectionResponse.success);
-                    Debug.Log("server_processing_time : " + objectDetectionResponse.server_processing_time);
-                    Debug.Log("Gpu Support : " + objectDetectionResponse.gpu_support);
+                    networkManager.ServerProcessingTimeCalculator(objectDetectionResponse.server_processing_time);
                     showGUI = objectDetectionResponse.success;
                     if (objectDetectionResponse.success)
                     {
@@ -281,7 +249,7 @@ namespace MobiledgeXComputerVision
                     TextStyle.normal.textColor = getConfidenceLevelColorFR(faceRecognitionConfidenceLevel);
                     TextStyle.fontSize = 50;
                     TextStyle.fontStyle = FontStyle.Bold;
-                    GUI.Label(new Rect((faceRecognitionRect[0] * imgScalingFactor)-100, faceRecognitionRect[1] * imgScalingFactor, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
+                    GUI.Label(new Rect((faceRecognitionRect[0] * imgScalingFactor), faceRecognitionRect[1] * imgScalingFactor, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
                     break;
                 case ServiceMode.ObjectDetection:
                     foreach (@Object obj in objectsDetected)
@@ -290,9 +258,9 @@ namespace MobiledgeXComputerVision
                         width = imgScalingFactor * (obj.rect[2] - obj.rect[0]);
                         GUI.DrawTexture(new Rect((obj.rect[0] * imgScalingFactor), (obj.rect[1] * imgScalingFactor), width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
                         TextStyle.normal.textColor = getConfidenceLevelColorOD(obj.confidence);
-                        TextStyle.fontSize = 30;
+                        TextStyle.fontSize = 50;
                         TextStyle.fontStyle = FontStyle.Bold;
-                        GUI.Label(new Rect(obj.rect[0] * imgScalingFactor, (obj.rect[1] * imgScalingFactor) + 50, width, 100), new GUIContent(obj.@class), TextStyle);
+                        GUI.Label(new Rect(obj.rect[0] * imgScalingFactor, (obj.rect[1] * imgScalingFactor) -100, width, 100), new GUIContent(obj.@class), TextStyle);
                     }
                     break;
             }
