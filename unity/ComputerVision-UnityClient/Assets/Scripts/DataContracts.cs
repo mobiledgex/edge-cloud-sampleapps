@@ -87,7 +87,7 @@ namespace MobiledgeXComputerVision
 
     public static class Messaging<T>
     {
-        private static string StreamToString(Stream s)
+        public static string StreamToString(Stream s)
         {
             s.Position = 0;
             StreamReader reader = new StreamReader(s);

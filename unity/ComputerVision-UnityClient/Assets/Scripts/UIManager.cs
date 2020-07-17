@@ -1,19 +1,22 @@
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 using UnityEngine;
-using System.Collections;
 using UnityEngine.Video;
 
 namespace MobiledgeXComputerVision
 {
     public class UIManager : MonoBehaviour
     {
+        public GameObject Background;
         public GameObject ModesPanel;
         public GameObject DataSourcePanel;
         public GameObject CameraPanel;
         public GameObject VideoPanel;
-        public Text infoText;
         public Button backButton;
         public AppManager appManager;
+        public NetworkManager networkManager;
+        public Image Logo;
+        public GameObject StatsButton;
+        public GameObject StatsPanel;
 
         #region MonoBehaviour Callbacks
         private void Start()
@@ -21,23 +24,19 @@ namespace MobiledgeXComputerVision
             backButton.onClick.AddListener(BackButton);
         }
         #endregion
-
-
+        
         public void SetMode(int modeSelected)
         {
             switch (modeSelected)
             {
                 case 0:
                     AppManager.serviceMode = AppManager.ServiceMode.FaceDetection;
-                    infoText.text = " FaceDetection Enabled";
                     break;
                 case 1:
                     AppManager.serviceMode = AppManager.ServiceMode.FaceRecognition;
-                    infoText.text = " FaceRecognition Enabled";
                     break;
                 case 2:
                     AppManager.serviceMode = AppManager.ServiceMode.ObjectDetection;
-                    infoText.text = " ObjectDetection Enabled";
                     break;
             }
             AppManager.level++;
@@ -56,23 +55,16 @@ namespace MobiledgeXComputerVision
                     AppManager.source = AppManager.DataSource.VIDEO;
                     VideoPanel.SetActive(true);
                     break;
-                case 2:
-                    AppManager.source = AppManager.DataSource.VIDEO;
-                    VideoPanel.SetActive(true); //fixme change to nReal Later
-                    break;
+                //case 2:
+                //    AppManager.source = AppManager.DataSource.nReal;
+                //    VideoPanel.SetActive(true);
+                //    break;
             }
             AppManager.level++;
             UpdateUIBasedOnLevel(AppManager.level);
         }
 
-        IEnumerator ShowInfoText()
-        {
-            infoText.gameObject.SetActive(true);
-            yield return new WaitForSeconds(1);
-            infoText.gameObject.SetActive(false);
-        }
-
-        public async void UpdateUIBasedOnLevel(int level)
+        public void UpdateUIBasedOnLevel(int level)
         {
             switch (level)
             {
@@ -89,15 +81,31 @@ namespace MobiledgeXComputerVision
                     ModesPanel.SetActive(false);
                     DataSourcePanel.SetActive(true);
                     backButton.gameObject.SetActive(true);
-                    // once the service is selected(url suffix is sat)> get mobiledgex url based on the protocol(connection mode (rest or ws) is selected in editor)
-                    await appManager.SetConnection(); 
+                    // once the service is selected(url suffix depends on it) get mobiledgex url based on the protocol((rest/ws)> selected in editor)
+                    appManager.SetConnection();
+                    StatsButton.SetActive(false);
+                    StatsPanel.SetActive(false);
+                    networkManager.ClearStats();
+                    Background.SetActive(true);
+                    Logo.color = new Color(Logo.color.r, Logo.color.g, Logo.color.b, 1);
                     break;
                 case 2:  // Service View (FaceDetection, Face Recognition ...)
                     ModesPanel.SetActive(false);
                     DataSourcePanel.SetActive(false);
                     backButton.gameObject.SetActive(true);
                     appManager.StartCV();
-                    StartCoroutine(ShowInfoText());
+                    Logo.color = new Color(Logo.color.r, Logo.color.g, Logo.color.b, 0);
+                    networkManager.ClearStats();
+                    StatsButton.SetActive(true);
+                    StatsPanel.SetActive(false);
+                    if(AppManager.source == AppManager.DataSource.CAMERA)
+                    {
+                        Background.SetActive(false);
+                    }
+                    else
+                    {
+                        Background.SetActive(true);
+                    }
                     break;
             }
         }
@@ -118,9 +126,13 @@ namespace MobiledgeXComputerVision
                     VideoPanel.GetComponentInChildren<VideoPlayer>().Stop(); // Reset Video
                     AppManager.urlFound = false; 
                     appManager.wsStarted = false;
-                    appManager.sendWebRequests = true;
+                    appManager.webRequestsLock = true;
+                    if(networkManager.client != null)
+                    {
+                        networkManager.client.tokenSource.Cancel();
+                    }
                 }
-                AppManager.level--;
+                    AppManager.level--;
             }
             UpdateUIBasedOnLevel(AppManager.level);
         }
