@@ -86,16 +86,16 @@ namespace MobiledgeXComputerVision {
                     ConnectedToEdgePanel.SetActive(true);
                     Loc cloudletLocation = integration.FindCloudletReply.cloudlet_location;
                     Loc userLocation = MobiledgeX.LocationService.RetrieveLocation();
-                    distanceToCloudlet = distance(cloudletLocation.latitude, cloudletLocation.longitude, userLocation.latitude, userLocation.longitude, 'N').ToString("f1")+" mi";
+                    distanceToCloudlet = distance(cloudletLocation.latitude, cloudletLocation.longitude, userLocation.latitude, userLocation.longitude).ToString("f1")+" mi";
                 }
             }
            
-           catch(RegisterClientException regEx) // In case we don't support the detected carrierName  (In the generated dme)
+           catch(RegisterClientException) // In case we don't support the detected carrierName  (In the generated dme)
             {
                 integration.UseWifiOnly(true);
                 await integration.RegisterAndFindCloudlet();
             }
-            catch (FindCloudletException fex) // GPS Location Error
+            catch (FindCloudletException) // GPS Location Error
             {
                 EdgePanel.SetActive(true); // Disables User Input
                 NotConnectedToEdgePanel.SetActive(true);
@@ -259,9 +259,9 @@ namespace MobiledgeXComputerVision {
         }
 
 
-        #region Distance Calculator
+        #region Distance Calculator using Haversine formula
 
-        private double distance(double lat1, double lon1, double lat2, double lon2, char unit)
+        private double distance(double lat1, double lon1, double lat2, double lon2)
         {
             if ((lat1 == lat2) && (lon1 == lon2))
             {
@@ -269,32 +269,31 @@ namespace MobiledgeXComputerVision {
             }
             else
             {
-                double theta = lon1 - lon2;
-                double dist = Math.Sin(deg2rad(lat1)) * Math.Sin(deg2rad(lat2)) + Math.Cos(deg2rad(lat1)) * Math.Cos(deg2rad(lat2)) * Math.Cos(deg2rad(theta));
-                dist = Math.Acos(dist);
-                dist = rad2deg(dist);
-                dist = dist * 60 * 1.1515;
-                if (unit == 'K')
-                {
-                    dist = dist * 1.609344;
-                }
-                else if (unit == 'N')
-                {
-                    dist = dist * 0.8684;
-                }
-                return (dist);
+                lon1 = Deg2Rad(lon1);
+                lon2 = Deg2Rad(lon2);
+                lat1 = Deg2Rad(lat1);
+                lat2 = Deg2Rad(lat2);
+
+                // Haversine formula  
+                double dlon = lon2 - lon1;
+                double dlat = lat2 - lat1;
+                double a = Math.Pow(Math.Sin(dlat / 2), 2) +
+                           Math.Cos(lat1) * Math.Cos(lat2) *
+                           Math.Pow(Math.Sin(dlon / 2), 2);
+
+                double c = 2 * Math.Asin(Math.Sqrt(a));
+
+                double r = 3956;// Radius of earth in miles
+
+                return (c * r);
             }
         }
 
-        private double deg2rad(double deg)
+        private double Deg2Rad(double deg)
         {
             return (deg * Math.PI / 180.0);
         }
 
-        private double rad2deg(double rad)
-        {
-            return (rad / Math.PI * 180.0);
-        }
     #endregion
     }
 }
