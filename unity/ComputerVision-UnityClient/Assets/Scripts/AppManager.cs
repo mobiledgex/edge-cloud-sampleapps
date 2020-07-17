@@ -122,7 +122,7 @@ namespace MobiledgeXComputerVision
             }
         }
 
-        /// <summary>`
+        /// <summary>
         /// ImageSenderFlow Flow : Hide the GUI > CaptureScreenShot
         ///  > ShowGUI > Shrink Image >
         ///  Based on Connection Mode > WebSocket Case > Add image binary to the socket queue > OnReceive > Handle Server Response
