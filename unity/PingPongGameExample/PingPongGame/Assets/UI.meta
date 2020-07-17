@@ -1,6 +1,15 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
 guid: 94caecc4f57d247b5bedd6b562cd0e31
 folderAsset: yes
+=======
+<<<<<<< HEAD:unity/MobiledgeXRestSample/Assets/Scenes/SampleScene.unity.meta
+guid: b00e986c5233b4b699a1961c591f934d
+=======
+guid: 94caecc4f57d247b5bedd6b562cd0e31
+folderAsset: yes
+>>>>>>> PingPongNetworkManager:unity/PingPongGameExample/PingPongGame/Assets/UI.meta
+>>>>>>> PingPongNetworkManager
 DefaultImporter:
   externalObjects: {}
   userData: 

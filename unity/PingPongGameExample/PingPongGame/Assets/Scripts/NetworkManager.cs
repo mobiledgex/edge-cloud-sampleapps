@@ -14,12 +14,16 @@ namespace MobiledgeXPingPongGame
     {
 
 #region Local Testing Variables
+<<<<<<< HEAD
 
+=======
+>>>>>>> PingPongNetworkManager
         bool useAltServer = false; // set to true for local testing
         string host = "localhost";
         string altServerHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
         int port = 3000;
         string server = "";
+<<<<<<< HEAD
         
 #endregion
        
@@ -29,6 +33,14 @@ namespace MobiledgeXPingPongGame
         Stopwatch stopWatch = new Stopwatch();
         NetTest netTest = null;
 
+=======
+#endregion
+       
+#region NetTest Variables
+        string l7Path; // Layer 7 in the OSI Networking Model (Application Layer) 
+        Stopwatch stopWatch = new Stopwatch();
+        NetTest netTest = null;
+>>>>>>> PingPongNetworkManager
 #endregion
 
         MobiledgeXIntegration integration;
@@ -39,12 +51,19 @@ namespace MobiledgeXPingPongGame
         string queryParams = "";
         string edgeCloudletStr = ""; // Connection url to Edge 
 
+<<<<<<< HEAD
 
 #region MonoBehaviour Callbacks
         // Use this for initialization
         IEnumerator Start()
         {
             integration = new MobiledgeXIntegration();
+=======
+#region
+        // Use this for initialization
+        IEnumerator Start()
+        {
+>>>>>>> PingPongNetworkManager
             // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
             // and a local DME cannot be located. Set to false if using a supported
             // SIM Card
@@ -154,7 +173,10 @@ namespace MobiledgeXPingPongGame
 
         public async void MobiledgeXAPICalls()
         {
+<<<<<<< HEAD
             
+=======
+>>>>>>> PingPongNetworkManager
 #if UNITY_EDITOR
             integration.UseWifiOnly(true);
 #endif 
@@ -253,7 +275,11 @@ namespace MobiledgeXPingPongGame
                         site = new NetTest.Site
                         {
                             host = integration.GetHost(ap),
+<<<<<<< HEAD
                             port = integration.GetPort(ap)
+=======
+                            port = integration.GetPort(ap, -1)
+>>>>>>> PingPongNetworkManager
                         };
                         site.testType = NetTest.TestType.CONNECT;
                     }
