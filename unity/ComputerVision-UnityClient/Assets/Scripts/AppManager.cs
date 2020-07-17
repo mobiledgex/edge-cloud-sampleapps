@@ -111,7 +111,6 @@ namespace MobiledgeXComputerVision
                     break;
                 case NetworkManager.ConnectionMode.Rest:
                     url = uri + urlSuffix;
-                    //url = "http://posedetection.defaultedge.mobiledgex.net:8008" + urlSuffix;
                     if (serviceMode == ServiceMode.ObjectDetection) // PoseDetection Server have GPU
                     {
                         url = "http://posedetection.defaultedge.mobiledgex.net:8008/object/detect/";
@@ -157,7 +156,6 @@ namespace MobiledgeXComputerVision
                 case NetworkManager.ConnectionMode.WebSocket:
                     while (!wsStarted)
                     {
-                        //print("ws not started yet");
                         yield return null;
                     }
                     networkManager.SendtoServer(imgBinary);
