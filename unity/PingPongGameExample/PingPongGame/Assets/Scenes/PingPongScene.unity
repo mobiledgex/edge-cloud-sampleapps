@@ -96,6 +96,7 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -219,13 +220,9 @@ MonoBehaviour:
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: UnityEngine.UI.InputField+SubmitEvent, UnityEngine.UI, Version=1.0.0.0,
-      Culture=neutral, PublicKeyToken=null
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: UnityEngine.UI.InputField+OnChangeEvent, UnityEngine.UI, Version=1.0.0.0,
-      Culture=neutral, PublicKeyToken=null
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
@@ -251,8 +248,6 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
@@ -543,8 +538,6 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 20cc7760507bc43d193c41797a77b63d, type: 3}
     m_FontSize: 14
@@ -577,6 +570,8 @@ GameObject:
   m_Component:
   - component: {fileID: 575957386}
   - component: {fileID: 575957385}
+  - component: {fileID: 575957388}
+  - component: {fileID: 575957387}
   m_Layer: 0
   m_Name: GameManagerObject
   m_TagString: GameManager
@@ -597,6 +592,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   layout: {fileID: 11400000, guid: 8f85781d9e23f43a4a1ff16c1c2bcaef, type: 2}
+  theBall: {fileID: 0}
+  ghostBall: {fileID: 0}
+  ghostPlayer: {fileID: 0}
+  networkManager: {fileID: 575957387}
   uiConsole: {fileID: 0}
   roomIdInput: {fileID: 0}
 --- !u!4 &575957386
@@ -613,6 +612,31 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &575957387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 575957384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eaea2a9c6152a4de7ba9d1beba3b6ff4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameManager: {fileID: 575957385}
+--- !u!114 &575957388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 575957384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e1e1f49021854c59abbe7d3b689b38c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &775266197
 GameObject:
   m_ObjectHideFlags: 0
@@ -754,6 +778,7 @@ SpriteRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1004,11 +1029,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 5560527873028004015, guid: 918dbf77d33a24e779dbbcd73500b1ce,
-        type: 3}
-      propertyPath: m_Name
-      value: PaddlePlayer1
-      objectReference: {fileID: 0}
     - target: {fileID: 5560527873028004008, guid: 918dbf77d33a24e779dbbcd73500b1ce,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1068,6 +1088,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Color.a
       value: 0.5019608
+      objectReference: {fileID: 0}
+    - target: {fileID: 5560527873028004015, guid: 918dbf77d33a24e779dbbcd73500b1ce,
+        type: 3}
+      propertyPath: m_Name
+      value: PaddlePlayer1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 918dbf77d33a24e779dbbcd73500b1ce, type: 3}
@@ -1132,8 +1157,6 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 20cc7760507bc43d193c41797a77b63d, type: 3}
     m_FontSize: 14
@@ -1147,7 +1170,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+  m_Text: Copyright 2020 MobiledgeX, Inc. All rights and licenses reserved.
 --- !u!222 &1562121425
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1163,11 +1186,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 5560527873028004015, guid: 918dbf77d33a24e779dbbcd73500b1ce,
-        type: 3}
-      propertyPath: m_Name
-      value: PaddlePlayer2
-      objectReference: {fileID: 0}
     - target: {fileID: 5560527873028004008, guid: 918dbf77d33a24e779dbbcd73500b1ce,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1238,6 +1256,11 @@ PrefabInstance:
       propertyPath: moveDown
       value: 274
       objectReference: {fileID: 0}
+    - target: {fileID: 5560527873028004015, guid: 918dbf77d33a24e779dbbcd73500b1ce,
+        type: 3}
+      propertyPath: m_Name
+      value: PaddlePlayer2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 918dbf77d33a24e779dbbcd73500b1ce, type: 3}
 --- !u!1 &1616197640
@@ -1271,6 +1294,7 @@ SpriteRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1388,6 +1412,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1480,6 +1505,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1629,8 +1655,6 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 20cc7760507bc43d193c41797a77b63d, type: 3}
     m_FontSize: 14
