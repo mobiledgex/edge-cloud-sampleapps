@@ -14,17 +14,21 @@ namespace MobiledgeXPingPongGame
     {
 
 #region Local Testing Variables
+
         bool useAltServer = false; // set to true for local testing
         string host = "localhost";
         string altServerHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
         int port = 3000;
         string server = "";
+        
 #endregion
        
 #region NetTest Variables
+
         string l7Path; // Layer 7 in the OSI Networking Model (Application Layer) 
         Stopwatch stopWatch = new Stopwatch();
         NetTest netTest = null;
+
 #endregion
 
         MobiledgeXIntegration integration;
@@ -35,10 +39,12 @@ namespace MobiledgeXPingPongGame
         string queryParams = "";
         string edgeCloudletStr = ""; // Connection url to Edge 
 
+
 #region MonoBehaviour Callbacks
         // Use this for initialization
         IEnumerator Start()
         {
+            integration = new MobiledgeXIntegration();
             // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
             // and a local DME cannot be located. Set to false if using a supported
             // SIM Card
@@ -148,6 +154,7 @@ namespace MobiledgeXPingPongGame
 
         public async void MobiledgeXAPICalls()
         {
+            
 #if UNITY_EDITOR
             integration.UseWifiOnly(true);
 #endif 
