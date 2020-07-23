@@ -62,18 +62,6 @@ public class MatchingEngineUnitTest {
             Looper.prepare();
     }
 
-//    @Before
-//    public void grantPermissions() {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
-//            uiAutomation.executeShellCommand(
-//                    "pm grant " + getInstrumentation().getTargetContext().getPackageName()
-//                            + " android.permission.READ_PHONE_STATE");
-//            uiAutomation.executeShellCommand(
-//                    "pm grant " + getInstrumentation().getTargetContext().getPackageName()
-//                            + " android.permission.ACCESS_COARSE_LOCATION");
-//        }
-//    }
     @Before
     public void grantPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
