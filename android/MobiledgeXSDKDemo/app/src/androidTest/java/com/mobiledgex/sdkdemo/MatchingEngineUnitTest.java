@@ -6,6 +6,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.os.Build;
 import android.os.Looper;
+import android.util.Log;
+
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -16,7 +18,11 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -30,6 +36,7 @@ import distributed_match_engine.LocOuterClass;
 
 @RunWith(AndroidJUnit4.class)
 public class MatchingEngineUnitTest {
+    private static final String TAG = "MatchingEngineUnitTest";
 
     public static final long GRPC_TIMEOUT_MS = 15000;
 
@@ -55,15 +62,27 @@ public class MatchingEngineUnitTest {
             Looper.prepare();
     }
 
+//    @Before
+//    public void grantPermissions() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+//            uiAutomation.executeShellCommand(
+//                    "pm grant " + getInstrumentation().getTargetContext().getPackageName()
+//                            + " android.permission.READ_PHONE_STATE");
+//            uiAutomation.executeShellCommand(
+//                    "pm grant " + getInstrumentation().getTargetContext().getPackageName()
+//                            + " android.permission.ACCESS_COARSE_LOCATION");
+//        }
+//    }
     @Before
     public void grantPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+            UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
             uiAutomation.grantRuntimePermission(
-                    InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName(),
+                    getInstrumentation().getTargetContext().getPackageName(),
                     "android.permission.READ_PHONE_STATE");
             uiAutomation.grantRuntimePermission(
-                    InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName(),
+                    getInstrumentation().getTargetContext().getPackageName(),
                     "android.permission.ACCESS_COARSE_LOCATION");
         }
     }
@@ -71,7 +90,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void useAppContext() {
         // Context of the app under test.
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context appContext = getInstrumentation().getTargetContext();
         assertEquals("com.mobiledgex.sdkdemo", appContext.getPackageName());
     }
 
@@ -103,7 +122,7 @@ public class MatchingEngineUnitTest {
 
     @Test
     public void testRegisterClient() {
-        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context ctx = getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -115,7 +134,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testFindCloudlet() {
 
-        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context ctx = getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -135,6 +154,44 @@ public class MatchingEngineUnitTest {
             assertTrue("Unable to get FindCloudletReply", reply != null);
             assertEquals("FindCloudlet status is " + reply.getStatus(), AppClient.FindCloudletReply.FindStatus.FIND_FOUND, reply.getStatus());
             assertTrue("Fqdn in FindCloudletReply is " + reply.getFqdn(),reply.getFqdn() != null && reply.getFqdn() != "");
+            Log.i(TAG, "cloudlet location="+reply.getCloudletLocation().getLatitude()+","+reply.getCloudletLocation().getLongitude());
+            assertNotEquals("Latitude should not be 0.0, but it is", 0.0, reply.getCloudletLocation().getLatitude());
+            assertNotEquals("Longitude should not be 0.0, but it is", 0.0, reply.getCloudletLocation().getLongitude());
+
+        } catch (DmeDnsException dde) {
+            assertTrue("ExecutionException finding cloudlet. " + dde.getMessage(), false);
+        } catch (ExecutionException ee) {
+            assertTrue("ExecutionException finding cloudlet. " + ee.getMessage(), false);
+        } catch (InterruptedException ie) {
+            assertTrue("InterruptedException finding cloudlet. " + ie.getMessage(),  false);
+        }
+    }
+
+    @Test
+    public void testFindCloudletPerformance() {
+
+        Context ctx = getInstrumentation().getTargetContext();
+        MatchingEngine me = new MatchingEngine(ctx);
+
+        me.setMatchingEngineLocationAllowed(true);
+        me.setAllowSwitchIfNoSubscriberInfo(true);
+
+        registerClient(me, ctx);
+
+        Location location = new Location("MobiledgeX_Loc_Sim");
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+
+        try {
+            AppClient.FindCloudletRequest request = me.createDefaultFindCloudletRequest(ctx, location).build();
+            AppClient.FindCloudletReply reply = me.findCloudlet(request, GRPC_TIMEOUT_MS, MatchingEngine.FindCloudletMode.PERFORMANCE);
+
+            assertTrue("Unable to get FindCloudletReply", reply != null);
+            assertEquals("FindCloudlet status is " + reply.getStatus(), AppClient.FindCloudletReply.FindStatus.FIND_FOUND, reply.getStatus());
+            assertTrue("Fqdn in FindCloudletReply is " + reply.getFqdn(),reply.getFqdn() != null && reply.getFqdn() != "");
+            Log.i(TAG, "cloudlet location="+reply.getCloudletLocation().getLatitude()+","+reply.getCloudletLocation().getLongitude());
+            assertNotEquals("Latitude should not be 0.0, but it is", 0.0, reply.getCloudletLocation().getLatitude());
+            assertNotEquals("Longitude should not be 0.0, but it is", 0.0, reply.getCloudletLocation().getLongitude());
 
         } catch (DmeDnsException dde) {
             assertTrue("ExecutionException finding cloudlet. " + dde.getMessage(), false);
@@ -148,7 +205,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testVerifyLocation() {
 
-        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context ctx = getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -182,7 +239,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testGetAppInstList() {
 
-        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context ctx = getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);
@@ -213,7 +270,7 @@ public class MatchingEngineUnitTest {
     @Test
     public void testGetQosPositionKpi() {
 
-        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context ctx = getInstrumentation().getTargetContext();
         MatchingEngine me = new MatchingEngine(ctx);
 
         me.setMatchingEngineLocationAllowed(true);

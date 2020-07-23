@@ -1,5 +1,8 @@
 <resources>
-    <string name="app_name">Computer Vision</string>
+    <string name="app_name">ComputerVision</string>
+    <string name="app_version">2.0</string>
+    <string name="org_name">MobiledgeX</string>
+
     <string name="title_activity_face_detection">Face Detection</string>
     <string name="title_activity_face_recognition">Face Recognition</string>
     <string name="title_activity_object_detection">Object Detection</string>
