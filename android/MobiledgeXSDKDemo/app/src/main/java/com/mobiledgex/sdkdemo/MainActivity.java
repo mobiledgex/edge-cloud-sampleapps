@@ -285,6 +285,9 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
         }
 
+        // Run any version-specific upgrades here.
+        upgradeToVersion59(prefs);
+
         // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_dme_hostname));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_default_operator_name));
@@ -1201,6 +1204,36 @@ public class MainActivity extends AppCompatActivity
                     .setPositiveButton("OK", null)
                     .show();
         }
+    }
+
+    /**
+     * In version 59 of this client app, the backend app name changed from "MobiledgeX SDK Demo"
+     * to "ComputerVision". This method will update the General Settings custom app name Preference
+     * value accordingly.
+     *
+     * However, we need to make sure this is only done once, in case the user specifically needs to
+     * connect to a "MobiledgeX SDK Demo" backend app and has updated their preferences manually.
+     * Because of this, we store a flag indicating that the upgrade has already happened so we can
+     * check the value and not perform it again.
+     *
+     * @param sharedPreferences
+     */
+    private void upgradeToVersion59(SharedPreferences sharedPreferences) {
+        String upgradedToVersion59Flag = "upgradedToVersion59Flag";
+        boolean upgraded = sharedPreferences.getBoolean(upgradedToVersion59Flag, false);
+        if (upgraded) {
+            Log.i(TAG, "upgradeToVersion59 previously performed");
+            return;
+        }
+        String prefKeyAppName = getResources().getString(R.string.pref_app_name);
+        String oldDefaultAppName = "MobiledgeX SDK Demo";
+        String newDefaultAppName = getResources().getString(R.string.app_name);
+        String appName = sharedPreferences.getString(prefKeyAppName, newDefaultAppName);
+        if (appName.equals(oldDefaultAppName)) {
+            Log.i(TAG, "upgradeToVersion59 changing "+prefKeyAppName+" from '"+oldDefaultAppName+"' to '"+newDefaultAppName+"'");
+            sharedPreferences.edit().putString(prefKeyAppName, newDefaultAppName).apply();
+        }
+        sharedPreferences.edit().putBoolean(upgradedToVersion59Flag, true).apply();
     }
 
     @Override
