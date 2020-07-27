@@ -28,22 +28,23 @@ You can also choose this cloudlet to be used as the **Edge** server for Face Det
 
 ### SDK Calls
 #### Register Client
-This will call the [RegisterClientAPI](http://swagger.mobiledgex.net/client/#operation/RegisterClient "RegisterClient") with information that identifies this app's backend software. The session cookie is shown to verify that the call was successful.
+This will call the [RegisterClientAPI](https://
+.mobiledgex.net/#section/Edge-SDK-Android/RegisterClient "RegisterClient") with information that identifies this app's backend software. The session cookie is shown to verify that the call was successful.
 
 #### Get App Instances
-This will call the [GetAppInstListAPI](http://swagger.mobiledgex.net/client/#operation/GetAppInstList "GetAppInstList") to find everywhere our backend is running, and will draw a cloudlet icon for every location found.
+This will call the GetAppInstListAPI to find everywhere our backend is running, and will draw a cloudlet icon for every location found.
 
 #### Verify Location
-This will call the [VerifyLocationAPI](http://swagger.mobiledgex.net/client/#operation/VerifyLocation "VerifyLocation") with our current GPS coordinates to verify that the mobile device is where it claims to be. If successful, the mobile phone icon is green showing the accuracy information briefly. If location verification fails, the icon will be red, displaying the result code temporarily. Tapping the icon will show the result code of the call.
+This will call the [VerifyLocationAPI](https://swagger.mobiledgex.net/#section/Edge-SDK-Android/VerifyLocation "VerifyLocation") with our current GPS coordinates to verify that the mobile device is where it claims to be. If successful, the mobile phone icon is green showing the accuracy information briefly. If location verification fails, the icon will be red, displaying the result code temporarily. Tapping the icon will show the result code of the call.
 
 #### Find Closest Cloudlet
-This will call the [FindCloudletAPI](http://swagger.mobiledgex.net/client/#operation/FindCloudlet "FindCloudlet") with our current GPS coordinates to determine which cloudlet running our backend is the closest. That cloudlet icon will turn green, and a line will be drawn between it and our location.
+This will call the [FindCloudletAPI](https://swagger.mobiledgex.net/#section/Edge-SDK-Android/FindCloudlet "FindCloudlet") with our current GPS coordinates to determine which cloudlet running our backend is the closest. That cloudlet icon will turn green, and a line will be drawn between it and our location.
 
 #### Perform All
 Select the red button in the lower right to perform all of these API calls in succession.
 
 ### GPS Spoofing Demo
-The app uses the MobiledgeX [VerifyLocationAPI](http://swagger.mobiledgex.net/client/#operation/VerifyLocation "VerifyLocation") to verify that the GPS coordinates reported are where the device actually is. 
+The app uses the MobiledgeX [VerifyLocationAPI](https://swagger.mobiledgex.net/#section/Edge-SDK-Android/VerifyLocation "VerifyLocation") to verify that the GPS coordinates reported are where the device actually is. 
 
 When you start the app, you will see your location on the map represented by a mobile phone icon. 
 
