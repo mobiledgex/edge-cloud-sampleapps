@@ -1,7 +1,7 @@
 <preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
 
     <header
-        android:fragment="com.mobiledgex.workshopskeleton.SettingsActivity$FaceDetectionSettingsFragment"
+        android:fragment="com.mobiledgex.computervision.SettingsActivity$FaceDetectionSettingsFragment"
         android:icon="@android:drawable/ic_menu_camera"
         android:title="@string/preference_fd_settings"/>
 

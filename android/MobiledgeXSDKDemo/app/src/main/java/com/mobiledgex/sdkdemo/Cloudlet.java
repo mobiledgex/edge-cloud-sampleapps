@@ -121,7 +121,7 @@ public class Cloudlet implements Serializable {
      * @param fqdn
      */
     public void setUri(String fqdnPrefix, String fqdn, int port) {
-        Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+fqdnPrefix+","+fqdn+","+port+")");
+        Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+fqdnPrefix+fqdn+":"+port+")");
         openPort = port;
         mFqdnPrefix = fqdnPrefix;
         hostName = fqdnPrefix+fqdn;
