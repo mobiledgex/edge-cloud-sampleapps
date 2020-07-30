@@ -184,7 +184,9 @@ public class ImageSender {
         try {
             mAccount = GoogleSignIn.getLastSignedInAccount(builder.activity);
         } catch (Exception e) {
+            // This may occur when the user quits during a restart attempt and the activity has gone away.
             Log.e(TAG, "NPE occurred in GoogleSignIn code.", e);
+            return;
         }
         if(mAccount != null) {
             Log.i(TAG, "mAccount=" + mAccount.getDisplayName()+" "+mAccount.getId());
@@ -202,7 +204,13 @@ public class ImageSender {
         handlerThreadPersistentTcp.start();
 
         // Instantiate the RequestQueue.
-        mRequestQueue = Volley.newRequestQueue(builder.activity);
+        try {
+            mRequestQueue = Volley.newRequestQueue(builder.activity);
+        } catch (NullPointerException e) {
+            // This may occur when the user quits during a restart attempt and the activity has gone away.
+            Log.e(TAG, "NPE occurred in Volley.newRequestQueue code.", e);
+            return;
+        }
 
         Log.i(TAG, "preferencesConnectionMode="+ preferencesConnectionMode);
         if(mCloudLetType == ImageServerInterface.CloudletType.PUBLIC) {
@@ -350,6 +358,11 @@ public class ImageSender {
             mDjangoUrl = "/object/detect/";
         } else {
             Log.e(TAG, "Invalid CameraMode: "+mode);
+        }
+        try {
+            throw new Exception("Null cameramode");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         Log.i(TAG, "setCameraMode("+mCameraMode+") mOpcode="+mOpcode+" mDjangoUrl="+ mDjangoUrl +" "+mCloudLetType+" host="+mHost);
     }

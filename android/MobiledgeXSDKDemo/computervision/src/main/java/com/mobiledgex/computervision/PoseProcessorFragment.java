@@ -19,6 +19,7 @@ package com.mobiledgex.computervision;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
@@ -36,9 +37,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.mobiledgex.matchingengine.MatchingEngine;
+
 import org.json.JSONArray;
 
 import java.text.DecimalFormat;
+import java.util.concurrent.ExecutionException;
 
 public class PoseProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
@@ -60,7 +64,11 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     }
 
     public String getStatsText() {
-        return mImageSenderEdge.getStatsText();
+        if (mImageSenderEdge != null) {
+            return mImageSenderEdge.getStatsText();
+        } else {
+            return "Edge never initialized.";
+        }
     }
 
     /**
@@ -82,7 +90,11 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
 
         Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
-        mImageSenderEdge.sendImage(bitmap);
+        if (mImageSenderEdge != null) {
+            mImageSenderEdge.sendImage(bitmap);
+        } else {
+            Log.d(TAG, "Waiting for mImageSenderEdge to be initialized.");
+        }
     }
 
     /**
@@ -198,6 +210,8 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated PoseProcessorFragment savedInstanceState="+savedInstanceState);
 
+        mMatchingEngine = new MatchingEngine(getContext());
+
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
@@ -212,6 +226,8 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         mStdNet = view.findViewById(R.id.network_std_dev);
         mStatusText = view.findViewById(R.id.statusTextView);
         mPoseRenderer = view.findViewById(R.id.poseSkeleton);
+
+        setupLogViewer(view);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -230,23 +246,12 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         mPoseRenderer.setStrokeWidth(strokeWidth);
         mPoseRenderer.setJointRadius(jointRadius);
 
-        mImageSenderEdge = new ImageSender.Builder()
-                .setActivity(getActivity())
-                .setImageServerInterface(this)
-                .setCloudLetType(CloudletType.EDGE)
-                .setHost(mHostDetectionEdge)
-                .setPort(FACE_DETECTION_HOST_PORT)
-                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
-                .setCameraMode(ImageSender.CameraMode.POSE_DETECTION)
-                .build();
-
-        //TODO: Revisit when we have GPU support on multiple servers.
-        //The only GPU-enabled server we have doesn't support ping.
-        mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.socket);
         mCameraMode = ImageSender.CameraMode.POSE_DETECTION;
         mCameraToolbar.setTitle(R.string.title_activity_pose_detection);
 
         mVideoFilename = VIDEO_FILE_NAME;
+
+        findCloudletGpu();
     }
 
     @Override
@@ -261,8 +266,6 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         menu.findItem(R.id.action_camera_training_guest).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
-        menu.findItem(R.id.action_find_cloudlet).setVisible(false);
-        menu.findItem(R.id.action_get_app_inst_list).setVisible(false);
 
         //No Cloud available for benchmarking
         menu.findItem(R.id.action_benchmark_cloud).setVisible(false);
@@ -299,5 +302,4 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
             mStdNet.setVisibility(View.GONE);
         }
     }
-
 }

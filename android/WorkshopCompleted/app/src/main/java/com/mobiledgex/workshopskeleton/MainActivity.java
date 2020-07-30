@@ -65,6 +65,7 @@ import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -322,6 +323,14 @@ public class MainActivity extends AppCompatActivity
             return false;
         }
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
+        try {
+            String uuid = matchingEngine.getUniqueId(this);
+            Log.i(TAG, "uuid="+uuid);
+        } catch (NoSuchAlgorithmException e) {
+            Log.e(TAG, "Can't get uuid:", e);
+            e.printStackTrace();
+        }
+
         return true;
     }
 

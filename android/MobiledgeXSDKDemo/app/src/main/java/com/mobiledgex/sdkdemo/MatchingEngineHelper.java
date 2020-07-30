@@ -177,13 +177,8 @@ public class MatchingEngineHelper {
             try {
                 String host = mHostname; // Override host.
                 int port = mMatchingEngine.getPort(); // Keep same port.
-                String orgName = "MobiledgeX";
                 //Note that mCarrierName came from preferences in MainActivity.
 
-                // SDK will populate the appVersion automatically if we pass in "".
-                // However, the backend we want to connect to is versioned as "2.0",
-                // so we are overriding with that value here.
-                String appVersion = "2.0";
                 boolean reportCookie = false;
 
                 if(reqType == RequestType.REQ_REGISTER_CLIENT) {
@@ -295,7 +290,6 @@ public class MatchingEngineHelper {
         AppClient.AppInstListRequest appInstListRequest
                 = mMatchingEngine.createDefaultAppInstListRequest(mContext, location)
                 .setCarrierName(mCarrierName).setLimit(mAppInstancesLimit).build();
-        // TODO: Make setLimit value a preference.
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     host, port, 10000);
