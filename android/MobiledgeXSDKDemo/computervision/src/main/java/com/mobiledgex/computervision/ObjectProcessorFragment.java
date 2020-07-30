@@ -36,6 +36,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.mobiledgex.matchingengine.MatchingEngine;
+
 import org.json.JSONArray;
 
 import java.text.DecimalFormat;
@@ -58,7 +60,11 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     }
 
     public String getStatsText() {
-        return mImageSenderEdge.getStatsText();
+        if (mImageSenderEdge != null) {
+            return mImageSenderEdge.getStatsText();
+        } else {
+            return "Edge never initialized.";
+        }
     }
 
     /**
@@ -80,7 +86,11 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
 
         Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
 
-        mImageSenderEdge.sendImage(bitmap);
+        if (mImageSenderEdge != null) {
+            mImageSenderEdge.sendImage(bitmap);
+        } else {
+            Log.d(TAG, "Waiting for mImageSenderEdge to be initialized.");
+        }
     }
 
     /**
@@ -196,6 +206,8 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated ObjectProcessorFragment savedInstanceState="+savedInstanceState);
 
+        mMatchingEngine = new MatchingEngine(getContext());
+
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
@@ -211,6 +223,8 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         mStatusText = view.findViewById(R.id.statusTextView);
         mObjectClassRenderer = view.findViewById(R.id.object_class_renderer);
 
+        setupLogViewer(view);
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         prefs.registerOnSharedPreferenceChangeListener(this);
         onSharedPreferenceChanged(prefs, "ALL");
@@ -223,23 +237,12 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         Intent intent = getActivity().getIntent();
         getCommonIntentExtras(intent);
 
-        mImageSenderEdge = new ImageSender.Builder()
-                .setActivity(getActivity())
-                .setImageServerInterface(this)
-                .setCloudLetType(CloudletType.EDGE)
-                .setHost(mHostDetectionEdge)
-                .setPort(FACE_DETECTION_HOST_PORT)
-                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
-                .setCameraMode(ImageSender.CameraMode.OBJECT_DETECTION)
-                .build();
-
-        //TODO: Revisit when we have GPU support on multiple servers.
-        //The only GPU-enabled server we have doesn't support ping.
-        mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.socket);
         mCameraMode = ImageSender.CameraMode.OBJECT_DETECTION;
         mCameraToolbar.setTitle(R.string.title_activity_object_detection);
 
         mVideoFilename = VIDEO_FILE_NAME;
+
+        findCloudletGpu();
     }
 
     @Override
@@ -254,8 +257,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         menu.findItem(R.id.action_camera_training_guest).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
         menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
-        menu.findItem(R.id.action_find_cloudlet).setVisible(false);
-        menu.findItem(R.id.action_get_app_inst_list).setVisible(false);
 
         //No Cloud available for benchmarking
         menu.findItem(R.id.action_benchmark_cloud).setVisible(false);

@@ -76,14 +76,14 @@ public class FaceProcessorActivity extends AppCompatActivity {
         MatchingEngine me = new MatchingEngine(this);
         AppConnectionManager appConnect = me.getAppConnectionManager();
 
-        String appName = "MobiledgeX SDK Demo";
+        String appName = "ComputerVision";
         String appVersion = "2.0";
         String orgName = "MobiledgeX";
         Location location = new Location("MEX");
         location.setLatitude(52.52);
         location.setLongitude(13.4040);    //Berlin
 
-        Future<AppClient.FindCloudletReply> future = me.registerAndFindCloudlet(this, orgName, appName, appVersion,  location, "", 0, "", "", null);
+        Future<AppClient.FindCloudletReply> future = me.registerAndFindCloudlet(this, orgName, appName, appVersion,  location, "", 0, "", "", null, MatchingEngine.FindCloudletMode.PROXIMITY);
         AppClient.FindCloudletReply findCloudletReply;
         try {
             findCloudletReply = future.get();

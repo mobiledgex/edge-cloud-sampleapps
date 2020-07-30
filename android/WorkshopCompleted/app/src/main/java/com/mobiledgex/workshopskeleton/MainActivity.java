@@ -65,6 +65,7 @@ import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -284,7 +285,7 @@ public class MainActivity extends AppCompatActivity
             io.grpc.StatusRuntimeException, DmeDnsException, PackageManager.NameNotFoundException {
         // NOTICE: In a real app, these values would be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
-        appName = "MobiledgeX SDK Demo";
+        appName = "ComputerVision";
         orgName = "MobiledgeX";
         carrierName = "TDG";
         appVersion = "2.0";
@@ -322,6 +323,14 @@ public class MainActivity extends AppCompatActivity
             return false;
         }
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
+        try {
+            String uuid = matchingEngine.getUniqueId(this);
+            Log.i(TAG, "uuid="+uuid);
+        } catch (NoSuchAlgorithmException e) {
+            Log.e(TAG, "Can't get uuid:", e);
+            e.printStackTrace();
+        }
+
         return true;
     }
 

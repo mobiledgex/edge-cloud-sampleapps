@@ -85,7 +85,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public static final String EXTRA_FACE_STROKE_WIDTH = "EXTRA_FACE_STROKE_WIDTH";
     private static final String VIDEO_FILE_NAME = "Jason.mp4";
 
-    private MatchingEngine mMatchingEngine;
+    protected MatchingEngine mMatchingEngine;
     //The following defaults may be overridden by passing EXTRA values to the Intent.
     public String mAppName = "MobiledgeX SDK Demo";
     public String mAppVersion = "2.0";
@@ -168,9 +168,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private FloatingActionButton mLogExpansionButton;
     private MatchingEngine.FindCloudletMode mFindCloudletMode;
     private int mAppInstancesLimit;
-    private boolean registerClientComplete;
+    protected boolean registerClientComplete;
     private boolean isLogExpanded = false;
     private int mLogViewHeight;
+    protected boolean mAttached;
 
     /**
      * Return statistics information to be displayed in dialog after activity -- a combination
@@ -246,10 +247,19 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     public void restartImageSenderEdge() {
-        String message = "Restarting mImageSenderEdge on host: " + mHostDetectionEdge;
+        if (!mAttached) {
+            Log.w(TAG, "Fragment is detached. Aborting restartImageSenderEdge()");
+            return;
+        }
+        String message;
+        if (mImageSenderEdge == null) {
+            message = "Starting mImageSenderEdge on host: " + mHostDetectionEdge;
+        } else {
+            message = "Restarting mImageSenderEdge on host: " + mHostDetectionEdge;
+            mImageSenderEdge.closeConnection();
+        }
         Log.i(TAG, message);
         showMessage(message);
-        mImageSenderEdge.closeConnection();
         mImageSenderEdge = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
@@ -257,8 +267,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 .setHost(mHostDetectionEdge)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .setCameraMode(mCameraMode)
                 .build();
-        mImageSenderEdge.setCameraMode(mCameraMode);
     }
 
     /**
@@ -1121,12 +1131,14 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public void onAttach(Context context) {
         Log.i(TAG, "onAttach("+context+")");
         super.onAttach(context);
+        mAttached = true;
     }
 
     @Override
     public void onDetach() {
         Log.i(TAG, "onDetach()");
         super.onDetach();
+        mAttached = false;
         mCamera2BasicFragment = null;
         if (mImageSenderEdge != null) {
             mImageSenderEdge.closeConnection();
@@ -1242,14 +1254,35 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         return true;
     }
 
+    protected void findCloudletGpu() {
+        mAppName = getResources().getString(R.string.app_name)+"-GPU";
+        mAppVersion = getResources().getString(R.string.app_version);
+        mOrgName = getResources().getString(R.string.org_name);
+
+        Log.i(TAG, "mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
+
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    if (registerClientComplete || registerClient()) {
+                        registerClientComplete = true;
+                        findCloudlet();
+                    }
+                } catch (ExecutionException | InterruptedException
+                        | PackageManager.NameNotFoundException | IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
     private boolean getAppInstList() throws InterruptedException, ExecutionException {
         Location location = new Location("MEX");
         location.setLatitude(mLatitude);
         location.setLongitude(mLongitude);
         Log.i(TAG, "getAppInstList location="+location);
         AppClient.AppInstListRequest appInstListRequest
-                = mMatchingEngine.createDefaultAppInstListRequest(getContext(), location).setCarrierName(mCarrierName).setLimit(6).build();
-        // TODO: Make setLimit value a preference.
+                = mMatchingEngine.createDefaultAppInstListRequest(getContext(), location).setCarrierName(mCarrierName).setLimit(mAppInstancesLimit).build();
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
                     mDmeHostname, mDmePort, 10000);
@@ -1282,6 +1315,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 mEdgeHostList.add(hostname);
                 showMessage("Found " + hostname);
             }
+
             Log.i(TAG, "getAppInstList cloudletList.getCloudletsCount()=" + cloudletList.getCloudletsCount());
             Log.i(TAG, "getAppInstList mEdgeHostList=" + mEdgeHostList);
 
