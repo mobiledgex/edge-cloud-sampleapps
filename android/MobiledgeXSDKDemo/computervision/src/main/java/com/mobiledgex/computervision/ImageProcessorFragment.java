@@ -1174,7 +1174,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (registerClientComplete) {
             return true;
         }
-        Log.i(TAG, "Watch for timeout. TODO: Remove");
 
         AppClient.RegisterClientRequest registerClientRequest;
         Future<AppClient.RegisterClientReply> registerReplyFuture;
@@ -1193,8 +1192,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             return false;
         }
         Log.i(TAG, "SessionCookie:" + reply.getSessionCookie());
-        Log.i(TAG, "Did it timeout? TODO: Remove");
-        showMessage("registerClient successful.");
+        showMessage("registerClient successful for "+mAppName);
         registerClientComplete = true;
         return true;
     }
