@@ -242,7 +242,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
 
         mVideoFilename = VIDEO_FILE_NAME;
 
-        findCloudletGpu();
+        findCloudletGpuInBackground();
     }
 
     @Override
