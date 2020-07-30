@@ -11,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import android.util.Base64;
 import android.util.Log;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -20,8 +21,11 @@ import com.android.volley.toolbox.StringRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
+
 import static org.junit.Assert.assertTrue;
 
 import com.android.volley.toolbox.Volley;
@@ -38,6 +42,7 @@ import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ComputerVisionRestUnitTest {
 
     public static final long GRPC_TIMEOUT_MS = 15000;
@@ -187,6 +192,12 @@ public class ComputerVisionRestUnitTest {
                 return params;
             }
         };
+
+        // The training operation can take quite some time.
+        request.setRetryPolicy(new DefaultRetryPolicy(20000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
         queue.add(request);
 
         synchronized (lock) {
@@ -218,7 +229,7 @@ public class ComputerVisionRestUnitTest {
      * Used to send a face image to the server and get back a set of coordinates for any detected faces.
      */
     @Test()
-    public void testDetectorDetectEndpoint() {
+    public void test001DetectorDetectEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = registerAndFindCloudlet(ctx);
@@ -229,8 +240,8 @@ public class ComputerVisionRestUnitTest {
             url = "http://" + host + ":" + port;
         }
 
-        String detectorDetectEnpoint = "/detector/detect/";
-        url += detectorDetectEnpoint;
+        String detectorDetectEndpoint = "/detector/detect/";
+        url += detectorDetectEndpoint;
         Log.i(TAG, "url is " + url);
 
         final String requestBody = getBase64EncodedResource(ctx, R.drawable.faces);
@@ -246,7 +257,7 @@ public class ComputerVisionRestUnitTest {
      * Used to send a face image to the server and get back a set of coordinates for the recognized face.
      */
     @Test
-    public void testRecognizerPredictEndpoint() {
+    public void test001RecognizerPredictEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = registerAndFindCloudlet(ctx);
@@ -257,11 +268,11 @@ public class ComputerVisionRestUnitTest {
             url = "http://" + host + ":" + port;
         }
 
-        String detectorDetectEnpoint = "/recognizer/predict/";
-        url += detectorDetectEnpoint;
+        String detectorDetectEndpoint = "/recognizer/predict/";
+        url += detectorDetectEndpoint;
         Log.i(TAG, "url is " + url);
 
-        final String requestBody = getBase64EncodedResource(ctx, R.drawable.wonho);
+        final String requestBody = getBase64EncodedResource(ctx, R.drawable.goober);
 
         Map<String, String> params = new HashMap<>();
         params.put("image", requestBody);
@@ -270,51 +281,73 @@ public class ComputerVisionRestUnitTest {
     }
 
     /*
-     * Face Recognition: recognizer/add/ endpoint
+     * Face Recognition: trainer/add/ endpoint
      * Used to send a face image to the server and add it to the set of training data.
      * The image is only added if a face is successfully detected.
      */
     @Test
-    public void testRecognizerAddEndpoint() {
+    public void test002TrainerAddEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        String url = registerAndFindCloudlet(ctx);
+        String url = "http://opencv.facetraining.mobiledgex.net:8009";
 
-        // If error with registerAndFindCloudlet, use backup
-        if (url == null || useBackupUrl) {
-            Log.e(TAG, "Unable to get url. Using backup host and port");
-            url = "http://" + host + ":" + port;
-        }
-
-        String detectorDetectEnpoint = "/recognizer/add/";
-        url += detectorDetectEnpoint;
+        String detectorDetectEndpoint = "/trainer/add/";
+        url += detectorDetectEndpoint;
         Log.i(TAG, "url is " + url);
 
-        final String requestBody = getBase64EncodedResource(ctx, R.drawable.wonho);
+        final String requestBody = getBase64EncodedResource(ctx, R.drawable.goober);
 
         Map<String, String> params = new HashMap<>();
-        params.put("subject", "Wonho Park");
-        params.put("owner", "Guest");
+        params.put("subject", "Goober");
+        params.put("owner_name", "Legacy Owner");
+        params.put("owner_id", "000000000000000000000");
         params.put("image", requestBody);
 
         sendPostRequest(ctx, url, params);
     }
 
     /*
-     * Face Recognition: recognizer/add/ endpoint
+     * Face Recognition: trainer/add/ endpoint
      * Tells the server to read all training data images and rebuild database.
      */
     @Test
-    public void testRecognizerTrainEndpoint() {
+    public void test003TrainerTrainEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        String url = "http://opencv.facetraining.mobiledgex.net/8009";
+        String url = "http://opencv.facetraining.mobiledgex.net:8009";
 
-        String detectorDetectEnpoint = "/recognizer/train/";
-        url += detectorDetectEnpoint;
+        String detectorDetectEndpoint = "/trainer/train/";
+        url += detectorDetectEndpoint;
         Log.i(TAG, "url is " + url);
 
-        sendPostRequest(ctx, url, null);
+        Map<String, String> params = new HashMap<>();
+        params.put("subject", "Goober");
+        params.put("owner_name", "Legacy Owner");
+        params.put("owner_id", "000000000000000000000");
+
+        sendPostRequest(ctx, url, params);
+    }
+
+    /*
+     * Face Recognition: trainer/remove/ endpoint
+     * Tells the server to remove training data for the given subject
+     */
+    @Test
+    public void test004TrainerRemoveEndpoint() {
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        String url = "http://opencv.facetraining.mobiledgex.net:8009";
+
+        String detectorDetectEndpoint = "/trainer/remove/";
+        url += detectorDetectEndpoint;
+        Log.i(TAG, "url is " + url);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("subject", "Goober");
+        params.put("owner_name", "Legacy Owner");
+        params.put("owner_id", "000000000000000000000");
+
+        sendPostRequest(ctx, url, params);
     }
 
     /*
@@ -322,13 +355,35 @@ public class ComputerVisionRestUnitTest {
      * Used to send a human body image to the server and get back a set of coordinates for any detected poses.
      */
     @Test
-    public void testOpenposeDetectEndpoint() {
+    public void test001OpenposeDetectEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         String url = "http://posedetection.defaultedge.mobiledgex.net:8008";
 
-        String detectorDetectEnpoint = "/openpose/detect/";
-        url += detectorDetectEnpoint;
+        String detectorDetectEndpoint = "/openpose/detect/";
+        url += detectorDetectEndpoint;
+        Log.i(TAG, "url is " + url);
+
+        final String requestBody = getBase64EncodedResource(ctx, R.drawable.pose);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("image", requestBody);
+
+        sendPostRequest(ctx, url, params);
+    }
+
+    /*
+     * Pose Detection: openpose/detect/ endpoint
+     * Used to send a human body image to the server and get back a set of coordinates for any detected poses.
+     */
+    @Test
+    public void test001ObjectDetectEndpoint() {
+        Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        String url = "http://posedetection.defaultedge.mobiledgex.net:8008";
+
+        String detectorDetectEndpoint = "/object/detect/";
+        url += detectorDetectEndpoint;
         Log.i(TAG, "url is " + url);
 
         final String requestBody = getBase64EncodedResource(ctx, R.drawable.pose);

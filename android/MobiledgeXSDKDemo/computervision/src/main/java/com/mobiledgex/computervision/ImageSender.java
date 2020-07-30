@@ -278,7 +278,7 @@ public class ImageSender {
             Log.i(TAG, mCloudLetType+" can't start WebSocket client with null host");
             return;
         }
-        String url = "ws://"+mHost+":8008/ws"+mDjangoUrl;
+        String url = "ws://"+mHost+":"+mPort+"/ws"+mDjangoUrl;
         Log.i(TAG, mCloudLetType+" attempting to start WebSocket client. url: " + url);
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
         ResultWebSocketListener listener = new ResultWebSocketListener();

@@ -14,7 +14,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.3'
+        classpath 'com.android.tools.build:gradle:4.0.1'
         classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.6"
 
         // JFrog Artifactory:
@@ -38,7 +38,7 @@ allprojects {
                 username artifactory_user
                 password artifactory_password
             }
-            url = "https://artifactory.mobiledgex.net/maven-releases/"
+            url "https://artifactory.mobiledgex.net/artifactory/maven-development/"
         }
     }
 }

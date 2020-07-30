@@ -143,6 +143,7 @@ public class MainActivity extends AppCompatActivity
     public static final String DEFAULT_CARRIER_NAME = "";
     public static final String DEFAULT_FIND_CLOUDLET_MODE = "PROXIMITY";
     public static final int DEFAULT_APP_INSTANCES_LIMIT = 4;
+    public static final int DEFAULT_SPEED_TEST_PORT = 8008;
     private String mDefaultCarrierName;
     private String mDefaultDmeHostname;
     protected static String mHostname;
@@ -1005,6 +1006,11 @@ public class MainActivity extends AppCompatActivity
                                     aPort.getInternalPort(),
                                     aPort.getPublicPort(),
                                     aPort.getPathPrefix()));
+                        // Only the default port is currently supported. Set it here so the
+                        // following "first port" logic won't be used.
+                        publicPort = DEFAULT_SPEED_TEST_PORT;
+                        Log.i(TAG, "Using DEFAULT_SPEED_TEST_PORT for publicPort="+publicPort);
+
                         // Only choose the first port
                         if (publicPort == 0) {
                             publicPort = aPort.getPublicPort();
@@ -1227,7 +1233,7 @@ public class MainActivity extends AppCompatActivity
         }
         String prefKeyAppName = getResources().getString(R.string.pref_app_name);
         String oldDefaultAppName = "MobiledgeX SDK Demo";
-        String newDefaultAppName = getResources().getString(R.string.app_name);
+        String newDefaultAppName = getResources().getString(R.string.dme_app_name);
         String appName = sharedPreferences.getString(prefKeyAppName, newDefaultAppName);
         if (appName.equals(oldDefaultAppName)) {
             Log.i(TAG, "upgradeToVersion59 changing "+prefKeyAppName+" from '"+oldDefaultAppName+"' to '"+newDefaultAppName+"'");
@@ -1380,11 +1386,11 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyDefaultAppInfo)) {
             boolean useDefault = sharedPreferences.getBoolean(prefKeyDefaultAppInfo, true);
             if (useDefault) {
-                mAppName = getResources().getString(R.string.app_name);
+                mAppName = getResources().getString(R.string.dme_app_name);
                 mAppVersion = getResources().getString(R.string.app_version);
                 mOrgName = getResources().getString(R.string.org_name);
             } else {
-                mAppName = sharedPreferences.getString(prefKeyAppName, getResources().getString(R.string.app_name));
+                mAppName = sharedPreferences.getString(prefKeyAppName, getResources().getString(R.string.dme_app_name));
                 mAppVersion = sharedPreferences.getString(prefKeyAppVersion, getResources().getString(R.string.app_version));
                 mOrgName = sharedPreferences.getString(prefKeyOrgName, getResources().getString(R.string.org_name));
                 Log.i(TAG, "onSharedPreferenceChanged("+key+")=false. Custom values: appName="+mAppName+" appVersion="+mAppVersion+" orgName="+mOrgName);
@@ -1393,7 +1399,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (key.equals(prefKeyAppName)) {
-            mAppName = sharedPreferences.getString(key, getResources().getString(R.string.app_name));
+            mAppName = sharedPreferences.getString(key, getResources().getString(R.string.dme_app_name));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAppName);
             appInfoChanged = true;
         }
