@@ -81,7 +81,7 @@ public class ExampleScene : MonoBehaviour
         {
             case 0:
                 infoText.transform.parent.gameObject.SetActive(true);
-                return infoText.text = "<b>RegisterClient()</b> \n Verfies the app has been deployed to MobiledgeX Cloudlets using (Organization Name, AppName &AppVersion).";
+                return infoText.text = "<b>RegisterClient()</b> \n Verifies the app has been deployed to MobiledgeX Cloudlets using Organization Name, App Name ,and App Version.";
 
             case 2:
                 infoText.transform.parent.gameObject.SetActive(true);
