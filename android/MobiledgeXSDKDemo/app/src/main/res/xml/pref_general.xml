@@ -48,7 +48,7 @@
 
     <EditTextPreference
         android:dependency="@string/pref_default_app_definition"
-        android:defaultValue="@string/app_name"
+        android:defaultValue="@string/dme_app_name"
         android:key="@string/pref_app_name"
         android:selectAllOnFocus="true"
         android:singleLine="true"

@@ -53,7 +53,7 @@ public class FaceProcessorActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         if (null == savedInstanceState) {
-            exampleDevloperWorkflowBackground();
+            exampleDeveloperWorkflowBackground();
         }
     }
 

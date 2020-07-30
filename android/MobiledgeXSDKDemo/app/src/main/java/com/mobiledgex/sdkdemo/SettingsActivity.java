@@ -376,7 +376,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             if (key.equals(prefKeyDefaultAppInfo)) {
                 String summary = getResources().getString(R.string.pref_summary_default_app_definition);
-                String appName = getResources().getString(R.string.app_name);
+                String appName = getResources().getString(R.string.dme_app_name);
                 String appVersion = getResources().getString(R.string.app_version);
                 String orgName = getResources().getString(R.string.org_name);
                 summary = summary + "\n    Name=" + appName + "\n    Version=" + appVersion + "\n    Org=" + orgName;

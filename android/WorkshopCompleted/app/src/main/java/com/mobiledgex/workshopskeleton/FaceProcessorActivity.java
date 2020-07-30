@@ -75,6 +75,8 @@ public class FaceProcessorActivity extends AppCompatActivity {
     public Socket exampleDeveloperWorkflow() {
         MatchingEngine me = new MatchingEngine(this);
         AppConnectionManager appConnect = me.getAppConnectionManager();
+        me.setMatchingEngineLocationAllowed(true);
+        me.setAllowSwitchIfNoSubscriberInfo(true);
 
         String appName = "ComputerVision";
         String appVersion = "2.0";
@@ -88,6 +90,7 @@ public class FaceProcessorActivity extends AppCompatActivity {
         try {
             findCloudletReply = future.get();
         } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
             Log.e(TAG, "RegisterAndFindCloudlet error " + e.getMessage());
             return null;
         }
