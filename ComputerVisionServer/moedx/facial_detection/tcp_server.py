@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
-        logger.info("handle() for %s" %threading.current_thread())
+        logger.debug("handle() for %s" %threading.current_thread())
         while True:
             logger.debug("while True for %s" %threading.current_thread())
             opcode, data = self.recv_one_message(self.request)
@@ -43,7 +43,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 logger.info("Opcode=None. Connection closed for %s" %threading.current_thread())
                 break;
 
-            logger.info("Opcode: %s len(data)=%d %s" %(opcode, len(data), threading.current_thread()))
+            logger.debug("Opcode: %s len(data)=%d %s" %(opcode, len(data), threading.current_thread()))
 
             if opcode == 1: #'face_det':
                 now = time.time()
