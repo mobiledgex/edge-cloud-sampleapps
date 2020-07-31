@@ -276,7 +276,7 @@ def remove(request):
         logger.error(e)
         return HttpResponseBadRequest(e)
 
-    return HttpResponse("OK")
+    return HttpResponse('{"success": "true"}')
 
 @csrf_exempt
 def predict(request):

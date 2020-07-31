@@ -1,4 +1,5 @@
 include Makedefs
+ORGNAME = mobiledgex
 
 # We build differently depending on whether this machine has an Nvidia GPU available.
 GPU := $(shell command -v nvidia-smi 2> /dev/null)
@@ -17,8 +18,8 @@ submodule-update:
 	git submodule update
 
 docker-build: submodule-update
-	docker build -t mobiledgex/${IMAGENAME}:${TAG} -f $(DOCKERFILE) .
+	docker build -t ${ORGNAME}/${IMAGENAME}:${TAG} -f $(DOCKERFILE) .
 
 docker-push:
-	docker tag mobiledgex/${IMAGENAME}:${TAG} docker.mobiledgex.net/mobiledgex/images/${IMAGENAME}:${TAG}
-	docker push docker.mobiledgex.net/mobiledgex/images/${IMAGENAME}:${TAG}
+	docker tag ${ORGNAME}/${IMAGENAME}:${TAG} docker.mobiledgex.net/${ORGNAME}/images/${IMAGENAME}:${TAG}
+	docker push docker.mobiledgex.net/${ORGNAME}/images/${IMAGENAME}:${TAG}
