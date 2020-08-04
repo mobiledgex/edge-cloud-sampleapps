@@ -19,7 +19,6 @@ package com.mobiledgex.computervision;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
@@ -42,7 +41,6 @@ import com.mobiledgex.matchingengine.MatchingEngine;
 import org.json.JSONArray;
 
 import java.text.DecimalFormat;
-import java.util.concurrent.ExecutionException;
 
 public class PoseProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
@@ -251,7 +249,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
 
         mVideoFilename = VIDEO_FILE_NAME;
 
-        findCloudletGpu();
+        findCloudletGpuInBackground();
     }
 
     @Override
