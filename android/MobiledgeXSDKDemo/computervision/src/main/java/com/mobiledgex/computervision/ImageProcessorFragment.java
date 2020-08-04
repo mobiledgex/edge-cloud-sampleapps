@@ -254,6 +254,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String message;
         if (mImageSenderEdge == null) {
             message = "Starting mImageSenderEdge on host: " + mHostDetectionEdge;
+            initialLogsComplete();
         } else {
             message = "Restarting mImageSenderEdge on host: " + mHostDetectionEdge;
             mImageSenderEdge.closeConnection();
@@ -935,6 +936,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mImageSenderEdge.setCameraMode(mCameraMode);
         showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
         showMessage("Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge);
+        initialLogsComplete();
 
         mVideoFilename = VIDEO_FILE_NAME;
 
@@ -956,6 +958,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         });
         mEventsRecyclerView.setAdapter(mEventRecyclerViewAdapter);
+        mEventsRecyclerView.getLayoutParams().height = 0;
+        mEventsRecyclerView.requestLayout();
+
         mLogExpansionButton = view.findViewById(R.id.fab);
         mLogExpansionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -999,6 +1004,15 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 return true;
             }
         });
+    }
+
+    /**
+     * Calling this method indicates the initial logs that the activity always shows are complete.
+     * Start a timer to hide the logs. Note that the logviewer will automatically be expanded if
+     * additional logs are displayed.
+     */
+    protected void initialLogsComplete() {
+        Log.i(TAG, "initialLogsComplete()");
         Timer myTimer = new Timer();
         myTimer.schedule(new TimerTask() {
             @Override
@@ -1008,7 +1022,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                     isLogExpanded = false;
                 }
             }
-        }, 2000);
+        }, 3000);
     }
 
     protected void logViewAnimate(final int start, final int end) {
@@ -1157,14 +1171,16 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     public boolean registerClient() throws ExecutionException, InterruptedException,
             io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
+        if (registerClientComplete) {
+            return true;
+        }
 
         AppClient.RegisterClientRequest registerClientRequest;
         Future<AppClient.RegisterClientReply> registerReplyFuture;
-        AppClient.RegisterClientReply reply = null;
         registerClientRequest = mMatchingEngine.createDefaultRegisterClientRequest(getActivity(), mOrgName)
                 .setAppName(mAppName).setAppVers(mAppVersion).setCarrierName(mCarrierName).build();
         registerReplyFuture = mMatchingEngine.registerClientFuture(registerClientRequest, mDmeHostname, mDmePort,10000);
-        reply = registerReplyFuture.get();
+        AppClient.RegisterClientReply reply = registerReplyFuture.get();
 
         Log.i(TAG, "registerClientRequest="+registerClientRequest);
         Log.i(TAG, "registerStatus.getStatus()="+reply.getStatus());
@@ -1176,7 +1192,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             return false;
         }
         Log.i(TAG, "SessionCookie:" + reply.getSessionCookie());
-        showMessage("registerClient successful.");
+        showMessage("registerClient successful for "+mAppName);
+        registerClientComplete = true;
         return true;
     }
 
@@ -1184,13 +1201,45 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         new Thread(new Runnable() {
             @Override public void run() {
                 try {
-                    if (registerClientComplete || registerClient()) {
-                        registerClientComplete = true;
-                        findCloudlet();
-                    }
+                    registerClient();
+                    findCloudlet();
                 } catch (ExecutionException | InterruptedException
                         | PackageManager.NameNotFoundException | IllegalArgumentException e) {
+                    Log.e(TAG, "Exception in findCloudletInBackground() for "+
+                            mAppName+", "+mAppVersion+", "+mOrgName);
                     e.printStackTrace();
+                    showError(e.getLocalizedMessage());
+                }
+            }
+        }).start();
+    }
+
+    protected void findCloudletGpuInBackground() {
+        String defaultAppName = getResources().getString(R.string.dme_app_name);
+        if (mAppName.isEmpty() || mAppName.equals(defaultAppName)) {
+            mAppName = defaultAppName + "-GPU";
+        }
+        if (mAppVersion.isEmpty()) {
+            mAppVersion = getResources().getString(R.string.app_version);
+        }
+        if (mOrgName.isEmpty()) {
+            mOrgName = getResources().getString(R.string.org_name);
+        }
+        showMessage("Register and findCloudlet for app "+mAppName+"...");
+
+        Log.i(TAG, "findCloudletGpuInBackground mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
+
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    registerClient();
+                    findCloudlet();
+                } catch (ExecutionException | InterruptedException
+                        | PackageManager.NameNotFoundException | IllegalArgumentException e) {
+                    Log.e(TAG, "Exception in findCloudletGpuInBackground() for "+
+                            mAppName+", "+mAppVersion+", "+mOrgName);
+                    e.printStackTrace();
+                    showError(e.getLocalizedMessage());
                 }
             }
         }).start();
@@ -1205,7 +1254,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                         getAppInstList();
                     }
                 } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
+                    Log.e(TAG, "Exception in getAppInstListInBackground() for "+
+                            mAppName+", "+mAppVersion+", "+mOrgName);
                     e.printStackTrace();
+                    showError(e.getLocalizedMessage());
                 }
             }
         }).start();
@@ -1252,28 +1304,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
         restartImageSenderEdge();
         return true;
-    }
-
-    protected void findCloudletGpu() {
-        mAppName = getResources().getString(R.string.app_name)+"-GPU";
-        mAppVersion = getResources().getString(R.string.app_version);
-        mOrgName = getResources().getString(R.string.org_name);
-
-        Log.i(TAG, "mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
-
-        new Thread(new Runnable() {
-            @Override public void run() {
-                try {
-                    if (registerClientComplete || registerClient()) {
-                        registerClientComplete = true;
-                        findCloudlet();
-                    }
-                } catch (ExecutionException | InterruptedException
-                        | PackageManager.NameNotFoundException | IllegalArgumentException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
     }
 
     private boolean getAppInstList() throws InterruptedException, ExecutionException {
