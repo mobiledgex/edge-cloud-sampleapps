@@ -15,330 +15,83 @@
  * limitations under the License.
  */
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.Serialization.Json;
-using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
-
-using System.Net.WebSockets;
 using System;
-using System.Threading.Tasks;
 
-using System.Net.Http;
-
-using DistributedMatchEngine;
-using DistributedMatchEngine.PerformanceMetrics;
-using MobiledgeX;
-using System.Diagnostics;
-using System.Threading;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 
 namespace MobiledgeXPingPongGame {
 
-  enum STATUS
-  {
-    LOBBY = 0,
-    JOINED,
-    INGAME,
-    NEXTROUND,
-    LOST,
-    WON,
-    RESTART
-  }
-
-  class GameSession
-  {
-    public string sessionId;
-    public string uuidPlayer;
-    public string gameId;
-
-    public int side;
-    public string uuidOtherPlayer;
-    public string lastUuidPing = null;
-
-    public GameState currentGs;
-
-    public STATUS status;
-
-  }
+  [RequireComponent(typeof(MobiledgeX.LocationService))]
   public class GameManager : MonoBehaviour
   {
     public static int PlayerScore1 = 0;
     public static int PlayerScore2 = 0;
-
     public GUISkin layout;
-
-    GameObject theBall;
+    public GameObject theBall;
     GameObject[] players;
-    GameObject ghostBall; // Just one.
-    GameObject ghostPlayer; // Local player.
-    MobiledgeXSocketClient webSocketClient;
-
-    GameSession gameSession = new GameSession();
-
-    /**
-     * MobiledgeX Integration: thin example encapsulation outside Pong for ease
-     * of viewing.
-     */
-    MobiledgeXIntegration integration;
-
-    string host = "localhost";
-    string altServerHost = "192.168.1.10"; // Local server hack. Override and set useAltServer=true for dev demo use.
-    int port = 3000;
-    string l7Path;
-    string server = "";
-    string queryParams = "";
-    string edgeCloudletStr = "";
-
-    bool isPaused = false;
-
-    bool useAltServer = false;
-    Stopwatch stopWatch = new Stopwatch();
-
+    public GameObject ghostBall; // Just one.
+    public GameObject ghostPlayer; // Local player.
+    public NetworkManager networkManager;
     GameObject uiG;
     public Text uiConsole;
     public InputField roomIdInput;
 
-    NetTest netTest = null;
-
-    // Use this for initialization
-    IEnumerator Start()
+#region MonoBehaviour Callbacks
+    private void Awake()
     {
-      // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
-      // and a local DME cannot be located. Set to false if using a supported
-      // SIM Card.
-      integration = new MobiledgeXIntegration();
-
-#if UNITY_EDITOR
-      integration.UseWifiOnly(true);
-#endif
-      // Use local server, by IP. This must be started before use:
-      if (useAltServer)
-      {
-        host = altServerHost;
-      }
-
-      server = "ws://" + host + ":" + port;
-      theBall = GameObject.FindGameObjectWithTag("Ball");
-      players = GameObject.FindGameObjectsWithTag("Player");
-      webSocketClient = new MobiledgeXSocketClient();
-      gameSession.currentGs = new GameState();
-      gameSession.status = STATUS.LOBBY;
-
-      // Create a Mex Paddle (for local user) from the Prefab:
-      ghostPlayer = (GameObject)Instantiate(Resources.Load("PaddleGhost"));
-      ghostBall = (GameObject)Instantiate(Resources.Load("BallGhost"));
-
-      uiG = GameObject.FindGameObjectWithTag("UIConsole");
-      uiConsole = uiG.GetComponent<Text>();
-
-      // Attach a listener to the Room ID input field.
-      roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
-      roomIdInput.onEndEdit.AddListener(ConnectToServerWithRoomId);
-
-      yield return StartCoroutine(CheckLocationIsRunning());
-    }
-
-    IEnumerator CheckLocationIsRunning()
-    {
-      clog("Location Services NOT IMPLEMENTED");
-      yield break;
-
-      MobiledgeXAPICalls();
-    }
-
-    async void MobiledgeXAPICalls()
-    {
-      clog("RegisterClient NOT IMPLEMENTED");
-      return;
-
-      clog("FindCloudlet NOT IMPLEMENTED");
-      return;
-
-      clog("GetAppPort NOT IMPLEMENTED");
-      return;
-
-      clog("GetUrl NOT IMPLEMENTED");
-      return;
-
-      // NetTest
-      netTest = new NetTest(integration.matchingEngine);
-      foreach (AppPort ap in integration.FindCloudletReply.ports)
-      {
-        clog("Port: proto: " + ap.proto + ", prefix: " + ap.fqdn_prefix + ", path_prefix: " + ap.path_prefix + ", port: " + ap.public_port);
-
-        NetTest.Site site;
-        // We're looking for one of the TCP app ports:
-        if (ap.proto == LProto.L_PROTO_TCP)
-        {
-          // Add to test targets.
-          if (ap.path_prefix == "")
-          {
-            site = new NetTest.Site {
-              host = integration.GetHost(ap),
-              port = integration.GetPort(ap, -1)
-            };
-            site.testType = NetTest.TestType.CONNECT;
-          }
-          else
-          {
-            site = new NetTest.Site {
-              L7Path = integration.GetUrl("", ap)
-            };
-            site.testType = NetTest.TestType.CONNECT;
-          }
-          if (useAltServer)
-          {
-            site.host = host;
-          }
-          l7Path = site.L7Path;
-          netTest.sites.Enqueue(site);
+            theBall = GameObject.FindGameObjectWithTag("Ball");
+            players = GameObject.FindGameObjectsWithTag("Player");
+            // Create a Mex Paddle (for local user) from the Prefab:
+            ghostPlayer = (GameObject)Instantiate(Resources.Load("PaddleGhost"));
+            ghostBall = (GameObject)Instantiate(Resources.Load("BallGhost"));
+            // Attach a listener to the Room ID input field.
+            roomIdInput = GameObject.Find("InputFieldRoomId").GetComponent<InputField>();
+            roomIdInput.onEndEdit.AddListener(networkManager.ConnectToServerWithRoomId);
+            uiG = GameObject.FindGameObjectWithTag("UIConsole");
+            uiConsole = uiG.GetComponent<Text>();
         }
-      }
-      netTest.doTest(true);
-    }
-
-    // This method is called when the user has finished editing the Room ID InputField.
-    async void ConnectToServerWithRoomId(string roomId)
-    {
-      Uri edgeCloudletUri;
-
-      if (roomId == "")
-      {
-        clog("You must enter a room ID. Please try again.");
-        return;
-      }
-
-      clog("Connecting to WebSocket Server with roomId=" + roomId + "...");
-      clog("useAltServer=" + useAltServer + " host=" + host + " edgeCloudletStr=" + edgeCloudletStr);
-      queryParams = "?roomid=" + roomId;
-
-      if (webSocketClient.isOpen())
-      {
-        webSocketClient.Dispose();
-        webSocketClient = new MobiledgeXSocketClient();
-      }
-
-      if (useAltServer)
-      {
-        server = "ws://" + host + ":" + port;
-        edgeCloudletUri = new Uri(server + queryParams);
-        await webSocketClient.Connect(edgeCloudletUri);
-      }
-      else
-      {
-        try
+    void OnGUI()
         {
-          edgeCloudletUri = new Uri(edgeCloudletStr + queryParams);
-          await webSocketClient.Connect(edgeCloudletUri);
-        }
-        catch (Exception e)
-        {
-          clog("Unable to get websocket connection. Exception: " + e.Message  + ". Switching to AltServer.");
-          useAltServer = true;
-          ConnectToServerWithRoomId(roomId);
-          return;
-        }
-      }
-      clog("Connection to status: " + webSocketClient.isOpen());
-    }
+            GUI.skin = layout;
+            GUI.Label(new Rect(Screen.width / 2 - 150 - 12, 20, 100, 100), "" + PlayerScore1);
+            GUI.Label(new Rect(Screen.width / 2 + 150 + 12, 20, 100, 100), "" + PlayerScore2);
 
-    void Update()
-    {
-      // Receive runs in a background filling the receive concurrent queue.
-      if (webSocketClient == null)
-      {
-        return;
-      }
-      if (netTest == null)
-      {
-        return;
-      }
-
-      stopWatch.Start();
-      // If Ping is running, print:
-      if (netTest.runTest)
-      {
-        long elapsed = (long)stopWatch.Elapsed.TotalMilliseconds;
-        if (elapsed > netTest.TestTimeoutMS)
-        {
-          stopWatch.Reset();
-          foreach(NetTest.Site s in netTest.sites)
-          {
-            clog("Round trip to host: " + s.host + ", port: " + s.port + ", l7Path: " + s.L7Path +
-              ", average: " + s.average + ", stddev: " + s.stddev);
-            for(int i = 0; i < s.samples.Length; i++)
+            if (GUI.Button(new Rect(Screen.width / 2 - 60, 35, 120, 53), "RESTART"))
             {
-              clog("Samples: " + s.samples[i]);
+                PlayerScore1 = 0;
+                PlayerScore2 = 0;
+                if (theBall != null)
+                {
+                    theBall.SendMessage("RestartGame", 0.5f, SendMessageOptions.RequireReceiver);
+                }
+                SendRestart();
             }
-          }
+
+            if (PlayerScore1 == 10)
+            {
+                GUI.Label(new Rect(Screen.width / 2 - 150, 200, 2000, 1000), "PLAYER ONE WINS");
+                if (theBall != null)
+                {
+                    theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+                }
+            }
+            else if (PlayerScore2 == 10)
+            {
+                GUI.Label(new Rect(Screen.width / 2 - 150, 200, 2000, 1000), "PLAYER TWO WINS");
+                if (theBall != null)
+                {
+                    theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
+                }
+            }
         }
-      }
+#endregion
 
-      var cqueue = webSocketClient.receiveQueue;
-      string msg;
-      while (cqueue.TryPeek(out msg))
-      {
-        cqueue.TryDequeue(out msg);
-        //clog("Dequeued this message: " + msg);
-        HandleMessage(msg);
-      }
-
-      if (gameSession.status == STATUS.JOINED)
-      {
-        // theBall.SendMessage("GoBall", null, SendMessageOptions.RequireReceiver);
-      }
-
-      if (gameSession.status == STATUS.INGAME)
-      {
-        // These puts messages into a send queue, sent via a thread.
-        UpdateBall();
-        UpdatePlayer();
-      }
-    }
-
-    void clog(string msg)
+    public void clog(string msg)
     {
       uiConsole.text = msg;
-      UnityEngine.Debug.Log(msg);
+      Debug.Log(msg);
     }
-
-    // TODO: Should manage the thread runnables.
-    private void OnApplicationFocus(bool focus)
-    {
-      if (webSocketClient != null)
-      {
-        try
-        {
-          if (integration != null && netTest != null)
-          {
-            netTest.doTest(focus);
-            clog("NetTest focused run status: " + netTest.runTest);
-          }
-        } catch (Exception e)
-        {
-          clog("Exception hit: " + e.Message);
-        }
-      }
-    }
-    // TODO: Should manage the thread runnables.
-    void OnApplicationPause(bool pauseStatus)
-    {
-      isPaused = pauseStatus;
-      if (webSocketClient != null)
-      {
-        if (integration != null && netTest != null)
-        {
-          netTest.doTest(!isPaused);
-          clog("NetTest pauseStatus: " + netTest.runTest);
-        }
-      }
-    }
-
     public void Score(string wallID)
     {
 
@@ -354,40 +107,38 @@ namespace MobiledgeXPingPongGame {
       // Let the star topology server know about this event!
       ScoreEvent scoreEvent = new ScoreEvent
       {
-        uuid = gameSession.uuidPlayer,
-        gameId = gameSession.gameId,
-        side = gameSession.side,
+        uuid = networkManager.gameSession.uuidPlayer,
+        gameId = networkManager.gameSession.gameId,
+        side = networkManager.gameSession.side,
         playerScore1 = PlayerScore1,
         playerScore2 = PlayerScore2
       };
 
-      webSocketClient.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
+      networkManager.webSocketClient.Send(Messaging<ScoreEvent>.Serialize(scoreEvent));
     }
-   
     public void UpdateBall()
     {
       var bc = theBall.GetComponent<BallControl>();
       Ball ball = Ball.CopyBall(bc);
 
-      gameSession.currentGs.balls[0] = ball;
+      networkManager.gameSession.currentGs.balls[0] = ball;
 
       MoveEvent moveEvent = new MoveEvent
       {
         uuid = bc.uuid,
-        playeruuid = gameSession.uuidPlayer,
-        gameId = gameSession.gameId,
+        playeruuid = networkManager.gameSession.uuidPlayer,
+        gameId = networkManager.gameSession.gameId,
         objectType = "Ball",
         position = new Position(ball.position),
         velocity = new Velocity(ball.velocity)
       };
 
-      webSocketClient.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+      networkManager.webSocketClient.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
-
     public void UpdatePlayer()
     {
       // Client side dict needed.
-      Player[] gsPlayers = new Player[gameSession.currentGs.players.Length];
+      Player[] gsPlayers = new Player[networkManager.gameSession.currentGs.players.Length];
       Player selected = null;
       // Only ever need to tell the server of own location (for now)
 
@@ -405,145 +156,44 @@ namespace MobiledgeXPingPongGame {
           gsPlayers[idx++] = Player.CopyPlayer(pc);
         }
       }
-      gameSession.currentGs.players = gsPlayers;
+      networkManager.gameSession.currentGs.players = gsPlayers;
 
       MoveEvent moveEvent = new MoveEvent
       {
         uuid = selected.uuid,
         playeruuid = selected.uuid,
-        gameId = gameSession.gameId,
+        gameId = networkManager.gameSession.gameId,
         objectType = "Player",
         position = new Position(selected.position),
         velocity = new Velocity(selected.velocity)
       };
 
-      webSocketClient.Send(Messaging<MoveEvent>.Serialize(moveEvent));
+      networkManager.webSocketClient.Send(Messaging<MoveEvent>.Serialize(moveEvent));
     }
-
     public void SendContactEvent(PlayerControls c, BallControl b, Collision2D collision)
     {
       // If the contact is actually the other player
       ContactEvent ce = new ContactEvent
       {
-        sequence = gameSession.currentGs.sequence,
+        sequence = networkManager.gameSession.currentGs.sequence,
         objectType = "Ball",
         uuid = c.uuid,
-        playeruuid = gameSession.uuidPlayer, // Sender source of this event.
-        gameId = gameSession.gameId,
+        playeruuid = networkManager.gameSession.uuidPlayer, // Sender source of this event.
+        gameId = networkManager.gameSession.gameId,
         position = new Position(b.rb2d.position),
         velocity = new Velocity(b.rb2d.velocity)
       };
-      webSocketClient.Send(Messaging<ContactEvent>.Serialize(ce));
+      networkManager.webSocketClient.Send(Messaging<ContactEvent>.Serialize(ce));
     }
-
-    void SendRestart()
+    public void SendRestart()
     {
       GameRestart gr = new GameRestart();
-      gr.gameId = gameSession.gameId;
+      gr.gameId = networkManager.gameSession.gameId;
       gr.balls = new Ball[1];
       gr.balls[0] = Ball.CopyBall(theBall.GetComponent<BallControl>());
-      webSocketClient.Send(Messaging<GameRestart>.Serialize(gr));
+      networkManager.webSocketClient.Send(Messaging<GameRestart>.Serialize(gr));
     }
-
-    // Separate from Update()
-    void OnGUI()
-    {
-      GUI.skin = layout;
-      GUI.Label(new Rect(Screen.width / 2 - 150 - 12, 20, 100, 100), "" + PlayerScore1);
-      GUI.Label(new Rect(Screen.width / 2 + 150 + 12, 20, 100, 100), "" + PlayerScore2);
-
-      if (GUI.Button(new Rect(Screen.width / 2 - 60, 35, 120, 53), "RESTART"))
-      {
-        PlayerScore1 = 0;
-        PlayerScore2 = 0;
-        if (theBall != null)
-        {
-          theBall.SendMessage("RestartGame", 0.5f, SendMessageOptions.RequireReceiver);
-        }
-        SendRestart();
-      }
-
-      if (PlayerScore1 == 10)
-      {
-        GUI.Label(new Rect(Screen.width / 2 - 150, 200, 2000, 1000), "PLAYER ONE WINS");
-        if (theBall != null)
-        {
-          theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
-        }
-      }
-      else if (PlayerScore2 == 10)
-      {
-        GUI.Label(new Rect(Screen.width / 2 - 150, 200, 2000, 1000), "PLAYER TWO WINS");
-        if (theBall != null)
-        {
-          theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
-        }
-      }
-    }
-
-
-    // Match whatever WebSocket text is sending
-    // Consistency: General rule here is that the game state if not timestamped, events may not represent the same time window.
-    void HandleMessage(string message)
-    {
-      var msg = MessageWrapper.UnWrapMessage(message);
-      // Not quite symetric, but the server is text only.
-      switch (msg.type)
-      {
-        case "qotd":
-          break;
-        case "notification":
-          Notification notification = Messaging<Notification>.Deserialize(message);
-          clog(notification.notificationText);
-          break;
-        case "register":
-          GameRegister register = Messaging<GameRegister>.Deserialize(message);
-          gameSession.sessionId = register.sessionId;
-          gameSession.uuidPlayer = register.uuidPlayer;
-          break;
-        case "gameJoin":
-          GameJoin gj = Messaging<GameJoin>.Deserialize(message);
-          JoinGame(gj);
-          break;
-        case "scoreEvent":
-          ScoreEvent se = Messaging<ScoreEvent>.Deserialize(message);
-          UpdateScore(se);
-          break;
-        case "moveEvent":
-          MoveEvent me = Messaging<MoveEvent>.Deserialize(message);
-          UpdatePosition(me);
-          break;
-        case "gameState":
-          GameState serverGs = Messaging<GameState>.Deserialize(message);
-          gameSession.currentGs.sequence = serverGs.sequence;
-          //UpdateLocalGame(serverGs);
-          break;
-        case "contactEvent":
-          ContactEvent ce = Messaging<ContactEvent>.Deserialize(message);
-          HandleContactEvent(ce);
-          break;
-        case "resign":
-          GameResign resign = Messaging<GameResign>.Deserialize(message);
-          theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
-          ghostBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
-          break;
-        case "nextRound":
-          NextRound nr = Messaging<NextRound>.Deserialize(message);
-          StartNextRound(nr);
-          break;
-        case "gameRestart":
-          GameRestart gr = Messaging<GameRestart>.Deserialize(message);
-          RestartGame(gr);
-          break;
-
-        default:
-          clog("Unknown message arrived: " + msg.type + ", message: " + message);
-          break;
-      }
-
-    }
-
-    bool UpdateScore(ScoreEvent se)
+    public bool UpdateScore(ScoreEvent se)
     {
       // Policy: Server rules:
       PlayerScore1 = se.playerScore1;
@@ -551,13 +201,12 @@ namespace MobiledgeXPingPongGame {
 
       return true;
     }
-
-    bool UpdatePosition(MoveEvent moveItem)
+    public bool UpdatePosition(MoveEvent moveItem)
     {
       //clog("moveItem: " + moveItem.uuid);
-      var gs = gameSession.currentGs;
+      var gs = networkManager.gameSession.currentGs;
 
-      if (moveItem.sequence < gameSession.currentGs.sequence)
+      if (moveItem.sequence < networkManager.gameSession.currentGs.sequence)
       {
         clog("old event.");
         return false; // Old.
@@ -567,8 +216,8 @@ namespace MobiledgeXPingPongGame {
       {
         // If the source is the other player, and that's the last contact,
         // update local ball.
-        if (gameSession.lastUuidPing == gameSession.uuidOtherPlayer &&
-            moveItem.playeruuid == gameSession.uuidOtherPlayer)
+        if (networkManager.gameSession.lastUuidPing == networkManager.gameSession.uuidOtherPlayer &&
+            moveItem.playeruuid == networkManager.gameSession.uuidOtherPlayer)
         {
           // Other player...
           var bc = theBall.GetComponent<BallControl>();
@@ -585,18 +234,18 @@ namespace MobiledgeXPingPongGame {
         }
       }
 
-      if (moveItem.uuid == gameSession.uuidPlayer)
+      if (moveItem.uuid == networkManager.gameSession.uuidPlayer)
       {
         UpdatePlayerGhost(moveItem);
         // Server echo of current player position and velocity.
         // Add a gameObject if not existing, and show it along with the current player's position.
         // Also, if significantly different, jump player to "server" position, or interpolate postion over time.
       }
-      else if (moveItem.uuid == gameSession.uuidOtherPlayer) // Other player, blind copy.
+      else if (moveItem.uuid == networkManager.gameSession.uuidOtherPlayer) // Other player, blind copy.
       {
         foreach (var player in gs.players)
         {
-          if (player.uuid == gameSession.uuidOtherPlayer)
+          if (player.uuid == networkManager.gameSession.uuidOtherPlayer)
           {
             player.position = moveItem.position;
             player.velocity = moveItem.velocity;
@@ -605,7 +254,7 @@ namespace MobiledgeXPingPongGame {
             foreach (var g in gp)
             {
               var p = g.GetComponent<PlayerControls>();
-              if (p.uuid == gameSession.uuidOtherPlayer)
+              if (p.uuid == networkManager.gameSession.uuidOtherPlayer)
               {
                 p.setPosition(moveItem.position);
                 p.setVelocity(moveItem.velocity);
@@ -618,8 +267,7 @@ namespace MobiledgeXPingPongGame {
 
       return true;
     }
-
-    bool UpdateBallGhost(MoveEvent moveItem)
+    public bool UpdateBallGhost(MoveEvent moveItem)
     {
       if (moveItem.objectType == "Ball")
       {
@@ -632,10 +280,10 @@ namespace MobiledgeXPingPongGame {
       }
       return true;
     }
-    bool UpdatePlayerGhost(MoveEvent moveItem)
+    public bool UpdatePlayerGhost(MoveEvent moveItem)
     {
       if (moveItem.objectType == "Player" &&
-          moveItem.uuid == gameSession.uuidPlayer)
+          moveItem.uuid == networkManager.gameSession.uuidPlayer)
       {
         // Ghost is a variant of the regular player paddle.
         // There's just one pre-assigned ghost.
@@ -649,52 +297,49 @@ namespace MobiledgeXPingPongGame {
       }
       return true;
     }
-
-    bool HandleContactEvent(ContactEvent ce)
+    public bool HandleContactEvent(ContactEvent ce)
     {
       // This is an event everyone should (try) to agree on, even if the simulation diverges.
       // 1) It's the latest event.
       // 2) The other player has already observed this on their game simulation.
       BallControl bc = theBall.GetComponent<BallControl>();
 
-      if (bc.uuid != gameSession.currentGs.balls[0].uuid)
+      if (bc.uuid != networkManager.gameSession.currentGs.balls[0].uuid)
       {
         clog("Ball UUID is unknown! Contact event unknown.");
         return false;
       }
 
-      if (ce.playeruuid == gameSession.uuidOtherPlayer)
+      if (ce.playeruuid == networkManager.gameSession.uuidOtherPlayer)
       {
         clog("Matching local ball to remote player event: " + ce.playeruuid);
         bc.setPosition(ce.position);
         bc.setVelocity(ce.velocity);
-        gameSession.lastUuidPing = gameSession.uuidOtherPlayer;
+        networkManager.gameSession.lastUuidPing = networkManager.gameSession.uuidOtherPlayer;
       }
-      else if(ce.playeruuid == gameSession.uuidPlayer)
+      else if(ce.playeruuid == networkManager.gameSession.uuidPlayer)
       {
         clog("Updating ghost ball (once) to server version: " + ce.velocity);
         // Self echo, just update server ghost.
         var gbc = ghostBall.GetComponent<BallControl>();
         gbc.setPosition(ce.position);
         gbc.setVelocity(ce.velocity);
-        gameSession.lastUuidPing = gameSession.uuidPlayer;
+        networkManager.gameSession.lastUuidPing = networkManager.gameSession.uuidPlayer;
       }
 
       return true;
     }
-
-    bool ApplyGameState(GameState gameState)
+    public bool ApplyGameState(GameState gameState)
     {
       // Instantiate other player, inspect, and then apply game state.
       return true;
     }
-
     // Not differential, but this is small. Bespoke. TODO: GRPC
     GameState GatherGameState()
     {
       GameState gameState = new GameState();
 
-      gameState.gameId = gameSession.gameId; // Keep gameId.
+      gameState.gameId = networkManager.gameSession.gameId; // Keep gameId.
       gameState.score1 = PlayerScore1;
       gameState.score2 = PlayerScore2;
 
@@ -723,24 +368,22 @@ namespace MobiledgeXPingPongGame {
 
       return gameState;
     }
-
-    void UpdateServer()
+    public void UpdateServer()
     {
       GameState gameState = GatherGameState();
       gameState.type = "gameState";
-      gameState.source = "webSocketClient";
+      gameState.source = "networkManager.webSocketClient";
 
       string jsonStr = Messaging<GameState>.Serialize(gameState);
       clog("UpdateServer: " + jsonStr);
       MessageWrapper wrapped = MessageWrapper.WrapTextMessage(jsonStr);
-      webSocketClient.Send(Messaging<MessageWrapper>.Serialize(wrapped));
+      networkManager.webSocketClient.Send(Messaging<MessageWrapper>.Serialize(wrapped));
 
-      gameSession.currentGs = gameState;
+      networkManager.gameSession.currentGs = gameState;
 
       return;
     }
-
-    bool PositionInRange(Position p1, Position p2, float error = 1.5f)
+    public bool PositionInRange(Position p1, Position p2, float error = 1.5f)
     {
       // Very basic check.
       if ((Math.Abs(p1.x - p2.x) < error) &&
@@ -751,8 +394,7 @@ namespace MobiledgeXPingPongGame {
       }
       return false;
     }
-
-    bool VelocityInRange(Velocity p1, Velocity p2, float error = 20.0f)
+    public bool VelocityInRange(Velocity p1, Velocity p2, float error = 20.0f)
     {
       // Very basic check.
       if ((Math.Abs(p1.x - p2.x) < error) &&
@@ -763,13 +405,12 @@ namespace MobiledgeXPingPongGame {
       }
       return false;
     }
-
-    void UpdateLocalGame(GameState serverGameState)
+    public void UpdateLocalGame(GameState serverGameState)
     {
 
       if (serverGameState.sequence == 0)
       {
-        gameSession.status = STATUS.INGAME;
+        networkManager.gameSession.status = STATUS.INGAME;
       }
 
       GameState localGs = GatherGameState();
@@ -810,7 +451,7 @@ namespace MobiledgeXPingPongGame {
       foreach(GameObject p in pcs)
       {
         PlayerControls a = p.GetComponent<PlayerControls>();
-        if (a.uuid == gameSession.uuidOtherPlayer)
+        if (a.uuid == networkManager.gameSession.uuidOtherPlayer)
         {
           // Find other player in server view:
           for (var i = 0; i < serverGameState.players.Length; i++)
@@ -818,11 +459,11 @@ namespace MobiledgeXPingPongGame {
             if (a.uuid == serverPlayers[i].uuid)
             {
               a.setPosition(serverPlayers[i].position);
-              if (a.uuid == gameSession.uuidPlayer)
+              if (a.uuid == networkManager.gameSession.uuidPlayer)
               {
                 cpIdx = i;
               }
-              else if (a.uuid == gameSession.uuidOtherPlayer)
+              else if (a.uuid == networkManager.gameSession.uuidOtherPlayer)
               {
                 opIdx = i;
               }
@@ -845,8 +486,7 @@ namespace MobiledgeXPingPongGame {
 
       return;
     }
-
-    bool JoinGame(GameJoin gj)
+    public bool JoinGame(GameJoin gj)
     {
       clog("Told to join gameId: " + gj.gameId + ", side: " + gj.side);
       if (gj.gameId == "")
@@ -855,15 +495,15 @@ namespace MobiledgeXPingPongGame {
         return false;
       }
 
-      gameSession.gameId = gj.gameId;
-      gameSession.side = gj.side;
-      gameSession.uuidOtherPlayer = gj.uuidOtherPlayer;
-      gameSession.status = STATUS.JOINED;
+      networkManager.gameSession.gameId = gj.gameId;
+      networkManager.gameSession.side = gj.side;
+      networkManager.gameSession.uuidOtherPlayer = gj.uuidOtherPlayer;
+      networkManager.gameSession.status = STATUS.JOINED;
 
-      gameSession.currentGs = new GameState();
-      var gs = gameSession.currentGs;
+      networkManager.gameSession.currentGs = new GameState();
+      var gs = networkManager.gameSession.currentGs;
 
-      gs.currentPlayer = gameSession.uuidPlayer;
+      gs.currentPlayer = networkManager.gameSession.uuidPlayer;
 
       // Update Ball:
       if (gs.balls.Length == 0)
@@ -903,23 +543,23 @@ namespace MobiledgeXPingPongGame {
 
       clog("Left sel: " + left.transform.position.x + "Right other: " + right.transform.position.x);
 
-      if (gameSession.side == 0)
+      if (networkManager.gameSession.side == 0)
       {
-        left.uuid = gameSession.uuidPlayer; // Player 1 assigned in match by server.
+        left.uuid = networkManager.gameSession.uuidPlayer; // Player 1 assigned in match by server.
         left.ownPlayer = true;
 
-        right.uuid = gameSession.uuidOtherPlayer;
+        right.uuid = networkManager.gameSession.uuidOtherPlayer;
         right.ownPlayer = false;
         gs.players[0] = Player.CopyPlayer(left);
         gs.players[1] = Player.CopyPlayer(right);
       }
-      else if (gameSession.side == 1)
+      else if (networkManager.gameSession.side == 1)
       {
 
-        right.uuid = gameSession.uuidPlayer; // Player 2 assigned in match by server.
+        right.uuid = networkManager.gameSession.uuidPlayer; // Player 2 assigned in match by server.
         right.ownPlayer = true;
 
-        left.uuid = gameSession.uuidOtherPlayer;
+        left.uuid = networkManager.gameSession.uuidOtherPlayer;
         left.ownPlayer = false;
 
         gs.players[0] = Player.CopyPlayer(right);
@@ -927,22 +567,21 @@ namespace MobiledgeXPingPongGame {
       }
 
       // Assign player state:
-      gameSession.currentGs = gs;
+      networkManager.gameSession.currentGs = gs;
 
       clog("Transition to inGame.");
-      gameSession.status = STATUS.INGAME;
+      networkManager.gameSession.status = STATUS.INGAME;
       return true;
     }
-
-    bool StartNextRound(NextRound nr)
+    public bool StartNextRound(NextRound nr)
     {
       clog("Start next round for game, gameId: " + nr.gameId);
-      if (nr.gameId != gameSession.gameId)
+      if (nr.gameId != networkManager.gameSession.gameId)
       {
         return false;
       }
-      gameSession.lastUuidPing = null;
-      gameSession.status = STATUS.INGAME;
+      networkManager.gameSession.lastUuidPing = null;
+      networkManager.gameSession.status = STATUS.INGAME;
 
       // The ball position and velocity is chosen at random by server, and sent out to players.
       // For now, just trust it.
@@ -957,22 +596,21 @@ namespace MobiledgeXPingPongGame {
 
       return false;
     }
-
-    bool RestartGame(GameRestart gr)
+    public bool RestartGame(GameRestart gr)
     {
       clog("Restarting game, gameId: " + gr.gameId);
-      if (gr.gameId != gameSession.gameId)
+      if (gr.gameId != networkManager.gameSession.gameId)
       {
         return false;
       }
-      gameSession.status = STATUS.RESTART;
+      networkManager.gameSession.status = STATUS.RESTART;
 
       //theBall.SendMessage("ResetBall", null, SendMessageOptions.RequireReceiver);
       PlayerScore1 = 0;
       PlayerScore2 = 0;
 
-      gameSession.currentGs.sequence = 0;
-      gameSession.status = STATUS.INGAME;
+      networkManager.gameSession.currentGs.sequence = 0;
+      networkManager.gameSession.status = STATUS.INGAME;
 
       // The ball position and velocity is chosen at random by server, and sent out to players.
       // For now, just trust it.
