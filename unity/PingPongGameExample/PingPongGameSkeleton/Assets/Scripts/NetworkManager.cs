@@ -183,7 +183,7 @@ namespace MobiledgeXPingPongGame
                         site = new NetTest.Site
                         {
                             host = integration.GetHost(ap),
-                            port = integration.GetPort(ap, -1)
+                            port = integration.GetPort(ap)
                         };
                         site.testType = NetTest.TestType.CONNECT;
                     }
