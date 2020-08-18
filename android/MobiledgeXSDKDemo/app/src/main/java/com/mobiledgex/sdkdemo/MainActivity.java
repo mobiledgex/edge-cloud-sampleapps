@@ -184,6 +184,7 @@ public class MainActivity extends AppCompatActivity
     private AlertDialog mAlertDialog;
     private boolean mAllowLocationSimulatorUpdate = false;
     private boolean uiHasBeenTouched;
+    private Polyline mClosestCloudletPolyLine;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -431,10 +432,11 @@ public class MainActivity extends AppCompatActivity
             }
             mMatchingEngineHelper.setSpoofedLocation(null);
             mUserLocationMarker.setPosition(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
+
+            resetUserMobileIcon();
+
             mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
             updateLocSimLocation(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
-            locationVerified = false;
-            locationVerificationAttempted = false;
             mClosestCloudletHostname = null;
             getCloudlets(true);
             return true;
@@ -795,8 +797,8 @@ public class MainActivity extends AppCompatActivity
                         Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
                         double distance = results[0]/1000;
                         mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
+                        resetUserMobileIcon();
                         mMatchingEngineHelper.setSpoofedLocation(location);
-                        locationVerificationAttempted = locationVerified = false;
                         getCloudlets(true);
                         break;
                     case 1:
@@ -829,6 +831,15 @@ public class MainActivity extends AppCompatActivity
 
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+    }
+
+    protected void resetUserMobileIcon() {
+        mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL, ""));
+        mUserLocationMarker.setTitle(getString(R.string.location_not_verified));
+        locationVerificationAttempted = locationVerified = false;
+        if (mClosestCloudletPolyLine != null) {
+            mClosestCloudletPolyLine.remove();
+        }
     }
 
     @Override
@@ -921,7 +932,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
         if (mAppInstanceReplyList != null) {
-            // Clear any existing lines on the map, but re-add existing cloudlets.
+            // Reset all cloudlets' titles, snippets, and icon colors.
             onGetCloudletList(mAppInstanceReplyList);
         }
         runOnUiThread(new Runnable() {
@@ -938,8 +949,8 @@ public class MainActivity extends AppCompatActivity
                         break;
                     }
                 }
-                if(cloudlet != null) {
-                    Polyline line = mGoogleMap.addPolyline(new PolylineOptions()
+                if (cloudlet != null) {
+                    mClosestCloudletPolyLine = mGoogleMap.addPolyline(new PolylineOptions()
                             .add(mUserLocationMarker.getPosition(), cloudlet.getMarker().getPosition())
                             .width(8)
                             .color(COLOR_VERIFIED));
@@ -964,7 +975,6 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mGoogleMap.clear();
                 ArrayMap<String, Cloudlet> tempCloudlets = new ArrayMap<>();
                 LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
@@ -984,6 +994,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 //First get the new list into an ArrayMap so we can index on the cloudletName
+                //In this loop, we will also reset any existing cloudlet marker's icon, title, and snippet.
                 for(AppClient.CloudletLocation cloudletLocation:cloudletList.getCloudletsList()) {
                     Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName()+" getCarrierName()="+cloudletLocation.getCarrierName());
                     String carrierName = cloudletLocation.getCarrierName();
@@ -1019,58 +1030,54 @@ public class MainActivity extends AppCompatActivity
                     }
                     double distance = cloudletLocation.getDistance();
                     LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());
-                    Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
-                    marker.setTag(cloudletName);
-
+                    Marker marker;
                     Cloudlet cloudlet;
                     if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
                         cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
+                        marker = cloudlet.getMarker();
                     } else {
+                        marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
                         cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, fqdn, marker, FQDNPrefix, publicPort);
                     }
+                    marker.setTitle(cloudletName + " Cloudlet");
+                    marker.setSnippet("Click for details");
+                    marker.setTag(cloudletName); // This is used by automation testing.
                     marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_NEUTRAL, getBadgeText(cloudlet)));
                     cloudlet.update(cloudletName, appName, carrierName, latLng, distance, fqdn, marker, FQDNPrefix, publicPort);
                     tempCloudlets.put(cloudletName, cloudlet);
                     builder.include(marker.getPosition());
                 }
 
-                //Now see if all cloudlets still exist. If removed, show as transparent.
+                //Now see if all cloudlets still exist. If removed, show as semi-transparent.
                 for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
                     Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
                     if (!tempCloudlets.containsKey(cloudlet.getCloudletName())) {
                         Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
-                        Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(cloudlet.getLatitude(), cloudlet.getLongitude()))
-                                .title(cloudlet.getCloudletName() + " Cloudlet").snippet("Has been removed"));
+                        Marker marker = cloudlet.getMarker();
+                        marker.setSnippet("Has been removed");
                         marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_FAILURE, getBadgeText(cloudlet)));
                         marker.setAlpha((float) 0.33);
                     }
                 }
                 CloudletListHolder.getSingleton().setCloudlets(tempCloudlets);
 
-                // Create the marker representing the user/mobile device.
-                String tag = "User";
-                String title = "User Location - Not Verified";
-                String snippet = (String) getResources().getText(R.string.drag_to_spoof);
-                BitmapDescriptor icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL, "");
-
-                if(mUserLocationMarker != null) {
-                    snippet = mUserLocationMarker.getSnippet();
-                    if (locationVerificationAttempted) {
-                        if (locationVerified) {
-                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_VERIFIED, "");
-                            title = "User Location - Verified";
-                        } else {
-                            icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_FAILURE, "");
-                            title = "User Location - Failed Verify";
-                        }
-                    }
+                // Erase "closest cloudlet" line if it exists.
+                if (mClosestCloudletPolyLine != null) {
+                    mClosestCloudletPolyLine.remove();
                 }
 
-                LatLng latLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
-                mUserLocationMarker = mGoogleMap.addMarker(new MarkerOptions().position(latLng)
-                        .title(title).snippet(snippet)
-                        .icon(icon).draggable(true));
-                mUserLocationMarker.setTag(tag);
+                Log.d(TAG, "mUserLocationMarker="+mUserLocationMarker+" locationVerificationAttempted="+locationVerificationAttempted+" locationVerified="+locationVerified);
+                if(mUserLocationMarker == null) {
+                    // Create the marker representing the user/mobile device.
+                    String tag = "User";
+                    String snippet = (String) getResources().getText(R.string.drag_to_spoof);
+                    BitmapDescriptor icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL, "");
+                    LatLng latLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
+                    mUserLocationMarker = mGoogleMap.addMarker(new MarkerOptions().position(latLng)
+                            .title(getString(R.string.location_not_verified)).snippet(snippet)
+                            .icon(icon).draggable(true));
+                    mUserLocationMarker.setTag(tag);
+                }
                 builder.include(mUserLocationMarker.getPosition());
 
                 // Update the camera view if needed.

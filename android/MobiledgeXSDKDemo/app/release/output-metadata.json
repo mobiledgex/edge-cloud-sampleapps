@@ -11,8 +11,8 @@
       "type": "SINGLE",
       "filters": [],
       "properties": [],
-      "versionCode": 58,
-      "versionName": "58",
+      "versionCode": 60,
+      "versionName": "1.1.11",
       "enabled": true,
       "outputFile": "MobiledgeXSDKDemo-release.apk"
     }
