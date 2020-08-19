@@ -696,6 +696,12 @@ public class MainActivity extends AppCompatActivity
 
         if (clearExisting) {
             //Clear list so we don't show old cloudlets as transparent
+            //First, remove all cloudlet markers.
+            for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
+                Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
+                cloudlet.getMarker().remove();
+            }
+            //Then clear the list.
             CloudletListHolder.getSingleton().getCloudletList().clear();
         }
 
@@ -1033,9 +1039,11 @@ public class MainActivity extends AppCompatActivity
                     Marker marker;
                     Cloudlet cloudlet;
                     if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
+                        Log.i(TAG, "Reusing existing marker for "+cloudletName);
                         cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
                         marker = cloudlet.getMarker();
                     } else {
+                        Log.i(TAG, "addMarker for "+cloudletName);
                         marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).title(cloudletName + " Cloudlet").snippet("Click for details"));
                         cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, fqdn, marker, FQDNPrefix, publicPort);
                     }
@@ -1073,6 +1081,7 @@ public class MainActivity extends AppCompatActivity
                     String snippet = (String) getResources().getText(R.string.drag_to_spoof);
                     BitmapDescriptor icon = makeMarker(R.mipmap.ic_marker_mobile, COLOR_NEUTRAL, "");
                     LatLng latLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
+                    Log.i(TAG, "addMarker for user location");
                     mUserLocationMarker = mGoogleMap.addMarker(new MarkerOptions().position(latLng)
                             .title(getString(R.string.location_not_verified)).snippet(snippet)
                             .icon(icon).draggable(true));
