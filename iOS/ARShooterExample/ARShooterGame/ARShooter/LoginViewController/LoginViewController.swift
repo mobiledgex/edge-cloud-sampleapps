@@ -81,6 +81,8 @@ class LoginViewController: UIViewController, CLLocationManagerDelegate {
     
     func setUpMatchingEngineParameters() {
         matchingEngine = MobiledgeXiOSLibrary.MatchingEngine()
+        // Default to WifiOnly for DME API calls
+        matchingEngine.state.setUseWifiOnly(enabled: true)
         if demo {
             // dmeHost and dmePort can be used as parameters in overloaded API calls
             // (ie. registerClient(host: dmeHost, port: dmePort, request: request))
@@ -190,6 +192,8 @@ class LoginViewController: UIViewController, CLLocationManagerDelegate {
                 throw LoginViewControllerError.runtimeError("No app ports with specified internal port")
             }
             
+            // Set WifiOnly to false before getting actual connection
+            self.matchingEngine.state.setUseWifiOnly(enabled: false)
             return self.matchingEngine.getWebsocketConnection(findCloudletReply: findCloudletReply, appPort: appPort, desiredPort: Int(self.internalPort), timeout: 5000)
             
         }.then { manager in
