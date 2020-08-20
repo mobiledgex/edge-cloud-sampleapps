@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: RimLightBlue
-  m_Shader: {fileID: 4800000, guid: 8c9562bc920c644f6bdebd18cb700fd3, type: 3}
+  m_Name: ConnectionLoadingMaterial
+  m_Shader: {fileID: 4800000, guid: d2ce1959ec10745d5b2740d9439ab412, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
