@@ -48,7 +48,7 @@ namespace MobiledgeXPingPongGame
             // Demo mode DME server to run MobiledgeX APIs, or if SIM card is missing
             // and a local DME cannot be located. Set to false if using a supported
             // SIM Card
-            yield return new Exception("MobiledgeX Callflow NOT IMPLEMENTED");
+            yield return new Exception("LocationService NOT IMPLEMENTED");
             MobiledgeXAPICalls();
 
             // Use local server, by IP. This must be started before use:
