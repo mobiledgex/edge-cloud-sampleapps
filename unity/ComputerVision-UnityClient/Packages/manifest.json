@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.mobiledgex.sdk": "https://github.com/mobiledgex/edge-cloud-sdk-unity.git",
     "com.unity.collab-proxy": "1.2.16",
     "com.unity.ide.rider": "1.1.4",
     "com.unity.ide.vscode": "1.1.4",
@@ -40,5 +41,11 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
+  },
+  "lock": {
+    "com.mobiledgex.sdk": {
+      "revision": "HEAD",
+      "hash": "a768d3e3df48d08a850e5590f9624e8edcab451d"
+    }
   }
 }
