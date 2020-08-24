@@ -11,7 +11,7 @@ RUN pip install -r requirements.txt
 
 FROM python:3.7-slim AS build-image
 COPY --from=compile-image /opt/venv /opt/venv
-RUN apt-get update && apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 wget
+RUN apt-get update && apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 libgl1-mesa-glx wget
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
 
