@@ -45,9 +45,9 @@ namespace MobiledgeXComputerVision
         }
         private int[][] faceDetectionRects;
         private int[] faceRecognitionRect;
-        private static string faceRecognitionSubject;
-        private static float faceRecognitionConfidenceLevel;
-        private static @Object[] objectsDetected;
+        private string faceRecognitionSubject;
+        private float faceRecognitionConfidenceLevel;
+        private @Object[] objectsDetected;
         private float imgScalingFactor;
         private static string url;
 
