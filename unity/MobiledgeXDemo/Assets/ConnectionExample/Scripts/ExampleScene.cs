@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System;
 using MobiledgeX;
 using DistributedMatchEngine;
+using System.Linq;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(MobiledgeX.LocationService))]
 public class ExampleScene : MonoBehaviour
@@ -19,7 +21,7 @@ public class ExampleScene : MonoBehaviour
     public Animator cameraAniamtor;
     public Animator planeAnimator;
     public GameObject protoPanel;
-
+    public GameObject L7protoPanel;
     public Button nextButton;
     public Text infoText;
     public GameObject errorPanel;
@@ -34,6 +36,8 @@ public class ExampleScene : MonoBehaviour
     static MobiledgeXSettings settings;
     LProto selectedProto; //selected protocol
     AppPort selectedPort;
+    string selectedL7Proto;
+    string url;
 
     #region MonoBehaviour Callbacks
 
@@ -81,15 +85,18 @@ public class ExampleScene : MonoBehaviour
         {
             case 0:
                 infoText.transform.parent.gameObject.SetActive(true);
-                return infoText.text = "<b>RegisterClient()</b> \n Verifies the app has been deployed to MobiledgeX Cloudlets using Organization Name, App Name ,and App Version.";
+                return infoText.text = "<b>RegisterClient()</b> \nRegisters the client with the closest Distributed Matching Engine (the nearest edge location in the Operator network) and validates the legitimacy of the mobile subscriber. All session information is encrypted.";
 
             case 2:
                 infoText.transform.parent.gameObject.SetActive(true);
-                return infoText.text = "<b>FindCloudlet() </b> \n Gets the address of the best cloudlet that is running your server application.";
+                return infoText.text = "<b>FindCloudlet() </b> \n Locates the most optimal edge computing footprint and allows the registered application to find the application backend by leveraging location, application subscription, and service provider agreement. If there are no suitable cloudlet instances available, the client may connect to the application server located in the public cloud.";
 
             case 4:
                 infoText.transform.parent.gameObject.SetActive(true);
-                return infoText.text = "<b>GetAppPort(Protocol) </b> \n Gets the mapped Port for the selected protocol ";
+                return infoText.text = "<b>GetAppPort( L4 Protocols ) </b> \nReturns the mapped port for the selected L4 protocol.";
+            case 7:
+                infoText.transform.parent.gameObject.SetActive(true);
+                return infoText.text = "<b>GetUrl( L7 Protocols ) </b> \nReturns the url for the selected L7 protocol.";
             default:
                 infoText.transform.parent.gameObject.SetActive(false);
                 return "";
@@ -102,7 +109,7 @@ public class ExampleScene : MonoBehaviour
         {
             switch (protoString)
             {
-                case "ws":
+                case "tcp":
                     selectedProto = LProto.L_PROTO_TCP;
                     mxi.GetAppPort(selectedProto);
                     break;
@@ -120,6 +127,35 @@ public class ExampleScene : MonoBehaviour
         {
             errorPanel.SetActive(true);
             errorText.text = "Error in GetAppPort, check the Console for more details";
+            return;
+        }
+    }
+
+    public void SetGetUrl(string l7protoString)
+    {
+        try
+        {
+            switch (l7protoString)
+            {
+                case "tcp":
+                    url = mxi.GetUrl("tcp");
+                    break;
+                case "ws":
+                    url = mxi.GetUrl("ws");
+                    break;
+                case "http":
+                    url = mxi.GetUrl("http");
+                    break;
+                case "udp":
+                    url = mxi.GetUrl("udp");
+                    break;
+            }
+            selectedL7Proto = l7protoString;
+        }
+        catch (GetConnectionException)
+        {
+            errorPanel.SetActive(true);
+            errorText.text = "Restart, Error in GetUrl, check Console for more details";
             return;
         }
     }
@@ -256,7 +292,7 @@ public class ExampleScene : MonoBehaviour
         await Task.Delay(TimeSpan.FromSeconds(1));
         protoPanel.SetActive(true);
         await Task.Delay(TimeSpan.FromSeconds(1.5));
-        nextButton.interactable = true;
+        nextButton.interactable = false;
         while (statusAnimator.GetInteger("Step") != 6)
         {
             await Task.Delay(TimeSpan.FromSeconds(.1));
@@ -278,31 +314,44 @@ public class ExampleScene : MonoBehaviour
         await Task.Delay(TimeSpan.FromSeconds(3));
         edgeConnectionSteps.gameObject.SetActive(false);
         await Task.Delay(TimeSpan.FromSeconds(1));
-        try
+        statusText.text = "";
+        IncrementStep();
+        cameraAniamtor.SetTrigger("CameraMove");
+        await Task.Delay(TimeSpan.FromSeconds(1));
+    
+        L7protoPanel.SetActive(true);
+        List<RectTransform> L7protos = (L7protoPanel.transform as RectTransform).Cast<RectTransform>().ToList();
+        switch (selectedProto)
         {
-            switch (selectedProto)
-            {
-                case LProto.L_PROTO_HTTP:
-                    detailedStatusText.text = "GetUrl(\"http\"):\n" + mxi.GetUrl("http");
-                    break;
-                case LProto.L_PROTO_TCP:
-                    detailedStatusText.text = "GetUrl(\"ws\"):\n" + mxi.GetUrl("ws");
-                    break;
-                case LProto.L_PROTO_UDP:
-                    detailedStatusText.text = "GetUrl(\"udp\"):\n" + mxi.GetUrl("udp");
-                    break;
-            }
-            statusText.text = "Connected";
-            connectedParticleEffect.SetActive(true);
-            detailedInfoButton.gameObject.SetActive(true);
-            loadingBall.enabled = true;
+            case LProto.L_PROTO_HTTP:
+                L7protos.Find(proto => proto.gameObject.name == "TCP").gameObject.SetActive(false);
+                L7protos.Find(proto => proto.gameObject.name == "WebSocket").gameObject.SetActive(false);
+                L7protos.Find(proto => proto.gameObject.name == "UDP").gameObject.SetActive(false);
+                break;
+            case LProto.L_PROTO_TCP:
+                L7protos.Find(proto => proto.gameObject.name == "UDP").gameObject.SetActive(false);
+                L7protos.Find(proto => proto.gameObject.name == "HTTP").gameObject.SetActive(false);
+                break;
+            case LProto.L_PROTO_UDP:
+                L7protos.Find(proto => proto.gameObject.name == "TCP").gameObject.SetActive(false);
+                L7protos.Find(proto => proto.gameObject.name == "WebSocket").gameObject.SetActive(false);
+                L7protos.Find(proto => proto.gameObject.name == "HTTP").gameObject.SetActive(false);
+                break;
         }
-        catch (GetConnectionException)
+
+        while (statusAnimator.GetInteger("Step") != 8)
         {
-            errorPanel.SetActive(true);
-            errorText.text = "Restart, Error in GetUrl, check Console for more details";
-            return;
+            await Task.Delay(TimeSpan.FromSeconds(.1));
         }
+        L7protoPanel.SetActive(false);
+
+        cameraAniamtor.SetTrigger("CameraBack");
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        statusText.text = "Connected";
+        connectedParticleEffect.SetActive(true);
+        detailedInfoButton.gameObject.SetActive(true);
+        detailedStatusText.text = "GetUrl(\"" + selectedL7Proto + "\"):\n" + url;
+        loadingBall.enabled = true;
     }
 
     #endregion
