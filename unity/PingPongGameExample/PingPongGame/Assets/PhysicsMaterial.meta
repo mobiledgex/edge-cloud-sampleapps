@@ -1,5 +1,13 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
 guid: 9da1fc6f4588c4482a8f588ea41f1ad3
+=======
+<<<<<<< HEAD:unity/MobiledgeXRestSample/Assets/Plugins.meta
+guid: 99c7a64f44312499baac6cfec1f094bb
+=======
+guid: 9da1fc6f4588c4482a8f588ea41f1ad3
+>>>>>>> PingPongNetworkManager:unity/PingPongGameExample/PingPongGame/Assets/PhysicsMaterial.meta
+>>>>>>> PingPongNetworkManager
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
