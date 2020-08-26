@@ -1,4 +1,21 @@
-﻿using UnityEngine;
+﻿/**
+ * Copyright 2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using UnityEngine;
 using System;
 using System.Threading.Tasks;
 using System.Net;
@@ -16,13 +33,14 @@ namespace MobiledgeXComputerVision {
 
     public class NetworkManager:MonoBehaviour
     {
+        private MobiledgeXIntegration integration;
+        private float avgLatency;
+        private float avgServerProcessingTime;
+        private ConcurrentQueue<float> LatencyRollingAvgQueue = new ConcurrentQueue<float>();
+        private ConcurrentQueue<float> ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
+        private static string distanceToCloudlet;
+
         public AppManager appManager;
-        public MobiledgeXWebSocketClient client;
-        MobiledgeXIntegration integration;
-        public float avgLatency;
-        public float avgServerProcessingTime;
-        ConcurrentQueue<float> LatencyRollingAvgQueue = new ConcurrentQueue<float>();
-        ConcurrentQueue<float> ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
         public GameObject EdgePanel;
         public GameObject ErrorPanel;
         public Text ErrorReason;
@@ -32,16 +50,17 @@ namespace MobiledgeXComputerVision {
         public Text avgServerProcessingTimeText;
         public Text avgLatencyText;
         public Text DistToCloudletText;
+        public MobiledgeXWebSocketClient client;
         public static bool showStats;
-        static string distanceToCloudlet;
         public enum ConnectionMode
         {
             Rest,
             WebSocket
         }
         public ConnectionMode connectionMode;
-   
-        IEnumerator  Start()
+
+        #region MonoBehaviour Callbacks
+        IEnumerator Start()
         {
 #if UNITY_EDITOR
             GetEDGE();
@@ -71,7 +90,24 @@ namespace MobiledgeXComputerVision {
                 GetEDGE();
             }
         }
+        private void Update()
+        {
+            if (client == null)
+            {
+                return;
+            }
+            var cqueue = client.receiveQueue;
+            string msg;
+            while (cqueue.TryPeek(out msg))
+            {
+                cqueue.TryDequeue(out msg);
+                appManager.HandleServerRespone(msg);
+            }
 
+        }
+        #endregion
+
+        #region MobiledgeXComputerVision Functions
         async Task GetEDGE() {
             integration = new MobiledgeXIntegration();
 #if UNITY_EDITOR
@@ -82,7 +118,7 @@ namespace MobiledgeXComputerVision {
                 bool cloudletFound = await integration.RegisterAndFindCloudlet();
                 if (cloudletFound)
                 {
-
+                    appManager.EnableInteraction();
                     ConnectedToEdgePanel.SetActive(true);
                     Loc cloudletLocation = integration.FindCloudletReply.cloudlet_location;
                     Loc userLocation = MobiledgeX.LocationService.RetrieveLocation();
@@ -107,7 +143,7 @@ namespace MobiledgeXComputerVision {
 
         public string UriBasedOnConnectionMode()
         {
-            DistributedMatchEngine.AppPort appPort;
+            AppPort appPort;
             string url;
             switch (connectionMode)
             {
@@ -154,6 +190,7 @@ namespace MobiledgeXComputerVision {
             var temp = Time.realtimeSinceStartup;
             yield return www.SendWebRequest();
             LatencyCalculator(Time.realtimeSinceStartup - temp);
+            UpdateStats();
 
             // isHttpError True on response codes greater than or equal to 400.
             // isNetworkError True on failure to resolve a DNS entry
@@ -236,7 +273,7 @@ namespace MobiledgeXComputerVision {
                 }
         }
 
-        private void Update()
+        void UpdateStats()
         {
             if (showStats)
             {
@@ -244,20 +281,7 @@ namespace MobiledgeXComputerVision {
                 avgServerProcessingTimeText.text = (avgServerProcessingTime * 100).ToString("f2") + " ms";
                 DistToCloudletText.text = distanceToCloudlet;
             }
-            if (client == null)
-            {
-                return;
-            }
-            var cqueue = client.receiveQueue;
-            string msg;
-            while (cqueue.TryPeek(out msg))
-            {
-                cqueue.TryDequeue(out msg);
-                appManager.HandleServerRespone(msg);
-            }
-            
         }
-
 
         #region Distance Calculator using Haversine formula
 
@@ -294,6 +318,8 @@ namespace MobiledgeXComputerVision {
             return (deg * Math.PI / 180.0);
         }
 
-    #endregion
+        #endregion
+
+        #endregion
     }
 }
