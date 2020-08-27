@@ -1,4 +1,21 @@
-﻿using UnityEngine;
+﻿/**
+ * Copyright 2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Networking;
@@ -9,19 +26,7 @@ namespace MobiledgeXComputerVision
 {
     public class AppManager : MonoBehaviour
     {
-        public RawImage rawImage;
-        public Texture rectTexture;
-        public static bool showGUI;
-        int[][] faceDetectionRects;
-        int[] faceRecognitionRect;
-        static string faceRecognitionSubject;
-        static float faceRecognitionConfidenceLevel;
-        static @Object[] objectsDetected;
-        float imgScalingFactor;
-        public static int level = 0;
-        public NetworkManager networkManager;
-        public Image NerdStatsPanel;
-        bool serviceAlreadyStarted
+        private bool serviceAlreadyStarted
         {
             get
             {
@@ -38,7 +43,24 @@ namespace MobiledgeXComputerVision
                 }
             }
         }
+        private int[][] faceDetectionRects;
+        private int[] faceRecognitionRect;
+        private string faceRecognitionSubject;
+        private float faceRecognitionConfidenceLevel;
+        private @Object[] objectsDetected;
+        private float imgScalingFactor;
+        private static string url;
 
+        public RawImage rawImage;
+        public Texture faceRectTexture;
+        public Texture greenRectTexture;
+        public Texture redRectTexture;
+        public Image placeholder;
+        public NetworkManager networkManager;
+        public Image NerdStatsPanel;
+
+        public static bool showGUI;
+        public static int level = 0;
         public static string urlSuffix
         {
             get
@@ -56,22 +78,18 @@ namespace MobiledgeXComputerVision
                 }
             }
         }
-
-        static string url; // connection url = uri>> SetConnection () >> (networkManager.UriBasedOnConnectionMode()) + urlSuffix
         public enum ServiceMode
         {
             FaceDetection,
             FaceRecognition,
             ObjectDetection
         }
-
         public enum DataSource
         {
             VIDEO,
             CAMERA,
             nReal
         }
-
         public static ServiceMode serviceMode;
         public static DataSource source;
         public static bool urlFound; // trigger indicating RegisterAndFindCloudlet and  GetUrl() occured
@@ -90,6 +108,7 @@ namespace MobiledgeXComputerVision
 
         #endregion
 
+        #region MobiledgeXComputerVision Functions
         public void StartCV()
         {
             StartCoroutine(ImageSenderFlow());
@@ -163,18 +182,6 @@ namespace MobiledgeXComputerVision
             }
         }
 
-
-        private void Update()
-        {
-            if (!showGUI)
-            {
-                NerdStatsPanel.enabled = false;
-            }
-            else
-            {
-                NerdStatsPanel.enabled = true;
-            }
-        }
         public void HandleServerRespone(string response)
         {
             switch (serviceMode)
@@ -237,28 +244,27 @@ namespace MobiledgeXComputerVision
                     {
                         height = imgScalingFactor * (faceDetectionRects[i][3] - faceDetectionRects[i][1]);
                         width = imgScalingFactor * (faceDetectionRects[i][2] - faceDetectionRects[i][0]);
-                        GUI.DrawTexture(new Rect(faceDetectionRects[i][0] * imgScalingFactor, faceDetectionRects[i][1] * imgScalingFactor, width, height), rectTexture, ScaleMode.ScaleToFit, true, width / height);
+                        GUI.DrawTexture(new Rect(faceDetectionRects[i][0] * imgScalingFactor, faceDetectionRects[i][1] * imgScalingFactor, width, height), faceRectTexture, ScaleMode.ScaleToFit, true, width / height);
                     }
                     break;                   
                 case ServiceMode.FaceRecognition:
                     height = imgScalingFactor * (faceRecognitionRect[3] - faceRecognitionRect[1]);
                     width = imgScalingFactor * (faceRecognitionRect[2] - faceRecognitionRect[0]);
-                    GUI.DrawTexture(new Rect((faceRecognitionRect[0] * imgScalingFactor), faceRecognitionRect[1] * imgScalingFactor, width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
+                    GUI.DrawTexture(new Rect(faceRecognitionRect[0] * imgScalingFactor, faceRecognitionRect[1] * imgScalingFactor, width, height), faceRecognitionConfidenceLevel < 105 ? greenRectTexture : redRectTexture, ScaleMode.StretchToFill, true, width / height);
                     TextStyle.normal.textColor = getConfidenceLevelColorFR(faceRecognitionConfidenceLevel);
-                    TextStyle.fontSize = 50;
-                    TextStyle.fontStyle = FontStyle.Bold;
-                    GUI.Label(new Rect((faceRecognitionRect[0] * imgScalingFactor), faceRecognitionRect[1] * imgScalingFactor, width, 100), new GUIContent(faceRecognitionSubject), TextStyle);
+                    TextStyle.fontSize = 30;
+                    GUI.Label(new Rect((faceRecognitionRect[0] * imgScalingFactor)+10, (faceRecognitionRect[1] * imgScalingFactor)+10, 50, 50), new GUIContent(faceRecognitionSubject), TextStyle);
                     break;
                 case ServiceMode.ObjectDetection:
                     foreach (@Object obj in objectsDetected)
                     {
                         height = imgScalingFactor * (obj.rect[3] - obj.rect[1]);
                         width = imgScalingFactor * (obj.rect[2] - obj.rect[0]);
-                        GUI.DrawTexture(new Rect((obj.rect[0] * imgScalingFactor), (obj.rect[1] * imgScalingFactor), width, height), rectTexture, ScaleMode.StretchToFill, true, width / height);
+                        
+                        GUI.DrawTexture(new Rect((obj.rect[0] * imgScalingFactor), (obj.rect[1] * imgScalingFactor), width, height), obj.confidence > 0.5 ? greenRectTexture : redRectTexture, ScaleMode.StretchToFill, true, width / height);
                         TextStyle.normal.textColor = getConfidenceLevelColorOD(obj.confidence);
-                        TextStyle.fontSize = 50;
-                        TextStyle.fontStyle = FontStyle.Bold;
-                        GUI.Label(new Rect(obj.rect[0] * imgScalingFactor, (obj.rect[1] * imgScalingFactor) -100, width, 100), new GUIContent(obj.@class), TextStyle);
+                        TextStyle.fontSize = 30;
+                        GUI.Label(new Rect((obj.rect[0] * imgScalingFactor)+10, (obj.rect[1] * imgScalingFactor)+10, 50, 50), new GUIContent(obj.@class+" "+(obj.confidence * 100)+"%"), TextStyle);
                     }
                     break;
             }
@@ -337,14 +343,23 @@ namespace MobiledgeXComputerVision
             {
                 return new Color(0.5f, 1, 0);
             }
-            if (confidenceLevel < 100)
-            {
-                return new Color(1, 0.5f, 0);
-            }
-            else
+            if (confidenceLevel > 105)
             {
                 return Color.red;
             }
+            else
+            {
+                return Color.green;
+            }
         }
+
+        /// <summary>
+        /// Enable user interaction after FindClouldet is passed
+        /// </summary>
+        public void EnableInteraction()
+        {
+            placeholder.gameObject.SetActive(false);
+        }
+        #endregion
     }
 }
