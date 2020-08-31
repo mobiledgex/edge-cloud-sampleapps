@@ -15,12 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from tracker.views import test_connection
+from django.conf import settings
+from tracker.views import test_connection, show_index, Home
 from tracker.views import detector_detect, recognizer_add, recognizer_train, recognizer_update
 from tracker.views import recognizer_predict, openpose_detect, object_detect, server_usage
 from tracker.views import get_data, upload_data
 
 urlpatterns = [
+    path('', show_index),
     path('admin/', admin.site.urls),
     path('detector/detect/', detector_detect),
     path('recognizer/add/', recognizer_add),

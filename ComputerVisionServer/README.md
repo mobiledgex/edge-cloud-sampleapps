@@ -26,6 +26,7 @@ pip install -r requirements.txt
 cd moedx/
 python manage.py makemigrations tracker
 python manage.py migrate
+python manage.py collectstatic --noinput
 cd pytorch_objectdetecttrack/config/
 wget http://opencv.facetraining.mobiledgex.net/files/yolov3.weights
 cd ../..
