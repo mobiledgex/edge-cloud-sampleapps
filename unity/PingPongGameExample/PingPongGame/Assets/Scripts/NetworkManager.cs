@@ -154,10 +154,7 @@ namespace MobiledgeXPingPongGame
 
         public async void MobiledgeXAPICalls()
         {
-            
-#if UNITY_EDITOR
             integration.UseWifiOnly(true);
-#endif 
             // RegisterAndFindCloudlet and VerifyLocation:
             FindCloudletReply findCloudletReply;
             try
