@@ -2,9 +2,12 @@
 * This facial recognition demo that implements a front end to the OpenCV instance running on MobiledgeX:
 */
 const webcamElement = document.getElementById('webcam');
-const canvasElement = document.getElementById('canvas');
+const canvasResize = document.getElementById('canvasResize');
+const canvasOutput = document.getElementById('canvasOutput');
 const fullLatencySpan = document.getElementById('full-latency');
 const networkLatencySpan = document.getElementById('network-latency');
+
+const RECOGNITION_CONFIDENCE_THRESHOLD = 120;
 
 const faceDetectionEndpoint = "/detector/detect/";
 const faceRecognitionEndpoint = "/recognizer/predict/";
@@ -13,6 +16,9 @@ const poseDetectionEndpoint = "/openpose/detect/";
 
 var currentEndpoint = faceDetectionEndpoint;
 
+var serverGpuSupport = false;
+
+var renderScale = canvasOutput.width / canvasResize.width;
 var renderData = null;
 var mirrored = true;
 var busyProcessing = false;
@@ -23,8 +29,14 @@ var animationAlpha = 1;
 var animationStart = 0; //Timestamp
 var animationDuration = 3000; //ms
 
-// Start with front camera, so mirror it.
-const ctx = canvasElement.getContext('2d');
+var frameMillis = 33;
+var frameInterval = setInterval(processImage, frameMillis); // Repeat every x milliseconds
+var networkLatencyInterval = setInterval(networkLatency, 1000);
+var sessionTimeoutMillis = 2*60*1000; // 2 minutes
+var sessionTimeoutInterval = setTimeout(sessionTimeout, sessionTimeoutMillis);
+
+const ctx = canvasOutput.getContext('2d');
+const ctx2 = canvasResize.getContext('2d');
 
 const constraints = {
   audio: false,
@@ -38,15 +50,27 @@ navigator.mediaDevices.getUserMedia(constraints)
 })
 .catch(error => {
   console.log('navigator.getUserMedia error: ', error);
+  endSession(false);
+  $.alert("Could not connect to webcam. Please load this page on a device with webcam capabilities.");
 });
 
-var frameMillis = 33;
-var frameInterval = setInterval(processImage, frameMillis); // Repeat every x milliseconds
-var networkLatencyInterval = setInterval(networkLatency, 1000);
-var sessionTimeoutMillis = 2*60*1000; // 2 minutes
-var sessionTimeoutInterval = setTimeout(sessionTimeout, sessionTimeoutMillis);
+getServerCapabilities();
+
+function enableGpuActivities(enabled) {
+  console.log("enableGpuActivities("+enabled+")");
+  $("#button-od").prop('disabled', !enabled);
+  $("#button-pd").prop('disabled', !enabled);
+}
+
+$("#websocket-onoffswitch").prop('disabled', true);
+$("#websocket-onoffswitch").prop("checked", false);
 
 $("#button-fd").addClass("cv-activity-selected");
+
+// "Secret" method of enabling GPU activities even when connected to non-GPU server.
+$(".header-img").dblclick(function() {
+  enableGpuActivities(true);
+});
 
 $("#button-fd").click(function () {
   animationDuration = 3000; //ms
@@ -72,21 +96,39 @@ $("#button-od").click(function () {
   restartProcessing();
 });
 
+$("#button-pd").click(function () {
+  animationDuration = 5000; //ms
+  currentEndpoint = poseDetectionEndpoint;
+  resetActivityStates();
+  $(this).addClass("cv-activity-selected");
+  restartProcessing();
+});
+
 function resetActivityStates() {
   $(".cv-activity").removeClass("cv-activity-selected");
 }
 
 function sessionTimeout() {
-  renderData = null;
-  clearInterval(frameInterval);
-  clearInterval(networkLatencyInterval);
-  $("#process-onoffswitch").prop("checked", false);
-  $("#network-onoffswitch").prop("checked", false);
-  setTimeout(showTimeoutAlert, 250);
+  endSession(true);
+  $.alert("Click an activity button to restart.", "Session Timeout");
 }
 
-function showTimeoutAlert() {
-  alert("Session Timeout. Click an activity button to restart.");
+function endSession(allowRestart) {
+  renderData = null;
+  console.log("endSession allowRestart="+allowRestart);
+  clearInterval(frameInterval);
+  clearInterval(networkLatencyInterval);
+  clearTimeout(sessionTimeoutInterval);
+  resetActivityStates() ;
+  $("#process-onoffswitch").prop("checked", false);
+  $("#network-onoffswitch").prop("checked", false);
+
+  if (!allowRestart) {
+    // Disable all controls.
+    $(".cv-activity").prop('disabled', true);
+    $(".onoffswitch-checkbox").prop('disabled', true);
+  }
+
 }
 
 function restartProcessing() {
@@ -98,8 +140,6 @@ function restartProcessing() {
   $("#process-onoffswitch").prop("checked", true);
 }
 
-$("#button-pd").prop('disabled', true);
-
 $("#process-onoffswitch").click(function () {
   if($(this).prop("checked") == true){
     restartProcessing();
@@ -107,11 +147,13 @@ $("#process-onoffswitch").click(function () {
   else if($(this).prop("checked") == false){
     renderData = null;
     clearInterval(frameInterval);
+    resetActivityStates();
   }
 });
 
 $("#network-onoffswitch").click(function () {
   if($(this).prop("checked") == true){
+    clearInterval(networkLatencyInterval);
     networkLatencyInterval = setInterval(networkLatency, 1000);
   }
   else if($(this).prop("checked") == false){
@@ -136,7 +178,7 @@ function renderResults() {
         console.log("Transitioning to rect list");
         return;
       }
-      color = "120, 192, 67";
+      color = "120, 192, 67"; // MobiledgeX Blue
       for (let i = 0; i < rects.length; i++) {
         renderRect(rects[i], null, color, "circle");
       }
@@ -147,22 +189,25 @@ function renderResults() {
         console.log("Transitioning to single rect");
         return;
       }
-      color = "239, 76, 35";
+      // TODO: Test confidence threshold and display uncertain images differently.
+      color = "239, 76, 35"; // MobiledgeX Orange
       renderRect(renderData.rect, renderData.subject, color, "rect");
       break;
-    case objectDetectionEndpoint:
-      let objects = renderData.objects;
-      if (!objects) {
-        console.log(renderData);
-        console.log("Transitioning to objects");
-        return;
-      }
-      for (let i = 0; i < objects.length; i++) {
-        color = "36, 176, 219";
-        let caption = objects[i].class + " " + objects[i].confidence*100 + "%"
-        renderRect(objects[i].rect, caption, color, "rect");
-      }
-      break;
+      case objectDetectionEndpoint:
+        let objects = renderData.objects;
+        if (!objects) {
+          console.log(renderData);
+          console.log("Transitioning to objects");
+          return;
+        }
+        for (let i = 0; i < objects.length; i++) {
+          color = "36, 176, 219"; // MobiledgeX Green
+          let caption = objects[i].class + " " + objects[i].confidence*100 + "%"
+          renderRect(objects[i].rect, caption, color, "rect");
+        }
+        break;
+      case poseDetectionEndpoint:
+        break;
     default:
       console.log("Unknown endpoint: "+currentEndpoint);
 
@@ -170,16 +215,13 @@ function renderResults() {
 }
 
 function renderRect(rect, caption, color, shape, fill) {
-  let x = rect[0];
-  let y = rect[1];
-  let right = rect[2];
-  let bottom = rect[3];
+  let x = rect[0] * renderScale;
+  let y = rect[1] * renderScale;
+  let right = rect[2] * renderScale;
+  let bottom = rect[3] * renderScale;
   let width = right - x;
   let height = bottom - y;
-  // if (mirrored) {
-  //   // The canvas has been mirrored, so we need to draw the rectangles mirrored.
-  //   x = canvasElement.width - x - width;
-  // }
+
   ctx.beginPath();
   ctx.lineWidth = "4";
   ctx.strokeStyle = "rgba("+color+", "+animationAlpha+")";
@@ -202,14 +244,18 @@ function renderRect(rect, caption, color, shape, fill) {
 
 function processImage() {
   if(mirrored) {
-    ctx.translate(canvasElement.width, 0);
+    ctx.translate(canvasOutput.width, 0);
     ctx.scale(-1, 1);
+    ctx2.translate(canvasResize.width, 0);
+    ctx2.scale(-1, 1);
   }
-  // ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-  ctx.drawImage(webcamElement, 0, 0, canvasElement.width, canvasElement.height);
+  ctx.drawImage(webcamElement, 0, 0, canvasOutput.width, canvasOutput.height);
+  ctx2.drawImage(webcamElement, 0, 0, canvasResize.width, canvasResize.height);
   if(mirrored) {
-    ctx.translate(canvasElement.width, 0);
+    ctx.translate(canvasOutput.width, 0);
     ctx.scale(-1, 1);
+    ctx2.translate(canvasResize.width, 0);
+    ctx2.scale(-1, 1);
   }
 
   renderResults(ctx);
@@ -219,8 +265,8 @@ function processImage() {
     return;
   }
 
-  // Get blob from the canvas, and send it to the server.
-  canvasElement.toBlob(function(blob) {
+  // Get blob from the resize canvas, and send it to the server.
+  canvasResize.toBlob(function(blob) {
     busyProcessing = true;
     let start = Date.now();
     fetch(currentEndpoint, {
@@ -241,7 +287,9 @@ function processImage() {
       })
       .catch(err => {
         elapsed = 9999;
-        console.log("Failed! err="+err);
+        console.log(currentEndpoint + " failed. Error="+err);
+        endSession(true);
+        $.alert(currentEndpoint + " failed. Please ensure that the CV server is running. Error="+err);
       })
       .finally(() => {
         busyProcessing = false;
@@ -267,10 +315,42 @@ function networkLatency() {
     })
     .catch(err => {
       elapsed = 9999;
-      console.log("Failed! err="+err);
+      console.log("Network latency test failed! Error="+err);
+      endSession(true);
+      $.alert("Network latency test failed! Please ensure that the CV server is running. Error="+err);
     })
     .finally(() => {
       busyNetworkLatency = false;
       networkLatencySpan.textContent = elapsed + " ms";
     })
 }
+
+// Does the server have GPU capabilities?
+function getServerCapabilities() {
+  fetch('/server/capabilities/', {
+      method: 'GET',
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      if (data.gpu_support == "true") {
+        serverGpuSupport = true;
+      } else {
+        serverGpuSupport = false;
+      }
+      console.log("serverGpuSupport="+serverGpuSupport);
+      enableGpuActivities(serverGpuSupport);
+    })
+}
+
+// Enable use of a Jquery/CSS alert dialog instead of the browser's built-in.
+$.extend({ alert: function (message, title) {
+    $("<div></div>").dialog( {
+      buttons: { "Ok": function () { $(this).dialog("close"); } },
+      close: function (event, ui) { $(this).remove(); },
+      resizable: false,
+      title: title,
+      modal: true
+    }).text(message);
+  }
+});

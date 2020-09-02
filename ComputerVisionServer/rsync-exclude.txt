@@ -1,6 +1,5 @@
 logfile
 logfile.*
-staticfiles
 pytorch_objectdetecttrack
 env
 trainer.yml

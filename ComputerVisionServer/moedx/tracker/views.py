@@ -49,9 +49,10 @@ def test_connection(request):
         logger.info(prepend_ip("/test/ Valid GET Request received", request))
         return HttpResponse("Valid GET Request to server")
     if request.method == 'HEAD':
-        logger.info(prepend_ip("/test/ Valid HEAD Request received", request))
+        # This is used by the JavaScript CV Demo for testing network latency.
+        logger.debug(prepend_ip("/test/ Valid HEAD Request received", request))
         return HttpResponse("Valid HEAD Request to server")
-    return HttpResponseBadRequest("Please send response as a GET or HEAD")
+    return HttpResponseBadRequest("Please send request as a GET or HEAD")
 
 @csrf_exempt
 def get_data(request):
@@ -312,6 +313,16 @@ def openpose_detect(request):
     logger.info(prepend_ip("%s ms to detect %d poses: %s" %(elapsed, num_poses, ret), request))
     json_ret = json.dumps(ret)
     return HttpResponse(json_ret)
+
+@csrf_exempt
+def server_capabilities(request):
+    """ Test the connection to the backend """
+    if request.method == 'GET':
+        ret = {"success": "true", "gpu_support": myObjectDetector.is_gpu_supported()}
+        json_ret = json.dumps(ret)
+        return HttpResponse(json_ret)
+
+    return HttpResponseBadRequest("Please send request as a GET")
 
 @csrf_exempt
 def server_usage(request):

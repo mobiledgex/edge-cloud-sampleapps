@@ -22,7 +22,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '5=h6y_)8yihpe!p*oftdc!t9c0c&nfn7eczjq%o76xe^7$aq*y'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -159,7 +159,6 @@ STATICFILES_DIRS = (
 )
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-print("BASE_DIR=%s STATICFILES_DIRS=%s STATIC_ROOT=%s" %(BASE_DIR, STATICFILES_DIRS, STATIC_ROOT))
 
 # Channels
 ASGI_APPLICATION = 'moedx.routing.application'
