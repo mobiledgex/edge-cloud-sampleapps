@@ -278,7 +278,7 @@ namespace MobiledgeXComputerVision {
             if (showStats)
             {
                 avgLatencyText.text = (avgLatency * 1000).ToString("f2") + " ms";
-                avgServerProcessingTimeText.text = (avgServerProcessingTime * 1000).ToString("f2") + " ms";
+                avgServerProcessingTimeText.text = (avgServerProcessingTime).ToString("f2") + " ms";
                 DistToCloudletText.text = distanceToCloudlet;
             }
         }
