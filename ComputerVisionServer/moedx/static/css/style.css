@@ -15,7 +15,7 @@ table.tbody.tr.td {
   border-radius: 5px;
 }
 
-button.cv-activity {
+button.cv-control {
     font-family: 'Roboto', sans-serif;
     font-size: 18px;
     padding: 8px 12px;
@@ -31,22 +31,23 @@ button.cv-activity {
     transition: all 0.1s ease-in-out;
 }
 
-button.cv-activity:hover {
+button.cv-control:hover {
   cursor: pointer;
 }
 
-button.cv-activity:hover:not(:focus) {
-  opacity: 0.8;
+button.cv-control:hover:not(.cv-control-selected) {
+    opacity: 1;
 }
 
-button.cv-activity-selected, button.cv-activity:hover, button.cv-activity:active, button.cv-activity:focus {
+button.cv-control-selected, button.cv-control:hover, button.cv-control:active {
+    opacity: 0.9;
     outline: none;
     background-color: #7cc844;
     border-color: #7cc844;
     color: white;
 }
 
-button.cv-activity:disabled {
+button.cv-control:disabled {
     background-color: #ffffff00;
     border-color: #7c7c7c;
     color: #7c7c7c;
@@ -135,15 +136,6 @@ button.cv-activity:disabled {
   padding: 10px 10px;
   display: block;
   text-align: center;
-}
-
-#control {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  min-width: 100%;
-  min-height: 100%;
-  z-index: 9998;
 }
 
 .onoffswitch {
