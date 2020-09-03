@@ -149,7 +149,7 @@ namespace MobiledgeXComputerVision
             texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             showGUI = serviceAlreadyStarted;
             texture.Apply();
-            byte[] imgBinary = ShrinkAndEncode(source: texture, targetWidth: serviceMode == ServiceMode.FaceRecognition ? 500 : 240);
+            byte[] imgBinary = ShrinkAndEncode(source: texture, targetWidth: 200);
             Destroy(texture);
             while (!urlFound)
             {
