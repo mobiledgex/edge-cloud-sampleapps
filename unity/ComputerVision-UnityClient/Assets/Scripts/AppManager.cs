@@ -121,19 +121,11 @@ namespace MobiledgeXComputerVision
             {
                 case NetworkManager.ConnectionMode.WebSocket:
                     url = uri +"/ws" +urlSuffix;
-                    if (serviceMode == ServiceMode.ObjectDetection) // PoseDetection Server have GPU
-                    {
-                        url = "ws://posedetection.defaultedge.mobiledgex.net:8008/ws/object/detect/";
-                    }
                     networkManager.StartWs(url);
                     urlFound = true;
                     break;
                 case NetworkManager.ConnectionMode.Rest:
                     url = uri + urlSuffix;
-                    if (serviceMode == ServiceMode.ObjectDetection) // PoseDetection Server have GPU
-                    {
-                        url = "http://posedetection.defaultedge.mobiledgex.net:8008/object/detect/";
-                    }
                     urlFound = true;
                     break;
                 default:

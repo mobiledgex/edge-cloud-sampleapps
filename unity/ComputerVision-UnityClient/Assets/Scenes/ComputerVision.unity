@@ -1608,7 +1608,7 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 70, y: 30}
+  m_CellSize: {x: 100, y: 30}
   m_Spacing: {x: 0, y: 0}
   m_Constraint: 0
   m_ConstraintCount: 2
@@ -1906,7 +1906,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: FPS (s)
+  m_Text: Mi
 --- !u!222 &534323774
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4437,8 +4437,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   appManager: {fileID: 1559097366}
-  avgLatency: 0
-  avgServerProcessingTime: 0
   EdgePanel: {fileID: 299014394}
   ErrorPanel: {fileID: 341875163}
   ErrorReason: {fileID: 1260374391}
@@ -5630,7 +5628,7 @@ VideoPlayer:
   m_RenderMode: 2
   m_AspectRatio: 3
   m_DataSource: 0
-  m_PlaybackSpeed: 0.7
+  m_PlaybackSpeed: 0.5
   m_AudioOutputMode: 0
   m_TargetAudioSources: []
   m_DirectAudioVolumes: []
@@ -5711,7 +5709,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Avg Latency
+  m_Text: Network Latency
 --- !u!222 &1935807721
 CanvasRenderer:
   m_ObjectHideFlags: 0
