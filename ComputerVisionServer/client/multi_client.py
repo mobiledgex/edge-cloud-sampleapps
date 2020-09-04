@@ -26,6 +26,7 @@ import re
 import base64
 import socket
 import websocket
+import ssl
 import struct
 import json
 import time
@@ -140,6 +141,8 @@ class Client:
 
     def get_server_stats(self):
         url = "http://%s:%d%s" %(self.host, self.port, "/server/usage/")
+        if self.tls:
+            url = url.replace("http", "https", 1)
         logger.info(requests.get(url).content)
 
     def time_open_socket(self):
@@ -228,6 +231,8 @@ class RestClient(Client):
     def start(self):
         Client.start(self)
         self.url = "http://%s:%d%s" %(self.host, self.port, self.endpoint)
+        if self.tls:
+            self.url = self.url.replace("http", "https", 1)
 
         while True:
             image = self.get_next_image()
@@ -263,7 +268,7 @@ class RestClient(Client):
         """
         # headers = {'Content-Type': 'image/jpeg', "Mobiledgex-Debug": "true"} # Enable saving debug images
         headers = {'Content-Type': 'image/jpeg'}
-        return requests.post(self.url, data=image, headers=headers)
+        return requests.post(self.url, data=image, headers=headers, verify=self.tls_verify)
 
     def send_image_json(self, image):
         """
@@ -349,6 +354,8 @@ class WebSocketClient(Client):
     def start(self):
         Client.start(self)
         url = "ws://%s:%s/ws%s" %(self.host, self.port, self.endpoint)
+        if self.tls:
+            url = url.replace("ws", "wss", 1)
         logger.debug("url: %s" %url)
         ws = websocket.WebSocketApp(url,
                     on_message = lambda ws,msg: self.on_message(ws, msg),
@@ -416,6 +423,8 @@ if __name__ == "__main__":
     parser.add_argument("-j", "--json-params", required=False, help='Extra parameters to include with image. Ex: {"subject":"Max Door", "owner":"Bruce Armstrong"}')
     parser.add_argument("--fullsize", action='store_true', help="Maintain original image size. Default is to shrink the image before sending.")
     parser.add_argument("--base64", action='store_true', help="Base64 encode image")
+    parser.add_argument("--tls", action='store_true', help="Use https connection")
+    parser.add_argument("--noverify", action='store_true', help="Disable TLS cert verification")
     parser.add_argument("--show-responses", action='store_true', help="Show responses.")
     parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
     args = parser.parse_args()
@@ -467,6 +476,8 @@ if __name__ == "__main__":
         client.net_latency_method = args.network_latency
         client.resize = not args.fullsize
         client.skip_frames = args.skip_frames
+        client.tls = args.tls
+        client.tls_verify = not args.noverify
 
         thread = Thread(target=client.start)
         thread.start()

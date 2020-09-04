@@ -34,6 +34,5 @@ EXPOSE 8011/tcp
 # Fix for "click" Python library, a uvicorn dependency.
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
-ENV REDIS_SERVER_PASSWORD=S@ndhi11
 
 CMD ["uvicorn","moedx.asgi:application","--host", "0.0.0.0","--port","8008","--workers","2"]

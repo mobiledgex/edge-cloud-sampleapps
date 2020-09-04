@@ -18,16 +18,15 @@ const faceDetectionEndpoint = "/detector/detect/";
 const faceRecognitionEndpoint = "/recognizer/predict/";
 const objectDetectionEndpoint = "/object/detect/";
 const poseDetectionEndpoint = "/openpose/detect/";
-
 var currentEndpoint = faceDetectionEndpoint;
 
 const protocolWebSocket = "WebSocket";
 const protocolRest = "REST";
 var currentProtocol = protocolWebSocket;
-// var currentProtocol = "REST";
 var webSocket   = null;
 
 var serverGpuSupport = false;
+var webcamAvailable = false;
 
 var renderScale = canvasOutput.width / canvasResize.width;
 var renderData = null;
@@ -59,6 +58,7 @@ navigator.mediaDevices.getUserMedia(constraints)
 .then(stream => {
   window.stream = stream; // make stream available to browser console
   webcamElement.srcObject = stream;
+  webcamAvailable = true;
 })
 .catch(error => {
   console.log('navigator.getUserMedia error: ', error);
@@ -84,6 +84,10 @@ function restartProcessing() {
   frameInterval = setInterval(processCameraImage, frameMillis);
   $("#process-onoffswitch").prop("checked", true);
 
+  resetGui();
+}
+
+function resetGui() {
   if (currentEndpoint == faceDetectionEndpoint) {
     $("#button-fd").addClass("cv-control-selected");
   } else if (currentEndpoint == faceRecognitionEndpoint) {
@@ -98,6 +102,37 @@ function restartProcessing() {
     $("#button-websocket").addClass("cv-control-selected");
   } else if (currentProtocol == protocolRest) {
     $("#button-rest").addClass("cv-control-selected");
+  }
+}
+
+function sessionTimeout() {
+  if ($("#process-onoffswitch").prop("checked") ||
+      $("#network-onoffswitch").prop("checked")) {
+        console.log("sessionTimeout() Showing alert dialog.");
+        $.alert("Click an activity button to restart.", "Session Timeout");
+  } else {
+    console.log("sessionTimeout() No activity. Skipping alert dialog.");
+  }
+  $("#network-onoffswitch").prop("checked", false);
+  endSession(true);
+}
+
+function endSession(allowRestart) {
+  console.log("endSession allowRestart="+allowRestart);
+  renderData = null;
+  clearInterval(frameInterval);
+  // clearInterval(networkLatencyInterval);
+  clearTimeout(sessionTimeoutInterval);
+  resetActivityStates() ;
+  $("#process-onoffswitch").prop("checked", false);
+
+  if (!allowRestart) {
+    // Disable all controls except network latency.
+    $(".cv-activity").prop('disabled', true);
+    $("#process-onoffswitch").prop('disabled', true);
+
+    currentEndpoint = null;
+    resetGui();
   }
 }
 
@@ -152,49 +187,33 @@ function resetActivityStates() {
 }
 
 $("#button-websocket").click(function () {
+  if (currentProtocol == protocolWebSocket) {
+    // Nothing to do.
+    return;
+  }
   currentProtocol = protocolWebSocket;
   resetProtocolStates();
   $(this).addClass("cv-control-selected");
-  restartProcessing();
+  if (webcamAvailable) {
+    restartProcessing();
+  }
 });
 
 $("#button-rest").click(function () {
+  if (currentProtocol == protocolRest) {
+    // Nothing to do.
+    return;
+  }
   currentProtocol = protocolRest;
   resetProtocolStates();
   $(this).addClass("cv-control-selected");
-  restartProcessing();
+  if (webcamAvailable) {
+    restartProcessing();
+  }
 });
 
 function resetProtocolStates() {
   $(".cv-protocol").removeClass("cv-control-selected");
-}
-
-function sessionTimeout() {
-  if ($("#process-onoffswitch").prop("checked") ||
-      $("#network-onoffswitch").prop("checked")) {
-        console.log("sessionTimeout() Showing alert dialog.");
-        $.alert("Click an activity button to restart.", "Session Timeout");
-      } else {
-        console.log("sessionTimeout() No activity. Skipping alert dialog.");
-      }
-  endSession(true);
-}
-
-function endSession(allowRestart) {
-  console.log("endSession allowRestart="+allowRestart);
-  renderData = null;
-  clearInterval(frameInterval);
-  // clearInterval(networkLatencyInterval);
-  clearTimeout(sessionTimeoutInterval);
-  resetActivityStates() ;
-  $("#process-onoffswitch").prop("checked", false);
-  $("#network-onoffswitch").prop("checked", false);
-
-  if (!allowRestart) {
-    // Disable all controls.
-    $(".cv-activity").prop('disabled', true);
-    $(".onoffswitch-checkbox").prop('disabled', true);
-  }
 }
 
 $("#process-onoffswitch").click(function () {
@@ -442,13 +461,13 @@ function getServerCapabilities() {
     .then(response => response.json())
     .then(data => {
       console.log(data);
-      if (data.gpu_support == "true") {
-        serverGpuSupport = true;
-      } else {
-        serverGpuSupport = false;
-      }
+      serverGpuSupport = data.gpu_support;
       console.log("serverGpuSupport="+serverGpuSupport);
-      enableGpuActivities(serverGpuSupport);
+      if (webcamAvailable) {
+        enableGpuActivities(serverGpuSupport);
+      } else {
+        console.log("Skipping enableGpuActivities due to lack of webcam");
+      }
     })
 }
 
