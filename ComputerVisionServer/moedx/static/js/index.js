@@ -294,6 +294,7 @@ function renderResults() {
       break;
 
     case poseDetectionEndpoint:
+      renderPoses(ctx, renderData.poses, renderScale, animationAlpha);
       break;
 
     default:

@@ -19,7 +19,7 @@
 
     <div id="canvas-wrapper" class="wrapper">
       <video id="webcam" autoplay="" playsinline="" width="640" height="480"></video>
-      <canvas id="canvasResize" width="240" height="180"></canvas>
+      <canvas id="canvasResize" width="320" height="240"></canvas>
       <canvas id="canvasOutput" width="800" height="600"></canvas>
     </div>
 
@@ -68,5 +68,6 @@
   </div>
 
   <script src="{% static 'js/index.js' %}"></script>
+  <script src="{% static 'js/poseRenderer.js' %}"></script>
   </body>
 </html>

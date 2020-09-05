@@ -363,7 +363,10 @@ class WebSocketClient(Client):
                     on_close   = lambda ws:     self.on_close(ws),
                     on_open    = lambda ws:     self.on_open(ws))
         # websocket.enableTrace(True)
-        ws.run_forever()
+        if self.tls_verify:
+            ws.run_forever()
+        else:
+            ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
     def on_message(self, ws, message):
         # As each response is received, process the response, then send the next image.
