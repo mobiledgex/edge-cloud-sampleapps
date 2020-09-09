@@ -23,6 +23,11 @@ const boneColors = [
 var jointCircleRadius = 6;
 var lineWidth = 4;
 
+/**
+ * Goes through each set of bonePairs and if the received data has those
+ * coordinates populated, draws a line between them and circles at the joints,
+ * in the corresponding boneColors value.
+ */
 function renderPoses(ctx, poses, renderScale, animationAlpha) {
   console.log("renderPoses");
   console.log(poses);
@@ -33,7 +38,6 @@ function renderPoses(ctx, poses, renderScale, animationAlpha) {
       let pair = bonePairs[j];
       let indexStart = pair[0];
       let indexEnd = pair[1];
-      // console.log("indexStart="+indexStart+" indexEnd="+indexEnd);
 
       let keypoint1 = pose[indexStart];
       let x1 = keypoint1[0] * renderScale;
@@ -48,8 +52,6 @@ function renderPoses(ctx, poses, renderScale, animationAlpha) {
       if(score1 == 0 || score2 == 0) {
           continue;
       }
-
-      // console.log("Drawing indexStart="+indexStart+" indexEnd="+indexEnd+" ("+x1+","+y1+","+x2+","+y2+")");
 
       ctx.strokeStyle = convertHexToRGBA(boneColors[j], animationAlpha);
       ctx.lineWidth = lineWidth;

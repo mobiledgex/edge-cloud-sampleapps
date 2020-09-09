@@ -316,13 +316,12 @@ function renderRect(rect, caption, strokeStyle, fillStyle, shape) {
   ctx.strokeStyle = strokeStyle;
   if (shape == "rect") {
     ctx.rect(x, y, width, height);
-    // ctx.fillRect(x, y, width, height);
   } else if (shape == "circle") {
     ctx.arc(x+(width/2), y+(height/2), (width/2), 0, 2*Math.PI);
   }
   if (fillStyle != null) {
     ctx.fillStyle = fillStyle;
-    ctx.fill()
+    ctx.fill();
   }
   ctx.stroke();
   if (caption) {
