@@ -1,0 +1,226 @@
+body {
+  overflow: hidden;
+  background: #111;
+  color: #fff;
+  font-family: 'Roboto', sans-serif;
+  font-size:18px;
+  /* display: grid; */
+  margin: 0;
+  /* grid-template: 80px 1fr / 210px 1fr; */
+}
+
+table.tbody.tr.td {
+  border-color: #7cc844;
+  border-style: dotted;
+  border-radius: 5px;
+}
+
+button.cv-control {
+    font-family: 'Roboto', sans-serif;
+    font-size: 18px;
+    padding: 8px 12px;
+    background-color: #ffffff00;
+    border-color: #7cc844;
+    color: #7cc844;
+    appearance: none;
+    border-style: solid;
+    border-radius: 100px;
+    width: 190px;
+    margin-bottom: 10px;
+    display: block;
+    transition: all 0.1s ease-in-out;
+}
+
+button.cv-control:hover {
+  cursor: pointer;
+}
+
+button.cv-control:hover:not(.cv-control-selected) {
+    opacity: 1;
+}
+
+button.cv-control-selected, button.cv-control:hover, button.cv-control:active {
+    opacity: 0.9;
+    outline: none;
+    background-color: #7cc844;
+    border-color: #7cc844;
+    color: white;
+}
+
+button.cv-control:disabled {
+    background-color: #ffffff00;
+    border-color: #7c7c7c;
+    color: #7c7c7c;
+    opacity: 0.25!important;
+    cursor: default;
+}
+
+#canvas-wrapper {
+  width: 80vw;
+  float: right;
+  z-index: -99999;
+  background: rgb(25 25 25);
+}
+
+.wrapper {
+  position: relative;
+}
+
+.dimensions {
+  /*position: absolute;*/
+  top: 20px;
+  left: 20px;
+  background: #fff;
+  color: #222;
+  padding: 10px;
+  border-radius: 5px;
+  opacity: 0.5;
+}
+
+#webcam{
+  display: block;
+  position: relative;
+  width: auto;
+  height: 100vh;
+  z-index: 999;
+  pointer-events: none;
+  margin: auto;
+}
+
+#canvasResize{
+  background-color: transparent;
+  position: absolute;
+  width: auto;
+  height: 100vh;
+  z-index: 9998;
+  margin: auto;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#canvasOutput{
+  background-color: transparent;
+  position: absolute;
+  width: auto;
+  height: 100vh;
+  z-index: 9999;
+  margin: auto;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sidebar {
+  position: absolute;
+  width: 20vw;
+  min-width: 210px;
+  height: 100vh;
+  background: rgb(40 40 40 / 0.8);
+  opacity: 1;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  align-content: space-between;
+}
+
+.controlPanel {
+  width: 100%;
+  z-index: 99999;
+  background: transparent;
+  opacity: 1;
+  padding: 10px 10px;
+  display: block;
+  text-align: center;
+}
+
+.onoffswitch {
+    position: relative;
+    width: 60px;
+    margin-right: 10px;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select: none;
+}
+.onoffswitch-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    height: 24px; padding: 0; line-height: 24px;
+    border: 2px solid #E3E3E3; border-radius: 24px;
+    background-color: #FFFFFF;
+    transition: background-color 0.2s ease-in;
+}
+.onoffswitch-label:before {
+    content: "";
+    display: block; width: 24px; margin: 0px;
+    background: #FFFFFF;
+    position: absolute; top: 0; bottom: 0;
+    right: 34px;
+    border: 2px solid #E3E3E3; border-radius: 24px;
+    transition: all 0.2s ease-in 0s;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label {
+    background-color: #7cc844;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label, .onoffswitch-checkbox:checked + .onoffswitch-label:before {
+   border-color: #7cc844;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label:before {
+    right: 0px;
+}
+
+#sidebar-left table td:nth-child(2) {
+  font-weight: 200;
+  font-size: 14px
+}
+
+#sidebar-left table td:last-child {
+    min-width: 80px;
+}
+
+#sidebar-left table {
+    /* align-self: flex-end; */
+    display: block;
+    margin-bottom: 10px;
+    padding-left: 6px;
+}
+
+#sidebar-left table tr {
+    margin-bottom: 10px;
+    display: block;
+}
+
+.header-wrapper {
+  align-self: flex-start;
+  padding: 10px;
+}
+
+.header-img {
+  /* padding: 10px; */
+  /* width: 100%; */
+}
+
+.header-text {
+  font-size: 24px;
+  font-weight: 100;
+  display: block;
+}
+
+#alert-panel {
+  width:200px;
+  height:100px;
+  color: white;
+  background: red;
+  border:solid 33px red;
+  position:absolute;
+  display:none;
+  z-index:10000;
+}

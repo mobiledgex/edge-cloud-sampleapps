@@ -15,21 +15,21 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from tracker.views import test_connection
-from tracker.views import detector_detect, recognizer_add, recognizer_train, recognizer_update
-from tracker.views import recognizer_predict, openpose_detect, object_detect, server_usage
-from tracker.views import get_data, upload_data
+from django.conf import settings
+from tracker import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('detector/detect/', detector_detect),
-    path('recognizer/add/', recognizer_add),
-    path('recognizer/train/', recognizer_train),
-    path('recognizer/predict/', recognizer_predict),
-    path('openpose/detect/', openpose_detect),
-    path('object/detect/', object_detect),
-    path('server/usage/', server_usage),
-    path('getdata/', get_data),
-    path('uploaddata/', upload_data),
-    path('test/', test_connection),
+    path('', views.show_index),
+    path('detector/detect/', views.detector_detect),
+    path('recognizer/add/', views.recognizer_add),
+    path('recognizer/train/', views.recognizer_train),
+    path('recognizer/predict/', views.recognizer_predict),
+    path('openpose/detect/', views.openpose_detect),
+    path('object/detect/', views.object_detect),
+    path('server/usage/', views.server_usage),
+    path('server/capabilities/', views.server_capabilities),
+    path('getdata/', views.get_data),
+    path('uploaddata/', views.upload_data),
+    path('test/', views.test_connection),
 ]

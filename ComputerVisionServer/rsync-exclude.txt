@@ -1,0 +1,7 @@
+logfile
+logfile.*
+pytorch_objectdetecttrack
+env
+trainer.yml
+db.sqlite3
+__pycache__
