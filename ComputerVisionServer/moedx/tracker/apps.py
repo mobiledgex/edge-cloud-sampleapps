@@ -44,7 +44,7 @@ class TrackerConfig(AppConfig):
 
         # If this script is called by manage.py with with either "makemigrations" or "migrate",
         # we don't need to continue with initialization.
-        if len(sys.argv) >= 2 and sys.argv[0] == "manage.py" and "migrat" in sys.argv[1]:
+        if len(sys.argv) >= 2 and sys.argv[0] == "manage.py" and sys.argv[1] != "runserver":
             logger.info("Called by '%s %s'. Aborting app initialization." %(sys.argv[0], sys.argv[1]))
             return
 

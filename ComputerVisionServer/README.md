@@ -20,12 +20,13 @@ TAG=2020-3-26 make
 If you see an error, particularly `ModuleNotFoundError: No module named 'models'`, you probably neglected the `git submodule` commands above.
 ### To run the server manually:
 ```bash
-virtualenv env -ppython3
+virtualenv env -ppython3.7
 source env/bin/activate
 pip install -r requirements.txt
 cd moedx/
 python manage.py makemigrations tracker
 python manage.py migrate
+python manage.py collectstatic --noinput
 cd pytorch_objectdetecttrack/config/
 wget http://opencv.facetraining.mobiledgex.net/files/yolov3.weights
 cd ../..

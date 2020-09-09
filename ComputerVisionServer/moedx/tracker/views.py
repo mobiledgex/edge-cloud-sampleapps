@@ -15,6 +15,7 @@
 
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import TemplateView
 from django.http import HttpResponse, HttpResponseBadRequest
 from tracker.models import CentralizedTraining
 from tracker.apps import myFaceDetector, myFaceRecognizer, myOpenPose, myOpWrapper
@@ -37,12 +38,21 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 @csrf_exempt
+def show_index(request):
+    """ Show index.html for the CV demo. """
+    return render(request,'index.html')
+
+@csrf_exempt
 def test_connection(request):
     """ Test the connection to the backend """
     if request.method == 'GET':
         logger.info(prepend_ip("/test/ Valid GET Request received", request))
         return HttpResponse("Valid GET Request to server")
-    return HttpResponseBadRequest("Please send response as a GET")
+    if request.method == 'HEAD':
+        # This is used by the JavaScript CV Demo for testing network latency.
+        logger.debug(prepend_ip("/test/ Valid HEAD Request received", request))
+        return HttpResponse("Valid HEAD Request to server")
+    return HttpResponseBadRequest("Please send request as a GET or HEAD")
 
 @csrf_exempt
 def get_data(request):
@@ -103,7 +113,8 @@ def save_debug_image(image, request, type):
 
 def get_image_from_request(request, type):
     """ Based on the content type, get the image data from the request. """
-    logger.debug(prepend_ip("get_image_from_request method=%s content_type=%s" %(request.method, request.content_type), request))
+    logger.info(prepend_ip("get_image_from_request method=%s content_type=%s" %(request.method, request.content_type), request))
+    logger.debug("first 32 bytes of body: %s" %request.body[:32])
     if request.method != 'POST':
         return HttpResponseBadRequest("Must send frame as a POST")
 
@@ -302,6 +313,16 @@ def openpose_detect(request):
     logger.info(prepend_ip("%s ms to detect %d poses: %s" %(elapsed, num_poses, ret), request))
     json_ret = json.dumps(ret)
     return HttpResponse(json_ret)
+
+@csrf_exempt
+def server_capabilities(request):
+    """ Test the connection to the backend """
+    if request.method == 'GET':
+        ret = {"success": "true", "gpu_support": myObjectDetector.is_gpu_supported()}
+        json_ret = json.dumps(ret)
+        return HttpResponse(json_ret)
+
+    return HttpResponseBadRequest("Please send request as a GET")
 
 @csrf_exempt
 def server_usage(request):

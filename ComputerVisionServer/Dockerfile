@@ -23,6 +23,9 @@ COPY . /usr/src/app
 # Initialize the database.
 RUN python manage.py makemigrations tracker
 RUN python manage.py migrate
+
+RUN python manage.py collectstatic --noinput
+
 # port for REST
 EXPOSE 8008/tcp
 # port for persistent TCP server
