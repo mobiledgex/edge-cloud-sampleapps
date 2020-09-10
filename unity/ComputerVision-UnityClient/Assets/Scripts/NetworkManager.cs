@@ -122,7 +122,7 @@ namespace MobiledgeXComputerVision {
                     ConnectedToEdgePanel.SetActive(true);
                     Loc cloudletLocation = integration.FindCloudletReply.cloudlet_location;
                     Loc userLocation = MobiledgeX.LocationService.RetrieveLocation();
-                    distanceToCloudlet = distance(cloudletLocation.latitude, cloudletLocation.longitude, userLocation.latitude, userLocation.longitude).ToString("f1")+" mi";
+                    distanceToCloudlet = distance(cloudletLocation.latitude, cloudletLocation.longitude, userLocation.latitude, userLocation.longitude).ToString("f0")+" mi";
                 }
             }
            
@@ -277,8 +277,8 @@ namespace MobiledgeXComputerVision {
         {
             if (showStats)
             {
-                avgLatencyText.text = (avgLatency * 100).ToString("f2") + " ms";
-                avgServerProcessingTimeText.text = (avgServerProcessingTime * 100).ToString("f2") + " ms";
+                avgLatencyText.text = (avgLatency * 1000).ToString("f0") + " ms";
+                avgServerProcessingTimeText.text = (avgServerProcessingTime).ToString("f0") + " ms";
                 DistToCloudletText.text = distanceToCloudlet;
             }
         }

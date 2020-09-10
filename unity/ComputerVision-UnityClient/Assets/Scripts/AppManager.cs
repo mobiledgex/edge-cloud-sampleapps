@@ -121,19 +121,11 @@ namespace MobiledgeXComputerVision
             {
                 case NetworkManager.ConnectionMode.WebSocket:
                     url = uri +"/ws" +urlSuffix;
-                    if (serviceMode == ServiceMode.ObjectDetection) // PoseDetection Server have GPU
-                    {
-                        url = "ws://posedetection.defaultedge.mobiledgex.net:8008/ws/object/detect/";
-                    }
                     networkManager.StartWs(url);
                     urlFound = true;
                     break;
                 case NetworkManager.ConnectionMode.Rest:
                     url = uri + urlSuffix;
-                    if (serviceMode == ServiceMode.ObjectDetection) // PoseDetection Server have GPU
-                    {
-                        url = "http://posedetection.defaultedge.mobiledgex.net:8008/object/detect/";
-                    }
                     urlFound = true;
                     break;
                 default:
@@ -157,7 +149,7 @@ namespace MobiledgeXComputerVision
             texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             showGUI = serviceAlreadyStarted;
             texture.Apply();
-            byte[] imgBinary = ShrinkAndEncode(source: texture, targetWidth: serviceMode == ServiceMode.FaceRecognition ? 500 : 240);
+            byte[] imgBinary = ShrinkAndEncode(source: texture, targetWidth: 200);
             Destroy(texture);
             while (!urlFound)
             {
