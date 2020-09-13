@@ -4,6 +4,7 @@
 const webcamElement = document.getElementById('webcam');
 const canvasResize = document.getElementById('canvasResize');
 const canvasOutput = document.getElementById('canvasOutput');
+const canvasWrapper = document.getElementById('canvas-wrapper');
 const fullLatencySpan = document.getElementById('full-latency');
 const networkLatencySpan = document.getElementById('network-latency');
 
@@ -27,8 +28,13 @@ var webSocket   = null;
 
 var serverGpuSupport = false;
 var webcamAvailable = false;
+var webcamInitialized = false;
 
-var renderScale = canvasOutput.width / canvasResize.width;
+// This is the size a frame will be resized to before sending it to the server.
+var resizeLong = 240;
+var resizeShort = 180;
+
+var renderScale = 1; // Will be calculated after webcam becomes available.
 var renderData = null;
 var mirrored = true;
 var busyProcessing = false;
@@ -54,11 +60,17 @@ const constraints = {
   video: true
 };
 
+// https://www.damirscorner.com/blog/posts/20170317-RenderCapturedVideoToFullPageCanvas.html
+
 navigator.mediaDevices.getUserMedia(constraints)
 .then(stream => {
   window.stream = stream; // make stream available to browser console
   webcamElement.srcObject = stream;
   webcamAvailable = true;
+
+  getServerCapabilities();
+  restartProcessing();
+
 })
 .catch(error => {
   console.log('navigator.getUserMedia error: ', error);
@@ -136,18 +148,36 @@ function endSession(allowRestart) {
   }
 }
 
-restartProcessing();
-getServerCapabilities();
-
 function enableGpuActivities(enabled) {
   console.log("enableGpuActivities("+enabled+")");
-  $("#button-od").prop('disabled', !enabled);
-  $("#button-pd").prop('disabled', !enabled);
+  $(".button-gpu").prop('disabled', !enabled);
 }
 
 // "Secret" method of enabling GPU activities even when connected to non-GPU server.
-$(".header-img").dblclick(function() {
+$(".logo").dblclick(function() {
   enableGpuActivities(true);
+});
+// For mobile
+$("body").on("contextmenu", "#mobile-logo", function() {
+  console.log("contextmenu");
+  enableGpuActivities(true);
+  return false;
+});
+
+// The menu button will toggel the menu.
+$("#header-menu-button").click(function () {
+  $(".dropdown-content").slideToggle();
+});
+
+// Clicking on anything else should close the menu.
+$(".cv-control").click(function () {
+  $(".dropdown-content").slideUp();
+});
+$(".onoffswitch-checkbox").click(function () {
+  $(".dropdown-content").slideUp();
+});
+$(".wrapper").click(function () {
+  $(".dropdown-content").slideUp();
 });
 
 $("#button-fd").click(function () {
@@ -229,6 +259,7 @@ $("#process-onoffswitch").click(function () {
 
 $("#network-onoffswitch").click(function () {
   if ($(this).prop("checked") == true){
+    busyNetworkLatency = false;
     clearInterval(networkLatencyInterval);
     networkLatencyInterval = setInterval(networkLatency, 1000);
   }
@@ -335,13 +366,77 @@ function renderRect(rect, caption, strokeStyle, fillStyle, shape) {
   }
 }
 
+function setCanvasSizes() {
+  let resizeWidth;
+  let resizeHeight;
+  let aspect;
+  let wantedWidth;
+  let wantedHeight;
+  let width;
+  let height;
+  if (webcamElement.videoWidth > webcamElement.videoHeight) {
+    console.log("Landscape mode.");
+    resizeWidth = resizeLong;
+    resizeHeight = resizeShort;
+    aspect = resizeHeight / resizeWidth;
+    // Set size for canvasOutput, which shows the webcam image overlayed by results returned from the CV server.
+    let headerWrapper = document.getElementById('header-wrapper');
+    wantedHeight = window.innerHeight - headerWrapper.clientHeight;
+    width = Math.round(wantedHeight / aspect);
+    console.log("Setting canvasOutput to "+width+"x"+wantedHeight);
+    canvasOutput.width = width;
+    canvasOutput.height = wantedHeight;
+  } else {
+    console.log("Portrait mode.");
+    resizeWidth = resizeShort;
+    resizeHeight = resizeLong;
+    aspect = resizeHeight / resizeWidth;
+    // Set size for canvasOutput, which shows the webcam image overlayed by results returned from the CV server.
+    wantedWidth = window.outerWidth;
+    height = Math.round(wantedWidth * aspect);
+    console.log("Setting canvasOutput to "+wantedWidth+"x"+height);
+    canvasOutput.width = wantedWidth;
+    canvasOutput.height = height;
+  }
+
+  // Set size for canvasResize, which is used to resize the webcam image before it's sent to the CV server.
+  wantedWidth = resizeWidth;
+  height = Math.round(wantedWidth * aspect);
+  console.log("Setting canvasResize to "+wantedWidth+"x"+height);
+  canvasResize.width = wantedWidth;
+  canvasResize.height = height;
+
+  // canvasWrapper.width = canvasOutput.width;
+  // canvasWrapper.height = canvasOutput.height;
+  webcamElement.width = canvasOutput.width;
+  webcamElement.height = canvasOutput.height;
+
+  // let statsWrapper = document.getElementById('stats-wrapper')
+  // statsWrapper.width = canvasOutput.width;
+
+  renderScale = canvasOutput.width / canvasResize.width;
+  console.log("Setting renderScale to "+renderScale);
+
+  webcamInitialized = true;
+}
+
 function processCameraImage() {
+  if (!webcamElement.videoHeight || !webcamElement.videoWidth) {
+    console.log("Webcam not ready");
+    return;
+  }
+
+  if (!webcamInitialized) {
+    setCanvasSizes();
+  }
+
   if (mirrored) {
     ctx.translate(canvasOutput.width, 0);
     ctx.scale(-1, 1);
     ctx2.translate(canvasResize.width, 0);
     ctx2.scale(-1, 1);
   }
+
   ctx.drawImage(webcamElement, 0, 0, canvasOutput.width, canvasOutput.height);
   ctx2.drawImage(webcamElement, 0, 0, canvasResize.width, canvasResize.height);
   if (mirrored) {
@@ -424,6 +519,11 @@ function networkLatency() {
   }
   busyNetworkLatency = true;
   if (currentProtocol == protocolWebSocket) {
+    if (!webSocket) {
+      console.error("webSocket is not initialized. Will retry...");
+      busyNetworkLatency = false;
+      return;
+    }
     if (webSocket.readyState != WebSocket.OPEN) {
       console.error("webSocket is not open: " + webSocket.readyState);
       busyNetworkLatency = false;

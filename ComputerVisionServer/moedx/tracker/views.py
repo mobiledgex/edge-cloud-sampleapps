@@ -43,6 +43,11 @@ def show_index(request):
     return render(request,'index.html')
 
 @csrf_exempt
+def show_index2(request):
+    """ Show index2.html for the CV demo. """
+    return render(request,'index2.html')
+
+@csrf_exempt
 def test_connection(request):
     """ Test the connection to the backend """
     if request.method == 'GET':
