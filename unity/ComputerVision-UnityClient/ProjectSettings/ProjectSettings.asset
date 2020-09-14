@@ -165,7 +165,7 @@ PlayerSettings:
   applicationIdentifier:
     iPhone: com.mobiledgex.computervision
   buildNumber:
-    iPhone: 3
+    iPhone: 5
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 22
   AndroidTargetSdkVersion: 0

@@ -34,11 +34,11 @@ namespace MobiledgeXComputerVision {
     public class NetworkManager:MonoBehaviour
     {
         private MobiledgeXIntegration integration;
-        private float avgLatency;
+        private float avgFullProcessLatency;
         private float avgServerProcessingTime;
+        private float avgNetworkOnlyLatency;
         private ConcurrentQueue<float> LatencyRollingAvgQueue = new ConcurrentQueue<float>();
         private ConcurrentQueue<float> ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
-        private static string distanceToCloudlet;
 
         public AppManager appManager;
         public GameObject EdgePanel;
@@ -48,8 +48,8 @@ namespace MobiledgeXComputerVision {
         public GameObject ConnectedToEdgePanel;
         public GameObject NotConnectedToEdgePanel;
         public Text avgServerProcessingTimeText;
-        public Text avgLatencyText;
-        public Text DistToCloudletText;
+        public Text avgFullProcessLatencyText;
+        public Text avgNetworkOnlyLatencyText;
         public MobiledgeXWebSocketClient client;
         public static bool showStats;
         public enum ConnectionMode
@@ -74,21 +74,8 @@ namespace MobiledgeXComputerVision {
                 ErrorSolution.GetComponentInChildren<Text>().text = "Restart the App and Connect to the Internet through Carrier Data.";
                 ErrorPanel.SetActive(true);
             }
-
-            if (Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork) // wifi or cable
-            {
-                EdgePanel.SetActive(true); // Disables User Input
-                NotConnectedToEdgePanel.SetActive(true);
-                ErrorReason.text = "Connected through Wifi, MobiledgeX Edge works with Carrier Data";
-                ErrorSolution.GetComponentInChildren<Text>().text = " Restart the App, Switch off Wifi and Connect through Carrier Data.";
-                ErrorPanel.SetActive(true);
-            }
-
-            else if (Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork)
-            {
-                yield return StartCoroutine(MobiledgeX.LocationService.EnsureLocation());
-                GetEDGE();
-            }
+            yield return StartCoroutine(MobiledgeX.LocationService.EnsureLocation());
+            GetEDGE();
         }
         private void Update()
         {
@@ -110,9 +97,7 @@ namespace MobiledgeXComputerVision {
         #region MobiledgeXComputerVision Functions
         async Task GetEDGE() {
             integration = new MobiledgeXIntegration();
-#if UNITY_EDITOR
             integration.UseWifiOnly(true);
-#endif
             try
             {
                 bool cloudletFound = await integration.RegisterAndFindCloudlet();
@@ -120,9 +105,6 @@ namespace MobiledgeXComputerVision {
                 {
                     appManager.EnableInteraction();
                     ConnectedToEdgePanel.SetActive(true);
-                    Loc cloudletLocation = integration.FindCloudletReply.cloudlet_location;
-                    Loc userLocation = MobiledgeX.LocationService.RetrieveLocation();
-                    distanceToCloudlet = distance(cloudletLocation.latitude, cloudletLocation.longitude, userLocation.latitude, userLocation.longitude).ToString("f0")+" mi";
                 }
             }
            
@@ -235,7 +217,7 @@ namespace MobiledgeXComputerVision {
                 LatencyRollingAvgQueue.TryDequeue(out t);
                 LatencyRollingAvgQueue.Enqueue(requestLatency);
             }
-            avgLatency = LatencyRollingAvgQueue.Average();
+            avgFullProcessLatency = LatencyRollingAvgQueue.Average();
         }
 
         public void ServerProcessingTimeCalculator(float requestLatency)
@@ -251,6 +233,7 @@ namespace MobiledgeXComputerVision {
                 ServerProcessingTimeRollingAvgQueue.Enqueue(requestLatency);
             }
             avgServerProcessingTime = ServerProcessingTimeRollingAvgQueue.Average();
+            avgNetworkOnlyLatency = (avgFullProcessLatency * 1000) - avgServerProcessingTime;
         }
 
         public void ClearStats()
@@ -277,49 +260,11 @@ namespace MobiledgeXComputerVision {
         {
             if (showStats)
             {
-                avgLatencyText.text = (avgLatency * 1000).ToString("f0") + " ms";
+                avgFullProcessLatencyText.text = (avgFullProcessLatency * 1000).ToString("f0") + " ms";
                 avgServerProcessingTimeText.text = (avgServerProcessingTime).ToString("f0") + " ms";
-                DistToCloudletText.text = distanceToCloudlet;
+                avgNetworkOnlyLatencyText.text = (avgNetworkOnlyLatency).ToString("f0") + " ms";
             }
         }
-
-        #region Distance Calculator using Haversine formula
-
-        private double distance(double lat1, double lon1, double lat2, double lon2)
-        {
-            if ((lat1 == lat2) && (lon1 == lon2))
-            {
-                return 0;
-            }
-            else
-            {
-                lon1 = Deg2Rad(lon1);
-                lon2 = Deg2Rad(lon2);
-                lat1 = Deg2Rad(lat1);
-                lat2 = Deg2Rad(lat2);
-
-                // Haversine formula  
-                double dlon = lon2 - lon1;
-                double dlat = lat2 - lat1;
-                double a = Math.Pow(Math.Sin(dlat / 2), 2) +
-                           Math.Cos(lat1) * Math.Cos(lat2) *
-                           Math.Pow(Math.Sin(dlon / 2), 2);
-
-                double c = 2 * Math.Asin(Math.Sqrt(a));
-
-                double r = 3956;// Radius of earth in miles
-
-                return (c * r);
-            }
-        }
-
-        private double Deg2Rad(double deg)
-        {
-            return (deg * Math.PI / 180.0);
-        }
-
-        #endregion
-
         #endregion
     }
 }
