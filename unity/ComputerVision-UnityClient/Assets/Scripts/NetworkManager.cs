@@ -35,13 +35,11 @@ namespace MobiledgeXComputerVision {
     public class NetworkManager:MonoBehaviour
     {
         private MobiledgeXIntegration integration;
-        private float avgFullProcessLatency;
-        private float avgServerProcessingTime;
-        private float avgNetworkOnlyLatency;
-        private ConcurrentQueue<float> LatencyRollingAvgQueue = new ConcurrentQueue<float>();
-        private ConcurrentQueue<float> ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
-        private int networkLatencyCounter = 0;
+        private ConcurrentQueue<float> networkOnlyLatencyRollingAvgQueue = new ConcurrentQueue<float>();
+        private ConcurrentQueue<float> fullLatencyRollingAvgQueue = new ConcurrentQueue<float>();
+        private string connectionUrl;
 
+        public ConcurrentQueue<float> ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
         public AppManager appManager;
         public GameObject EdgePanel;
         public GameObject ErrorPanel;
@@ -60,11 +58,6 @@ namespace MobiledgeXComputerVision {
             WebSocket
         }
         public ConnectionMode connectionMode;
-
-        private void Awake()
-        {
-            InvokeRepeating("GetNetworkOnlyLatency", 5, 10);
-        }
         #region MonoBehaviour Callbacks
         IEnumerator Start()
         {
@@ -142,6 +135,7 @@ namespace MobiledgeXComputerVision {
                 case ConnectionMode.Rest:
                     appPort = integration.GetAppPort(LProto.L_PROTO_TCP);
                     url = integration.GetUrl("http");
+                    connectionUrl = url; // caching url for network only latency calculation REST only
                     return url;
                 default:
                     return "";
@@ -177,7 +171,8 @@ namespace MobiledgeXComputerVision {
 
             var temp = Time.realtimeSinceStartup;
             yield return www.SendWebRequest();
-            LatencyCalculator(Time.realtimeSinceStartup - temp);
+            UpdateAverageLatency(fullLatencyRollingAvgQueue, Time.realtimeSinceStartup - temp);
+
             UpdateStats();
 
             // isHttpError True on response codes greater than or equal to 400.
@@ -206,59 +201,17 @@ namespace MobiledgeXComputerVision {
             }
             else
             {
-                if (networkLatencyCounter % 10 == 0)
-                {
-                    networkLatencyCounter++;
-                    GetNetworkOnlyLatency();
-                    if (networkLatencyCounter > 10)
-                    {
-                        networkLatencyCounter = 0;
-                    }
-                }
-                else
-                {
-                    appManager.webRequestsLock = true;
-                }
+                GetNetworkOnlyLatency();
                 appManager.HandleServerResponse(www.downloadHandler.text);
             }
-        }
-
-        void LatencyCalculator(float requestLatency)
-        {
-            if(LatencyRollingAvgQueue.Count < 10)
-            {
-                LatencyRollingAvgQueue.Enqueue(requestLatency);
-            }
-            else
-            {
-                float t;
-                LatencyRollingAvgQueue.TryDequeue(out t);
-                LatencyRollingAvgQueue.Enqueue(requestLatency);
-            }
-            avgFullProcessLatency = LatencyRollingAvgQueue.Average();
-        }
-
-        public void ServerProcessingTimeCalculator(float requestLatency)
-        {
-            if (ServerProcessingTimeRollingAvgQueue.Count < 10)
-            {
-                ServerProcessingTimeRollingAvgQueue.Enqueue(requestLatency);
-            }
-            else
-            {
-                float t;
-                ServerProcessingTimeRollingAvgQueue.TryDequeue(out t);
-                ServerProcessingTimeRollingAvgQueue.Enqueue(requestLatency);
-            }
-            avgServerProcessingTime = ServerProcessingTimeRollingAvgQueue.Average();
         }
 
         public void ClearStats()
         {
             ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
-            LatencyRollingAvgQueue = new ConcurrentQueue<float>();
+            fullLatencyRollingAvgQueue = new ConcurrentQueue<float>();
+            networkOnlyLatencyRollingAvgQueue = new ConcurrentQueue<float>();
             showStats = false;
-
         }
 
         public void ShowStats()
@@ -277,22 +230,48 @@ namespace MobiledgeXComputerVision {
         {
             if (showStats)
             {
-                avgFullProcessLatencyText.text = (avgFullProcessLatency * 1000).ToString("f0") + " ms";
-                avgServerProcessingTimeText.text = (avgServerProcessingTime).ToString("f0") + " ms";
+                avgFullProcessLatencyText.text = (getAverageLatency(fullLatencyRollingAvgQueue) * 1000).ToString("f0") + " ms";
+                avgServerProcessingTimeText.text = getAverageLatency(ServerProcessingTimeRollingAvgQueue).ToString("f0") + " ms";
+                avgNetworkOnlyLatencyText.text = getAverageLatency(networkOnlyLatencyRollingAvgQueue).ToString("f0") + " ms";
 
             }
         }
 
-       async void GetNetworkOnlyLatency()
+        public void UpdateAverageLatency(ConcurrentQueue<float> queue, float requestLatency)
+        {
+            if (queue.Count < 10)
+            {
+                queue.Enqueue(requestLatency);
+            }
+            else
+            {
+                float t;
+                queue.TryDequeue(out t);
+                queue.Enqueue(requestLatency);
+            }
+        }
+
+        private float getAverageLatency(ConcurrentQueue<float> queue)
+        {
+            if (queue.Count < 1) //InvalidOperationException 
+            {
+                return 0;
+            }
+            else
+            {
+                return queue.Average();
+            }
+        }
+
+        async void GetNetworkOnlyLatency()
         {
             HttpClient httpClient = new HttpClient();
-            HttpRequestMessage request =new HttpRequestMessage(HttpMethod.Head,new Uri(UriBasedOnConnectionMode()));
+            HttpRequestMessage request =new HttpRequestMessage(HttpMethod.Head,new Uri(connectionUrl));
             System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
             timer.Start();
             HttpResponseMessage response = await httpClient.SendAsync(request);
             timer.Stop();
-            TimeSpan timeTaken = timer.Elapsed;
-            avgNetworkOnlyLatencyText.text = (timeTaken.Milliseconds).ToString("f0") + " ms";
+            UpdateAverageLatency(networkOnlyLatencyRollingAvgQueue, timer.Elapsed.Milliseconds);
             appManager.webRequestsLock = true;
         }
         #endregion
