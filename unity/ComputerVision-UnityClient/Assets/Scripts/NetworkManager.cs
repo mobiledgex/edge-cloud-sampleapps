@@ -28,6 +28,7 @@ using UnityEngine.Networking;
 using System.Collections.Concurrent;
 using UnityEngine.UI;
 using System.Text;
+using System.Net.Http;
 
 namespace MobiledgeXComputerVision {
 
@@ -39,6 +40,7 @@ namespace MobiledgeXComputerVision {
         private float avgNetworkOnlyLatency;
         private ConcurrentQueue<float> LatencyRollingAvgQueue = new ConcurrentQueue<float>();
         private ConcurrentQueue<float> ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
+        private int networkLatencyCounter = 0;
 
         public AppManager appManager;
         public GameObject EdgePanel;
@@ -51,7 +53,7 @@ namespace MobiledgeXComputerVision {
         public Text avgFullProcessLatencyText;
         public Text avgNetworkOnlyLatencyText;
         public MobiledgeXWebSocketClient client;
-        public static bool showStats;
+        public static bool showStats; 
         public enum ConnectionMode
         {
             Rest,
@@ -59,6 +61,10 @@ namespace MobiledgeXComputerVision {
         }
         public ConnectionMode connectionMode;
 
+        private void Awake()
+        {
+            InvokeRepeating("GetNetworkOnlyLatency", 5, 10);
+        }
         #region MonoBehaviour Callbacks
         IEnumerator Start()
         {
@@ -88,7 +94,7 @@ namespace MobiledgeXComputerVision {
             while (cqueue.TryPeek(out msg))
             {
                 cqueue.TryDequeue(out msg);
-                appManager.HandleServerRespone(msg);
+                appManager.HandleServerResponse(msg);
             }
 
         }
@@ -200,8 +206,21 @@ namespace MobiledgeXComputerVision {
             }
             else
             {
-                appManager.webRequestsLock = true;
-                appManager.HandleServerRespone(www.downloadHandler.text);
+                if (networkLatencyCounter % 10 == 0)
+                {
+                    appManager.webRequestsLock = false;
+                    networkLatencyCounter++;
+                    GetNetworkOnlyLatency();
+                    if (networkLatencyCounter > 10)
+                    {
+                        networkLatencyCounter = 0;
+                    }
+                }
+                else
+                {
+                    appManager.webRequestsLock = true;
+                }
+                appManager.HandleServerResponse(www.downloadHandler.text);
             }
         }
 
@@ -233,7 +252,6 @@ namespace MobiledgeXComputerVision {
                 ServerProcessingTimeRollingAvgQueue.Enqueue(requestLatency);
             }
             avgServerProcessingTime = ServerProcessingTimeRollingAvgQueue.Average();
-            avgNetworkOnlyLatency = (avgFullProcessLatency * 1000) - avgServerProcessingTime;
         }
 
         public void ClearStats()
@@ -262,8 +280,21 @@ namespace MobiledgeXComputerVision {
             {
                 avgFullProcessLatencyText.text = (avgFullProcessLatency * 1000).ToString("f0") + " ms";
                 avgServerProcessingTimeText.text = (avgServerProcessingTime).ToString("f0") + " ms";
-                avgNetworkOnlyLatencyText.text = (avgNetworkOnlyLatency).ToString("f0") + " ms";
+
             }
+        }
+
+       async void GetNetworkOnlyLatency()
+        {
+            HttpClient httpClient = new HttpClient();
+            HttpRequestMessage request =new HttpRequestMessage(HttpMethod.Head,new Uri(UriBasedOnConnectionMode()));
+            System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
+            timer.Start();
+            HttpResponseMessage response = await httpClient.SendAsync(request);
+            timer.Stop();
+            TimeSpan timeTaken = timer.Elapsed;
+            avgNetworkOnlyLatencyText.text = (timeTaken.Milliseconds).ToString("f0") + " ms";
+            appManager.webRequestsLock = true;
         }
         #endregion
     }

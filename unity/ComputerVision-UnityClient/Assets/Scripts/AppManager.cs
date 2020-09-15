@@ -174,7 +174,7 @@ namespace MobiledgeXComputerVision
             }
         }
 
-        public void HandleServerRespone(string response)
+        public void HandleServerResponse(string response)
         {
             switch (serviceMode)
             {
