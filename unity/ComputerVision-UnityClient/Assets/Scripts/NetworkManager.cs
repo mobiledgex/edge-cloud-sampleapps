@@ -208,7 +208,6 @@ namespace MobiledgeXComputerVision {
             {
                 if (networkLatencyCounter % 10 == 0)
                 {
-                    appManager.webRequestsLock = false;
                     networkLatencyCounter++;
                     GetNetworkOnlyLatency();
                     if (networkLatencyCounter > 10)
