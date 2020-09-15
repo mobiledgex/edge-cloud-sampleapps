@@ -4,9 +4,7 @@ body {
   color: #fff;
   font-family: 'Roboto', sans-serif;
   font-size:18px;
-  /* display: grid; */
   margin: 0;
-  /* grid-template: 80px 1fr / 210px 1fr; */
 }
 
 table.tbody.tr.td {
@@ -62,7 +60,6 @@ button.cv-control:disabled {
 
 #stats-wrapper {
   background-color: #00000044;
-  /* width: 100%; */
   position: absolute;
   bottom: 5px;
   left: 5px;
@@ -78,68 +75,19 @@ button.cv-control:disabled {
   display: none;
 }
 
-/*
-#webcam{
-  display: block;
-  position: relative;
-  width: auto;
-  height: 100vh;
-  z-index: 999;
-  pointer-events: none;
-  margin: auto;
-}
-
-#canvasResize{
-  background-color: transparent;
-  position: absolute;
-  width: auto;
-  height: 100vh;
-  z-index: 9998;
-  margin: auto;
-  top: 0;
-  left: 0;
-  right: 0;
-  margin-left: auto;
-  margin-right: auto;
-}
- */
 #canvasOutput{
   background-color: transparent;
   z-index: 9999;
 }
 
 .sidebar {
-  /* z-index: 99; */
-  /* position: absolute; */
-  /* width: 20vw; */
-  /* min-width: 210px; */
-  /* height: 100vh; */
   background: rgb(40 40 40 / 0.8);
   opacity: 1;
   display: none;
-  /* display: flex; */
-  /* align-items: flex-end; */
-  /* flex-wrap: wrap; */
-  /* align-content: space-between; */
-}
-
-.sidebarOLD_TODO {
-  z-index: 99;
-  position: absolute;
-  width: 20vw;
-  min-width: 210px;
-  height: 100vh;
-  background: rgb(40 40 40 / 0.8);
-  opacity: 1;
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  align-content: space-between;
 }
 
 .controlPanel {
   width: 100%;
-  /* z-index: 99999; */
   background: transparent;
   opacity: 1;
   padding: 10px 20px;
@@ -196,7 +144,6 @@ button.cv-control:disabled {
 }
 
 #sidebar-left table {
-    /* align-self: flex-end; */
     display: block;
     margin-bottom: 10px;
     padding-left: 6px;
@@ -231,7 +178,7 @@ button.cv-control:disabled {
   bottom: 5px;
 }
 
-#header-menu-button {
+.toolbar-button {
   font-size: 24px;
   padding: 4px 8px;
   background-color: #ffffff00;
@@ -277,10 +224,6 @@ button.cv-control:disabled {
   z-index: 1;
 }
 
-/* .dropdown:not(hover) .dropdown-content {
-  display: block;
-} */
-
 .grid-container {
   display: grid;
   grid-template-columns: auto auto auto;
@@ -289,6 +232,6 @@ button.cv-control:disabled {
   padding: 2px;
 }
 
-.identity {
+.toolbar {
   display: inline;
 }

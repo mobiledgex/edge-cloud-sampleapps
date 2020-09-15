@@ -22,26 +22,27 @@
     <div id="header-wrapper">
 
       <div class="dropdown">
-        <button type="button" class="dropdown" id="header-menu-button"><i class="material-icons md-light">menu</i></button>
+        <button type="button" class="toolbar-button" id="header-menu-button"><i class="material-icons md-light">menu</i></button>
 
           <div class="dropdown-content">
             <div id="activities-wrapper" class="controlPanel">
-              <button type="button" class="cv-control cv-activity" id="button-fd">Face Detection</button>
-              <button type="button" class="cv-control cv-activity" id="button-fr">Face Recognition</button>
-              <button type="button" class="cv-control cv-activity button-gpu" id="button-od">Object Detection</button>
-              <button type="button" class="cv-control cv-activity button-gpu" id="button-pd">Pose Detection</button>
+              <button type="button" class="cv-control cv-activity button-fd">Face Detection</button>
+              <button type="button" class="cv-control cv-activity button-fr">Face Recognition</button>
+              <button type="button" class="cv-control cv-activity button-od button-gpu">Object Detection</button>
+              <button type="button" class="cv-control cv-activity button-pd button-gpu">Pose Detection</button>
             </div>
             <div id="protocols-wrapper" class="controlPanel">
-              <button type="button" class="cv-control cv-protocol" id="button-websocket">WebSocket</button>
-              <button type="button" class="cv-control cv-protocol" id="button-rest">REST</button>
+              <button type="button" class="cv-control cv-protocol button-websocket">WebSocket</button>
+              <button type="button" class="cv-control cv-protocol button-rest">REST</button>
             </div>
         </div>
 
       </div>
 
-      <div class="identity">
+      <div class="toolbar">
         <span class="logo header-img"><img src="/static/images/logo-white.png" alt="MobiledgeX Logo"></span>
         <span class="header-text">Computer Vision</span>
+        <button type="button" class="toolbar-button" id="toolbar-camera-button"><i class="material-icons md-light">switch_camera</i></button>
         <span id="mobile-logo" class="logo header-img-only"><img src="/static/images/logo-green-small.png" alt="MobiledgeX Logo"></span>
       </div>
     </div>
@@ -50,15 +51,15 @@
 
       <div id="sidebar-left" class="sidebar grid-item">
         <div id="activities-wrapper" class="controlPanel">
-          <button type="button" class="cv-control cv-activity" id="button-fd">Face Detection</button>
-          <button type="button" class="cv-control cv-activity" id="button-fr">Face Recognition</button>
-          <button type="button" class="cv-control cv-activity button-gpu" id="button-od">Object Detection</button>
-          <button type="button" class="cv-control cv-activity button-gpu" id="button-pd">Pose Detection</button>
+          <button type="button" class="cv-control cv-activity button-fd">Face Detection</button>
+          <button type="button" class="cv-control cv-activity button-fr">Face Recognition</button>
+          <button type="button" class="cv-control cv-activity button-gpu button-od">Object Detection</button>
+          <button type="button" class="cv-control cv-activity button-gpu button-pd">Pose Detection</button>
         </div>
 
         <div id="protocols-wrapper" class="controlPanel">
-          <button type="button" class="cv-control cv-protocol" id="button-websocket">WebSocket</button>
-          <button type="button" class="cv-control cv-protocol" id="button-rest">REST</button>
+          <button type="button" class="cv-control cv-protocol button-websocket">WebSocket</button>
+          <button type="button" class="cv-control cv-protocol button-rest">REST</button>
         </div>
       </div>
 

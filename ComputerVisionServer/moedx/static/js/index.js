@@ -55,28 +55,49 @@ var frameInterval;
 const ctx = canvasOutput.getContext('2d');
 const ctx2 = canvasResize.getContext('2d');
 
-const constraints = {
-  audio: false,
-  video: true
-};
+startCamera();
 
-// https://www.damirscorner.com/blog/posts/20170317-RenderCapturedVideoToFullPageCanvas.html
+function switchCamera() {
+  mirrored = !mirrored;
+  stopCamera();
+  startCamera();
+}
 
-navigator.mediaDevices.getUserMedia(constraints)
-.then(stream => {
-  window.stream = stream; // make stream available to browser console
-  webcamElement.srcObject = stream;
-  webcamAvailable = true;
+function startCamera() {
+  let mode;
+  if (mirrored) {
+    mode = 'user';
+  } else {
+    mode = 'environment';
+  }
+  let constraints = {
+    audio: false,
+    video: {facingMode: mode}
+  };
+  console.log(constraints);
 
-  getServerCapabilities();
-  restartProcessing();
+  navigator.mediaDevices.getUserMedia(constraints)
+  .then(stream => {
+    window.stream = stream; // make stream available to browser console
+    webcamElement.srcObject = stream;
+    webcamAvailable = true;
 
-})
-.catch(error => {
-  console.log('navigator.getUserMedia error: ', error);
-  endSession(false);
-  $.alert("Could not connect to webcam. Please load this page on a device with webcam capabilities.");
-});
+    getServerCapabilities();
+    restartProcessing();
+
+  })
+  .catch(error => {
+    console.log('navigator.getUserMedia error: ', error);
+    endSession(false);
+    $.alert("Could not connect to webcam. Please load this page on a device with webcam capabilities.");
+  });
+}
+
+function stopCamera() {
+  window.stream.getTracks().forEach(track => {
+    track.stop();
+  });
+}
 
 function restartProcessing() {
   console.log("restartProcessing() "+currentProtocol+" "+currentEndpoint);
@@ -101,19 +122,19 @@ function restartProcessing() {
 
 function resetGui() {
   if (currentEndpoint == faceDetectionEndpoint) {
-    $("#button-fd").addClass("cv-control-selected");
+    $(".button-fd").addClass("cv-control-selected");
   } else if (currentEndpoint == faceRecognitionEndpoint) {
-    $("#button-fr").addClass("cv-control-selected");
+    $(".button-fr").addClass("cv-control-selected");
   } else if (currentEndpoint == objectDetectionEndpoint) {
-    $("#button-od").addClass("cv-control-selected");
+    $(".button-od").addClass("cv-control-selected");
   } else if (currentEndpoint == poseDetectionEndpoint) {
-    $("#button-pd").addClass("cv-control-selected");
+    $(".button-pd").addClass("cv-control-selected");
   }
 
   if (currentProtocol == protocolWebSocket) {
-    $("#button-websocket").addClass("cv-control-selected");
+    $(".button-websocket").addClass("cv-control-selected");
   } else if (currentProtocol == protocolRest) {
-    $("#button-rest").addClass("cv-control-selected");
+    $(".button-rest").addClass("cv-control-selected");
   }
 }
 
@@ -180,7 +201,11 @@ $(".wrapper").click(function () {
   $(".dropdown-content").slideUp();
 });
 
-$("#button-fd").click(function () {
+$("#toolbar-camera-button").click(function () {
+  switchCamera();
+});
+
+$(".button-fd").click(function () {
   animationDuration = 3000; //ms
   currentEndpoint = faceDetectionEndpoint;
   resetActivityStates();
@@ -188,7 +213,7 @@ $("#button-fd").click(function () {
   restartProcessing();
 });
 
-$("#button-fr").click(function () {
+$(".button-fr").click(function () {
   animationDuration = 3000; //ms
   currentEndpoint = faceRecognitionEndpoint;
   resetActivityStates();
@@ -196,7 +221,7 @@ $("#button-fr").click(function () {
   restartProcessing();
 });
 
-$("#button-od").click(function () {
+$(".button-od").click(function () {
   animationDuration = 5000; //ms
   currentEndpoint = objectDetectionEndpoint;
   resetActivityStates();
@@ -204,7 +229,7 @@ $("#button-od").click(function () {
   restartProcessing();
 });
 
-$("#button-pd").click(function () {
+$(".button-pd").click(function () {
   animationDuration = 5000; //ms
   currentEndpoint = poseDetectionEndpoint;
   resetActivityStates();
@@ -216,7 +241,7 @@ function resetActivityStates() {
   $(".cv-activity").removeClass("cv-control-selected");
 }
 
-$("#button-websocket").click(function () {
+$(".button-websocket").click(function () {
   if (currentProtocol == protocolWebSocket) {
     // Nothing to do.
     return;
@@ -229,7 +254,7 @@ $("#button-websocket").click(function () {
   }
 });
 
-$("#button-rest").click(function () {
+$(".button-rest").click(function () {
   if (currentProtocol == protocolRest) {
     // Nothing to do.
     return;
