@@ -37,7 +37,6 @@ namespace MobiledgeXComputerVision {
         private MobiledgeXIntegration integration;
         private ConcurrentQueue<float> networkOnlyLatencyRollingAvgQueue = new ConcurrentQueue<float>();
         private ConcurrentQueue<float> fullLatencyRollingAvgQueue = new ConcurrentQueue<float>();
-        private string connectionUrl;
 
         public ConcurrentQueue<float> ServerProcessingTimeRollingAvgQueue = new ConcurrentQueue<float>();
         public AppManager appManager;
@@ -135,7 +134,6 @@ namespace MobiledgeXComputerVision {
                 case ConnectionMode.Rest:
                     appPort = integration.GetAppPort(LProto.L_PROTO_TCP);
                     url = integration.GetUrl("http");
-                    connectionUrl = url; // caching url for network only latency calculation REST only
                     return url;
                 default:
                     return "";
@@ -169,10 +167,12 @@ namespace MobiledgeXComputerVision {
             UnityWebRequest www = UnityWebRequest.Post(url, form);
             www.timeout = 5; // Timeout in seconds
 
-            var temp = Time.realtimeSinceStartup;
+            System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
+            timer.Start();
             yield return www.SendWebRequest();
-            UpdateAverageLatency(fullLatencyRollingAvgQueue, Time.realtimeSinceStartup - temp);
-
+            timer.Stop();
+            TimeSpan ts = timer.Elapsed;
+            UpdateAverageLatency(fullLatencyRollingAvgQueue, (float)ts.TotalMilliseconds);
             UpdateStats();
 
             // isHttpError True on response codes greater than or equal to 400.
@@ -201,7 +201,7 @@ namespace MobiledgeXComputerVision {
             }
             else
             {
-                GetNetworkOnlyLatency();
+                StartCoroutine(GetNetworkOnlyLatency(url));
                 appManager.HandleServerResponse(www.downloadHandler.text);
             }
         }
@@ -230,7 +230,7 @@ namespace MobiledgeXComputerVision {
         {
             if (showStats)
             {
-                avgFullProcessLatencyText.text = (getAverageLatency(fullLatencyRollingAvgQueue) * 1000).ToString("f0") + " ms";
+                avgFullProcessLatencyText.text = getAverageLatency(fullLatencyRollingAvgQueue).ToString("f0") + " ms";
                 avgServerProcessingTimeText.text = getAverageLatency(ServerProcessingTimeRollingAvgQueue).ToString("f0") + " ms";
                 avgNetworkOnlyLatencyText.text = getAverageLatency(networkOnlyLatencyRollingAvgQueue).ToString("f0") + " ms";
 
@@ -263,17 +263,18 @@ namespace MobiledgeXComputerVision {
             }
         }
 
-        async void GetNetworkOnlyLatency()
+        public IEnumerator GetNetworkOnlyLatency( string url)
         {
-            HttpClient httpClient = new HttpClient();
-            HttpRequestMessage request =new HttpRequestMessage(HttpMethod.Head,new Uri(connectionUrl));
+            UnityWebRequest www = UnityWebRequest.Head(url);
             System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
             timer.Start();
-            HttpResponseMessage response = await httpClient.SendAsync(request);
+            yield return www.SendWebRequest();
             timer.Stop();
-            UpdateAverageLatency(networkOnlyLatencyRollingAvgQueue, timer.Elapsed.Milliseconds);
+            TimeSpan ts = timer.Elapsed;
+            UpdateAverageLatency(networkOnlyLatencyRollingAvgQueue, (float)ts.TotalMilliseconds);
             appManager.webRequestsLock = true;
         }
+
         #endregion
     }
 }
