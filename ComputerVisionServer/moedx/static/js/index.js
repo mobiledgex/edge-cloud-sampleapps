@@ -7,6 +7,8 @@ const canvasOutput = document.getElementById('canvasOutput');
 const canvasWrapper = document.getElementById('canvas-wrapper');
 const fullLatencySpan = document.getElementById('full-latency');
 const networkLatencySpan = document.getElementById('network-latency');
+const fullLatencyStatsSpan = document.getElementById('full-latency-stats');
+const networkLatencyStatsSpan = document.getElementById('network-latency-stats');
 
 const RECOGNITION_CONFIDENCE_THRESHOLD = 110;
 
@@ -23,8 +25,8 @@ var currentEndpoint = faceDetectionEndpoint;
 
 const protocolWebSocket = "WebSocket";
 const protocolRest = "REST";
-var currentProtocol = protocolWebSocket;
-var webSocket   = null;
+var currentProtocol = protocolRest;
+var webSocket = null;
 
 var serverGpuSupport = false;
 var webcamAvailable = false;
@@ -41,6 +43,8 @@ var busyProcessing = false;
 var fullProcessStart;
 var busyNetworkLatency = false;
 var elapsed = 0;
+var fullProcessStatReceived = false;
+var networkStatReceived = false;
 
 var animationAlpha = 1;
 var animationStart = 0; //Timestamp
@@ -51,6 +55,9 @@ var networkLatencyInterval = setInterval(networkLatency, 1000);
 var sessionTimeoutMillis = 2*60*1000; // 2 minutes
 var sessionTimeoutInterval;
 var frameInterval;
+
+const runningNetwork = new RunningStatsCalculator("Network Only");
+const runningFullProcess = new RunningStatsCalculator("Full Process");
 
 const ctx = canvasOutput.getContext('2d');
 const ctx2 = canvasResize.getContext('2d');
@@ -108,6 +115,11 @@ function restartProcessing() {
   if (currentProtocol == protocolWebSocket) {
     openWSConnection("wss", window.location.hostname, window.location.port, "/ws" + currentEndpoint);
   }
+
+  runningNetwork.reset();
+  runningFullProcess.reset();
+  fullProcessStatReceived = false;
+  networkStatReceived = false;
 
   renderData = null;
   busyProcessing = false;
@@ -291,6 +303,10 @@ $("#network-onoffswitch").click(function () {
   else if ($(this).prop("checked") == false){
     clearInterval(networkLatencyInterval);
   }
+});
+
+$(window).on('resize', function() {
+  setCanvasSizes();
 });
 
 function renderResults() {
@@ -523,11 +539,23 @@ function handleResponse(data) {
     // In this case, we sent a text-only message and it was echoed back by the server.
     elapsed = Date.now() - data.latency_start;
     networkLatencySpan.textContent = elapsed + " ms";
+    // The first response is always slow. Don't add it to our stats.
+    if (networkStatReceived) {
+      runningNetwork.update(elapsed);
+      networkLatencyStatsSpan.textContent = runningNetwork.statsText + " ms";
+    }
+    networkStatReceived = true;
     busyNetworkLatency = false;
     return;
   }
   elapsed = Date.now() - fullProcessStart;
   fullLatencySpan.textContent = elapsed + " ms";
+  // The first response is always slow. Don't add it to our stats.
+  if (fullProcessStatReceived) {
+    runningFullProcess.update(elapsed);
+    fullLatencyStatsSpan.textContent = runningFullProcess.statsText + " ms";;
+  }
+  fullProcessStatReceived = true;
   if (data.success == "true") {
     renderData = data;
     animationStart = Date.now();
@@ -574,6 +602,12 @@ function networkLatency() {
       .finally(() => {
         busyNetworkLatency = false;
         networkLatencySpan.textContent = elapsed + " ms";
+        // The first response is always slow. Don't add it to our stats.
+        if (networkStatReceived) {
+          runningNetwork.update(elapsed);
+          networkLatencyStatsSpan.textContent = runningNetwork.statsText + " ms";
+        }
+        networkStatReceived = true;
       })
   }
 }

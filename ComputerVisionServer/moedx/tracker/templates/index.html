@@ -80,6 +80,7 @@
                 </td>
                 <td>Full Process Latency:</td>
                 <td><span id="full-latency">9999 ms</span></td>
+                <tr><td></td><td colspan="2"><span class="stats" id="full-latency-stats">min/avg/max/stddev</span></td></tr>
               </tr>
               <tr>
                 <td>
@@ -91,6 +92,7 @@
                 <td>Network Only Latency:</td>
                 <td><span id="network-latency">9999 ms</span></td>
               </tr>
+              <tr><td></td><td colspan="2"><span class="stats" id="network-latency-stats">min/avg/max/stddev</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -99,7 +101,9 @@
 
     </div>
 
-  <script src="{% static 'js/index.js' %}"></script>
-  <script src="{% static 'js/poseRenderer.js' %}"></script>
+    <script src="{% static 'js/runningStatsCalculator.js' %}"></script>
+    <script src="{% static 'js/index.js' %}"></script>
+    <script src="{% static 'js/poseRenderer.js' %}"></script>
+
   </body>
 </html>

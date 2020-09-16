@@ -59,10 +59,11 @@ button.cv-control:disabled {
 }
 
 #stats-wrapper {
-  background-color: #00000044;
+  background-color: #00000055;
   position: absolute;
-  bottom: 5px;
+  bottom: -72px;
   left: 5px;
+  width: 100%;
 }
 
 #webcam{
@@ -78,6 +79,15 @@ button.cv-control:disabled {
 #canvasOutput{
   background-color: transparent;
   z-index: 9999;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+td {
+  border: 1px;
+  padding: 0px;
 }
 
 .sidebar {
@@ -188,6 +198,10 @@ button.cv-control:disabled {
   transition: all 0.1s ease-in-out;
 }
 
+.stats {
+  font-size: 15px;
+}
+
 @media only screen and (min-width: 768px) {
   /* For desktop: */
   .header-text {
@@ -204,10 +218,16 @@ button.cv-control:disabled {
   #header-menu-button {
     display: none;
   }
+  #toolbar-camera-button {
+    display: none;
+  }
   .sidebar {
     display: block;
   }
-
+  #stats-wrapper {
+    width: fit-content;
+    bottom: 5px;
+  }
 }
 
 .dropdown {
