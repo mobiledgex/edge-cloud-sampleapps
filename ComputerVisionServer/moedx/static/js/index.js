@@ -197,7 +197,7 @@ $("body").on("contextmenu", "#mobile-logo", function() {
   return false;
 });
 
-// The menu button will toggel the menu.
+// The menu button will toggle the menu.
 $("#header-menu-button").click(function () {
   $(".dropdown-content").slideToggle();
 });

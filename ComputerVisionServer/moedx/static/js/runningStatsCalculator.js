@@ -22,17 +22,11 @@ class RunningStatsCalculator {
     }
 
     this._count++
-
     const meanDifferential = (newValue - this._mean) / this._count
-
     const newMean = this._mean + meanDifferential
-
     const dSquaredIncrement =	(newValue - newMean) * (newValue - this._mean)
-
     const newDSquared = this._dSquared + dSquaredIncrement
-
     this._mean = newMean
-
     this._dSquared = newDSquared
   }
 
