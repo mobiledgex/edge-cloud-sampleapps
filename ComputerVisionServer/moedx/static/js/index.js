@@ -4,8 +4,11 @@
 const webcamElement = document.getElementById('webcam');
 const canvasResize = document.getElementById('canvasResize');
 const canvasOutput = document.getElementById('canvasOutput');
+const canvasWrapper = document.getElementById('canvas-wrapper');
 const fullLatencySpan = document.getElementById('full-latency');
 const networkLatencySpan = document.getElementById('network-latency');
+const fullLatencyStatsSpan = document.getElementById('full-latency-stats');
+const networkLatencyStatsSpan = document.getElementById('network-latency-stats');
 
 const RECOGNITION_CONFIDENCE_THRESHOLD = 110;
 
@@ -22,19 +25,26 @@ var currentEndpoint = faceDetectionEndpoint;
 
 const protocolWebSocket = "WebSocket";
 const protocolRest = "REST";
-var currentProtocol = protocolWebSocket;
-var webSocket   = null;
+var currentProtocol = protocolRest;
+var webSocket = null;
 
 var serverGpuSupport = false;
 var webcamAvailable = false;
+var webcamInitialized = false;
 
-var renderScale = canvasOutput.width / canvasResize.width;
+// This is the size a frame will be resized to before sending it to the server.
+var resizeLong = 240;
+var resizeShort = 180;
+
+var renderScale = 1; // Will be calculated after webcam becomes available.
 var renderData = null;
 var mirrored = true;
 var busyProcessing = false;
 var fullProcessStart;
 var busyNetworkLatency = false;
 var elapsed = 0;
+var fullProcessStatReceived = false;
+var networkStatReceived = false;
 
 var animationAlpha = 1;
 var animationStart = 0; //Timestamp
@@ -46,25 +56,55 @@ var sessionTimeoutMillis = 2*60*1000; // 2 minutes
 var sessionTimeoutInterval;
 var frameInterval;
 
+const runningNetwork = new RunningStatsCalculator("Network Only");
+const runningFullProcess = new RunningStatsCalculator("Full Process");
+
 const ctx = canvasOutput.getContext('2d');
 const ctx2 = canvasResize.getContext('2d');
 
-const constraints = {
-  audio: false,
-  video: true
-};
+startCamera();
 
-navigator.mediaDevices.getUserMedia(constraints)
-.then(stream => {
-  window.stream = stream; // make stream available to browser console
-  webcamElement.srcObject = stream;
-  webcamAvailable = true;
-})
-.catch(error => {
-  console.log('navigator.getUserMedia error: ', error);
-  endSession(false);
-  $.alert("Could not connect to webcam. Please load this page on a device with webcam capabilities.");
-});
+function switchCamera() {
+  mirrored = !mirrored;
+  stopCamera();
+  startCamera();
+}
+
+function startCamera() {
+  let mode;
+  if (mirrored) {
+    mode = 'user';
+  } else {
+    mode = 'environment';
+  }
+  let constraints = {
+    audio: false,
+    video: {facingMode: mode}
+  };
+  console.log(constraints);
+
+  navigator.mediaDevices.getUserMedia(constraints)
+  .then(stream => {
+    window.stream = stream; // make stream available to browser console
+    webcamElement.srcObject = stream;
+    webcamAvailable = true;
+
+    getServerCapabilities();
+    restartProcessing();
+
+  })
+  .catch(error => {
+    console.log('navigator.getUserMedia error: ', error);
+    endSession(false);
+    $.alert("Could not connect to webcam. Please load this page on a device with webcam capabilities.");
+  });
+}
+
+function stopCamera() {
+  window.stream.getTracks().forEach(track => {
+    track.stop();
+  });
+}
 
 function restartProcessing() {
   console.log("restartProcessing() "+currentProtocol+" "+currentEndpoint);
@@ -75,6 +115,11 @@ function restartProcessing() {
   if (currentProtocol == protocolWebSocket) {
     openWSConnection("wss", window.location.hostname, window.location.port, "/ws" + currentEndpoint);
   }
+
+  runningNetwork.reset();
+  runningFullProcess.reset();
+  fullProcessStatReceived = false;
+  networkStatReceived = false;
 
   renderData = null;
   busyProcessing = false;
@@ -89,19 +134,19 @@ function restartProcessing() {
 
 function resetGui() {
   if (currentEndpoint == faceDetectionEndpoint) {
-    $("#button-fd").addClass("cv-control-selected");
+    $(".button-fd").addClass("cv-control-selected");
   } else if (currentEndpoint == faceRecognitionEndpoint) {
-    $("#button-fr").addClass("cv-control-selected");
+    $(".button-fr").addClass("cv-control-selected");
   } else if (currentEndpoint == objectDetectionEndpoint) {
-    $("#button-od").addClass("cv-control-selected");
+    $(".button-od").addClass("cv-control-selected");
   } else if (currentEndpoint == poseDetectionEndpoint) {
-    $("#button-pd").addClass("cv-control-selected");
+    $(".button-pd").addClass("cv-control-selected");
   }
 
   if (currentProtocol == protocolWebSocket) {
-    $("#button-websocket").addClass("cv-control-selected");
+    $(".button-websocket").addClass("cv-control-selected");
   } else if (currentProtocol == protocolRest) {
-    $("#button-rest").addClass("cv-control-selected");
+    $(".button-rest").addClass("cv-control-selected");
   }
 }
 
@@ -136,21 +181,43 @@ function endSession(allowRestart) {
   }
 }
 
-restartProcessing();
-getServerCapabilities();
-
 function enableGpuActivities(enabled) {
   console.log("enableGpuActivities("+enabled+")");
-  $("#button-od").prop('disabled', !enabled);
-  $("#button-pd").prop('disabled', !enabled);
+  $(".button-gpu").prop('disabled', !enabled);
 }
 
 // "Secret" method of enabling GPU activities even when connected to non-GPU server.
-$(".header-img").dblclick(function() {
+$(".logo").dblclick(function() {
   enableGpuActivities(true);
 });
+// For mobile
+$("body").on("contextmenu", "#mobile-logo", function() {
+  console.log("contextmenu");
+  enableGpuActivities(true);
+  return false;
+});
 
-$("#button-fd").click(function () {
+// The menu button will toggle the menu.
+$("#header-menu-button").click(function () {
+  $(".dropdown-content").slideToggle();
+});
+
+// Clicking on anything else should close the menu.
+$(".cv-control").click(function () {
+  $(".dropdown-content").slideUp();
+});
+$(".onoffswitch-checkbox").click(function () {
+  $(".dropdown-content").slideUp();
+});
+$(".wrapper").click(function () {
+  $(".dropdown-content").slideUp();
+});
+
+$("#toolbar-camera-button").click(function () {
+  switchCamera();
+});
+
+$(".button-fd").click(function () {
   animationDuration = 3000; //ms
   currentEndpoint = faceDetectionEndpoint;
   resetActivityStates();
@@ -158,7 +225,7 @@ $("#button-fd").click(function () {
   restartProcessing();
 });
 
-$("#button-fr").click(function () {
+$(".button-fr").click(function () {
   animationDuration = 3000; //ms
   currentEndpoint = faceRecognitionEndpoint;
   resetActivityStates();
@@ -166,7 +233,7 @@ $("#button-fr").click(function () {
   restartProcessing();
 });
 
-$("#button-od").click(function () {
+$(".button-od").click(function () {
   animationDuration = 5000; //ms
   currentEndpoint = objectDetectionEndpoint;
   resetActivityStates();
@@ -174,7 +241,7 @@ $("#button-od").click(function () {
   restartProcessing();
 });
 
-$("#button-pd").click(function () {
+$(".button-pd").click(function () {
   animationDuration = 5000; //ms
   currentEndpoint = poseDetectionEndpoint;
   resetActivityStates();
@@ -186,7 +253,7 @@ function resetActivityStates() {
   $(".cv-activity").removeClass("cv-control-selected");
 }
 
-$("#button-websocket").click(function () {
+$(".button-websocket").click(function () {
   if (currentProtocol == protocolWebSocket) {
     // Nothing to do.
     return;
@@ -199,7 +266,7 @@ $("#button-websocket").click(function () {
   }
 });
 
-$("#button-rest").click(function () {
+$(".button-rest").click(function () {
   if (currentProtocol == protocolRest) {
     // Nothing to do.
     return;
@@ -229,12 +296,17 @@ $("#process-onoffswitch").click(function () {
 
 $("#network-onoffswitch").click(function () {
   if ($(this).prop("checked") == true){
+    busyNetworkLatency = false;
     clearInterval(networkLatencyInterval);
     networkLatencyInterval = setInterval(networkLatency, 1000);
   }
   else if ($(this).prop("checked") == false){
     clearInterval(networkLatencyInterval);
   }
+});
+
+$(window).on('resize', function() {
+  setCanvasSizes();
 });
 
 function renderResults() {
@@ -335,13 +407,74 @@ function renderRect(rect, caption, strokeStyle, fillStyle, shape) {
   }
 }
 
+function setCanvasSizes() {
+  let resizeWidth;
+  let resizeHeight;
+  let aspect;
+  let wantedWidth;
+  let wantedHeight;
+  let width;
+  let height;
+  if (webcamElement.videoWidth > webcamElement.videoHeight) {
+    console.log("Landscape mode.");
+    resizeWidth = resizeLong;
+    resizeHeight = resizeShort;
+    aspect = resizeHeight / resizeWidth;
+    // Set size for canvasOutput, which shows the webcam image overlayed by results returned from the CV server.
+    let headerWrapper = document.getElementById('header-wrapper');
+    wantedHeight = window.innerHeight - headerWrapper.clientHeight;
+    width = Math.round(wantedHeight / aspect);
+    console.log("Setting canvasOutput to "+width+"x"+wantedHeight);
+    canvasOutput.width = width;
+    canvasOutput.height = wantedHeight;
+  } else {
+    console.log("Portrait mode.");
+    resizeWidth = resizeShort;
+    resizeHeight = resizeLong;
+    aspect = resizeHeight / resizeWidth;
+    // Set size for canvasOutput, which shows the webcam image overlayed by results returned from the CV server.
+    wantedWidth = window.outerWidth;
+    height = Math.round(wantedWidth * aspect);
+    console.log("Setting canvasOutput to "+wantedWidth+"x"+height);
+    canvasOutput.width = wantedWidth;
+    canvasOutput.height = height;
+  }
+
+  // Set size for canvasResize, which is used to resize the webcam image before it's sent to the CV server.
+  wantedWidth = resizeWidth;
+  height = Math.round(wantedWidth * aspect);
+  console.log("Setting canvasResize to "+wantedWidth+"x"+height);
+  canvasResize.width = wantedWidth;
+  canvasResize.height = height;
+
+  // canvasWrapper.width = canvasOutput.width;
+  // canvasWrapper.height = canvasOutput.height;
+  webcamElement.width = canvasOutput.width;
+  webcamElement.height = canvasOutput.height;
+
+  renderScale = canvasOutput.width / canvasResize.width;
+  console.log("Setting renderScale to "+renderScale);
+
+  webcamInitialized = true;
+}
+
 function processCameraImage() {
+  if (!webcamElement.videoHeight || !webcamElement.videoWidth) {
+    console.log("Webcam not ready");
+    return;
+  }
+
+  if (!webcamInitialized) {
+    setCanvasSizes();
+  }
+
   if (mirrored) {
     ctx.translate(canvasOutput.width, 0);
     ctx.scale(-1, 1);
     ctx2.translate(canvasResize.width, 0);
     ctx2.scale(-1, 1);
   }
+
   ctx.drawImage(webcamElement, 0, 0, canvasOutput.width, canvasOutput.height);
   ctx2.drawImage(webcamElement, 0, 0, canvasResize.width, canvasResize.height);
   if (mirrored) {
@@ -403,11 +536,23 @@ function handleResponse(data) {
     // In this case, we sent a text-only message and it was echoed back by the server.
     elapsed = Date.now() - data.latency_start;
     networkLatencySpan.textContent = elapsed + " ms";
+    // The first response is always slow. Don't add it to our stats.
+    if (networkStatReceived) {
+      runningNetwork.update(elapsed);
+      networkLatencyStatsSpan.textContent = runningNetwork.statsText + " ms";
+    }
+    networkStatReceived = true;
     busyNetworkLatency = false;
     return;
   }
   elapsed = Date.now() - fullProcessStart;
   fullLatencySpan.textContent = elapsed + " ms";
+  // The first response is always slow. Don't add it to our stats.
+  if (fullProcessStatReceived) {
+    runningFullProcess.update(elapsed);
+    fullLatencyStatsSpan.textContent = runningFullProcess.statsText + " ms";;
+  }
+  fullProcessStatReceived = true;
   if (data.success == "true") {
     renderData = data;
     animationStart = Date.now();
@@ -424,6 +569,11 @@ function networkLatency() {
   }
   busyNetworkLatency = true;
   if (currentProtocol == protocolWebSocket) {
+    if (!webSocket) {
+      console.error("webSocket is not initialized. Will retry...");
+      busyNetworkLatency = false;
+      return;
+    }
     if (webSocket.readyState != WebSocket.OPEN) {
       console.error("webSocket is not open: " + webSocket.readyState);
       busyNetworkLatency = false;
@@ -449,6 +599,12 @@ function networkLatency() {
       .finally(() => {
         busyNetworkLatency = false;
         networkLatencySpan.textContent = elapsed + " ms";
+        // The first response is always slow. Don't add it to our stats.
+        if (networkStatReceived) {
+          runningNetwork.update(elapsed);
+          networkLatencyStatsSpan.textContent = runningNetwork.statsText + " ms";
+        }
+        networkStatReceived = true;
       })
   }
 }

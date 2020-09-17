@@ -4,6 +4,7 @@
 
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MobiledgeX Computer Vision Demo</title>
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}" type="text/css" />
@@ -12,62 +13,97 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="//code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 
   </head>
 
   <body>
 
-    <div id="canvas-wrapper" class="wrapper">
-      <video id="webcam" autoplay="" playsinline="" width="640" height="480"></video>
-      <canvas id="canvasResize" width="320" height="240"></canvas>
-      <canvas id="canvasOutput" width="800" height="600"></canvas>
+    <div id="header-wrapper">
+
+      <div class="dropdown">
+        <button type="button" class="toolbar-button" id="header-menu-button"><i class="material-icons md-light">menu</i></button>
+
+          <div class="dropdown-content">
+            <div id="activities-wrapper" class="controlPanel">
+              <button type="button" class="cv-control cv-activity button-fd">Face Detection</button>
+              <button type="button" class="cv-control cv-activity button-fr">Face Recognition</button>
+              <button type="button" class="cv-control cv-activity button-od button-gpu">Object Detection</button>
+              <button type="button" class="cv-control cv-activity button-pd button-gpu">Pose Detection</button>
+            </div>
+            <div id="protocols-wrapper" class="controlPanel">
+              <button type="button" class="cv-control cv-protocol button-websocket">WebSocket</button>
+              <button type="button" class="cv-control cv-protocol button-rest">REST</button>
+            </div>
+        </div>
+
+      </div>
+
+      <div class="toolbar">
+        <span class="logo header-img"><img src="/static/images/logo-white.png" alt="MobiledgeX Logo"></span>
+        <span class="header-text">Computer Vision</span>
+        <button type="button" class="toolbar-button" id="toolbar-camera-button"><i class="material-icons md-light">switch_camera</i></button>
+        <span id="mobile-logo" class="logo header-img-only"><img src="/static/images/logo-green-small.png" alt="MobiledgeX Logo"></span>
+      </div>
     </div>
 
-    <div id="sidebar-left" class="sidebar">
-      <div class="header-wrapper">
-        <span class="header-img"><img src="/static/images/logo-white.png" alt="MobiledgeX Logo"></span>
-        <span class="header-text">Computer Vision</span>
+    <div class="grid-container">
+
+      <div id="sidebar-left" class="sidebar grid-item">
+        <div id="activities-wrapper" class="controlPanel">
+          <button type="button" class="cv-control cv-activity button-fd">Face Detection</button>
+          <button type="button" class="cv-control cv-activity button-fr">Face Recognition</button>
+          <button type="button" class="cv-control cv-activity button-gpu button-od">Object Detection</button>
+          <button type="button" class="cv-control cv-activity button-gpu button-pd">Pose Detection</button>
+        </div>
+
+        <div id="protocols-wrapper" class="controlPanel">
+          <button type="button" class="cv-control cv-protocol button-websocket">WebSocket</button>
+          <button type="button" class="cv-control cv-protocol button-rest">REST</button>
+        </div>
       </div>
 
-      <div id="activities-wrapper" class="controlPanel">
-        <button type="button" class="cv-control cv-activity" id="button-fd">Face Detection</button>
-        <button type="button" class="cv-control cv-activity" id="button-fr">Face Recognition</button>
-        <button type="button" class="cv-control cv-activity" id="button-od">Object Detection</button>
-        <button type="button" class="cv-control cv-activity" id="button-pd">Pose Detection</button>
+      <div id="canvas-wrapper" class="wrapper grid-item">
+        <video id="webcam" autoplay="" playsinline=""></video>
+        <canvas id="canvasResize"></canvas>
+        <canvas id="canvasOutput"></canvas>
+
+        <div id="stats-wrapper">
+          <table>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="onoffswitch">
+                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="process-onoffswitch" tabindex="0" checked="">
+                    <label class="onoffswitch-label" for="process-onoffswitch"></label>
+                  </div>
+                </td>
+                <td>Full Process Latency:</td>
+                <td><span id="full-latency">9999 ms</span></td>
+                <tr><td></td><td colspan="2"><span class="stats" id="full-latency-stats">min/avg/max/stddev</span></td></tr>
+              </tr>
+              <tr>
+                <td>
+                  <div class="onoffswitch">
+                    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="network-onoffswitch" tabindex="0" checked="">
+                    <label class="onoffswitch-label" for="network-onoffswitch"></label>
+                  </div>
+                </td>
+                <td>Network Only Latency:</td>
+                <td><span id="network-latency">9999 ms</span></td>
+              </tr>
+              <tr><td></td><td colspan="2"><span class="stats" id="network-latency-stats">min/avg/max/stddev</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
 
-      <div id="protocols-wrapper" class="controlPanel">
-        <button type="button" class="cv-control cv-protocol" id="button-websocket">WebSocket</button>
-        <button type="button" class="cv-control cv-protocol" id="button-rest">REST</button>
-      </div>
+    </div>
 
-      <table>
-        <tbody>
-          <tr>
-            <td>
-              <div class="onoffswitch">
-                <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="process-onoffswitch" tabindex="0" checked="">
-                <label class="onoffswitch-label" for="process-onoffswitch"></label>
-              </div>
-            </td>
-            <td>Full Process Latency:</td>
-            <td><span id="full-latency">9999 ms</span></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="onoffswitch">
-                <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="network-onoffswitch" tabindex="0" checked="">
-                <label class="onoffswitch-label" for="network-onoffswitch"></label>
-              </div>
-            </td>
-            <td>Network Only Latency:</td>
-            <td><span id="network-latency">9999 ms</span></td>
-          </tr>
-        </tbody>
-      </table>
-  </div>
+    <script src="{% static 'js/runningStatsCalculator.js' %}"></script>
+    <script src="{% static 'js/index.js' %}"></script>
+    <script src="{% static 'js/poseRenderer.js' %}"></script>
 
-  <script src="{% static 'js/index.js' %}"></script>
-  <script src="{% static 'js/poseRenderer.js' %}"></script>
   </body>
 </html>
