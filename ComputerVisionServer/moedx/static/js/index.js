@@ -452,9 +452,6 @@ function setCanvasSizes() {
   webcamElement.width = canvasOutput.width;
   webcamElement.height = canvasOutput.height;
 
-  // let statsWrapper = document.getElementById('stats-wrapper')
-  // statsWrapper.width = canvasOutput.width;
-
   renderScale = canvasOutput.width / canvasResize.width;
   console.log("Setting renderScale to "+renderScale);
 
