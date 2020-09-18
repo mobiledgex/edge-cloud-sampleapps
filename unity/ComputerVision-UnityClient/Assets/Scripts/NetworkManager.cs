@@ -18,8 +18,6 @@
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
-using System.Net;
-using System.Net.Sockets;
 using System.Linq;
 using MobiledgeX;
 using DistributedMatchEngine;
@@ -27,8 +25,7 @@ using System.Collections;
 using UnityEngine.Networking;
 using System.Collections.Concurrent;
 using UnityEngine.UI;
-using System.Text;
-using System.Net.Http;
+using System.Collections.Generic;
 
 namespace MobiledgeXComputerVision {
 
@@ -49,17 +46,24 @@ namespace MobiledgeXComputerVision {
         public Text avgServerProcessingTimeText;
         public Text avgFullProcessLatencyText;
         public Text avgNetworkOnlyLatencyText;
+        public Text cloudletLocationText;
         public MobiledgeXWebSocketClient client;
-        public static bool showStats; 
+        public static bool showStats;
+        public List<string> regionsDmeList;
         public enum ConnectionMode
         {
             Rest,
             WebSocket
         }
         public ConnectionMode connectionMode;
+        public static int regionIndex = 0;
+
         #region MonoBehaviour Callbacks
         IEnumerator Start()
         {
+            regionsDmeList = new List<string>() { "wifi", "eu-mexdemo", "us-mexdemo", "jp-mexdemo", "kr-mexdemo" };
+            integration = new MobiledgeXIntegration();
+
 #if UNITY_EDITOR
             GetEDGE();
             yield break;
@@ -93,32 +97,55 @@ namespace MobiledgeXComputerVision {
         #endregion
 
         #region MobiledgeXComputerVision Functions
-        async Task GetEDGE() {
-            integration = new MobiledgeXIntegration();
+        public async Task GetEDGE() {
+            ConnectedToEdgePanel.SetActive(false);
+            NotConnectedToEdgePanel.SetActive(false);
+            appManager.DisableInteraction();
             integration.UseWifiOnly(true);
+            EdgePanel.SetActive(false); // Disables User Input
+            NotConnectedToEdgePanel.SetActive(false);
             try
             {
-                bool cloudletFound = await integration.RegisterAndFindCloudlet();
+                bool cloudletFound = await integration.RegisterAndFindCloudlet(regionsDmeList[regionIndex]+"."+MatchingEngine.baseDmeHost, MatchingEngine.defaultDmeRestPort);
                 if (cloudletFound)
                 {
                     appManager.EnableInteraction();
                     ConnectedToEdgePanel.SetActive(true);
                 }
+                StartCoroutine(GetCloudletCityName(integration.FindCloudletReply.cloudlet_location.longitude, integration.FindCloudletReply.cloudlet_location.latitude));
             }
            
-           catch(RegisterClientException) // In case we don't support the detected carrierName  (In the generated dme)
+           catch(RegisterClientException) // App Name Doesn't exist on the DME
             {
-                integration.UseWifiOnly(true);
-                await integration.RegisterAndFindCloudlet();
+                EdgePanel.SetActive(true); // Disables User Input
+                NotConnectedToEdgePanel.SetActive(true);
+                ErrorReason.text = "CV App is not availabe in your region";
+                ErrorSolution.GetComponentInChildren<Text>().text = "Change the region in Location Settings.";
+                ErrorPanel.SetActive(true);
+                appManager.EnableInteraction();
             }
             catch (FindCloudletException) // GPS Location Error
             {
                 EdgePanel.SetActive(true); // Disables User Input
                 NotConnectedToEdgePanel.SetActive(true);
-                ErrorReason.text = "Location Permission Denied";
-                ErrorSolution.GetComponentInChildren<Text>().text = "Allow Location Permission in your settings & Restart the App";
+                ErrorReason.text = "Either no App Instances in your Region or Application Location permissions are denied";
+                ErrorSolution.GetComponentInChildren<Text>().text = "Update Location Settings in the Application.";
                 ErrorPanel.SetActive(true);
+                appManager.EnableInteraction();
             }
+        }
+
+        public void UpdateUserLocation(double longitude, double latitude)
+        {
+            integration.SetFallbackLocation(longitude, latitude);
+            integration.useFallbackLocation = true;
+            GetEDGE();
+        }
+
+        public void UpdateUserLocation()
+        {
+            integration.useFallbackLocation = false;
+            GetEDGE();
         }
 
         public string UriBasedOnConnectionMode()
@@ -179,7 +206,7 @@ namespace MobiledgeXComputerVision {
             // isNetworkError True on failure to resolve a DNS entry
             if (www.isNetworkError || www.isHttpError)
             {
-                Debug.Log("Error sending Image to SERVER");
+                Debug.Log("Error sending Image to Server");
                 Debug.Log(www.error);
                 if (www.responseCode == 503)
                 {
@@ -239,7 +266,7 @@ namespace MobiledgeXComputerVision {
 
         public void UpdateAverageLatency(ConcurrentQueue<float> queue, float requestLatency)
         {
-            if (queue.Count < 10)
+            if (queue.Count < 100)
             {
                 queue.Enqueue(requestLatency);
             }
@@ -265,16 +292,36 @@ namespace MobiledgeXComputerVision {
 
         public IEnumerator GetNetworkOnlyLatency( string url)
         {
-            UnityWebRequest www = UnityWebRequest.Head(url);
-            System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
-            timer.Start();
-            yield return www.SendWebRequest();
-            timer.Stop();
-            TimeSpan ts = timer.Elapsed;
-            UpdateAverageLatency(networkOnlyLatencyRollingAvgQueue, (float)ts.TotalMilliseconds);
+            UnityWebRequest networkTest = UnityWebRequest.Head(url);
+            System.Diagnostics.Stopwatch networkOnlyLatencyTimer = new System.Diagnostics.Stopwatch();
+            networkOnlyLatencyTimer.Start();
+            yield return networkTest.SendWebRequest();
+            networkOnlyLatencyTimer.Stop();
+            TimeSpan networkOnlyLatencyTimeSpan = networkOnlyLatencyTimer.Elapsed;
+            UpdateAverageLatency(networkOnlyLatencyRollingAvgQueue, (float)networkOnlyLatencyTimeSpan.TotalMilliseconds);
             appManager.webRequestsLock = true;
         }
 
+
+        public IEnumerator GetCloudletCityName(double longitude, double latitude)
+        {
+            UnityWebRequest cityNameRequest = UnityWebRequest.Get("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + latitude + "&longitude=" + longitude + "&localityLanguage=en");
+            cityNameRequest.timeout = 5; // Timeout in seconds
+            yield return cityNameRequest.SendWebRequest();
+            if (!cityNameRequest.isNetworkError)
+            {
+                cloudletLocationText.text = (JsonUtility.FromJson<GetCloudletCityNameResponse>(cityNameRequest.downloadHandler.text).principalSubdivision);
+            }
+            else
+            {
+                cloudletLocationText.text = "Unknown";
+            }
+        }
+               
+        public class GetCloudletCityNameResponse // full response structure at https://www.bigdatacloud.com/geocoding-apis/free-reverse-geocode-to-city-api
+        {
+            public string principalSubdivision;
+        }
         #endregion
     }
 }
