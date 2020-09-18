@@ -104,7 +104,7 @@ curl facedetection.defaultedge.mobiledgex.net:8008/recognizer/predict/ -F "image
 ```
 curl facedetection.defaultedge.mobiledgex.net:8008/recognizer/predict/ -F "image=@Bruce.jpg"
 <HTTP/1.1 503 Service Unavailable>
-Training data update in progress
+{"success": "false", "error": "Training data update in progress"}
 ```
 If this state is encountered, it should only last a few seconds.
 
