@@ -46,17 +46,20 @@ class FaceRecognizer(object):
     """
 
     def __init__(self):
+        self.working_dir = os.path.dirname(os.path.realpath(__file__))
+
+        # Always create our face detector
+        self.face_cascade = cv2.CascadeClassifier(self.working_dir+'/opencv-files/haarcascade_frontalface_alt.xml')
+        self.training_update_in_progress = False
+
+        self.redis_server_password = None
         # Get password from environment variable.
         try:
             self.redis_server_password = os.environ['REDIS_SERVER_PASSWORD']
         except (ValueError, KeyError) as e:
-            logger.error("Fatal error: REDIS_SERVER_PASSWORD environment variable is not available.")
-            sys.exit(1)
-
-        self.working_dir = os.path.dirname(os.path.realpath(__file__))
-
-        #Create face detector
-        self.face_cascade = cv2.CascadeClassifier(self.working_dir+'/opencv-files/haarcascade_frontalface_alt.xml')
+            logger.error("Error: REDIS_SERVER_PASSWORD environment variable is not available. Face Recognition will be disabled.")
+            self.redis_server_password = None
+            return
 
         #create our LBPH face recognizer
         self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -80,7 +83,6 @@ class FaceRecognizer(object):
         self.channel = PUBSUB_CHANNEL
         self.redis = None
         self.pubsub = None
-        self.training_update_in_progress = False
         self.redis_updated_timestamp = 0
         redis_thread = threading.Thread(target=self.redis_loop)
         redis_thread.daemon = True
@@ -459,6 +461,15 @@ class FaceRecognizer(object):
         if face is None or rect is None:
             #print("No face found for img ", type(img))
             return None, None, None, None
+
+        if self.redis_server_password is None:
+            # No training data available. Just perform detection and return
+            # an error message in the subject value.
+            warning = "Training data not available. Redis password not set."
+            subject = "No Training Password" # This will be displayed with the face
+            confidence = 0
+            logger.warning("%s" %warning)
+            return None, subject, confidence, rect
 
         #predict the image using our face recognizer
         label, confidence = self.face_recognizer.predict(face)

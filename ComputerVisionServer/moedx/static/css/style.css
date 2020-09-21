@@ -225,6 +225,7 @@ td {
     display: block;
   }
   #stats-wrapper {
+    min-width: 320px;    
     width: fit-content;
     bottom: 5px;
   }

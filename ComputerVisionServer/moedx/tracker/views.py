@@ -194,7 +194,7 @@ def recognizer_predict(request):
     logger.debug(prepend_ip("Request received: %s" %request, request))
 
     if myFaceRecognizer.training_update_in_progress:
-        error = "Training data update in progress"
+        error = '{"success": "false", "error": "Training data update in progress"}'
         logger.error(prepend_ip("%s" %error, request))
         return HttpResponse(error, status=503)
 

@@ -514,6 +514,12 @@ function sendImageToServer(image) {
         headers: { 'Content-Type': 'image/jpeg', 'Mobiledgex-Debug': 'true' },
         body: image
       })
+      .then(function(response) {
+        if (!response.ok) {
+          console.log(currentEndpoint + " failed. Error="+response.statusText);
+        }
+        return response;
+      })
       .then(response => response.json())
       .then(data => {
         handleResponse(data);
