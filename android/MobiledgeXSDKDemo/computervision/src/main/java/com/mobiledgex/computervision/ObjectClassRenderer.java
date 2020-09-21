@@ -89,7 +89,7 @@ public class ObjectClassRenderer extends View {
             paint.setStyle(Paint.Style.STROKE);
             mPaints.add(paint);
             Paint fillPaint = new Paint(paint);
-            fillPaint.setAlpha(96);
+            fillPaint.setAlpha(96); // out of 255
             fillPaint.setStyle(Paint.Style.FILL);
             mFillPaints.add(fillPaint);
         }

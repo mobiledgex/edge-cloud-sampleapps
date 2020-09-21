@@ -4,13 +4,13 @@ apply plugin: 'com.jfrog.artifactory'
 
 android {
     archivesBaseName = "MobiledgeXSDKDemo"
-    compileSdkVersion 28
+    compileSdkVersion 29
     defaultConfig {
         applicationId "com.mobiledgex.sdkdemo"
         minSdkVersion 24
-        targetSdkVersion 28
-        versionCode 60
-        versionName "1.1.11"
+        targetSdkVersion 29
+        versionCode 61
+        versionName "1.1.12"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         manifestPlaceholders = [GOOGLE_MAPS_API_KEY: "${googleMapsApiKey}"]

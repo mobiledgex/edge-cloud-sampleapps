@@ -75,6 +75,7 @@ import distributed_match_engine.Appcommon;
 
 import static com.mobiledgex.computervision.EventItem.EventType.ERROR;
 import static com.mobiledgex.computervision.EventItem.EventType.INFO;
+import static com.mobiledgex.computervision.PoseProcessorFragment.DEF_OPENPOSE_HOST_EDGE;
 
 public class ImageProcessorFragment extends Fragment implements ImageServerInterface, ImageProviderInterface,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -139,6 +140,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
     protected static final int PERSISTENT_TCP_PORT = 8011;
+    private boolean mTls;
     public static final String DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net";
     public static final String DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net";
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
@@ -149,8 +151,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private String mHostDetectionCloud;
     protected String mHostDetectionEdge;
     private String mHostTraining;
-    private List<String> mEdgeHostList = new ArrayList<>();
-    private int mEdgeHostListIndex;
+    protected List<String> mEdgeHostList = new ArrayList<>();
+    protected int mEdgeHostListIndex;
+
+    protected boolean mGpuHostNameOverride = false;
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
     public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
@@ -229,7 +233,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             RollingAverage ra = new RollingAverage(CloudletType.EDGE, "Error", 1);
             updateFullProcessStats(CloudletType.EDGE, ra);
             updateNetworkStats(CloudletType.EDGE, ra);
-            if (prefAutoFailover) {
+            if (prefAutoFailover || text.equals("Manual Failover")) {
                 Log.i(TAG, "Restarting mImageSenderEdge due to reportConnectionError: "+text);
                 mEdgeHostListIndex++;
                 if (mEdgeHostList.size() > mEdgeHostListIndex) {
@@ -265,6 +269,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.EDGE)
+                .setTls(mTls)
                 .setHost(mHostDetectionEdge)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
@@ -732,6 +737,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
         String prefKeyHostTraining = getResources().getString(R.string.preference_fd_host_training);
+        String prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
+        String prefKeyHostGpu = getResources().getString(R.string.preference_openpose_host_edge);
 
         if (key.equals(prefKeyHostCloud) || key.equals("ALL")) {
             mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_FACE_HOST_CLOUD);
@@ -739,7 +746,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         if (key.equals(prefKeyHostEdge) || key.equals("ALL")) {
             mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_FACE_HOST_EDGE);
-            Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge1="+ mHostDetectionEdge);
+            Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
         }
         if (key.equals(prefKeyHostTraining) || key.equals("ALL")) {
             mHostTraining = sharedPreferences.getString(prefKeyHostTraining, DEF_FACE_HOST_TRAINING);
@@ -820,8 +827,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                              Bundle savedInstanceState) {
         Log.i(TAG, "onCreateView");
         final View root = inflater.inflate(R.layout.fragment_image_processor, container, false);
-
-
         return root;
     }
 
@@ -1043,7 +1048,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                             return;
                         }
                         Integer value = (Integer) animation.getAnimatedValue();
-                        Log.i(TAG, "value="+value);
                         mEventsRecyclerView.getLayoutParams().height = value.intValue();
                         mEventsRecyclerView.requestLayout();
                     }
@@ -1246,6 +1250,20 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     protected void getAppInstListInBackground() {
+        String defaultAppName = getResources().getString(R.string.dme_app_name);
+        if (mAppName.isEmpty() || mAppName.equals(defaultAppName)) {
+            mAppName = defaultAppName + "-GPU";
+        }
+        if (mAppVersion.isEmpty()) {
+            mAppVersion = getResources().getString(R.string.app_version);
+        }
+        if (mOrgName.isEmpty()) {
+            mOrgName = getResources().getString(R.string.org_name);
+        }
+        showMessage("Get App Instances for app "+mAppName+"...");
+
+        Log.i(TAG, "getAppInstListInBackground mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
+
         new Thread(new Runnable() {
             @Override public void run() {
                 try {
@@ -1284,18 +1302,21 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         Log.i(TAG, "mClosestCloudlet.getFqdn()=" + mClosestCloudlet.getFqdn());
 
-        // Extract cloudlet name from FQDN
-        String[] parts = mClosestCloudlet.getFqdn().split("\\.");
-        String cloudletNameTvStr = parts[0];
-
         //Find fqdnPrefix from Port structure.
         String fqdnPrefix = "";
         List<Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
-        for (Appcommon.AppPort aPort : ports) {
+        // Get data only from first port.
+        Appcommon.AppPort aPort = ports.get(0);
+        if (aPort != null) {
+            Log.i(TAG, "Got port "+aPort+" TLS="+aPort.getTls()+" fqdnPrefix="+fqdnPrefix);
             fqdnPrefix = aPort.getFqdnPrefix();
+            mTls = aPort.getTls();
+            Log.i(TAG, "Setting TLS="+mTls);
+
         }
         // Build full hostname.
-        mHostDetectionEdge = fqdnPrefix+mClosestCloudlet.getFqdn();
+//        mHostDetectionEdge = fqdnPrefix+mClosestCloudlet.getFqdn();
+        mHostDetectionEdge = mClosestCloudlet.getFqdn(); // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
         mEdgeHostList.clear();
         mEdgeHostListIndex = 0;
         mEdgeHostList.add(mHostDetectionEdge);
@@ -1339,9 +1360,14 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 String fqdnPrefix = "";
                 List<Appcommon.AppPort> ports = appInst.getPortsList();
                 for (Appcommon.AppPort aPort : ports) {
-                    fqdnPrefix = aPort.getFqdnPrefix();
+                    // Get data only from first port.
+                    if (fqdnPrefix.equals("")) {
+                        fqdnPrefix = aPort.getFqdnPrefix();
+                        mTls = aPort.getTls();
+                    }
                 }
-                String hostname = fqdnPrefix + appInst.getFqdn();
+//                String hostname = fqdnPrefix + appInst.getFqdn();
+                String hostname = appInst.getFqdn(); // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
                 mEdgeHostList.add(hostname);
                 showMessage("Found " + hostname);
             }

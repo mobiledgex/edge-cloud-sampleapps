@@ -83,7 +83,13 @@
         android:singleLine="false"
         android:summary="@string/preference_fd_host_edge_summary"
         android:title="@string/preference_fd_host_edge_title" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/pref_override_gpu_cloudlet_hostname"
+        android:summary="@string/pref_summary_override_gpu_cloudlet_hostname"
+        android:title="@string/pref_title_override_gpu_cloudlet_hostname" />
     <EditTextPreference
+        android:dependency="@string/pref_override_gpu_cloudlet_hostname"
         android:defaultValue="posedetection.defaultedge.mobiledgex.net"
         android:key="@string/preference_openpose_host_edge"
         android:selectAllOnFocus="true"
