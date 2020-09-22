@@ -352,6 +352,13 @@ namespace MobiledgeXComputerVision
         {
             placeholder.gameObject.SetActive(false);
         }
+        /// <summary>
+        /// Disable user interaction for a new FindClouldet request
+        /// </summary>
+        public void DisableInteraction()
+        {
+            placeholder.gameObject.SetActive(true);
+        }
         #endregion
     }
 }
