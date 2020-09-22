@@ -1312,11 +1312,13 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             fqdnPrefix = aPort.getFqdnPrefix();
             mTls = aPort.getTls();
             Log.i(TAG, "Setting TLS="+mTls);
-
         }
         // Build full hostname.
 //        mHostDetectionEdge = fqdnPrefix+mClosestCloudlet.getFqdn();
-        mHostDetectionEdge = mClosestCloudlet.getFqdn(); // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
+        // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
+        // Note that Docker deployments don't even have FqdnPrefix, so this workaround
+        // is only needed for k8s, but the same code will work for both.
+        mHostDetectionEdge = mClosestCloudlet.getFqdn();
         mEdgeHostList.clear();
         mEdgeHostListIndex = 0;
         mEdgeHostList.add(mHostDetectionEdge);
@@ -1359,15 +1361,19 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 //Find fqdnPrefix from Port structure.
                 String fqdnPrefix = "";
                 List<Appcommon.AppPort> ports = appInst.getPortsList();
-                for (Appcommon.AppPort aPort : ports) {
-                    // Get data only from first port.
-                    if (fqdnPrefix.equals("")) {
-                        fqdnPrefix = aPort.getFqdnPrefix();
-                        mTls = aPort.getTls();
-                    }
+                // Get data only from first port.
+                Appcommon.AppPort aPort = ports.get(0);
+                if (aPort != null) {
+                    Log.i(TAG, "Got port "+aPort+" TLS="+aPort.getTls()+" fqdnPrefix="+fqdnPrefix);
+                    fqdnPrefix = aPort.getFqdnPrefix();
+                    mTls = aPort.getTls();
+                    Log.i(TAG, "Setting TLS="+mTls);
                 }
 //                String hostname = fqdnPrefix + appInst.getFqdn();
-                String hostname = appInst.getFqdn(); // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
+                // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
+                // Note that Docker deployments don't even have FqdnPrefix, so this workaround
+                // is only needed for k8s, but the same code will work for both.
+                String hostname = appInst.getFqdn();
                 mEdgeHostList.add(hostname);
                 showMessage("Found " + hostname);
             }

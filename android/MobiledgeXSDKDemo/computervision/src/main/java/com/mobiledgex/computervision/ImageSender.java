@@ -178,7 +178,6 @@ public class ImageSender {
         public ImageSender build() {
             return new ImageSender(this);
         }
-
     }
 
     private ImageSender(final Builder builder) {

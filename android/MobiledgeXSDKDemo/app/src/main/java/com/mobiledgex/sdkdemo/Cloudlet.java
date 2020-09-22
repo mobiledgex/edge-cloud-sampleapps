@@ -77,7 +77,7 @@ public class Cloudlet implements Serializable {
     private SpeedTestResultsInterface mSpeedTestResultsInterface;
 
     private String mHostName;
-    private int mOpenPort = 7777;
+    private int mOpenPort = 8008;
     private final int socketTimeout = 3000;
     private boolean latencyTestTaskRunning = false;
     private boolean speedTestDownloadTaskRunning = false;
