@@ -8,8 +8,10 @@ namespace MobiledgeXComputerVision
         public InputField LatitudeInput;
         public InputField LongitudeInput;
         public Button UpdateLocationButton;
-        public Button UseDeviceLocationButton;
+        public Toggle UseDeviceLocationToggle;
         public Dropdown RegionDropDownList;
+        public GameObject SetupLocationLabel;
+        public GameObject SetupLocationField;
         public NetworkManager networkManager;
 
 
@@ -17,7 +19,7 @@ namespace MobiledgeXComputerVision
         {
             RegionDropDownList.value = NetworkManager.regionIndex;
             UpdateLocationButton.onClick.AddListener(UpdateLocationSettings);
-            UseDeviceLocationButton.onClick.AddListener(UseDeviceLocation);
+            UseDeviceLocationToggle.onValueChanged.AddListener(UseDeviceLocation);
             RegionDropDownList.onValueChanged.AddListener(SetRegion);
         }
 
@@ -27,13 +29,25 @@ namespace MobiledgeXComputerVision
             double.TryParse(LatitudeInput.text, out latitude);
             double.TryParse(LongitudeInput.text, out longitude);
             networkManager.UpdateUserLocation(longitude, latitude);
+            UseDeviceLocationToggle.isOn = false;
         }
 
-        void UseDeviceLocation()
+        void UseDeviceLocation(bool useDeviceLocation)
         {
-            LatitudeInput.text = "";
-            LongitudeInput.text = "";
-            networkManager.UpdateUserLocation();
+            if (useDeviceLocation)
+            {
+                LatitudeInput.text = "";
+                LongitudeInput.text = "";
+                networkManager.UpdateUserLocation();
+                SetupLocationField.SetActive(false);
+                SetupLocationLabel.SetActive(false);
+            }
+            else
+            {
+                SetupLocationField.SetActive(true);
+                SetupLocationLabel.SetActive(true);
+            }
+
         }
 
         void SetRegion(int region)
