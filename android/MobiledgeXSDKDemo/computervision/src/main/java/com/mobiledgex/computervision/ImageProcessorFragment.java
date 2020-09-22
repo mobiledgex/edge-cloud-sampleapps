@@ -233,13 +233,17 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             RollingAverage ra = new RollingAverage(CloudletType.EDGE, "Error", 1);
             updateFullProcessStats(CloudletType.EDGE, ra);
             updateNetworkStats(CloudletType.EDGE, ra);
-            if (prefAutoFailover || text.equals("Manual Failover")) {
+            boolean manualFailover = text.equals("Manual Failover");
+            if (prefAutoFailover || manualFailover) {
                 Log.i(TAG, "Restarting mImageSenderEdge due to reportConnectionError: "+text);
                 mEdgeHostListIndex++;
                 if (mEdgeHostList.size() > mEdgeHostListIndex) {
                     mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
                     restartImageSenderEdge();
                 } else {
+                    if (mEdgeHostList.size() > 1) {
+                        showMessage("Host list exhausted.");
+                    }
                     findCloudletInBackground();
                 }
             } else {
