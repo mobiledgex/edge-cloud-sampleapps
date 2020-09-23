@@ -42,6 +42,8 @@ import org.json.JSONArray;
 
 import java.text.DecimalFormat;
 
+import static com.mobiledgex.computervision.PoseProcessorFragment.DEF_OPENPOSE_HOST_EDGE;
+
 public class ObjectProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
     private static final String TAG = "ObjectProcessorFragment";
@@ -242,7 +244,15 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
 
         mVideoFilename = VIDEO_FILE_NAME;
 
-        findCloudletGpuInBackground();
+        if (mGpuHostNameOverride) {
+            mEdgeHostList.clear();
+            mEdgeHostListIndex = 0;
+            mEdgeHostList.add(mHostDetectionEdge);
+            showMessage("Overriding GPU host. Host=" + mHostDetectionEdge);
+            restartImageSenderEdge();
+        } else {
+            findCloudletGpuInBackground();
+        }
     }
 
     @Override
@@ -295,4 +305,39 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         }
     }
 
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Log.i(TAG, "Object Detection onSharedPreferenceChanged("+key+")");
+        if(getContext() == null) {
+            //Can happen during rapid screen rotations.
+            return;
+        }
+        super.onSharedPreferenceChanged(sharedPreferences, key);
+
+        String prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
+        String prefKeyHostGpu = getResources().getString(R.string.preference_openpose_host_edge);
+
+        if (key.equals(prefKeyHostGpuOverride) || key.equals("ALL")) {
+            mGpuHostNameOverride = sharedPreferences.getBoolean(prefKeyHostGpuOverride, false);
+            Log.i(TAG, "key="+key+" mGpuHostNameOverride="+ mGpuHostNameOverride);
+            if (mGpuHostNameOverride) {
+                mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_OPENPOSE_HOST_EDGE);
+                Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
+            }
+        }
+        if (key.equals(prefKeyHostGpu) || key.equals("ALL")) {
+            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_OPENPOSE_HOST_EDGE);
+            Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
+        }
+
+        if (key.equals(prefKeyHostGpu) || key.equals(prefKeyHostGpuOverride)) {
+            if (mGpuHostNameOverride) {
+                mEdgeHostList.clear();
+                mEdgeHostListIndex = 0;
+                mEdgeHostList.add(mHostDetectionEdge);
+                showMessage("mHostDetectionEdge set to " + mHostDetectionEdge);
+                restartImageSenderEdge();
+            }
+        }
+    }
 }
