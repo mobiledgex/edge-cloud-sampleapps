@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">MobiledgeX SDK Demo</string>
     <string name="dme_app_name">ComputerVision</string>
-    <string name="app_version">2.0</string>
-    <string name="org_name">MobiledgeX</string>
+    <string name="app_version">2.2</string>
+    <string name="org_name">MobiledgeX-Samples</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>

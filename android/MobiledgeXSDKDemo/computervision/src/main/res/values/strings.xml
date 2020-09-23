@@ -1,7 +1,7 @@
 <resources>
     <string name="dme_app_name">ComputerVision</string>
-    <string name="app_version">2.0</string>
-    <string name="org_name">MobiledgeX</string>
+    <string name="app_version">2.2</string>
+    <string name="org_name">MobiledgeX-Samples</string>
 
     <string name="title_activity_face_detection">Face Detection</string>
     <string name="title_activity_face_recognition">Face Recognition</string>
@@ -100,5 +100,9 @@
         <item>PERSISTENT_TCP</item>
         <item>WEBSOCKET</item>
     </string-array>
+
+    <string name="pref_override_gpu_cloudlet_hostname">pref_override_gpu_cloudlet_hostname</string>
+    <string name="pref_summary_override_gpu_cloudlet_hostname">Select this to enter a GPU hostname to override the FindCloudlet result.</string>
+    <string name="pref_title_override_gpu_cloudlet_hostname">Override GPU cloudlet hostname</string>
 
 </resources>

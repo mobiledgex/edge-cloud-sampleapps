@@ -65,6 +65,8 @@ public class ImageSender {
     private ImageServerInterface mImageServerInterface;
     private RequestQueue mRequestQueue;
 
+    private boolean mTls;
+    private String mScheme;
     private String mHost;
     private int mPort;
     private int mPersistentTcpPort;
@@ -127,6 +129,7 @@ public class ImageSender {
         private Activity activity;
         private ImageServerInterface imageServerInterface;
         private ImageServerInterface.CloudletType cloudLetType;
+        private boolean tls;
         private String host;
         private int port;
         private int persistentTcpPort;
@@ -144,6 +147,11 @@ public class ImageSender {
 
         public Builder setCloudLetType(ImageServerInterface.CloudletType cloudLetType) {
             this.cloudLetType = cloudLetType;
+            return this;
+        }
+
+        public Builder setTls(boolean tls) {
+            this.tls = tls;
             return this;
         }
 
@@ -174,6 +182,7 @@ public class ImageSender {
 
     private ImageSender(final Builder builder) {
         mCloudLetType = builder.cloudLetType;
+        mTls = builder.tls;
         mHost = builder.host;
         mPort = builder.port;
         mPersistentTcpPort = builder.persistentTcpPort;
@@ -278,7 +287,9 @@ public class ImageSender {
             Log.i(TAG, mCloudLetType+" can't start WebSocket client with null host");
             return;
         }
-        String url = "ws://"+mHost+":"+mPort+"/ws"+mDjangoUrl;
+
+        mScheme =  mTls ? "ws" : "wss";
+        String url = mScheme+"://"+mHost+":"+mPort+"/ws"+mDjangoUrl;
         Log.i(TAG, mCloudLetType+" attempting to start WebSocket client. url: " + url);
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
         ResultWebSocketListener listener = new ResultWebSocketListener();
@@ -358,11 +369,6 @@ public class ImageSender {
             mDjangoUrl = "/object/detect/";
         } else {
             Log.e(TAG, "Invalid CameraMode: "+mode);
-        }
-        try {
-            throw new Exception("Null cameramode");
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         Log.i(TAG, "setCameraMode("+mCameraMode+") mOpcode="+mOpcode+" mDjangoUrl="+ mDjangoUrl +" "+mCloudLetType+" host="+mHost);
     }
@@ -446,7 +452,8 @@ public class ImageSender {
 
         } else if(mConnectionMode == ConnectionMode.REST) {
             final String requestBody = Base64.encodeToString(bytes, Base64.DEFAULT);
-            String url = "http://"+ mHost +":"+mPort + mDjangoUrl;
+            mScheme =  mTls ? "https" : "http";
+            String url = mScheme+"://"+ mHost +":"+mPort + mDjangoUrl;
             Log.i(TAG, "url="+url+" length: "+requestBody.length());
 
             // Request a byte response from the provided URL.
@@ -551,7 +558,8 @@ public class ImageSender {
         Log.i(TAG, mCloudLetType +" trainerTrain mCameraMode="+mCameraMode);
         setCameraMode(CameraMode.FACE_UPDATING_SERVER);
 
-        String url = "http://"+ mHost +":"+mPort+"/trainer/train/";
+        mScheme =  mTls ? "https" : "http";
+        String url = mScheme+"://"+ mHost +":"+mPort+"/trainer/train/";
         Log.i(TAG, mCloudLetType +" url="+url);
 
         final long startTime = System.nanoTime();
@@ -593,7 +601,8 @@ public class ImageSender {
      * Sends request to the FaceTrainingServer to remove training data.
      */
     public void trainerRemove() {
-        String url = "http://"+ mHost +":"+mPort+"/trainer/remove/";
+        mScheme =  mTls ? "https" : "http";
+        String url = mScheme+"://"+ mHost +":"+mPort+"/trainer/remove/";
         Log.i(TAG, mCloudLetType +" url="+url);
         setCameraMode(CameraMode.FACE_UPDATING_SERVER);
 

@@ -54,7 +54,7 @@ public class Cloudlet implements Serializable {
     private double mLatitude;
     private double mLongitude;
     private double mDistance;
-    private boolean bestMatch;
+    private boolean mBestMatch;
     private transient Marker mMarker;
 
     private double latencyMin=9999;
@@ -76,8 +76,8 @@ public class Cloudlet implements Serializable {
 
     private SpeedTestResultsInterface mSpeedTestResultsInterface;
 
-    private String hostName;
-    private int openPort = 7777;
+    private String mHostName;
+    private int mOpenPort = 8008;
     private final int socketTimeout = 3000;
     private boolean latencyTestTaskRunning = false;
     private boolean speedTestDownloadTaskRunning = false;
@@ -86,13 +86,21 @@ public class Cloudlet implements Serializable {
     private String speedTestUploadErrorMessage = "";
     private String mFqdnPrefix;
     private String mIpAddress;
-    private String fqdn;
+    private String mFqdn;
+    private String mScheme;
     private CloudletListHolder.LatencyTestMethod mLatencyTestMethod;
     private boolean mLatencyTestMethodForced = false;
 
-    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, Marker marker, String fqdnPrefix, int port) {
+    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, String fqdnPrefix, boolean tls, Marker marker, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
-        update(cloudletName, appName, carrierName, gpsLocation, distance, fqdn, marker, fqdnPrefix, port);
+        mCloudletName = cloudletName;
+        mAppName = appName;
+        mCarrierName = carrierName;
+        mLatitude = gpsLocation.latitude;
+        mLongitude = gpsLocation.longitude;
+        mDistance = distance;
+        mMarker = marker;
+        setUri(fqdnPrefix, fqdn, tls, port);
 
         if(CloudletListHolder.getSingleton().getLatencyTestAutoStart()) {
             //All AsyncTask instances are run on the same thread, so this queues up the tasks.
@@ -104,35 +112,31 @@ public class Cloudlet implements Serializable {
         mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
     }
 
-    public void update(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, Marker marker, String fqdnPrefix, int port) {
-        Log.d(TAG, "Cloudlet update. cloudletName="+cloudletName);
-        mCloudletName = cloudletName;
-        mAppName = appName;
-        mCarrierName = carrierName;
-        mLatitude = gpsLocation.latitude;
-        mLongitude = gpsLocation.longitude;
-        mDistance = distance;
-        mMarker = marker;
-        setUri(fqdnPrefix, fqdn, port);
-    }
-
     /**
-     * From the given string, create the hostname that will be pinged.
+     * From the given parameters, create the hostname that will be pinged.
+     * @param fqdnPrefix
      * @param fqdn
+     * @param tls
+     * @param port
      */
-    public void setUri(String fqdnPrefix, String fqdn, int port) {
+    public void setUri(String fqdnPrefix, String fqdn, boolean tls, int port) {
         Log.i(TAG, "mCarrierName="+mCarrierName+ " setUri("+fqdnPrefix+fqdn+":"+port+")");
-        openPort = port;
+        mOpenPort = port;
         mFqdnPrefix = fqdnPrefix;
-        hostName = fqdnPrefix+fqdn;
-        this.fqdn = fqdn;
+        mHostName = fqdnPrefix+fqdn;
+        mFqdn = fqdn;
+        if (tls) {
+            mScheme = "https";
+        } else {
+            mScheme = "http";
+        }
     }
 
     public String getHostName() {
-        return hostName;
+        return mHostName;
     }
     public String getFqdn() {
-        return fqdn;
+        return mFqdn;
     }
 
     /**
@@ -141,7 +145,7 @@ public class Cloudlet implements Serializable {
      */
     private String getDownloadUri() {
         mNumBytes = CloudletListHolder.getSingleton().getNumBytesDownload();
-        return "http://"+hostName+":"+openPort+"/getdata/?numbytes="+ mNumBytes;
+        return mScheme+"://"+ mHostName +":"+ mOpenPort +"/getdata/?numbytes="+ mNumBytes;
     }
 
     /**
@@ -149,12 +153,12 @@ public class Cloudlet implements Serializable {
      * @return  The URI.
      */
     private String getUploadUri() {
-        return "http://"+hostName+":"+openPort+"/uploaddata/";
+        return mScheme+"://"+ mHostName +":"+ mOpenPort +"/uploaddata/";
     }
 
     public String toString() {
         return "mCarrierName="+mCarrierName+" mCloudletName="+mCloudletName+" mLatitude="+mLatitude
-                +" mLongitude="+mLongitude+" mDistance="+mDistance+" hostName="+hostName;
+                +" mLongitude="+mLongitude+" mDistance="+mDistance+" mScheme="+mScheme+" hostName="+ mHostName;
     }
 
     public void setSpeedTestResultsListener(SpeedTestResultsInterface speedTestResultsInterface) {
@@ -257,14 +261,14 @@ public class Cloudlet implements Serializable {
             int countSuccess = 0;
             boolean reachable;
             //First time may be slower because of DNS lookup. Run once before it counts.
-            isReachable(hostName, openPort, socketTimeout);
+            isReachable(mHostName, mOpenPort, socketTimeout);
             for(int i = 0; i < mNumPackets; i++) {
                 startTime = System.nanoTime();
-                reachable = isReachable(hostName, openPort, socketTimeout);
+                reachable = isReachable(mHostName, mOpenPort, socketTimeout);
                 if(reachable) {
                     long endTime = System.nanoTime();
                     timeDifference = (endTime - startTime)/1000000.0;
-                    Log.d(TAG, hostName+" reachable="+reachable+" Latency=" + timeDifference + " ms.");
+                    Log.d(TAG, mHostName +" reachable="+reachable+" Latency=" + timeDifference + " ms.");
                     latencyTotal += timeDifference;
                     latencyAvg = latencyTotal/(i+1);
                     if(timeDifference < latencyMin) { latencyMin = timeDifference; }
@@ -294,8 +298,8 @@ public class Cloudlet implements Serializable {
             String percent = String.format("%.1f", (countFail/(float)mNumPackets*100));
             String avg = String.format("%.3f", (latencyAvg));
             String stddev = String.format("%.3f", (latencyStddev));
-            Log.i(TAG, hostName+" "+mNumPackets+" packets transmitted, "+countSuccess+" packets received, "+percent+"% packet loss");
-            Log.i(TAG, hostName+" round-trip min/avg/max/stddev = "+latencyMin+"/"+avg+"/"+latencyMax+"/"+stddev+" ms");
+            Log.i(TAG, mHostName +" "+mNumPackets+" packets transmitted, "+countSuccess+" packets received, "+percent+"% packet loss");
+            Log.i(TAG, mHostName +" round-trip min/avg/max/stddev = "+latencyMin+"/"+avg+"/"+latencyMax+"/"+stddev+" ms");
 
             return null;
         }
@@ -325,7 +329,7 @@ public class Cloudlet implements Serializable {
         @Override
         protected String doInBackground(Void... voids) {
             pingFailed = false;
-            String pingCommand = "/system/bin/ping -c "+ mNumPackets +" " + hostName;
+            String pingCommand = "/system/bin/ping -c "+ mNumPackets +" " + mHostName;
             String inputLine = "";
 
             String regex = "time=(\\d+.\\d+) ms";
@@ -532,7 +536,7 @@ public class Cloudlet implements Serializable {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                InetAddress address = InetAddress.getByName(hostName);
+                InetAddress address = InetAddress.getByName(mHostName);
                 mIpAddress = address.getHostAddress();
                 return null;
             } catch (UnknownHostException e) {
@@ -591,9 +595,9 @@ public class Cloudlet implements Serializable {
 
     public void setMarker(Marker mMarker) { this.mMarker = mMarker; }
 
-    public boolean isBestMatch() { return bestMatch; }
+    public boolean isBestMatch() { return mBestMatch; }
 
-    public void setBestMatch(boolean bestMatch) { this.bestMatch = bestMatch; }
+    public void setBestMatch(boolean bestMatch) { this.mBestMatch = bestMatch; }
 
     public double getLatencyMin() {
         return latencyMin;

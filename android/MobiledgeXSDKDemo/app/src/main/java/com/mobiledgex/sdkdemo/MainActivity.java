@@ -152,6 +152,7 @@ public class MainActivity extends AppCompatActivity
     protected static String mAppName;
     protected static String mAppVersion;
     protected static String mOrgName;
+    private boolean mTls;
     protected static  MatchingEngine.FindCloudletMode mFindCloudletMode;
     protected static int mAppInstancesLimit;
     private boolean mNetworkSwitchingAllowed;
@@ -1042,25 +1043,35 @@ public class MainActivity extends AppCompatActivity
                     String appName = appInstances.get(0).getAppName();
                     String FQDNPrefix = "";
                     int publicPort = 0;
+                    mTls = false;
                     List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
-                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
+                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, TLS: %b, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
                     for (Appcommon.AppPort aPort : ports) {
                         FQDNPrefix = aPort.getFqdnPrefix();
                         Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                                     aPort.getProto().getNumber(),
                                     aPort.getFqdnPrefix(),
+                                    aPort.getTls(),
                                     aPort.getInternalPort(),
                                     aPort.getPublicPort(),
                                     aPort.getPathPrefix()));
-                        // Only the default port is currently supported. Set it here so the
-                        // following "first port" logic won't be used.
-                        publicPort = DEFAULT_SPEED_TEST_PORT;
-                        Log.i(TAG, "Using DEFAULT_SPEED_TEST_PORT for publicPort="+publicPort);
 
-                        // Only choose the first port
+                        // For our app, the first port is for an http/ws server and can be TLS.
+                        // This server provides both CV and speedtest capabilities.
+                        // The second port is for a generic socket server.
+                        // Only choose the first port.
                         if (publicPort == 0) {
                             publicPort = aPort.getPublicPort();
-                            Log.i(TAG, "Using publicPort="+publicPort);
+                            mTls = aPort.getTls();
+                            Log.i(TAG, "Using publicPort="+publicPort+" TLS="+mTls);
+                        }
+
+                        if (publicPort != DEFAULT_SPEED_TEST_PORT) {
+                            // Only the default port is currently supported. Set it here so the
+                            // above "first port" logic is overridden in case the port order in
+                            // the app definition was incorrect.
+                            Log.w(TAG, "Incorrect appInst first port "+publicPort+". Overriding with default: " + DEFAULT_SPEED_TEST_PORT);
+                            publicPort = DEFAULT_SPEED_TEST_PORT;
                         }
                     }
                     double distance = cloudletLocation.getDistance();
@@ -1074,7 +1085,17 @@ public class MainActivity extends AppCompatActivity
                     } else {
                         Log.i(TAG, "addMarker for "+cloudletName);
                         marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                        cloudlet = new Cloudlet(cloudletName, appName, carrierName, latLng, distance, fqdn, marker, FQDNPrefix, publicPort);
+                        cloudlet = new CloudletBuilder()
+                                .setCloudletName(cloudletName)
+                                .setAppName(appName)
+                                .setCarrierName(carrierName)
+                                .setGpsLocation(latLng)
+                                .setDistance(distance).setFqdn(fqdn)
+                                .setFqdnPrefix(FQDNPrefix)
+                                .setTls(mTls)
+                                .setMarker(marker)
+                                .setPort(publicPort)
+                                .createCloudlet();
                         initCloudletMarker(cloudlet);
                     }
                     tempCloudlets.put(cloudletName, cloudlet);
