@@ -223,6 +223,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         mStdFull = view.findViewById(R.id.full_std_dev);
         mStdNet = view.findViewById(R.id.network_std_dev);
         mStatusText = view.findViewById(R.id.statusTextView);
+        mStatusText.setVisibility(View.GONE);
         mObjectClassRenderer = view.findViewById(R.id.object_class_renderer);
 
         setupLogViewer(view);
