@@ -5,7 +5,18 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:foregroundTint="#2196F3"
     tools:context=".Camera2BasicFragment">
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:indeterminateTint="#03A9F4"
+        android:visibility="invisible" />
 
     <TextureView
         android:id="@+id/videoView"

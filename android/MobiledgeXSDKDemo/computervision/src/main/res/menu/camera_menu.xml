@@ -30,6 +30,8 @@
         android:title="Remove Guest Data" />
     <item android:id="@+id/action_camera_video"
         android:title="Play Video" />
+    <item android:id="@+id/action_camera_custom_video"
+        android:title="Play Custom Video..." />
     <item android:id="@+id/action_camera_debug"
         android:title="Generate Debug Info" />
     <item android:title="Benchmark"
