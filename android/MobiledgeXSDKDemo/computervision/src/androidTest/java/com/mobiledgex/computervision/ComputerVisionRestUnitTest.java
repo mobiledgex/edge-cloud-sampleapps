@@ -49,13 +49,13 @@ public class ComputerVisionRestUnitTest {
     public static final String TAG = "Computer Vision Rest APIs Unit Test";
 
     // Backup Host and Port of MobiledgeXSDK Demo backend (face detection server)
-    public static String host = "mobiledgexsdkdemo-tcp.sdkdemo-app-cluster.hawkins-main.gddt.mobiledgex.net";
+    public static String host = "cv-cluster.hawkins-main.gddt.mobiledgex.net";
     public static int port = 8008;
 
     // MatchingEngine variables
-    public static final String orgName = "MobiledgeX";
-    public static final String appName = "MobiledgeX SDK Demo";
-    public static final String appVers = "2.0";
+    public static final String orgName = "MobiledgeX-Samples";
+    public static final String appName = "ComputerVision";
+    public static final String appVers = "2.2";
     public static final String carrierName = "wifi";
     public static final String authToken = null;
     public static final int cellID = 0;
@@ -358,7 +358,7 @@ public class ComputerVisionRestUnitTest {
     public void test001OpenposeDetectEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        String url = "http://posedetection.defaultedge.mobiledgex.net:8008";
+        String url = "https://posedetection.defaultedge.mobiledgex.net:8008";
 
         String detectorDetectEndpoint = "/openpose/detect/";
         url += detectorDetectEndpoint;
@@ -380,7 +380,7 @@ public class ComputerVisionRestUnitTest {
     public void test001ObjectDetectEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        String url = "http://posedetection.defaultedge.mobiledgex.net:8008";
+        String url = "https://posedetection.defaultedge.mobiledgex.net:8008";
 
         String detectorDetectEndpoint = "/object/detect/";
         url += detectorDetectEndpoint;

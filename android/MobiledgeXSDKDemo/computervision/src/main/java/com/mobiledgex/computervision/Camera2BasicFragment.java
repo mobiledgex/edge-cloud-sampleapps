@@ -63,6 +63,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -80,6 +81,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -127,6 +129,8 @@ public class Camera2BasicFragment extends Fragment
     private TextureView mVideoView;
     private boolean mVideoMode;
     private boolean mLegacyCamera;
+
+    private ProgressBar mProgressBar;
 
     private int mImageSendWidth = 240;
     private int mImageSendHeight = 180;
@@ -736,6 +740,7 @@ public class Camera2BasicFragment extends Fragment
         }
         Log.i(TAG, "savedInstanceState mVideoMode="+mVideoMode);
 
+        mProgressBar = view.findViewById(R.id.progressBar);
         mTextureView = view.findViewById(R.id.textureView);
         mVideoView = view.findViewById(R.id.videoView);
         mVideoView.setOnClickListener(this);
@@ -1495,19 +1500,13 @@ public class Camera2BasicFragment extends Fragment
     private Runnable mVideoRunnableCode = new Runnable() {
         @Override
         public void run() {
-            //TODO: Can we optimize this?
-//            if(mVolleyRequestHandler.cloudImageSender.busy && mVolleyRequestHandler.edgeImageSender.busy) {
-//                Log.i(TAG, "both busy. bail.");
-//                mBackgroundHandler.postDelayed(this, 33);
-//                return;
-//            }
             getCurrentVideoFrame();
             mBackgroundHandler.postDelayed(this, 66);
         }
     };
 
-    public void startVideo(String filename) {
-        Log.i(TAG, "startVideo()");
+    public void startVideo(String filename, boolean isFullUrl) {
+        Log.i(TAG, "startVideo("+filename+","+isFullUrl+")");
         mTextureView.setVisibility(View.INVISIBLE);
         mImageSendWidth = 320; //Widescreen: 1.77:1
         // Hide the status bar.
@@ -1515,7 +1514,7 @@ public class Camera2BasicFragment extends Fragment
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
 
-        prepareVideo(filename);
+        prepareVideo(filename, isFullUrl);
     }
 
     /**
@@ -1524,9 +1523,10 @@ public class Camera2BasicFragment extends Fragment
      *
      * @param filename  The video file name.
      */
-    private void prepareVideo(String filename) {
+    private void prepareVideo(String filename, boolean isFullUrl) {
         Log.i(TAG, "prepareVideo()");
         String videoFileName;
+        final Uri videoUrl;
         mVideoMode = true;
         closeCamera();
         if(mLegacyCamera) {
@@ -1534,23 +1534,28 @@ public class Camera2BasicFragment extends Fragment
             startBackgroundThread();
         }
 
-        int orientation = getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            videoFileName = "landscape/"+filename;
+        if (isFullUrl) {
+            videoUrl = Uri.parse(filename);
         } else {
-            videoFileName = "portrait/"+filename;
+            // In this case, it is one of the standard videos that we maintain.
+            int orientation = getResources().getConfiguration().orientation;
+            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                videoFileName = "landscape/"+filename;
+            } else {
+                videoFileName = "portrait/"+filename;
+            }
+            videoUrl = Uri.parse("http://opencv.facetraining.mobiledgex.net/videos/"+videoFileName);
         }
 
         try {
-            AssetFileDescriptor afd = getActivity().getAssets().openFd("videos/"+videoFileName);
-
             Surface videoSurface = new Surface(mVideoView.getSurfaceTexture());
             Log.i(TAG, "videoSurface="+videoSurface);
 
             mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            mMediaPlayer.setDataSource(getContext(), videoUrl);
             mMediaPlayer.setSurface(videoSurface);
             mMediaPlayer.setLooping(true);
+            mProgressBar.setVisibility(View.VISIBLE);
             mMediaPlayer.prepareAsync();
 
             // Play video when the media source is ready for playback.
@@ -1558,7 +1563,17 @@ public class Camera2BasicFragment extends Fragment
                 @Override
                 public void onPrepared(MediaPlayer mediaPlayer) {
                     mediaPlayer.start();
+                    mProgressBar.setVisibility(View.INVISIBLE);
                     mBackgroundHandler.post(mVideoRunnableCode);
+                }
+            });
+            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    mProgressBar.setVisibility(View.INVISIBLE);
+                    ErrorDialog.newInstance("Error playing video from URL "+videoUrl)
+                            .show(getChildFragmentManager(), FRAGMENT_DIALOG);
+                    return true;
                 }
             });
 

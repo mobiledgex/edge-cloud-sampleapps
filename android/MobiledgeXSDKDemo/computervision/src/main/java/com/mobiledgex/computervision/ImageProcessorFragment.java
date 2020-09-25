@@ -33,6 +33,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -41,6 +43,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,6 +51,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -571,8 +575,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_camera_video) {
-//            mCameraToolbar.setVisibility(View.GONE);
-            mCamera2BasicFragment.startVideo(mVideoFilename);
+            mCamera2BasicFragment.startVideo(mVideoFilename, false);
+            return true;
+        }
+
+        if (id == R.id.action_camera_custom_video) {
+            getCustomVideoName();
             return true;
         }
 
@@ -679,7 +687,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 mCloudStd.setVisibility(View.GONE);
                 mCloudStd2.setVisibility(View.GONE);
             }
-            mCamera2BasicFragment.startVideo(mVideoFilename);
+            mCamera2BasicFragment.startVideo(mVideoFilename, false);
             mCamera2BasicFragment.runBenchmark(getContext(), "Edge");
             return true;
         }
@@ -693,12 +701,40 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 mEdgeStd.setVisibility(View.GONE);
                 mEdgeStd2.setVisibility(View.GONE);
             }
-            mCamera2BasicFragment.startVideo(mVideoFilename);
+            mCamera2BasicFragment.startVideo(mVideoFilename, false);
             mCamera2BasicFragment.runBenchmark(getContext(), "Cloud");
             return true;
         }
 
         return false;
+    }
+
+    private void getCustomVideoName() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Custom Video");
+        builder.setMessage("Enter the URL of the video");
+
+        // Set up the input
+        final EditText input = new EditText(getContext());
+        input.setHint("http://mysite.com/myvideo.mp4");
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String videoURL = input.getText().toString();
+                mCamera2BasicFragment.startVideo(videoURL, true);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
     }
 
     public boolean verifySignedIn() {
@@ -908,22 +944,34 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mEdgeFaceBoxRenderer.setStrokeWidth(strokeWidth);
         mLocalFaceBoxRenderer.setStrokeWidth(strokeWidth);
 
+        boolean tls = true;
+        if (mHostDetectionCloud.endsWith(".gcp.mobiledgex.net")) {
+            tls = false; //Because this is a GCP cloudlet where TLS is not supported.
+        }
         mImageSenderCloud = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.CLOUD)
                 .setHost(mHostDetectionCloud)
+                .setTls(tls)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
+
+        if (mHostDetectionEdge.equals(DEF_FACE_HOST_EDGE) ||
+                mHostDetectionEdge.endsWith(".gcp.mobiledgex.net")) {
+            tls = false; //Because this is a GCP cloudlet where TLS is not supported.
+        }
         mImageSenderEdge = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.EDGE)
                 .setHost(mHostDetectionEdge)
+                .setTls(tls)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
+
         mImageSenderTraining = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
@@ -1318,11 +1366,14 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             Log.i(TAG, "Setting TLS="+mTls);
         }
         // Build full hostname.
-//        mHostDetectionEdge = fqdnPrefix+mClosestCloudlet.getFqdn();
-        // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
-        // Note that Docker deployments don't even have FqdnPrefix, so this workaround
-        // is only needed for k8s, but the same code will work for both.
-        mHostDetectionEdge = mClosestCloudlet.getFqdn();
+        if (!mTls) {
+            mHostDetectionEdge = fqdnPrefix + mClosestCloudlet.getFqdn();
+        } else {
+            // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
+            // Note that Docker deployments don't even have FqdnPrefix, so this workaround
+            // is only needed for k8s, but the same code will work for both.
+            mHostDetectionEdge = mClosestCloudlet.getFqdn();
+        }
         mEdgeHostList.clear();
         mEdgeHostListIndex = 0;
         mEdgeHostList.add(mHostDetectionEdge);

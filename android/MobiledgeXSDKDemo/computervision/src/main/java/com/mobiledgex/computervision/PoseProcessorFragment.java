@@ -223,6 +223,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
         mStdFull = view.findViewById(R.id.full_std_dev);
         mStdNet = view.findViewById(R.id.network_std_dev);
         mStatusText = view.findViewById(R.id.statusTextView);
+        mStatusText.setVisibility(View.GONE);
         mPoseRenderer = view.findViewById(R.id.poseSkeleton);
 
         setupLogViewer(view);

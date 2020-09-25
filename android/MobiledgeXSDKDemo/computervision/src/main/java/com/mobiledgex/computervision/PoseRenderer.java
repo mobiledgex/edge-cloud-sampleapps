@@ -144,7 +144,7 @@ public class PoseRenderer extends View {
                     int[] pair = pairs[j];
                     int indexStart = pair[0];
                     int indexEnd = pair[1];
-                    Log.d(TAG, "indexStart="+indexStart+" indexEnd="+indexEnd);
+//                    Log.d(TAG, "indexStart="+indexStart+" indexEnd="+indexEnd);
 
                     JSONArray keypoint1 = pose.getJSONArray(indexStart);
                     float x1 = (float) keypoint1.getDouble(0) * mServerToDisplayRatioX;
@@ -160,7 +160,7 @@ public class PoseRenderer extends View {
                         continue;
                     }
 
-                    Log.d(TAG, "Drawing indexStart="+indexStart+" indexEnd="+indexEnd+" ("+x1+","+y1+","+x2+","+y2+")");
+//                    Log.d(TAG, "Drawing indexStart="+indexStart+" indexEnd="+indexEnd+" ("+x1+","+y1+","+x2+","+y2+")");
                     if(mMirrored) {
                         x1 = mWidth - x1;
                         x2 = mWidth - x2;

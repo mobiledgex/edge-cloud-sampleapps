@@ -1536,7 +1536,13 @@ public class MainActivity extends AppCompatActivity
     public void setDmeHostname(String hostname) {
         mHostname = hostname;
         mClosestCloudletHostname = null;
-        getCloudlets(true);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getCloudlets(true);
+            }
+        });
         checkForLocSimulator(mHostname);
     }
 
