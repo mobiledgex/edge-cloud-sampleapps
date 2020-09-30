@@ -47,9 +47,9 @@
     <string name="preference_fd_host_edge">fd_host_edge</string>
     <string name="preference_fd_host_edge_title">Edge Server</string>
     <string name="preference_fd_host_edge_summary">Enter a custom IP or hostname.</string>
-    <string name="preference_fd_reset_both_hosts">fd_reset_both_hosts</string>
-    <string name="preference_fd_reset_both_hosts_title">Reset hosts to default.</string>
-    <string name="preference_fd_reset_both_hosts_message">Are you sure?</string>
+    <string name="preference_fd_reset_all_hosts">fd_reset_both_hosts</string>
+    <string name="preference_fd_reset_all_hosts_title">Reset hosts to default.</string>
+    <string name="preference_fd_reset_all_hosts_message">Are you sure?</string>
     <string name="preference_fd_legacy_camera">fd_legacy_camera</string>
     <string name="preference_fd_legacy_camera_title">Legacy Camera</string>
     <string name="preference_fd_legacy_camera_summary">Camera handling for older devices</string>
@@ -61,9 +61,9 @@
         <item>No. Retain current values.</item>
     </string-array>
     <string name="fd_latency_method">fd_latency_method</string>
-    <string name="preference_openpose_host_edge">fd_openpose_host_edge</string>
-    <string name="preference_openpose_host_edge_title">GPU Server (OpenPose, PyTorch)</string>
-    <string name="preference_openpose_host_edge_summary">Enter a custom IP or hostname.</string>
+    <string name="preference_gpu_host_edge">fd_gpu_host_edge</string>
+    <string name="preference_gpu_host_edge_title">GPU Server (OpenPose, PyTorch)</string>
+    <string name="preference_gpu_host_edge_summary">Enter a custom IP or hostname.</string>
     <string name="train_guest_start">Start</string>
     <string name="train_guest_title">Guest Name</string>
     <string name="train_guest_message">Enter the guest name, then face recognition training will begin.</string>
@@ -104,5 +104,13 @@
     <string name="pref_override_gpu_cloudlet_hostname">pref_override_gpu_cloudlet_hostname</string>
     <string name="pref_summary_override_gpu_cloudlet_hostname">Select this to enter a GPU hostname to override the FindCloudlet result.</string>
     <string name="pref_title_override_gpu_cloudlet_hostname">Override GPU cloudlet hostname</string>
+
+    <string name="pref_override_edge_cloudlet_hostname">pref_override_edge_cloudlet_hostname</string>
+    <string name="pref_summary_override_edge_cloudlet_hostname">Select this to enter an Edge Server hostname to override the FindCloudlet result.</string>
+    <string name="pref_title_override_edge_cloudlet_hostname">Override Edge cloudlet hostname</string>
+
+    <string name="pref_override_cloud_cloudlet_hostname">pref_override_cloud_cloudlet_hostname</string>
+    <string name="pref_summary_override_cloud_cloudlet_hostname">Select this to enter a Cloud Server hostname to override default provisioned value.</string>
+    <string name="pref_title_override_cloud_cloudlet_hostname">Override Cloud cloudlet hostname</string>
 
 </resources>

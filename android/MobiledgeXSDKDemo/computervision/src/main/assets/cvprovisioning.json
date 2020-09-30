@@ -1,0 +1,21 @@
+{
+  "product": "ComputerVision Provisioning Data",
+  "releaseDate": "2020-09-25",
+  "comment": "This device-local copy will only be used if the online version isn't available or fails to parse.",
+  "regions": {
+    "default": {
+      "defaultHostNames": {
+        "edge": "cv-cluster.berlin-main.tdg.mobiledgex.net",
+        "cloud": "computervision-tcp.mobiledgex-samplescomputervision22.cv-cluster.us-los-angeles.gcp.mobiledgex.net",
+        "gpu": "cv-gpu-cluster.hamburg-main.tdg.mobiledgex.net"
+      }
+    },
+    "us-mexdemo.dme.mobiledgex.net": {
+      "defaultHostNames": {
+        "edge": "computervision-tcp.mobiledgex-samplescomputervision22.cv-cluster.us-los-angeles.gcp.mobiledgex.net",
+        "cloud": "cv-cluster.berlin-main.tdg.mobiledgex.net",
+        "gpu": "cv-gpu-cluster.hamburg-main.tdg.mobiledgex.net"
+      }
+    }
+  }
+}

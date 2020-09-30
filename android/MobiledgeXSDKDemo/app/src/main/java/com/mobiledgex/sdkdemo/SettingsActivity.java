@@ -408,14 +408,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             setHasOptionsMenu(true);
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
-
-            String prefKeyHostCloud = getResources().getString(com.mobiledgex.computervision.R.string.preference_fd_host_cloud);
-            String prefKeyHostEdge = getResources().getString(com.mobiledgex.computervision.R.string.preference_fd_host_edge);
-            String prefKeyOpenPoseHostEdge = getResources().getString(com.mobiledgex.computervision.R.string.preference_openpose_host_edge);
-
-            bindPreferenceSummaryToValue(findPreference(prefKeyHostCloud));
-            bindPreferenceSummaryToValue(findPreference(prefKeyHostEdge));
-            bindPreferenceSummaryToValue(findPreference(prefKeyOpenPoseHostEdge));
         }
 
         @Override

@@ -67,11 +67,11 @@ Things to try:
 - Go to settings and turn on "Show Latency Stats after session" to get a stats summary that can be copy/pasted for additional use.
 
 #### Face Detection
-The Face Detection activity provides a visual comparison of the latency offered by an Edge cloudlet vs. that of a server in the public cloud. The Edge cloudlet can be determined in a few ways, in this order of priorit: 
+The Face Detection activity provides a visual comparison of the latency offered by an Edge cloudlet vs. that of a server in the public cloud. The Edge cloudlet can be determined in a few ways, in this order of priority:
 1. The result of "Find Closest Cloudlet", if performed.
-1. Selected from within the Cloudlet Details page.
+1. Selected from within the Cloudlet Details page options menu. This also activates the "Override Edge cloudlet hostname" value in **Computer Vision Settings**.
 1. "Edge Server" entry in the **Computer Vision Settings**, if updated by the user.
-1. The default hostname: facedetection.defaultedge.mobiledgex.net.
+1. The default hostname from the provisioning data at http://opencv.facetraining.mobiledgex.net/cvprovisioning.json.
 
 Images from the camera are sent to a server that uses OpenCV to detect faces in the image. The server returns coordinates of any faces, and the app renders rectangles around them. 
 

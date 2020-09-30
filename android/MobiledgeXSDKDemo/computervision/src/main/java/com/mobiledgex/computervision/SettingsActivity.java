@@ -180,7 +180,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
             String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
-            String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
+            String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_gpu_host_edge);
 
             bindPreferenceSummaryToValue(findPreference(prefKeyHostCloud));
             bindPreferenceSummaryToValue(findPreference(prefKeyHostEdge));

@@ -143,16 +143,20 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (id == R.id.action_copy_cloud_host) {
             String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+            String prefKeyHostCloudOverride = getResources().getString(R.string.pref_override_cloud_cloudlet_hostname);
             String hostname = cloudlet.getHostName();
             Log.i(TAG, "Cloud hostname being set to: "+hostname);
             prefs.edit().putString(prefKeyHostCloud, hostname).apply();
+            prefs.edit().putBoolean(prefKeyHostCloudOverride, true).apply();
             return true;
         }
         if (id == R.id.action_copy_edge_host) {
             String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+            String prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
             String hostname = cloudlet.getHostName();
             Log.i(TAG, "Edge hostname being set to: "+hostname);
             prefs.edit().putString(prefKeyHostEdge, hostname).apply();
+            prefs.edit().putBoolean(prefKeyHostEdgeOverride, true).apply();
             return true;
         }
         if (id == R.id.action_speedtest_settings) {

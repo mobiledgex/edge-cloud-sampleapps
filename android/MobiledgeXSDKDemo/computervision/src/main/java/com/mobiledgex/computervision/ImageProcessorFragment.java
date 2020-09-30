@@ -43,7 +43,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -57,13 +56,25 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,7 +90,6 @@ import distributed_match_engine.Appcommon;
 
 import static com.mobiledgex.computervision.EventItem.EventType.ERROR;
 import static com.mobiledgex.computervision.EventItem.EventType.INFO;
-import static com.mobiledgex.computervision.PoseProcessorFragment.DEF_OPENPOSE_HOST_EDGE;
 
 public class ImageProcessorFragment extends Fragment implements ImageServerInterface, ImageProviderInterface,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -92,9 +102,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
 
     protected MatchingEngine mMatchingEngine;
     //The following defaults may be overridden by passing EXTRA values to the Intent.
-    public String mAppName = "MobiledgeX SDK Demo";
-    public String mAppVersion = "2.0";
-    public String mOrgName = "MobiledgeX";
+    public String mAppName = "ComputerVision";
+    public String mAppVersion = "2.2";
+    public String mOrgName = "MobiledgeX-Samples";
     public String mCarrierName = "TDG";
     public String mDmeHostname = "wifi.dme.mobiledgex.net";
     public int mDmePort = 50051;
@@ -144,10 +154,15 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
     protected static final int PERSISTENT_TCP_PORT = 8011;
-    private boolean mTls;
-    public static final String DEF_FACE_HOST_EDGE = "facedetection.defaultedge.mobiledgex.net";
-    public static final String DEF_FACE_HOST_CLOUD = "facedetection.defaultcloud.mobiledgex.net";
+    private boolean mTlsEdge = true;
+    private boolean mTlsCloud = true;
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
+    public static final String DEF_HOSTNAME_PLACEHOLDER = "Default";
+
+    private String mDefaultHostCloud;
+    private String mDefaultHostEdge;
+    private String mDefaultHostGpu;
+
     protected ImageSender mImageSenderEdge;
     private ImageSender mImageSenderCloud;
     private ImageSender mImageSenderTraining;
@@ -159,6 +174,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected int mEdgeHostListIndex;
 
     protected boolean mGpuHostNameOverride = false;
+    private boolean mEdgeHostNameOverride = false;
+    private boolean mCloudHostNameOverride = false;
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
     public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
@@ -187,8 +204,19 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      * @return  The statistics text.
      */
     public String getStatsText() {
-        return mImageSenderEdge.getStatsText() + "\n\n" +
-                mImageSenderCloud.getStatsText();
+        String statsText = "";
+        if (mImageSenderEdge != null) {
+            statsText = mImageSenderEdge.getStatsText();
+        } else {
+            statsText = "Edge never initialized.";
+        }
+        statsText += "\n\n";
+        if (mImageSenderCloud != null) {
+            statsText += mImageSenderCloud.getStatsText();
+        } else {
+            statsText += "Cloud never initialized.";
+        }
+        return statsText;
     }
 
     /**
@@ -277,7 +305,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.EDGE)
-                .setTls(mTls)
+                .setTls(mTlsEdge)
                 .setHost(mHostDetectionEdge)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
@@ -308,10 +336,22 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         // Determine which ImageSenders should handle this image.
         if(mCameraMode == ImageSender.CameraMode.FACE_TRAINING
             || mCameraMode == ImageSender.CameraMode.FACE_UPDATING_SERVER) {
-            mImageSenderTraining.sendImage(bitmap);
+            if (mImageSenderTraining != null) {
+                mImageSenderTraining.sendImage(bitmap);
+            } else {
+                Log.w(TAG, "mImageSenderTraining not yet initialized");
+            }
         } else {
-            mImageSenderEdge.sendImage(bitmap);                 
-            mImageSenderCloud.sendImage(bitmap);
+            if (mImageSenderEdge != null) {
+                mImageSenderEdge.sendImage(bitmap);
+            } else {
+                Log.w(TAG, "mImageSenderEdge not yet initialized");
+            }
+            if (mImageSenderCloud != null) {
+                mImageSenderCloud.sendImage(bitmap);
+            } else {
+                Log.w(TAG, "mImageSenderCloud not yet initialized");
+            }
         }
     }
 
@@ -321,7 +361,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      */
     @Override
     public void setStatus(String status) {
-//        mEventItemList.add(new EventItem(INFO, status));
         if (status.isEmpty()) {
             mStatusText.setVisibility(View.GONE);
         } else {
@@ -774,20 +813,66 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
         String prefKeyAutoFailover = getResources().getString(R.string.preference_fd_auto_failover);
         String prefKeyShowCloudOutput = getResources().getString(R.string.preference_fd_show_cloud_output);
+        String prefKeyResetCvHosts = getResources().getString(R.string.preference_fd_reset_all_hosts);
+        String prefKeyHostCloudOverride = getResources().getString(R.string.pref_override_cloud_cloudlet_hostname);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+        String prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+        String prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
         String prefKeyHostTraining = getResources().getString(R.string.preference_fd_host_training);
-        String prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
-        String prefKeyHostGpu = getResources().getString(R.string.preference_openpose_host_edge);
 
+        if(key.equals(prefKeyResetCvHosts)) {
+            String value = sharedPreferences.getString(prefKeyResetCvHosts, "No");
+            Log.i(TAG, prefKeyResetCvHosts+" "+value);
+            if(value.startsWith("Yes")) {
+                Log.i(TAG, "Resetting Face server hosts.");
+                sharedPreferences.edit().putString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER).apply();
+                sharedPreferences.edit().putString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER).apply();
+                sharedPreferences.edit().putString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER).apply();
+                Toast.makeText(getContext(), "Computer Vision hosts reset to default.", Toast.LENGTH_SHORT).show();
+            }
+            //Always set the value back to something so that either clicking Yes or No in the dialog
+            //will activate this "changed" call.
+            sharedPreferences.edit().putString(prefKeyResetCvHosts, "XXX_garbage_value").apply();
+        }
+
+        // Cloud Hostname handling
+        if (key.equals(prefKeyHostCloudOverride) || key.equals("ALL")) {
+            mCloudHostNameOverride = sharedPreferences.getBoolean(prefKeyHostCloudOverride, false);
+            Log.i(TAG, "key="+key+" mCloudHostNameOverride="+ mCloudHostNameOverride);
+            if (mCloudHostNameOverride) {
+                mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER);
+                Log.i(TAG, "key="+key+" mHostDetectionCloud="+ mHostDetectionCloud);
+            }
+        }
         if (key.equals(prefKeyHostCloud) || key.equals("ALL")) {
-            mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_FACE_HOST_CLOUD);
-            Log.i(TAG, "prefKeyHostCloud="+prefKeyHostCloud+" mHostDetectionCloud="+mHostDetectionCloud);
+            mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER);
+            Log.i(TAG, "prefKeyHostCloud="+prefKeyHostCloud+" mHostDetectionCloud="+ mHostDetectionCloud);
+        }
+
+        // Edge Hostname handling
+        if (key.equals(prefKeyHostEdgeOverride) || key.equals("ALL")) {
+            mEdgeHostNameOverride = sharedPreferences.getBoolean(prefKeyHostEdgeOverride, false);
+            Log.i(TAG, "key="+key+" mEdgeHostNameOverride="+ mEdgeHostNameOverride);
+            if (mEdgeHostNameOverride) {
+                mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
+                Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
+            }
         }
         if (key.equals(prefKeyHostEdge) || key.equals("ALL")) {
-            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_FACE_HOST_EDGE);
+            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
             Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
         }
+        if (key.equals(prefKeyHostEdge) || key.equals(prefKeyHostEdgeOverride)) {
+            if (mEdgeHostNameOverride) {
+                mEdgeHostList.clear();
+                mEdgeHostListIndex = 0;
+                mEdgeHostList.add(mHostDetectionEdge);
+                showMessage("mHostDetectionEdge set to " + mHostDetectionEdge);
+                restartImageSenderEdge();
+            }
+        }
+
         if (key.equals(prefKeyHostTraining) || key.equals("ALL")) {
             mHostTraining = sharedPreferences.getString(prefKeyHostTraining, DEF_FACE_HOST_TRAINING);
             Log.i(TAG, "prefKeyHostTraining="+prefKeyHostTraining+" mHostTraining="+mHostTraining);
@@ -944,33 +1029,152 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mEdgeFaceBoxRenderer.setStrokeWidth(strokeWidth);
         mLocalFaceBoxRenderer.setStrokeWidth(strokeWidth);
 
-        boolean tls = true;
+        mVideoFilename = VIDEO_FILE_NAME;
+
+        boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
+        if (faceRecognition) {
+            mCameraMode = ImageSender.CameraMode.FACE_RECOGNITION;
+            mCameraToolbar.setTitle(R.string.title_activity_face_recognition);
+        } else {
+            mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
+            mCameraToolbar.setTitle(R.string.title_activity_face_detection);
+        }
+
+        getProvisioningData();
+    }
+
+    private void getProvisioningData() {
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        String url = "http://opencv.facetraining.mobiledgex.net/cvprovisioning.json";
+
+        // Request a string response from the provided URL.
+        // If the cvprovisioning request fails, or can't be parsed, the provisioning data will
+        // come from assets/cvprovisioning.json.
+        StringRequest stringRequest = new StringRequest(url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.i(TAG, "cvprovisioning response=" + response);
+                        parseProvisioningData(response, false);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "That didn't work! error=" + error);
+                parseProvisioningData(getLocalProvisioningData(), true);
+            }
+        });
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
+
+    private void parseProvisioningData(String provData, boolean isLocal) {
+        try {
+            JSONObject dataForRegion;
+            JSONObject jsonObject = new JSONObject(provData);
+            Log.d(TAG, "jsonObject=" + jsonObject);
+            JSONObject regions = jsonObject.getJSONObject("regions");
+            Log.d(TAG, "regions=" + regions);
+            Log.d(TAG, "mDmeHostname="+mDmeHostname);
+            if (regions.has(mDmeHostname)) {
+                Log.d(TAG, "getting region data for "+mDmeHostname);
+                dataForRegion = regions.getJSONObject(mDmeHostname);
+            } else {
+                Log.d(TAG, "getting region data for default");
+                dataForRegion = regions.getJSONObject("default");
+            }
+            JSONObject defaultHostNames = dataForRegion.getJSONObject("defaultHostNames");
+            mDefaultHostCloud = defaultHostNames.getString("cloud");
+            mDefaultHostEdge = defaultHostNames.getString("edge");
+            mDefaultHostGpu = defaultHostNames.getString("gpu");
+            Log.i(TAG, "mDefaultHostCloud = "+mDefaultHostCloud);
+            Log.i(TAG, "mDefaultHostEdge = "+mDefaultHostEdge);
+            Log.i(TAG, "mDefaultHostGpu = "+mDefaultHostGpu);
+
+            startImageSenders();
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing JSON", e);
+            if (isLocal) {
+                new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                        .setTitle("Error in provisioning data")
+                        .setMessage("Unable to parse JSON string. Please alert MobiledgeX support.")
+                        .setPositiveButton("OK", null)
+                        .show();
+            } else {
+                Log.w(TAG, "Online version of provisioning data failed to parse. Using local copy.");
+                parseProvisioningData(getLocalProvisioningData(), true);
+            }
+        }
+    }
+
+    private String getLocalProvisioningData() {
+        String provData;
+        try {
+            StringBuilder sb = new StringBuilder();
+            InputStream is = getActivity().getAssets().open("cvprovisioning.json");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8 ));
+            String str;
+            while ((str = br.readLine()) != null) {
+                sb.append(str);
+            }
+            provData = sb.toString();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return provData;
+    }
+
+    private void startImageSenders() {
+        mHostDetectionCloud = mHostDetectionCloud.toLowerCase();
+        if (mCloudHostNameOverride) {
+            Log.i(TAG, "mHostDetectionCloud came from Settings: "+mHostDetectionCloud);
+            if (mHostDetectionCloud.indexOf("default") >= 0) {
+                // Use the hostname from the downloaded provisioning data.
+                mHostDetectionCloud = mDefaultHostCloud;
+                Log.i(TAG, "Cloud override selected, but setting contains 'default', so use mHostDetectionCloud provisioning: "+mHostDetectionCloud);
+            }
+        } else {
+            mHostDetectionCloud = mDefaultHostCloud;
+            Log.i(TAG, "mHostDetectionCloud came from provisioning: "+mHostDetectionCloud);
+        }
+
+        mTlsCloud = true;
         if (mHostDetectionCloud.endsWith(".gcp.mobiledgex.net")) {
-            tls = false; //Because this is a GCP cloudlet where TLS is not supported.
+            mTlsCloud = false; //Because this is a GCP cloudlet where TLS is not supported.
+            Log.i(TAG, "Set mTlsCloud="+mTlsCloud+" because GCP cloudlets don't support TLS.");
         }
         mImageSenderCloud = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.CLOUD)
                 .setHost(mHostDetectionCloud)
-                .setTls(tls)
+                .setTls(mTlsCloud)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .setCameraMode(mCameraMode)
                 .build();
 
-        if (mHostDetectionEdge.equals(DEF_FACE_HOST_EDGE) ||
-                mHostDetectionEdge.endsWith(".gcp.mobiledgex.net")) {
-            tls = false; //Because this is a GCP cloudlet where TLS is not supported.
+        if (mEdgeHostNameOverride) {
+            mHostDetectionEdge = mHostDetectionEdge.toLowerCase();
+            if (mHostDetectionEdge.indexOf("default") >= 0) {
+                mHostDetectionEdge = mDefaultHostEdge;
+                Log.i(TAG, "Edge override selected, but setting contains 'default', so use mHostDetectionEdge provisioning: "+mHostDetectionEdge);
+            }
+            if (mHostDetectionEdge.endsWith(".gcp.mobiledgex.net")) {
+                mTlsEdge = false; //Because this is a GCP cloudlet where TLS is not supported.
+                Log.i(TAG, "Set mTlsEdge="+mTlsEdge+" because GCP cloudlets don't support TLS.");
+            }
+            mEdgeHostList.clear();
+            mEdgeHostListIndex = 0;
+            mEdgeHostList.add(mHostDetectionEdge);
+            showMessage("Overriding GPU host. Host=" + mHostDetectionEdge);
+            restartImageSenderEdge();
+        } else {
+            findCloudletInBackground();
         }
-        mImageSenderEdge = new ImageSender.Builder()
-                .setActivity(getActivity())
-                .setImageServerInterface(this)
-                .setCloudLetType(CloudletType.EDGE)
-                .setHost(mHostDetectionEdge)
-                .setTls(tls)
-                .setPort(FACE_DETECTION_HOST_PORT)
-                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
-                .build();
 
         mImageSenderTraining = new ImageSender.Builder()
                 .setActivity(getActivity())
@@ -981,16 +1185,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
 
-        boolean faceRecognition = intent.getBooleanExtra(EXTRA_FACE_RECOGNITION, false);
-        if (faceRecognition) {
-            mCameraMode = ImageSender.CameraMode.FACE_RECOGNITION;
-            mCameraToolbar.setTitle(R.string.title_activity_face_recognition);
-        } else {
-            mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
-            mCameraToolbar.setTitle(R.string.title_activity_face_detection);
-        }
-        mImageSenderCloud.setCameraMode(mCameraMode);
-        mImageSenderEdge.setCameraMode(mCameraMode);
         showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
         showMessage("Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge);
         initialLogsComplete();
@@ -998,6 +1192,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mVideoFilename = VIDEO_FILE_NAME;
 
         //One more call to get preferences for ImageSenders
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         onSharedPreferenceChanged(prefs, "ALL");
     }
 
@@ -1114,6 +1309,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
         if(edgeCloudletHostname != null) {
             Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
+            mEdgeHostNameOverride = true;
             mHostDetectionEdge = edgeCloudletHostname;
         }
         mAppName = intent.getStringExtra(EXTRA_APP_NAME);
@@ -1254,6 +1450,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     protected void findCloudletInBackground() {
+        mEdgeHostNameOverride = false;
         new Thread(new Runnable() {
             @Override public void run() {
                 try {
@@ -1271,6 +1468,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     protected void findCloudletGpuInBackground() {
+        mEdgeHostNameOverride = false;
         String defaultAppName = getResources().getString(R.string.dme_app_name);
         if (mAppName.isEmpty() || mAppName.equals(defaultAppName)) {
             mAppName = defaultAppName + "-GPU";
@@ -1302,6 +1500,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     protected void getAppInstListInBackground() {
+        mEdgeHostNameOverride = false;
         String defaultAppName = getResources().getString(R.string.dme_app_name);
         if (mAppName.isEmpty() || mAppName.equals(defaultAppName)) {
             mAppName = defaultAppName + "-GPU";
@@ -1362,11 +1561,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (aPort != null) {
             Log.i(TAG, "Got port "+aPort+" TLS="+aPort.getTls()+" fqdnPrefix="+fqdnPrefix);
             fqdnPrefix = aPort.getFqdnPrefix();
-            mTls = aPort.getTls();
-            Log.i(TAG, "Setting TLS="+mTls);
+            mTlsEdge = aPort.getTls();
+            Log.i(TAG, "Setting TLS="+ mTlsEdge);
         }
         // Build full hostname.
-        if (!mTls) {
+        if (!mTlsEdge) {
             mHostDetectionEdge = fqdnPrefix + mClosestCloudlet.getFqdn();
         } else {
             // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
@@ -1421,8 +1620,8 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 if (aPort != null) {
                     Log.i(TAG, "Got port "+aPort+" TLS="+aPort.getTls()+" fqdnPrefix="+fqdnPrefix);
                     fqdnPrefix = aPort.getFqdnPrefix();
-                    mTls = aPort.getTls();
-                    Log.i(TAG, "Setting TLS="+mTls);
+                    mTlsEdge = aPort.getTls();
+                    Log.i(TAG, "Setting EDGE TLS="+ mTlsEdge);
                 }
 //                String hostname = fqdnPrefix + appInst.getFqdn();
                 // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
