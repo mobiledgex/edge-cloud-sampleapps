@@ -65,8 +65,8 @@
         android:defaultValue="true" />
     <ListPreference
         android:defaultValue="invalid"
-        android:entries="@array/pref_fd_reset_both_hosts_choices"
-        android:entryValues="@array/pref_fd_reset_both_hosts_choices"
+        android:entries="@array/pref_fd_reset_all_hosts_choices"
+        android:entryValues="@array/pref_fd_reset_all_hosts_choices"
         android:key="@string/preference_fd_reset_all_hosts"
         android:title="@string/preference_fd_reset_all_hosts_title" />
     <CheckBoxPreference

@@ -56,7 +56,7 @@
     <string name="preference_fd_show_latency_stats_dialog">fd_show_latency_stats_dialog</string>
     <string name="preference_fd_show_latency_stats_dialog_title">Show Latency Stats after session</string>
     <string name="preference_fd_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
-    <string-array name="pref_fd_reset_both_hosts_choices">
+    <string-array name="pref_fd_reset_all_hosts_choices">
         <item>Yes. Reset hosts to default.</item>
         <item>No. Retain current values.</item>
     </string-array>

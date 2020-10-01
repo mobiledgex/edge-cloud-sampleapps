@@ -293,10 +293,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
         String message;
         if (mImageSenderEdge == null) {
-            message = "Starting mImageSenderEdge on host: " + mHostDetectionEdge;
+            message = "Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
             initialLogsComplete();
         } else {
-            message = "Restarting mImageSenderEdge on host: " + mHostDetectionEdge;
+            message = "Restarting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
             mImageSenderEdge.closeConnection();
         }
         Log.i(TAG, message);
@@ -813,28 +813,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
         String prefKeyAutoFailover = getResources().getString(R.string.preference_fd_auto_failover);
         String prefKeyShowCloudOutput = getResources().getString(R.string.preference_fd_show_cloud_output);
-        String prefKeyResetCvHosts = getResources().getString(R.string.preference_fd_reset_all_hosts);
         String prefKeyHostCloudOverride = getResources().getString(R.string.pref_override_cloud_cloudlet_hostname);
         String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
         String prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
         String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
-        String prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
         String prefKeyHostTraining = getResources().getString(R.string.preference_fd_host_training);
-
-        if(key.equals(prefKeyResetCvHosts)) {
-            String value = sharedPreferences.getString(prefKeyResetCvHosts, "No");
-            Log.i(TAG, prefKeyResetCvHosts+" "+value);
-            if(value.startsWith("Yes")) {
-                Log.i(TAG, "Resetting Face server hosts.");
-                sharedPreferences.edit().putString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER).apply();
-                sharedPreferences.edit().putString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER).apply();
-                sharedPreferences.edit().putString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER).apply();
-                Toast.makeText(getContext(), "Computer Vision hosts reset to default.", Toast.LENGTH_SHORT).show();
-            }
-            //Always set the value back to something so that either clicking Yes or No in the dialog
-            //will activate this "changed" call.
-            sharedPreferences.edit().putString(prefKeyResetCvHosts, "XXX_garbage_value").apply();
-        }
 
         // Cloud Hostname handling
         if (key.equals(prefKeyHostCloudOverride) || key.equals("ALL")) {
@@ -1156,6 +1139,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .setCameraMode(mCameraMode)
                 .build();
+        showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
 
         if (mEdgeHostNameOverride) {
             mHostDetectionEdge = mHostDetectionEdge.toLowerCase();
@@ -1170,7 +1154,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mEdgeHostList.clear();
             mEdgeHostListIndex = 0;
             mEdgeHostList.add(mHostDetectionEdge);
-            showMessage("Overriding GPU host. Host=" + mHostDetectionEdge);
+            showMessage("Overriding Edge host. Host=" + mHostDetectionEdge);
             restartImageSenderEdge();
         } else {
             findCloudletInBackground();
@@ -1184,10 +1168,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                 .setPort(FACE_TRAINING_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
-
-        showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
-        showMessage("Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge);
-        initialLogsComplete();
 
         mVideoFilename = VIDEO_FILE_NAME;
 
