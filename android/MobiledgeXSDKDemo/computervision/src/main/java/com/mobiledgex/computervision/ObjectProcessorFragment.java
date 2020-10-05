@@ -42,8 +42,6 @@ import org.json.JSONArray;
 
 import java.text.DecimalFormat;
 
-import static com.mobiledgex.computervision.PoseProcessorFragment.DEF_OPENPOSE_HOST_EDGE;
-
 public class ObjectProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
     private static final String TAG = "ObjectProcessorFragment";
@@ -54,8 +52,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     private TextView mLatencyNet;
     private TextView mStdFull;
     private TextView mStdNet;
-
-    public static final String DEF_OBJECT_DETECTION_HOST_EDGE = "posedetection.defaultedge.mobiledgex.net";
 
     public static ObjectProcessorFragment newInstance() {
         return new ObjectProcessorFragment();
@@ -232,11 +228,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         prefs.registerOnSharedPreferenceChangeListener(this);
         onSharedPreferenceChanged(prefs, "ALL");
 
-        // TODO: Create separate preference for Object Detection Host
-        String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
-        mHostDetectionEdge = prefs.getString(prefKeyOpenPoseHostEdge, DEF_OBJECT_DETECTION_HOST_EDGE);
-        Log.i(TAG, "prefKeyOpenPoseHostEdge="+prefKeyOpenPoseHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
-
         Intent intent = getActivity().getIntent();
         getCommonIntentExtras(intent);
 
@@ -316,18 +307,18 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         super.onSharedPreferenceChanged(sharedPreferences, key);
 
         String prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
-        String prefKeyHostGpu = getResources().getString(R.string.preference_openpose_host_edge);
+        String prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
 
         if (key.equals(prefKeyHostGpuOverride) || key.equals("ALL")) {
             mGpuHostNameOverride = sharedPreferences.getBoolean(prefKeyHostGpuOverride, false);
             Log.i(TAG, "key="+key+" mGpuHostNameOverride="+ mGpuHostNameOverride);
             if (mGpuHostNameOverride) {
-                mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_OPENPOSE_HOST_EDGE);
+                mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER);
                 Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
             }
         }
         if (key.equals(prefKeyHostGpu) || key.equals("ALL")) {
-            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_OPENPOSE_HOST_EDGE);
+            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER);
             Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
         }
 

@@ -37,8 +37,8 @@ import java.util.List;
  */
 public class PoseRenderer extends View {
     private static final String TAG = "PoseRenderer";
-    public static final int DEFAULT_JOINT_RADIUS = 18;
-    public static final int DEFAULT_STROKE_WIDTH = 15;
+    public static final int DEFAULT_JOINT_RADIUS = 14;
+    public static final int DEFAULT_STROKE_WIDTH = 10;
     private int mJointRadius = DEFAULT_JOINT_RADIUS;
     private int mStrokeWidth = DEFAULT_STROKE_WIDTH;
     private JSONArray mPoses;

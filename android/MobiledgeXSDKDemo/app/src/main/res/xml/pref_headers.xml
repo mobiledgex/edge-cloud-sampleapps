@@ -13,7 +13,7 @@
         android:icon="@android:drawable/ic_menu_recent_history"
         android:title="@string/preference_speed_test_settings"/>
     <header
-        android:fragment="com.mobiledgex.sdkdemo.SettingsActivity$FaceDetectionSettingsFragment"
+        android:fragment="com.mobiledgex.computervision.SettingsActivity$FaceDetectionSettingsFragment"
         android:icon="@android:drawable/ic_menu_camera"
         android:title="@string/preference_fd_settings"/>
 

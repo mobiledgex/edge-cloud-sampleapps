@@ -183,7 +183,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         return PreferenceFragment.class.getName().equals(fragmentName)
                 || MatchingEngineSettingsFragment.class.getName().equals(fragmentName)
                 || GeneralSettingsFragment.class.getName().equals(fragmentName)
-                || FaceDetectionSettingsFragment.class.getName().equals(fragmentName)
+                || com.mobiledgex.computervision.SettingsActivity.FaceDetectionSettingsFragment.class.getName().equals(fragmentName)
                 || SpeedTestSettingsFragment.class.getName().equals(fragmentName);
     }
 
@@ -397,49 +397,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             region = dmeListPref.getValue();
         }
         return region;
-    }
-
-    // Face Detection Preferences.
-    public static class FaceDetectionSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_face_detection);
-            setHasOptionsMenu(true);
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            prefs.registerOnSharedPreferenceChangeListener(this);
-
-            String prefKeyHostCloud = getResources().getString(com.mobiledgex.computervision.R.string.preference_fd_host_cloud);
-            String prefKeyHostEdge = getResources().getString(com.mobiledgex.computervision.R.string.preference_fd_host_edge);
-            String prefKeyOpenPoseHostEdge = getResources().getString(com.mobiledgex.computervision.R.string.preference_openpose_host_edge);
-
-            bindPreferenceSummaryToValue(findPreference(prefKeyHostCloud));
-            bindPreferenceSummaryToValue(findPreference(prefKeyHostEdge));
-            bindPreferenceSummaryToValue(findPreference(prefKeyOpenPoseHostEdge));
-        }
-
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
-            }
-            return super.onOptionsItemSelected(item);
-        }
-
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            // Reinitialize this screen of preferences, since values may have changed.
-            // If an NPE occurs because the PreferenceManager has gone away,
-            // there's no need for any action. Just don't crash the app.
-            try {
-                getPreferenceScreen().removeAll();
-                addPreferencesFromResource(R.xml.pref_face_detection);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     // TODO: Implement this

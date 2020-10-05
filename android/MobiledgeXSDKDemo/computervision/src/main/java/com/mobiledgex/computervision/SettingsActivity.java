@@ -33,8 +33,11 @@ import androidx.appcompat.app.ActionBar;
 
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import java.util.List;
+
+import static com.mobiledgex.computervision.ImageProcessorFragment.DEF_HOSTNAME_PLACEHOLDER;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -170,6 +173,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
     // Face Detection Preferences.
     public static class FaceDetectionSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+        private String prefKeyResetCvHosts;
+        private String prefKeyHostCloudOverride;
+        private String prefKeyHostCloud;
+        private String prefKeyHostEdgeOverride;
+        private String prefKeyHostEdge;
+        private String prefKeyHostGpuOverride;
+        private String prefKeyHostGpu;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -178,13 +190,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
 
-            String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
-            String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
-            String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
+            prefKeyResetCvHosts = getResources().getString(R.string.preference_fd_reset_all_hosts);
+            prefKeyHostCloudOverride = getResources().getString(R.string.pref_override_cloud_cloudlet_hostname);
+            prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+            prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
+            prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+            prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
+            prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
 
             bindPreferenceSummaryToValue(findPreference(prefKeyHostCloud));
             bindPreferenceSummaryToValue(findPreference(prefKeyHostEdge));
-            bindPreferenceSummaryToValue(findPreference(prefKeyOpenPoseHostEdge));
+            bindPreferenceSummaryToValue(findPreference(prefKeyHostGpu));
         }
 
         @Override
@@ -199,14 +215,34 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            // Reinitialize this screen of preferences, since values may have changed.
-            // If an NPE occurs because the PreferenceManager has gone away,
-            // there's no need for any action. Just don't crash the app.
-            try {
-                getPreferenceScreen().removeAll();
-                addPreferencesFromResource(R.xml.pref_face_detection);
-            } catch (Exception e) {
-                e.printStackTrace();
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")");
+
+            if(key.equals(prefKeyResetCvHosts)) {
+                String value = sharedPreferences.getString(prefKeyResetCvHosts, "No");
+                Log.i(TAG, prefKeyResetCvHosts+" "+value);
+                if(value.startsWith("Yes")) {
+                    Log.i(TAG, "Resetting Computer Vision server hosts.");
+                    sharedPreferences.edit().putString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER)
+                        .putString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER)
+                        .putString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER)
+                        .putBoolean(prefKeyHostCloudOverride, false)
+                        .putBoolean(prefKeyHostEdgeOverride, false)
+                        .putBoolean(prefKeyHostGpuOverride, false).apply();
+                    Toast.makeText(getContext(), "Computer Vision hosts reset to default.", Toast.LENGTH_SHORT).show();
+                }
+                //Always set the value back to something so that either clicking Yes or No in the dialog
+                //will activate this "changed" call.
+                sharedPreferences.edit().putString(prefKeyResetCvHosts, "XXX_garbage_value").apply();
+
+                // Reinitialize this screen of preferences, since values may have changed.
+                // If an NPE occurs because the PreferenceManager has gone away,
+                // there's no need for any action. Just don't crash the app.
+                try {
+                    getPreferenceScreen().removeAll();
+                    addPreferencesFromResource(R.xml.pref_face_detection);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
