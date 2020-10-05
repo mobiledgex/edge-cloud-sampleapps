@@ -358,7 +358,7 @@ public class ComputerVisionRestUnitTest {
     public void test001OpenposeDetectEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        String url = "https://posedetection.defaultedge.mobiledgex.net:8008";
+        String url = "https://cv-gpu-cluster.hawkins-main.gddt.mobiledgex.net:8008";
 
         String detectorDetectEndpoint = "/openpose/detect/";
         url += detectorDetectEndpoint;
@@ -380,7 +380,7 @@ public class ComputerVisionRestUnitTest {
     public void test001ObjectDetectEndpoint() {
         Context ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        String url = "https://posedetection.defaultedge.mobiledgex.net:8008";
+        String url = "https://cv-gpu-cluster.hawkins-main.gddt.mobiledgex.net:8008";
 
         String detectorDetectEndpoint = "/object/detect/";
         url += detectorDetectEndpoint;

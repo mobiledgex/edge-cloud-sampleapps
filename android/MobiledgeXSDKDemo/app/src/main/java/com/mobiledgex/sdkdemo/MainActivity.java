@@ -1319,10 +1319,6 @@ public class MainActivity extends AppCompatActivity
         String prefKeyDefaultOperatorName = getResources().getString(R.string.pref_default_operator_name);
         String prefKeyFindCloudletMode = getResources().getString(R.string.pref_find_cloudlet_mode);
         String prefKeyAppInstancesLimit = getResources().getString(R.string.pref_app_instances_limit);
-        String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
-        String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
-        String prefKeyOpenPoseHostEdge = getResources().getString(R.string.preference_openpose_host_edge);
-        String prefKeyResetFdHosts = getResources().getString(R.string.preference_fd_reset_both_hosts);
         String prefKeyDefaultAppInfo = getResources().getString(R.string.pref_default_app_definition);
         String prefKeyAppName = getResources().getString(R.string.pref_app_name);
         String prefKeyAppVersion = getResources().getString(R.string.pref_app_version);
@@ -1492,36 +1488,6 @@ public class MainActivity extends AppCompatActivity
             CloudletListHolder.getSingleton().setNumPackets(numPackets);
         }
 
-        if(key.equals(prefKeyHostCloud)) {
-            // This call will attempt to connect to the server at prefKeyHostCloud.
-            // If it fails, the default will be restored.
-            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-                    ImageProcessorFragment.DEF_FACE_HOST_CLOUD, key);
-        }
-        if(key.equals(prefKeyHostEdge)) {
-            // This call will attempt to connect to the server at prefKeyHostEdge.
-            // If it fails, the default will be restored.
-            mClosestCloudletHostname = null;
-            new FaceServerConnectivityTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-                    ImageProcessorFragment.DEF_FACE_HOST_EDGE, key);
-        }
-
-        if(key.equals(prefKeyResetFdHosts)) {
-            String value = sharedPreferences.getString(prefKeyResetFdHosts, "No");
-            mClosestCloudletHostname = null;
-            Log.i(TAG, prefKeyResetFdHosts+" "+value);
-            if(value.startsWith("Yes")) {
-                Log.i(TAG, "Resetting Face server hosts.");
-                sharedPreferences.edit().putString(prefKeyHostCloud, ImageProcessorFragment.DEF_FACE_HOST_CLOUD).apply();
-                sharedPreferences.edit().putString(prefKeyHostEdge, ImageProcessorFragment.DEF_FACE_HOST_EDGE).apply();
-                sharedPreferences.edit().putString(prefKeyOpenPoseHostEdge, PoseProcessorFragment.DEF_OPENPOSE_HOST_EDGE).apply();
-                Toast.makeText(this, "Face detection hosts reset to default.", Toast.LENGTH_SHORT).show();
-            }
-            //Always set the value back to something so that either clicking Yes or No in the dialog
-            //will activate this "changed" call.
-            sharedPreferences.edit().putString(prefKeyResetFdHosts, "XXX_garbage_value").apply();
-        }
-
         if (appInfoChanged) {
             getCloudlets(true);
         }
@@ -1557,45 +1523,6 @@ public class MainActivity extends AppCompatActivity
             String message = "Invalid DME hostname and port: "+hostAndPort;
             throw new HostParseException(message);
         }
-    }
-
-    private class FaceServerConnectivityTask extends AsyncTask<String, Void, Boolean> {
-        private String newHost;
-
-        @Override
-        protected Boolean doInBackground(String... params) {
-            String defaultHost = params[0];
-            String keyName = params[1];
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-            newHost = prefs.getString(keyName, defaultHost);
-            boolean reachable = ImageSender.isReachable(newHost,
-                    ImageSender.getComputerVisionServerPort(newHost), 3000);
-            if(!reachable) {
-                Log.e(TAG, newHost+" not reachable. Resetting "+keyName+" to default.");
-                prefs.edit().putString(keyName, defaultHost).apply();
-                return false;
-            }
-            return true;
-        }
-        @Override
-        protected void onPostExecute(Boolean result) {
-            String message;
-            if(result) {
-                message = "Verified new host: "+newHost;
-                Log.i(TAG, message);
-            } else {
-                message = "Could not reach face server at '"+newHost+"'. Resetting to default.";
-            }
-            if (newHost.equals(ImageProcessorFragment.DEF_FACE_HOST_CLOUD) || newHost.equals(ImageProcessorFragment.DEF_FACE_HOST_EDGE)) {
-                // Don't show Toast for defaults.
-            } else {
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-            }
-        }
-        @Override
-        protected void onPreExecute() {}
-        @Override
-        protected void onProgressUpdate(Void... values) {}
     }
 
     @Override

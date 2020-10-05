@@ -129,7 +129,7 @@ public class ImageSender {
         private Activity activity;
         private ImageServerInterface imageServerInterface;
         private ImageServerInterface.CloudletType cloudLetType;
-        private boolean tls;
+        private boolean tls = false;
         private String host;
         private int port;
         private int persistentTcpPort;
@@ -189,6 +189,8 @@ public class ImageSender {
         setCameraMode(builder.cameraMode);
 
         mImageServerInterface = builder.imageServerInterface;
+
+        Log.i(TAG, "ImageSender "+mCloudLetType+" "+mHost+":"+mPort+" mTls="+mTls+" mCameraMode="+mCameraMode);
 
         try {
             mAccount = GoogleSignIn.getLastSignedInAccount(builder.activity);
@@ -270,7 +272,7 @@ public class ImageSender {
         }
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, okhttp3.Response response) {
-            String message = "WebSocket Error: " + t.getMessage();
+            String message = mCloudLetType + " WebSocket Error: " + t.getMessage();
             Log.e(TAG, message);
             mWebSocketClient.dispatcher().cancelAll();
             if (response != null && response.code() == 404) {
@@ -288,7 +290,7 @@ public class ImageSender {
             return;
         }
 
-        mScheme =  mTls ? "ws" : "wss";
+        mScheme =  mTls ? "wss" : "ws";
         String url = mScheme+"://"+mHost+":"+mPort+"/ws"+mDjangoUrl;
         Log.i(TAG, mCloudLetType+" attempting to start WebSocket client. url: " + url);
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
@@ -412,7 +414,7 @@ public class ImageSender {
      * @param bitmap  The image to encode and send.
      */
     public void sendImage(Bitmap bitmap) {
-        Log.d(TAG, "sendImage()");
+        Log.d(TAG, mCloudLetType+"sendImage()");
         if(mBusy || mInactive || mInactiveBenchmark || mInactiveFailure) {
             return;
         }
