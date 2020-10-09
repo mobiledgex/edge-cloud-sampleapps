@@ -1,0 +1,4 @@
+# Duration w/ time unit (ie, 60 seconds = 60s)
+THEDURATION=60s
+# Connections per second
+THERATE=50

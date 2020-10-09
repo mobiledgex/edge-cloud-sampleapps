@@ -1,0 +1,6 @@
+version: "3.5"
+services:
+  apitest:
+    image: qdzlug/jaypiserver:latest
+    ports:
+    - "3000:3000"

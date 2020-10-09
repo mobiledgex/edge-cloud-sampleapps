@@ -1,0 +1,2 @@
+docker build -t qdzlug/jaypiserver .
+docker push qdzlug/jaypiserver

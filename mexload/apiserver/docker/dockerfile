@@ -1,0 +1,17 @@
+FROM node:latest
+
+# Where we working?
+RUN mkdir /data
+
+# Install tools required for project
+##RUN apt update
+
+RUN cd /data && git clone https://github.com/typicode/jsonplaceholder.git  
+RUN npm install /data/jsonplaceholder
+COPY run.sh /data/run.sh
+RUN chmod 755 /data/run.sh
+
+EXPOSE 3000
+
+# This results in a single layer image
+ENTRYPOINT ["/data/run.sh"]
