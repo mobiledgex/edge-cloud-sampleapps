@@ -98,7 +98,6 @@ class ObjectDetector(object):
         detections = self.detect_image(img)
         millis = (time.time() - prev_time)*1000
         elapsed = "%.3f" %millis
-        print("%s ms to detect objects" %(elapsed))
         count_server_processing_time += 1
         total_server_processing_time += millis
 
