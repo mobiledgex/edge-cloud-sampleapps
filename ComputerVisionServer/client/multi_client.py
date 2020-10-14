@@ -66,6 +66,10 @@ class Client:
     stats_latency_full_process = RunningStats()
     stats_latency_network_only = RunningStats()
     stats_server_processing_time = RunningStats()
+    stats_cpu_utilization = RunningStats()
+    stats_mem_utilization = RunningStats()
+    stats_gpu_utilization_snapshot = RunningStats()
+    stats_gpu_memory_utilization_high = RunningStats()
 
     def __init__(self, host, port):
         # Initialize instance variables.
@@ -76,6 +80,10 @@ class Client:
         self.stats_latency_full_process = RunningStats()
         self.stats_latency_network_only = RunningStats()
         self.stats_server_processing_time = RunningStats()
+        self.stats_cpu_utilization = RunningStats()
+        self.stats_mem_utilization = RunningStats()
+        self.stats_gpu_utilization_snapshot = RunningStats()
+        self.stats_gpu_memory_utilization_high = RunningStats()
         self.media_file_name = None
         self.latency_start_time = 0
         self.loop_count = 0
@@ -119,7 +127,7 @@ class Client:
                 image = cv2.resize(image, (resize_w, resize_h))
                 logger.debug("Resized image to: %dx%d" %(resize_w, resize_h))
             res, image = cv2.imencode('.JPEG', image)
-            image = image.tostring()
+            image = image.tobytes()
         else:
             # If the filename_list array has more than 1, get the next value.
             if len(self.filename_list) > 1:
@@ -143,6 +151,19 @@ class Client:
         url = "http://%s:%d%s" %(self.host, self.port, "/server/usage/")
         if self.tls:
             url = url.replace("http", "https", 1)
+        decoded_json = json.loads(requests.get(url).content)
+        if 'cpu_utilization' in decoded_json:
+            self.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
+            Client.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
+        if 'mem_utilization' in decoded_json:
+            self.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
+            Client.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
+        if 'gpu_utilization_snapshot' in decoded_json:
+            self.stats_gpu_utilization_snapshot.push(float(decoded_json['gpu_utilization_snapshot']))
+            Client.stats_gpu_utilization_snapshot.push(float(decoded_json['gpu_utilization_snapshot']))
+        if 'gpu_memory_utilization_high' in decoded_json:
+            self.stats_gpu_memory_utilization_high.push(float(decoded_json['gpu_memory_utilization_high']))
+            Client.stats_gpu_memory_utilization_high.push(float(decoded_json['gpu_memory_utilization_high']))
         logger.info(requests.get(url).content)
 
     def time_open_socket(self):
@@ -499,11 +520,22 @@ if __name__ == "__main__":
         logger.info(header2)
         logger.info(separator)
         if Client.stats_latency_full_process.n > 0:
-            logger.info("====> Average Latency Full Process=%.3f ms (stddev=%.3f)" %(Client.stats_latency_full_process.mean(), Client.stats_latency_full_process.stddev()))
+            fps = 1/Client.stats_latency_full_process.mean()*1000
+            logger.info("====> Average Latency Full Process=%.3f ms (stddev=%.3f) FPS=%.3f" %(Client.stats_latency_full_process.mean(), Client.stats_latency_full_process.stddev(), fps))
         if Client.stats_latency_network_only.n > 0:
             logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(Client.stats_latency_network_only.mean(), Client.stats_latency_network_only.stddev()))
         if Client.stats_server_processing_time.n > 0:
             logger.info("====> Average Server Processing Time=%.3f ms (stddev=%.3f)" %(Client.stats_server_processing_time.mean(), Client.stats_server_processing_time.stddev()))
+
+        if Client.stats_cpu_utilization.n > 0:
+            logger.info("====> Average CPU Utilization=%.1f%%" %(Client.stats_cpu_utilization.mean()))
+        if Client.stats_mem_utilization.n > 0:
+            logger.info("====> Average Memory Utilization=%.1f%%" %(Client.stats_mem_utilization.mean()))
+        if Client.stats_gpu_utilization_snapshot.n > 0:
+            logger.info("====> Average GPU Utilization=%.1f%%" %(Client.stats_gpu_utilization_snapshot.mean()))
+        if Client.stats_gpu_memory_utilization_high.n > 0:
+            logger.info("====> Average GPU Memory Utilization=%.1f%%" %(Client.stats_gpu_memory_utilization_high.mean()))
+
 
         # The following line outputs CSV data that can be imported to a spreadsheet.
         #print("%s,%s,%.3f,%.3f" %((args.server, args.filename, file_size, Client.stats_latency_full_process.mean(), Client.stats_latency_network_only.mean())))
