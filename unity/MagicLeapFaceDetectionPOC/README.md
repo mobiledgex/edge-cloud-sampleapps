@@ -56,3 +56,4 @@ v0.24.1
     a real MLLocation provided location.
 11) Point it at a set of faces once connected to the face detection server to see rectanges. There is more
     to do in this Proof of Concept to improve this code.
+12) ./mldb log to monitor some verbose log output on which AppInst and the state of CompanionDeviceManager.cs/GameObject.
