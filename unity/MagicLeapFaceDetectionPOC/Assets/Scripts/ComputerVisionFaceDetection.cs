@@ -22,9 +22,6 @@ using System.Threading;
 
 using UnityEngine;
 
-using ZXing;
-using ZXing.QrCode;
-
 using TMPro;
 
 using UnityEngine.XR.MagicLeap;
@@ -405,8 +402,8 @@ public class ComputerVisionFaceDetection : MonoBehaviour
   void CameraFeedHandler()
   {
     // create a reader with a custom luminance source
-    var barcodeReader = new BarcodeReader { AutoRotate = false };
-    Logger.D(TAG, "In DecodeQR");
+    //var barcodeReader = new BarcodeReader { AutoRotate = false };
+    //Logger.D(TAG, "In DecodeQR");
     while (true)
     {
       //Logger.D(TAG, "DecodeQR loop.");
@@ -423,6 +420,7 @@ public class ComputerVisionFaceDetection : MonoBehaviour
           switch (appMode)
           {
             case AppMode.QrCodeScanning:
+#if false
               Logger.D(TAG, "Send to Decoder...");
               var result = barcodeReader.Decode(c, ImageWidth, ImageHeight);
 
@@ -443,6 +441,7 @@ public class ComputerVisionFaceDetection : MonoBehaviour
                 }
                 Logger.D(TAG, result.Text);
               }
+#endif
               break;
             case AppMode.CompanionAppInfo:
               Logger.D(TAG, "Waiting for CompanionDeviceManger to get Info for FindCloudlet...");
@@ -502,6 +501,7 @@ public class ComputerVisionFaceDetection : MonoBehaviour
 
   private static Color32[] Encode(string textForEncoding, int width, int height)
   {
+#if false
     var writer = new BarcodeWriter
     {
       Format = BarcodeFormat.QR_CODE,
@@ -511,7 +511,10 @@ public class ComputerVisionFaceDetection : MonoBehaviour
         Width = width
       }
     };
+
     return writer.Write(textForEncoding);
+#endif
+    return new Color32[1];
   }
 
   private void SetTeleText(string barcodeText)
