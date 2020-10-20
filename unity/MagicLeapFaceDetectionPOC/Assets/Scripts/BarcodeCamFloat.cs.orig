@@ -1,0 +1,449 @@
+/*
+ * Copyright 2012 ZXing.Net authors
+ * 
+ * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using System;
+using System.Threading;
+
+using UnityEngine;
+
+using ZXing;
+using ZXing.QrCode;
+
+using TMPro;
+
+using UnityEngine.XR.MagicLeap;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+using CompanionApp;
+using System.Diagnostics;
+using System.Runtime.Serialization.Json;
+using DistributedMatchEngine;
+using System.IO;
+
+static class Log
+{
+  
+}
+
+public class BarcodeCamFloat : MonoBehaviour
+{
+  private const string TAG = "BarcodeCamFloat";
+  // Texture for encoding test
+  public Texture2D encoded;
+
+  // RenderTexture(?) for Camera video stream to update.
+  Material monitorMaterial;
+  Material barcodeBufferMaterial;
+
+  private Thread qrThread;
+
+  private Color32[] c;
+  private int W, H;
+
+  private Rect screenRect;
+
+  private bool isQuit;
+
+  public string LastResult;
+  private bool shouldEncodeNow;
+
+  GameObject cameraMonitor;
+  GameObject cameraSubtitle;
+  GameObject barcodeBuffer;
+  TextMeshPro tmpro;
+
+  // Some render targets to extract pixels for Camera.
+  RenderTexture tmp;
+  Texture2D nt;
+
+  private Color[] green;
+
+  HttpClient httpClient;
+  private uint DEFAULT_REST_TIMEOUT_MS = 10000;
+  private uint TICKS_PER_MS = 10000;
+
+  // REST paths:
+  CompanionDevice device;
+
+  // Register device parameters as empty strings, to be filled in inside Unity/UI or CompanionDevice utility:
+  public string user_name = "";
+  public string user_email = "";
+  public string user_id = "";
+  public string device_name = "";
+  public string model = "";
+  public string serial = "";
+
+  MobiledgeXIntegration mxi;
+
+  void OnGUI()
+  {
+    // Locate and draw to Barcode camera obeservation box output to aid scanning.
+    //GUI.DrawTexture(screenRect, camTexture, ScaleMode.ScaleToFit);
+  }
+  
+
+  Action<MLCameraResultExtras> onCaptureStarted = delegate (MLCameraResultExtras extras)
+  { 
+    Logger.D(TAG, "capture started!");
+    Logger.D(TAG, "capture result extra: " + extras.FrameNumber);
+  };
+
+
+  void OnEnable()
+  {
+    Logger.D(TAG, "Called OnEnable()...");
+
+    // Needs a render Texture.
+    Logger.D(TAG, "Calling Start to camera...");
+    MLCamera.Start();
+    Logger.D(TAG, "Calling Connect()...");
+    MLCamera.Connect();
+
+    Logger.D(TAG, "Calling StartPreview()...");
+    MLCamera.StartPreview();
+
+    Logger.D(TAG, "Setting texture sizes app side...");
+    // Preview has fixed capture height and width. May need a prepare capture to do parameters not in preview.
+    W = MLCamera.PreviewTextureWidth;
+    H = MLCamera.PreviewTextureHeight;
+
+
+    // Allocate space for render buffers:
+    tmp = RenderTexture.GetTemporary(
+                    W,
+                    H,
+                    0,
+                    RenderTextureFormat.ARGB32,
+                    RenderTextureReadWrite.Linear);
+    nt = new Texture2D(W, H, TextureFormat.ARGB32, false); // Src and targets need to be same size for copyTexture, even if copying a subset?
+  }
+
+  void OnDisable()
+  {
+    if (MLCamera.IsStarted)
+    {
+      MLCamera.Disconnect();
+      MLCamera.Stop();
+    }
+  }
+
+  void OnDestroy()
+  {
+    qrThread.Abort();
+    OnDisable();
+  }
+
+  // It's better to stop the thread by itself rather than abort it.
+  void OnApplicationQuit()
+  {
+    isQuit = true;
+  }
+
+  // Main thread only.
+  private void ensureBarcodeCamera()
+  {
+    // Try to get a reference to the Barcode Cam Monitor
+    if (cameraMonitor == null)
+    {
+      cameraMonitor = GameObject.FindGameObjectWithTag("BarCodeMonitor");
+      // Attach webcam texture output to a render texture of that surface.
+      monitorMaterial = cameraMonitor.GetComponent<Renderer>().material;
+
+      cameraSubtitle = GameObject.FindGameObjectWithTag("BarCodeDecodedTextArea");
+      tmpro = cameraSubtitle.GetComponent<TextMeshPro>();
+
+      // Barcode sized buffer holder.
+      barcodeBuffer = GameObject.FindGameObjectWithTag("BarcodeBuffer");
+      barcodeBufferMaterial = barcodeBuffer.GetComponent<Renderer>().material;
+    }
+  }
+
+  void ensureEdgeCloudletUri()
+  {
+    try
+    {
+      if (mxi.tcpAppPort == null || mxi.tcpAppPort == "" || (++i) % 600 == 0) // Need a separate thread.
+      {
+        var uri = mxi.RegisterAndFindCloudlet().ConfigureAwait(false); // Await outside UI thread.
+        Logger.D(TAG, "XXX5 New cloudlet address: " + mxi.tcpAppPort);
+      }
+      else
+      {
+        Logger.D(TAG, "YYY5 Last known cloudlet address: " + mxi.tcpAppPort);
+      }
+    }
+    catch (Exception e) // TODO: Need a specific app not found here.
+    {
+      Logger.D(TAG, "XXX5 Exception getting edge cloudlet to connect to: " + e.Message);
+      Logger.D(TAG, "XXX5 StackTrace: " + e.StackTrace);
+    }
+  }
+
+  void Start()
+  {
+    device = new CompanionDevice(new RegisterDeviceRequest
+    {
+      user_name = user_name == null ? "" : user_name,
+      user_email = user_email == null ? "" : user_email,
+      user_id = user_id == null ? "" : user_id,
+      device_name = (device_name == "") ? "Magic Leap One" : device_name,
+      model = (model == null) ? "M1001" : model,
+      serial = (serial == "") ? serial : "G9206M001022"
+    });
+
+
+    mxi = new MobiledgeXIntegration();
+
+    ensureEdgeCloudletUri();
+    ensureBarcodeCamera();
+
+    /* Local HTTP client */
+    httpClient = new HttpClient();
+    httpClient.Timeout = TimeSpan.FromTicks(DEFAULT_REST_TIMEOUT_MS * TICKS_PER_MS);
+
+    encoded = new Texture2D(256, 256);
+    LastResult = "http://www.mobiledgex.com";
+    shouldEncodeNow = true;
+
+    screenRect = new Rect(0, 0, Screen.width, Screen.height);
+
+    OnEnable();
+
+    qrThread = new Thread(DecodeQR);
+    qrThread.Start();
+  }
+
+  // Simple rate limit warning.
+  static int i = 0;
+  void Update()
+  {
+    // Might not have a real camera.
+    if (!MLCamera.IsStarted)
+    {
+      Logger.D(TAG, "No camera is started yet!");
+      return;
+    }
+
+    try
+    {
+      if (c == null)
+      {
+        Logger.D(TAG, "xx1");
+        // Can't read/copy webcam pixels to CPU memory, just point to the camera texture:
+        monitorMaterial.mainTexture = MLCamera.PreviewTexture2D;
+
+        // Render to a tmp renderTexture to extract pixels to a readable texture:
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = tmp;
+
+        // CopyTexture types is system dependent, platform must support it.
+        // Copy the pixels on texture to the RenderTexture (not blit, no format conversion?), Src and Dest must be same size texture for copy.
+        Graphics.CopyTexture(MLCamera.PreviewTexture2D, tmp);
+
+        // Read pixels right off the tmp renderTexture:
+        int x = (1920 - 1080) / 2;
+        nt.ReadPixels(new Rect(x, 0, H, H), 0, 0, true);
+        nt.Apply();
+
+        // Reset global:
+        RenderTexture.active = previous;
+        barcodeBufferMaterial.mainTexture = nt;
+
+        c = nt.GetPixels32();
+      }
+      SetTeleText(LastResult + " " + count++);
+
+      // encode the last found
+      var textForEncoding = LastResult;
+      if (shouldEncodeNow &&
+          textForEncoding != null)
+      {
+        var color32 = Encode(textForEncoding, encoded.width, encoded.height);
+        encoded.SetPixels32(color32);
+        encoded.Apply();
+        shouldEncodeNow = false;
+      }
+    }
+    catch (CompanionDeviceDefinitionMissing cddm)
+    {
+      Logger.D(TAG, "Whoops: " + cddm.Message);
+    }
+    catch (Exception e)
+    {
+      Logger.D(TAG, "Exception Message:" + e.Message);
+      Logger.D(TAG, "Exception hit:" + e.StackTrace);
+    }
+  }
+
+  static int count = 0;
+  // DecodeQR should run inside a thread.
+  void DecodeQR()
+  {
+    // create a reader with a custom luminance source
+    var barcodeReader = new BarcodeReader { AutoRotate = false, TryHarder = true };
+
+    Logger.D(TAG, "In DecodeQR");
+    while (true)
+    {
+      //Logger.D(TAG, "DecodeQR loop.");
+      if (isQuit)
+        break;
+
+      try
+      {
+        // decode the current frame
+        if (c != null)
+        {
+          Logger.D(TAG, "Send to Decoder...");
+          var result = barcodeReader.Decode(c, W, H);
+          if (result != null)
+          {
+            LastResult = result.Text;
+            // Wait for return of the QrCode handler in this thread context. Must not be UI athread.
+            bool handledQRCode = HandleQrCode(LastResult).GetAwaiter().GetResult();
+            if (handledQRCode)
+            {
+              var locationReply = GetLocationFromCompanionApp().GetAwaiter().GetResult();
+              if (locationReply != null)
+              {
+                Logger.D(TAG, "Location Reply: [longitude: " + locationReply.longitude + ", latitude: " + locationReply.latitude + "]");
+              }
+              else
+              {
+                Logger.D(TAG, "Received no location back.");
+              }
+            }
+            Logger.D(TAG, result.Text);
+          }
+        }
+      }
+      catch (Exception e)
+      {
+        Logger.D(TAG, "Exception Message: " + e.Message);
+        Logger.D(TAG, "Exception hit: " + e.StackTrace);
+      }
+      finally
+      {
+        if (c != null)
+        {
+          c = null;
+        }
+        // Sleep a little bit and set the signal to get the next frame
+        Thread.Sleep(200);
+        shouldEncodeNow = true;
+      }
+    }
+  }
+
+  private static Color32[] Encode(string textForEncoding, int width, int height)
+  {
+    var writer = new BarcodeWriter
+    {
+      Format = BarcodeFormat.QR_CODE,
+      Options = new QrCodeEncodingOptions
+      {
+        Height = height,
+        Width = width
+      }
+    };
+    return writer.Write(textForEncoding);
+  }
+
+  private void SetTeleText(string barcodeText)
+  {
+    tmpro.text = barcodeText;
+  }
+
+  // In thread loop, not UI tread. Can pause for async tasks.
+  async private Task<Boolean> HandleQrCode(string Qrcode)
+  {
+    Logger.D(TAG, "HandleQrCode(" + Qrcode + ")");
+
+    // Have an edge AppInst uri yet?
+    if (mxi.tcpAppPort == null && (++i % 600) == 0)
+    {
+      ensureEdgeCloudletUri();
+    }
+
+    int minimumLength = 7;
+    if (Qrcode != null && Qrcode.Length > minimumLength)
+    {
+      string quri = "http://" + Qrcode;
+      Logger.D(TAG, "quri: " + quri);
+
+      // Register against CompanionApp.
+      var reply = await device.RegisterDevice(Qrcode, CompanionDevice.DEFAULT_REST_PORT);
+
+      if (!reply.success)
+      {
+        Logger.E(TAG, "Did not register! Message: " + reply.message);
+      }
+      else
+      {
+        Logger.D(TAG, "Reply: " + reply.success + ", Message: " + reply.message);
+      }
+      return reply.success;
+    }
+
+    return false;
+  }
+
+  // In thread loop, not UI tread. Can pause for async tasks.
+  async private Task<LocationReply> GetLocationFromCompanionApp()
+  {
+    Logger.D(TAG, "GetLocation(" + LastResult + ")");
+
+    // Have an edge AppInst uri yet?
+    if (mxi.tcpAppPort == null && (++i % 600) == 0)
+    {
+      ensureEdgeCloudletUri();
+    }
+
+    int minimumLength = 7;
+    if (LastResult != null && LastResult.Length > minimumLength)
+    {
+      // Register against CompanionApp.
+      var reply = await device.GetLocation(LastResult, CompanionDevice.DEFAULT_REST_PORT);
+
+<<<<<<< HEAD
+=======
+      if (reply == null)
+      {
+        Logger.E(TAG, "Expected a Location return. Found null reply."); // TODO: Need exception since reply doesn't exist.
+        return null;
+      }
+      DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(LocationReply));
+      MemoryStream ms = new MemoryStream();
+      serializer.WriteObject(ms, reply);
+      string jsonStr = Util.StreamToString(ms);
+      Logger.D(TAG, jsonStr);
+
+>>>>>>> Partially handle GetLocation.
+      if (reply.operation != "location")
+      {
+        Logger.E(TAG, "Did not receive a valid location! Message: " + reply);
+        return null;
+      }
+      return reply;
+    }
+
+    return null;
+  }
+}
