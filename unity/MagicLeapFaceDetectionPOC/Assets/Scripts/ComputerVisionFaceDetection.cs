@@ -244,17 +244,6 @@ public class ComputerVisionFaceDetection : MonoBehaviour
 
     OnEnable();
 
-    /**
-     * Refactor:
-     * Spawn a separate Coroutine to go through these steps:
-     * 1) Get DME host. wifi.dme.mobiledgex.net
-     * 2) Get Location (from ML Location or Unity on the device).
-     * 3) then launch FindCloudlet, and yeild for ready.
-     * 4) On the yeilding thread, wait for an OK, and run normally. Delete CompanionDevice, and CompaionDeviceManager.cs.
-     * 5) Remove large view, keep small one.
-     * 
-     */
-
     qrThread = new Thread(CameraFeedHandler);
     qrThread.Start();
 
@@ -312,22 +301,6 @@ public class ComputerVisionFaceDetection : MonoBehaviour
       }
 
       SetTeleText(CompanionDeviceHost + " " + count++);
-
-
-#if false
-      // encode the last found
-      var textForEncoding = CompanionDeviceHost;
-      if (shouldEncodeNow &&
-          textForEncoding != null)
-      {
-        // Bar code:
-        var color32 = Encode(textForEncoding, encoded.width, encoded.height);
-        encoded.SetPixels32(color32);
-        encoded.Apply();
-        shouldEncodeNow = false;
-      }
-#endif
-
     }
     catch (CompanionDeviceDefinitionMissing cddm)
     {
@@ -420,28 +393,7 @@ public class ComputerVisionFaceDetection : MonoBehaviour
           switch (appMode)
           {
             case AppMode.QrCodeScanning:
-#if false
-              Logger.D(TAG, "Send to Decoder...");
-              var result = barcodeReader.Decode(c, ImageWidth, ImageHeight);
-
-              // Update states:
-              if (result != null)
-              {
-                CompanionDeviceHost = result.Text;
-                CompanionDeviceManager.SetCompanionAppHost(CompanionDeviceHost);
-                // Wait for return of the QrCode handler in this thread context. Must not be a UI thread.
-                if (HandleQrCodeRegistration(CompanionDeviceHost).Result)
-                {
-                  appMode = AppMode.CompanionAppInfo;
-                  Logger.D(TAG, "The Companion Device is registered!");
-                }
-                else
-                {
-                  Logger.D(TAG, "The Companion Device is NOT registered!");
-                }
-                Logger.D(TAG, result.Text);
-              }
-#endif
+              // Stubbed.
               break;
             case AppMode.CompanionAppInfo:
               Logger.D(TAG, "Waiting for CompanionDeviceManger to get Info for FindCloudlet...");
@@ -501,19 +453,7 @@ public class ComputerVisionFaceDetection : MonoBehaviour
 
   private static Color32[] Encode(string textForEncoding, int width, int height)
   {
-#if false
-    var writer = new BarcodeWriter
-    {
-      Format = BarcodeFormat.QR_CODE,
-      Options = new QrCodeEncodingOptions
-      {
-        Height = height,
-        Width = width
-      }
-    };
-
-    return writer.Write(textForEncoding);
-#endif
+    // Encoder stub.
     return new Color32[1];
   }
 

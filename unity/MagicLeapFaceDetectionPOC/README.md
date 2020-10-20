@@ -53,7 +53,8 @@ v0.24.1
    the permisison plugin.
 10) FindClouldlet seems to take a long while to get a result once the app starts (this is likely a bug).
     Wait about 20 seconds, and it should discover either the fallback location (In San Jose, CA), or
-    a real MLLocation provided location.
+    a real MLLocation provided location. Then it should have a message that it found an AppInst to send
+    snapshots to the detection server.
 11) Point it at a set of faces once connected to the face detection server to see rectanges. There is more
     to do in this Proof of Concept to improve this code.
 12) ./mldb log to monitor some verbose log output on which AppInst and the state of CompanionDeviceManager.cs/GameObject.

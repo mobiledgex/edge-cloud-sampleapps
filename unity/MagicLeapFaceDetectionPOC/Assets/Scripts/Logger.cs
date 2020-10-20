@@ -32,7 +32,7 @@ public class Logger
     UnityEngine.Debug.LogFormat(LogType.Error, LogOption.NoStacktrace, null, "[" + TAG + "] {0}", msg);
   }
 
-  // Stderr:
+  // Stdout, DEBUG:
   [ConditionalAttribute("DEBUG")]
   public static void D(string TAG, string msg)
   {

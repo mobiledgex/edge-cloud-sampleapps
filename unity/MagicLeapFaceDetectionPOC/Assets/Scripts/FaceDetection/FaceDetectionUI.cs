@@ -119,8 +119,6 @@ public class FaceDetectionUI : MonoBehaviour
   const string TAG = "FaceDetectionUI";
   GameObject faceDetectionGo;
 
-  public delegate void DetectionCallback(int numDetected);
-  DetectionCallback aDetectionCallback;
   bool RectsUpdated;
   void HandleDetection()
   {
@@ -133,9 +131,6 @@ public class FaceDetectionUI : MonoBehaviour
   private List<GameObject> detectionUIInsts;
 
   public GameObject parentCam;
-
-  // public Camera cam = Camera.main;
-  ComputerVisionFaceDetection barcodeCamFloat;
 
   // captured pixels width and height
   int imageW = 1440;
@@ -159,7 +154,9 @@ public class FaceDetectionUI : MonoBehaviour
 
   // Set in Unity Editor or programatially:
   private FaceDetectionRects faceDetectionRects;
-  public FaceDetectionRects FaceDetectionRects { get {
+  public FaceDetectionRects FaceDetectionRects
+  {
+    get {
       return faceDetectionRects;
     }
     set

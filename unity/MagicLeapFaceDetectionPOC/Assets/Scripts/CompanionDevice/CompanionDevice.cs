@@ -274,14 +274,6 @@ namespace CompanionApp
         user_id = info.user_id == null ? "" : info.user_id,
         device_uuid = device.device_uuid == null ? "" : device.device_uuid,
       };
-      /*
-      Logger.D("XXX", "RegisterDevice() has info.");
-
-      Logger.D("XXX", "Registering Device dn: " + ConfiguredDeviceRegisterRequest.user_name);
-      Logger.D("XXX", "Registering Device ue: " + ConfiguredDeviceRegisterRequest.user_email);
-      Logger.D("XXX", "Registering Device uid: " + ConfiguredDeviceRegisterRequest.user_id);
-      Logger.D("XXX", "Registering Device uuid: " + ConfiguredDeviceRegisterRequest.device_uuid);
-      */
       
       DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(DeviceRegisterRequest));
       Logger.D(TAG, "created serializer.");
@@ -354,41 +346,6 @@ namespace CompanionApp
         latitude = locData.Latitude
       };
     }
-
-    // From CompanionApp.
-#if false
-      if (companionAppHost == null || companionAppHost.Length < minimumHostLength)
-      {
-        Logger.D(TAG, "Host not known yet for CompanionApp server!");
-        return null;
-      }
-
-      string uri = "http://" + companionAppHost + ":" + port + locationAPI;
-      Logger.D(TAG, "GetLocation(): uri: " + uri);
-      Stream responseStream = await PostRequest(uri, "").ConfigureAwait(false);
-
-      if (responseStream == null || !responseStream.CanRead)
-      {
-        throw new EmptyStreamException("LocationReply stream is empty!");
-      }
-
-      DataContractJsonSerializer deserializer = new DataContractJsonSerializer(typeof(LocationReply));
-      string responseStr = Util.StreamToString(responseStream);
-      Logger.D(TAG, "GetLocation(): reply: " + responseStr);
-      byte[] byteArray = Encoding.ASCII.GetBytes(responseStr);
-      MemoryStream ms = new MemoryStream(byteArray);
-      var reply = (LocationReply)deserializer.ReadObject(ms);
-
-      if (reply != null)
-      {
-        LastLocationReply = reply;
-      }
-
-      Mxi.SetFallbackLocation(reply.longitude, reply.latitude);
-
-      return reply;
-    }
-#endif
 
     /**
      * Returns the DME Host this device should use to contact over the CompanionApp WiFi hostspot.
