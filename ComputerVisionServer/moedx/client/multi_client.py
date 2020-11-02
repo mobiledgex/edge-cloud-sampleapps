@@ -193,7 +193,7 @@ class Client:
             if 'gpu_mem_utilization' in decoded_json:
                 self.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
                 Client.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
-            if self.show_responses or True:
+            if self.show_responses:
                 logger.info(requests.get(url).content)
             time.sleep(SERVER_STATS_INTERVAL)
 
