@@ -59,7 +59,6 @@ url = "https://%s:38001/v1/registerclient" %dme
 data = {
   "app_name": app_name,
   "org_name": org_name,
-  # "dev_name": org_name,
   "carrier_name": carrier_name,
   "app_vers": app_vers
 }
@@ -91,10 +90,6 @@ data = {
     "vertical_accuracy": 0
   },
   "limit": 6,
-  # "app_name": app_name,
-  # "org_name": org_name,
-  # "carrier_name": carrier_name,
-  # "app_vers": app_vers
 }
 resp = requests.post(url, data=json.dumps(data))
 # print(resp.content)
@@ -122,10 +117,7 @@ data = {
     "speed": 0,
     "vertical_accuracy": 0
   },
-  # "app_name": app_name,
-  # "org_name": org_name,
   "carrier_name": carrier_name,
-  # "app_vers": app_vers
 }
 resp = requests.post(url, data=json.dumps(data))
 # print(resp.content)
