@@ -19,6 +19,7 @@ computervision backend and measure latency.
 """
 import sys
 import os
+import os.path
 import platform
 import requests
 import subprocess
@@ -31,12 +32,19 @@ import struct
 import json
 import time
 import logging
+from io import StringIO
 import cv2
+import argparse
 from threading import Thread
-from utils import RunningStats
+try:
+    from stats import RunningStats
+except Exception as e:
+    from .stats import RunningStats
 
 WEBSOCKET_OPCODE_BINARY = 0x2
-PING_INTERVAL = 4
+PING_INTERVAL = 1 # Seconds
+SERVER_STATS_INTERVAL = 1.5 # Seconds
+SERVER_STATS_DELAY = 2 # Seconds
 TEST_PASS = False
 
 logger = logging.getLogger(__name__)
@@ -68,13 +76,14 @@ class Client:
     stats_server_processing_time = RunningStats()
     stats_cpu_utilization = RunningStats()
     stats_mem_utilization = RunningStats()
-    stats_gpu_utilization_snapshot = RunningStats()
-    stats_gpu_memory_utilization_high = RunningStats()
+    stats_gpu_utilization = RunningStats()
+    stats_gpu_mem_utilization = RunningStats()
 
     def __init__(self, host, port):
         # Initialize instance variables.
         self.host = host
         self.port = port
+        self.running = False
         self.do_server_stats = False
         self.show_responses = False
         self.stats_latency_full_process = RunningStats()
@@ -82,12 +91,13 @@ class Client:
         self.stats_server_processing_time = RunningStats()
         self.stats_cpu_utilization = RunningStats()
         self.stats_mem_utilization = RunningStats()
-        self.stats_gpu_utilization_snapshot = RunningStats()
-        self.stats_gpu_memory_utilization_high = RunningStats()
+        self.stats_gpu_utilization = RunningStats()
+        self.stats_gpu_mem_utilization = RunningStats()
         self.media_file_name = None
         self.latency_start_time = 0
         self.loop_count = 0
         self.num_repeat = 0
+        self.num_vid_repeat = 0
         self.filename_list = []
         self.filename_list_index = 0
         self.json_params = None
@@ -100,6 +110,7 @@ class Client:
         logger.debug("host:port = %s:%d" %(self.host, self.port))
 
     def start(self):
+        self.running = True
         logger.debug("media file(s) %s" %(self.filename_list))
         video_extensions = ('mp4', 'avi', 'mov')
         if self.filename_list[0].endswith(video_extensions):
@@ -113,6 +124,7 @@ class Client:
                 ret, image = self.video.read()
                 if not ret:
                     logger.debug("End of video")
+
                     return None
             vw = image.shape[1]
             vh = image.shape[0]
@@ -124,6 +136,13 @@ class Client:
                 else:
                     resize_w = self.resize_short
                     resize_h = self.resize_long
+                # if vw > vh:
+                #     resize_w = int(self.resize_short / (vh/vw))
+                #     resize_h = self.resize_short
+                # else:
+                #     resize_w = int(self.resize_long / (vw/vh))
+                #     resize_h = self.resize_long
+
                 image = cv2.resize(image, (resize_w, resize_h))
                 logger.debug("Resized image to: %dx%d" %(resize_w, resize_h))
             res, image = cv2.imencode('.JPEG', image)
@@ -147,24 +166,36 @@ class Client:
         logger.debug("Image data (first 32 bytes logged): %s" %image[:32])
         return image
 
-    def get_server_stats(self):
+    def measure_network_latency(self):
+        while self.running:
+            if self.net_latency_method == "SOCKET":
+                self.time_open_socket()
+            elif self.net_latency_method == "PING":
+                self.icmp_ping()
+            time.sleep(PING_INTERVAL)
+
+    def measure_server_stats(self):
         url = "http://%s:%d%s" %(self.host, self.port, "/server/usage/")
         if self.tls:
             url = url.replace("http", "https", 1)
-        decoded_json = json.loads(requests.get(url).content)
-        if 'cpu_utilization' in decoded_json:
-            self.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
-            Client.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
-        if 'mem_utilization' in decoded_json:
-            self.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
-            Client.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
-        if 'gpu_utilization_snapshot' in decoded_json:
-            self.stats_gpu_utilization_snapshot.push(float(decoded_json['gpu_utilization_snapshot']))
-            Client.stats_gpu_utilization_snapshot.push(float(decoded_json['gpu_utilization_snapshot']))
-        if 'gpu_memory_utilization_high' in decoded_json:
-            self.stats_gpu_memory_utilization_high.push(float(decoded_json['gpu_memory_utilization_high']))
-            Client.stats_gpu_memory_utilization_high.push(float(decoded_json['gpu_memory_utilization_high']))
-        logger.info(requests.get(url).content)
+        time.sleep(SERVER_STATS_DELAY)
+        while self.running:
+            decoded_json = json.loads(requests.get(url).content)
+            if 'cpu_utilization' in decoded_json:
+                self.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
+                Client.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
+            if 'mem_utilization' in decoded_json:
+                self.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
+                Client.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
+            if 'gpu_utilization' in decoded_json:
+                self.stats_gpu_utilization.push(float(decoded_json['gpu_utilization']))
+                Client.stats_gpu_utilization.push(float(decoded_json['gpu_utilization']))
+            if 'gpu_mem_utilization' in decoded_json:
+                self.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
+                Client.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
+            if self.show_responses or True:
+                logger.info(requests.get(url).content)
+            time.sleep(SERVER_STATS_INTERVAL)
 
     def time_open_socket(self):
         now = time.time()
@@ -191,7 +222,7 @@ class Client:
         p_ping_out = str(p_ping.communicate()[0])
 
         if (p_ping.wait() == 0):
-            logger.info(p_ping_out)
+            # logger.info(p_ping_out)
             # rtt min/avg/max/mdev = 61.994/61.994/61.994/0.000 ms
             search = re.search(PING_REGEX, p_ping_out, re.M|re.I)
             ping_rtt = float(search.group(2))
@@ -233,6 +264,7 @@ class Client:
             logger.info("%s ms to send and receive: %s" %(elapsed, result))
 
     def display_results(self):
+        self.running = False
         if not self.show_responses or not Client.MULTI_THREADED:
             return
 
@@ -272,14 +304,6 @@ class RestClient(Client):
                 continue
             self.process_result(content)
 
-            if (self.stats_latency_full_process.n) % PING_INTERVAL == 0:
-                if self.do_server_stats:
-                    self.get_server_stats()
-                if self.net_latency_method == "SOCKET":
-                    self.time_open_socket()
-                else:
-                    self.icmp_ping()
-
         logger.debug("Done")
         self.display_results()
 
@@ -287,8 +311,8 @@ class RestClient(Client):
         """
         Sends the raw image data with a 'Content-Type' of 'image/jpeg'.
         """
-        # headers = {'Content-Type': 'image/jpeg', "Mobiledgex-Debug": "true"} # Enable saving debug images
-        headers = {'Content-Type': 'image/jpeg'}
+        headers = {'Content-Type': 'image/jpeg', "Mobiledgex-Debug": "true"} # Enable saving debug images
+        # headers = {'Content-Type': 'image/jpeg'}
         return requests.post(self.url, data=image, headers=headers, verify=self.tls_verify)
 
     def send_image_json(self, image):
@@ -346,13 +370,6 @@ class PersistentTcpClient(Client):
             result = str(sock.recv(length), "utf-8")
 
             self.process_result(result)
-            if (self.stats_latency_full_process.n) % PING_INTERVAL == 0:
-                if self.do_server_stats:
-                    self.get_server_stats()
-                if self.net_latency_method == "SOCKET":
-                    self.time_open_socket()
-                else:
-                    self.icmp_ping()
 
         logger.debug("Done")
         self.display_results()
@@ -395,17 +412,6 @@ class WebSocketClient(Client):
         self.process_result(message)
 
         self.loop_count += 1
-        if self.loop_count % (PING_INTERVAL+1) == 0:
-            if self.do_server_stats:
-                self.get_server_stats()
-
-            # ignore self.net_latency_method because any other type of
-            # network activity seems to lock up the websocket.
-
-            # Text payload gets echoed back. See how long it takes.
-            payload = json.dumps({"latency_start": time.time()})
-            ws.send(payload)
-            return
 
         image = self.get_next_image()
         if image is None:
@@ -421,6 +427,7 @@ class WebSocketClient(Client):
         logger.info("on_error: %s" %error)
 
     def on_close(self, ws):
+        self.running = False
         logger.info("on_close")
 
     def on_open(self, ws):
@@ -430,13 +437,30 @@ class WebSocketClient(Client):
         self.latency_start_time = time.time()
         ws.send(image, WEBSOCKET_OPCODE_BINARY)
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
+class ErrorCatchingArgumentParser(argparse.ArgumentParser):
+    def exit(self, status=0, message=None):
+        if status:
+            raise Exception(f'ArgumentParser error: {message}')
+
+def benchmark(arguments=None, django=False):
+    # This handler will save everything logged to a String which
+    # can be accessed with log_stream.getvalue()
+    log_stream = StringIO()
+    sh = logging.StreamHandler(log_stream)
+    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    sh.setLevel(logging.INFO)
+    sh.setFormatter(formatter)
+    logger.addHandler(sh)
+    if django:
+        logger.removeHandler(fh)
+        logger.removeHandler(ch)
+        parser = ErrorCatchingArgumentParser()
+    else:
+        parser = argparse.ArgumentParser()
 
     parser.add_argument("-s", "--server", required=True, help="Server host name or IP address.")
     parser.add_argument("-e", "--endpoint", required=True, choices=["/detector/detect/", "/recognizer/predict/", "/openpose/detect/", "/object/detect/", "/trainer/add/", "/trainer/predict/"], help="Endpoint of web service to call.")
-    parser.add_argument("-n", "--network-latency", required=False, choices=["PING", "SOCKET"], default="SOCKET", help="Network-only latency test method.")
+    parser.add_argument("-n", "--network-latency", required=False, choices=["PING", "SOCKET", "NONE"], default="SOCKET", help="Network-only latency test method.")
     parser.add_argument("-c", "--connection-method", required=True, choices=["rest", "socket", "websocket"], help="Connection type.")
     parser.add_argument("-f", "--filename", required=False, help="Name of image file to send.")
     parser.add_argument("-d", "--directory", required=False, help="Directory containing image files to send (*.jpg, *.png).")
@@ -451,7 +475,9 @@ if __name__ == "__main__":
     parser.add_argument("--noverify", action='store_true', help="Disable TLS cert verification")
     parser.add_argument("--show-responses", action='store_true', help="Show responses.")
     parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
-    args = parser.parse_args()
+    args = parser.parse_args(arguments)
+
+    start_time = time.time()
 
     if args.threads > 1:
         Client.MULTI_THREADED = True
@@ -465,7 +491,7 @@ if __name__ == "__main__":
         else:
             # This should be impossible because the ArgumentParser enforces a valid choice.
             logger.error("Unknown connection-method: %s" %args.connection_method)
-            sys.exit()
+            return False
 
         if args.base64 and args.connection_method != "rest":
             logger.warning("base64 parameter ignored for %s" %args.connection_method)
@@ -473,22 +499,28 @@ if __name__ == "__main__":
         if args.filename != None and args.directory != None:
             logger.error("Can't include both filename and directory arguments")
             parser.print_usage()
-            sys.exit()
+            return False
 
         if args.filename != None:
+            if not os.path.isfile(args.filename):
+                return [False, "%s doesn't exist" %args.filename]
             client.filename_list.append(args.filename)
 
         elif args.directory != None:
+            if not os.path.isdir(args.directory):
+                return [False, "%s doesn't exist" %args.directory]
             valid_extensions = ('jpg','jpeg', 'png')
             files = os.listdir(args.directory)
             for file in files:
                 if file.endswith(valid_extensions):
                     client.filename_list.append(args.directory+"/"+file)
+            if len(client.filename_list) == 0:
+                return [False, "%s contains no valid image files" %args.directory]
 
         else:
             logger.error("Must include either filename or directory argument")
             parser.print_usage()
-            sys.exit()
+            return False
 
         client.filename_list_index = -1
         client.num_repeat = args.repeat * len(client.filename_list)
@@ -503,16 +535,37 @@ if __name__ == "__main__":
         client.tls = args.tls
         client.tls_verify = not args.noverify
 
+        Client.stats_latency_full_process.clear()
+        Client.stats_latency_network_only.clear()
+        Client.stats_server_processing_time.clear()
+        Client.stats_cpu_utilization.clear()
+        Client.stats_mem_utilization.clear()
+        Client.stats_gpu_utilization.clear()
+        Client.stats_gpu_mem_utilization.clear()
+
         thread = Thread(target=client.start)
         thread.start()
         logger.debug("Started %s" %thread)
         time.sleep(0.5) # stagger threads
 
+    if args.network_latency != "NONE":
+        thread = Thread(target=client.measure_network_latency)
+        thread.start()
+        logger.debug("Started background measure_network_latency %s" %thread)
+
+    if args.server_stats:
+        thread = Thread(target=client.measure_server_stats)
+        thread.start()
+        logger.debug("Started background measure_server_stats %s" %thread)
+
     thread.join()
 
+    session_time = time.time() - start_time
+
     if Client.stats_latency_full_process.n + Client.stats_latency_network_only.n + Client.stats_server_processing_time.n > 0:
+        fps = Client.stats_latency_full_process.n / session_time
         header1 = "Grand totals for %s %s %s" %(args.server, args.endpoint, args.connection_method)
-        header2 = "%d threads repeated %d times on %d files. %d total frames." %(args.threads, args.repeat, len(client.filename_list), Client.stats_latency_full_process.n)
+        header2 = "%d threads repeated %d times on %d files. %d total frames. FPS=%.2f" %(args.threads, args.repeat, len(client.filename_list), Client.stats_latency_full_process.n, fps)
         separator = ""
         for s in header1: separator += "="
         logger.info(separator)
@@ -521,7 +574,7 @@ if __name__ == "__main__":
         logger.info(separator)
         if Client.stats_latency_full_process.n > 0:
             fps = 1/Client.stats_latency_full_process.mean()*1000
-            logger.info("====> Average Latency Full Process=%.3f ms (stddev=%.3f) FPS=%.3f" %(Client.stats_latency_full_process.mean(), Client.stats_latency_full_process.stddev(), fps))
+            logger.info("====> Average Latency Full Process=%.3f ms (stddev=%.3f) FPS=%.2f" %(Client.stats_latency_full_process.mean(), Client.stats_latency_full_process.stddev(), fps))
         if Client.stats_latency_network_only.n > 0:
             logger.info("====> Average Latency Network Only=%.3f ms (stddev=%.3f)" %(Client.stats_latency_network_only.mean(), Client.stats_latency_network_only.stddev()))
         if Client.stats_server_processing_time.n > 0:
@@ -531,15 +584,24 @@ if __name__ == "__main__":
             logger.info("====> Average CPU Utilization=%.1f%%" %(Client.stats_cpu_utilization.mean()))
         if Client.stats_mem_utilization.n > 0:
             logger.info("====> Average Memory Utilization=%.1f%%" %(Client.stats_mem_utilization.mean()))
-        if Client.stats_gpu_utilization_snapshot.n > 0:
-            logger.info("====> Average GPU Utilization=%.1f%%" %(Client.stats_gpu_utilization_snapshot.mean()))
-        if Client.stats_gpu_memory_utilization_high.n > 0:
-            logger.info("====> Average GPU Memory Utilization=%.1f%%" %(Client.stats_gpu_memory_utilization_high.mean()))
+        if Client.stats_gpu_utilization.n > 0:
+            logger.info("====> Average GPU Utilization=%.1f%%" %(Client.stats_gpu_utilization.mean()))
+        if Client.stats_gpu_mem_utilization.n > 0:
+            logger.info("====> Average GPU Memory Utilization=%.1f%%" %(Client.stats_gpu_mem_utilization.mean()))
 
 
         # The following line outputs CSV data that can be imported to a spreadsheet.
-        #print("%s,%s,%.3f,%.3f" %((args.server, args.filename, file_size, Client.stats_latency_full_process.mean(), Client.stats_latency_network_only.mean())))
+        logger.info("")
+        logger.info("Server, Full Process, Network Only, Server Time, CPU Util, Mem Util, GPU Util, GPU Mem Util")
+        logger.info("%s, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" %(args.server, Client.stats_latency_full_process.mean(),
+            Client.stats_latency_network_only.mean(), Client.stats_server_processing_time.mean(), Client.stats_cpu_utilization.mean(),
+            Client.stats_mem_utilization.mean(), Client.stats_gpu_utilization.mean(), Client.stats_gpu_mem_utilization.mean()))
 
         logger.info("TEST_PASS=%r" %TEST_PASS)
     else:
         logger.info("No results")
+
+    return [True, log_stream.getvalue()]
+
+if __name__ == "__main__":
+    benchmark()

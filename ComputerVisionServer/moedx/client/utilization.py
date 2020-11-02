@@ -1,21 +1,3 @@
-# Copyright 2020 MobiledgeX, Inc. All rights and licenses reserved.
-# MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""
-Run this script during system load testing to see CPU/MEM/GPU/GPU_MEM stats.
-"""
 import sys
 import os
 import subprocess
@@ -27,16 +9,16 @@ import datetime
 import time
 import psutil
 import logging
+import argparse
 from subprocess import Popen, PIPE
-from utils import RunningStats
+try:
+    from stats import RunningStats
+except Exception as e:
+    from .stats import RunningStats
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
-fh = logging.FileHandler('utilization.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(formatter)
-logger.addHandler(fh)
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
@@ -79,9 +61,12 @@ def usage_cpu_and_mem():
     return ret
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
+    fh = logging.FileHandler(__name__+'.log')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
+    parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--seconds", required=True, help="Number of seconds to run")
     parser.add_argument("-d", "--delay", required=False, default=0.25, help="Number of seconds to wait between each sample")
     args = parser.parse_args()

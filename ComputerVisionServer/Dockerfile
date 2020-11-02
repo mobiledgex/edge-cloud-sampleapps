@@ -35,4 +35,4 @@ EXPOSE 8011/tcp
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-CMD ["uvicorn","moedx.asgi:application","--host", "0.0.0.0","--port","8008","--workers","2"]
+CMD ["gunicorn","moedx.asgi:application","--bind", "0.0.0.0:8008","-k","uvicorn.workers.UvicornWorker","--workers","1"]
