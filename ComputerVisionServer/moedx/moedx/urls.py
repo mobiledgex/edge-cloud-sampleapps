@@ -27,6 +27,8 @@ urlpatterns = [
     path('recognizer/predict/', views.recognizer_predict),
     path('openpose/detect/', views.openpose_detect),
     path('object/detect/', views.object_detect),
+    path('client/benchmark/', views.client_benchmark),
+    path('client/download/', views.client_download),
     path('server/usage/', views.server_usage),
     path('server/capabilities/', views.server_capabilities),
     path('getdata/', views.get_data),

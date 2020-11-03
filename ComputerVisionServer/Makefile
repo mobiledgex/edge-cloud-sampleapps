@@ -1,5 +1,5 @@
 include Makedefs
-ORGNAME = mobiledgex
+ORGNAME = mobiledgex-samples
 
 # We build differently depending on whether this machine has an Nvidia GPU available.
 GPU := $(shell command -v nvidia-smi 2> /dev/null)

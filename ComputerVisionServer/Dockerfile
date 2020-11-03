@@ -11,7 +11,7 @@ RUN pip install -r requirements.txt
 
 FROM python:3.7-slim AS build-image
 COPY --from=compile-image /opt/venv /opt/venv
-RUN apt-get update && apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 libgl1-mesa-glx wget
+RUN apt-get update && apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 libgl1-mesa-glx wget iputils-ping
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -35,4 +35,4 @@ EXPOSE 8011/tcp
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-CMD ["uvicorn","moedx.asgi:application","--host", "0.0.0.0","--port","8008","--workers","2"]
+CMD ["gunicorn","moedx.asgi:application","--bind", "0.0.0.0:8008","-k","uvicorn.workers.UvicornWorker","--workers","1"]
