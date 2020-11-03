@@ -29,11 +29,15 @@ from imageio import imread, imwrite
 import io
 import time
 import os
+import sys
 import glob
 import json
 import logging
 import imghdr
 from PIL import Image
+from urllib.parse import urlparse
+
+from client.multi_client import *
 
 logger = logging.getLogger(__name__)
 
@@ -316,7 +320,7 @@ def openpose_detect(request):
 
 @csrf_exempt
 def server_capabilities(request):
-    """ Test the connection to the backend """
+    """ Return whether the server has GPU support. """
     if request.method == 'GET':
         ret = {"success": "true", "gpu_support": myObjectDetector.is_gpu_supported()}
         json_ret = json.dumps(ret)
@@ -326,7 +330,7 @@ def server_capabilities(request):
 
 @csrf_exempt
 def server_usage(request):
-    from tracker.utils import usage_cpu_and_mem, usage_gpu
+    from client.utilization import usage_cpu_and_mem, usage_gpu
     """
     Get CPU and GPU usage summary.
     """
@@ -342,6 +346,59 @@ def server_usage(request):
     return HttpResponseBadRequest("This request must be a GET")
 
 @csrf_exempt
+def client_benchmark(request):
+    if request.method == 'POST':
+        logger.info(prepend_ip("Request received: %s" %request, request))
+        arg_string = request.body.decode("utf-8")
+        logger.info("multi_client args: %s" %arg_string)
+        arguments = arg_string.split()
+        cwd = os.getcwd()
+        try:
+            os.chdir("./client")
+            ret = benchmark(arguments, django=True)
+            if ret[0]:
+                return HttpResponse(ret[1])
+            else:
+                return HttpResponseBadRequest(ret[1])
+        except Exception as e:
+            logger.error(e)
+            return HttpResponseBadRequest(e)
+        finally:
+            os.chdir(cwd)
+
+    return HttpResponseBadRequest("Must send request as a POST")
+
+@csrf_exempt
+def client_download(request):
+    if request.method == 'POST':
+        logger.info(prepend_ip("Request received: %s" %request, request))
+        print(request.POST)
+        url = request.POST.get("url", "")
+        if url == "":
+            return HttpResponseBadRequest("Missing 'url' parameter")
+
+        cwd = os.getcwd()
+        try:
+            os.chdir("./client")
+            parsed = urlparse(url)
+            filename = parsed.path.split("/")[-1]
+            start = time.time()
+            r = requests.get(url, allow_redirects=True)
+            elapsed = (time.time() - start)
+            bps = len(r.content)/elapsed
+            open(filename, 'wb').write(r.content)
+            msg = "Downloaded %s. %d bytes in %.1f seconds (%.1f bytes/sec)" %(filename, len(r.content), elapsed, bps)
+            logger.info(msg)
+            return HttpResponse(msg)
+        except Exception as e:
+            logger.error(e)
+            return HttpResponseBadRequest(e)
+        finally:
+            os.chdir(cwd)
+
+    return HttpResponseBadRequest("Must send request as a POST")
+
+@csrf_exempt
 def object_detect(request):
     """
     """
@@ -352,9 +409,8 @@ def object_detect(request):
         return image
 
     logger.debug(prepend_ip("Performing detection process", request))
-    pillow_image = Image.fromarray(image, 'RGB')
     start = time.time()
-    objects = myObjectDetector.process_image(pillow_image)
+    objects = myObjectDetector.process_image(image)
     elapsed = "%.3f" %((time.time() - start)*1000)
 
     # Create a JSON response to be returned in a consistent manner

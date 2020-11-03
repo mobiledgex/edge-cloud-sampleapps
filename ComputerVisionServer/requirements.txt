@@ -12,6 +12,10 @@ numba
 scikit-image
 scikit-learn
 filterpy
+websockets
+websocket-client
+uvloop
+httptools
 channels
 uvicorn
 redis

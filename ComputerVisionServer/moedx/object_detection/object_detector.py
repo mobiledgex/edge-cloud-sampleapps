@@ -30,6 +30,7 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from PIL import Image
+import cv2
 
 package_dir = os.path.dirname(os.path.abspath(__file__))+"/"+submodule
 config_path=package_dir+'/config/yolov3.cfg'
@@ -94,6 +95,7 @@ class ObjectDetector(object):
         global total_server_processing_time
         global count_server_processing_time
         # load image and get detections
+        img = Image.fromarray(img, 'RGB')
         prev_time = time.time()
         detections = self.detect_image(img)
         millis = (time.time() - prev_time)*1000
@@ -157,7 +159,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--filename", required=False, help="Name of image file to send.")
     parser.add_argument("-d", "--directory", required=False, help="Directory containing image files to process.")
-    parser.add_argument("-o", "--outdir", required=True, help="Directory to output processed images to.")
+    parser.add_argument("-o", "--outdir", required=False, help="Directory to output processed images to.")
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
     args = parser.parse_args()
 
@@ -178,14 +180,15 @@ if __name__ == "__main__":
         files = os.listdir(args.directory)
         dir_prefix = args.directory+"/"
 
-    valid_extensions = ('jpg','jpeg', 'png')
+    valid_extensions = ('jpg', 'jpeg', 'png')
 
     for x in range(args.repeat):
         for image_name in files:
             if not image_name.endswith(valid_extensions):
                 continue
-            img = Image.open(dir_prefix+image_name)
-            detector.process_image(img, args.outdir)
+            img = cv2.imread(dir_prefix+image_name)
+            results = detector.process_image(img, args.outdir)
+            print(image_name, results)
 
     if count_server_processing_time > 0:
         average_server_processing_time = total_server_processing_time / count_server_processing_time

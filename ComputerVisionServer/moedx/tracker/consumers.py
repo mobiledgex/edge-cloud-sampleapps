@@ -137,20 +137,25 @@ class ImageConsumerOpenposeDetector(WebsocketConsumer):
 
 class ImageConsumerObjectDetector(WebsocketConsumer):
     def connect(self):
-        self.accept()
         logger.info("ImageConsumerObjectDetect")
+        self.accept()
+        self.session_start = time.time()
+        self.frame_count = 0
 
     def disconnect(self, close_code):
         logger.info("disconnect. close_code=%s" %close_code)
+        session_time = time.time() - self.session_start
+        fps = self.frame_count / session_time
+        logger.info("%d frames in %.2f seconds = %.2f FPS" %(self.frame_count, session_time, fps))
 
     def receive(self, text_data=None, bytes_data=None):
         if bytes_data != None:
             logger.info("bytes_data length=%d" %(len(bytes_data)))
+            self.frame_count += 1
             start = time.time()
             image = imread(io.BytesIO(bytes_data))
             try:
-                pillow_image = Image.fromarray(image, 'RGB')
-                objects = myObjectDetector.process_image(pillow_image)
+                objects = myObjectDetector.process_image(image)
             except Exception as e:
                 logger.error("Could not process image. Exception: %s" %e)
                 objects = []
