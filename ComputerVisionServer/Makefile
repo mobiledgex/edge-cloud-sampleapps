@@ -1,14 +1,14 @@
 include Makedefs
 ORGNAME = mobiledgex-samples
 
-# We build differently depending on whether this machine has an Nvidia GPU available.
-GPU := $(shell command -v nvidia-smi 2> /dev/null)
-ifndef GPU
+# To build the version with GPU support, define GPU as "true", e.g.:
+# TAG=20201110 GPU=true make docker-build
+ifeq ($(GPU), true)
+	DOCKERFILE = Dockerfile_gpu
+	IMAGENAME = computervision-gpu
+else
 	DOCKERFILE = Dockerfile
 	IMAGENAME = computervision
-else
-	DOCKERFILE = Dockerfile_openpose
-	IMAGENAME = computervision-gpu
 endif
 
 default: docker-build docker-push
