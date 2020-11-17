@@ -30,7 +30,6 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -44,6 +43,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.ArrayMap;
 import android.util.Log;
@@ -85,12 +85,11 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.mobiledgex.computervision.EventLogViewer;
 import com.mobiledgex.computervision.ImageProcessorActivity;
 import com.mobiledgex.computervision.ImageProcessorFragment;
-import com.mobiledgex.computervision.ImageSender;
 import com.mobiledgex.computervision.ObjectProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorActivity;
-import com.mobiledgex.computervision.PoseProcessorFragment;
 import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
@@ -115,6 +114,8 @@ import java.util.regex.Pattern;
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 
+import static com.mobiledgex.computervision.EventItem.EventType.ERROR;
+import static com.mobiledgex.computervision.EventItem.EventType.INFO;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_FIND_CLOUDLET;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_GET_CLOUDLETS;
 import static com.mobiledgex.sdkdemo.MatchingEngineHelper.RequestType.REQ_REGISTER_CLIENT;
@@ -161,9 +162,9 @@ public class MainActivity extends AppCompatActivity
     private MatchingEngineHelper mMatchingEngineHelper;
     private Marker mUserLocationMarker;
     private Location mLastKnownLocation;
-    private Location mLocationForMatching;
     private Location mLocationInSimulator;
     private String mClosestCloudletHostname;
+    private AppClient.FindCloudletReply mClosestCloudlet;
     private AppClient.AppInstListReply mAppInstanceReplyList;
 
     private RequestPermissions mRpUtil;
@@ -186,6 +187,8 @@ public class MainActivity extends AppCompatActivity
     private boolean mAllowLocationSimulatorUpdate = false;
     private boolean uiHasBeenTouched;
     private Polyline mClosestCloudletPolyLine;
+    private EventLogViewer mEventLogViewer;
+    private LatLng mPrevMarkPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -277,6 +280,10 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        RecyclerView eventsRecyclerView = findViewById(R.id.events_recycler_view);
+        FloatingActionButton logExpansionButton = findViewById(R.id.fab_log_viewer);
+        mEventLogViewer = new EventLogViewer(this, logExpansionButton, eventsRecyclerView);
+
         boolean allowFindBeforeVerify = prefs.getBoolean(getResources().getString(R.string.preference_allow_find_before_verify), true);
         fabFindCloudlets.setEnabled(allowFindBeforeVerify);
 
@@ -320,8 +327,27 @@ public class MainActivity extends AppCompatActivity
             mRpUtil.requestMultiplePermissions(this);
             return;
         }
-        mMatchingEngineHelper.doEnhancedLocationUpdateInBackground(mLocationForMatching);
+        mMatchingEngineHelper.doEnhancedLocationUpdateInBackground(getLocationForMatching());
     }
+
+    /**
+     * Adds a informational message to the log viewer.
+     *
+     * @param text The message to show.
+     */
+    public void showMessage(String text) {
+        mEventLogViewer.addEventItem(INFO, text);
+    }
+
+    /**
+     * Adds an error message to the log viewer.
+     *
+     * @param text The message to show.
+     */
+    public void showError(String text) {
+        mEventLogViewer.addEventItem(ERROR, text);
+    }
+
 
     /**
      * Use the MatchingEngineHelper to perform a request with the Matching Engine.
@@ -335,7 +361,8 @@ public class MainActivity extends AppCompatActivity
             showGpsWarning();
             return;
         }
-        mMatchingEngineHelper.doRequestInBackground(reqType, mLocationForMatching);
+        showMessage("Performing "+reqType);
+        mMatchingEngineHelper.doRequestInBackground(reqType, getLocationForMatching());
     }
 
     private void showAboutDialog() {
@@ -705,13 +732,8 @@ public class MainActivity extends AppCompatActivity
             CloudletListHolder.getSingleton().getCloudletList().clear();
         }
 
-        if(mMatchingEngineHelper.getSpoofedLocation() == null) {
-            mLocationForMatching = mLastKnownLocation;
-        } else {
-            mLocationForMatching = mMatchingEngineHelper.getSpoofedLocation();
-        }
-
-        mMatchingEngineHelper.doRequestInBackground(REQ_GET_CLOUDLETS, mLocationForMatching);
+        showMessage("Performing "+REQ_GET_CLOUDLETS);
+        mMatchingEngineHelper.doRequestInBackground(REQ_GET_CLOUDLETS, getLocationForMatching());
     }
 
     public void showGpsWarning() {
@@ -769,6 +791,7 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         mUserLocationMarker.setPosition(spoofLatLng);
+        final boolean[] resetPosition = {true}; //Has to be final. Use array so we can update the value.
         String spoofText = "Spoof GPS at this location";
         String updateSimText = "Update location in GPS database";
         final CharSequence[] charSequence;
@@ -783,7 +806,6 @@ public class MainActivity extends AppCompatActivity
         alertDialogBuilder.setSingleChoiceItems(charSequence, -1, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
                 Location location = new Location("MobiledgeX_Loc_Sim");
                 location.setLatitude(spoofLatLng.latitude);
                 location.setLongitude(spoofLatLng.longitude);
@@ -798,14 +820,14 @@ public class MainActivity extends AppCompatActivity
                 switch (which) {
                     case 0:
                         Log.i(TAG, "Spoof GPS at "+location);
-                        Toast.makeText(MainActivity.this, "GPS spoof enabled.", Toast.LENGTH_LONG).show();
+                        showMessage("GPS spoof enabled.");
                         float[] results = new float[1];
                         Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
                         double distance = results[0]/1000;
                         initUserMobileIcon();
                         mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
                         mMatchingEngineHelper.setSpoofedLocation(location);
-                        getCloudlets(true);
+                        resetPosition[0] = false;
                         break;
                     case 1:
                         Log.i(TAG, "Update GPS in simulator to "+location);
@@ -813,25 +835,30 @@ public class MainActivity extends AppCompatActivity
                         mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
                         updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
                         mMatchingEngineHelper.setSpoofedLocation(location);
-                        getCloudlets(true);
+                        resetPosition[0] = false;
                         break;
                     default:
                         Log.i(TAG, "Unknown dialog selection.");
                 }
+                dialog.dismiss();
 
             }
         });
 
         alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                mUserLocationMarker.setPosition(new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude()));
+                if (resetPosition[0]) {
+                    mUserLocationMarker.setPosition(mPrevMarkPosition);
+                }
             }
         });
 
         alertDialogBuilder.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                mUserLocationMarker.setPosition(new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude()));
+                if (resetPosition[0]) {
+                    mUserLocationMarker.setPosition(mPrevMarkPosition);
+                }
             }
         });
 
@@ -971,6 +998,7 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
+        mClosestCloudlet = closestCloudlet;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -994,6 +1022,7 @@ public class MainActivity extends AppCompatActivity
                     //Save the hostname for use by Face Detection Activity.
                     mClosestCloudletHostname = cloudlet.getHostName();
                     Log.i(TAG, "mClosestCloudletHostname: "+ mClosestCloudletHostname);
+                    showMessage("Closest Cloudlet is now: " + mClosestCloudletHostname);
                 }
             }
         });
@@ -1023,16 +1052,22 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 if(cloudletList.getCloudletsList().size() == 0) {
+                    String message = "No cloudlets available.\nPlease update Region and Operator settings.";
                     AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Error")
-                            .setMessage("No cloudlets available.\nPlease update Region and Operator settings.")
+                            .setMessage(message)
                             .setPositiveButton("OK", null);
                     mAlertDialog = dialogBuilder.show();
+                    showError(message);
                 }
 
+                showMessage("Got "+cloudletList.getCloudletsList().size()+" cloudlets");
+                int num = 1;
                 //First get the new list into an ArrayMap so we can index on the cloudletName
                 for(AppClient.CloudletLocation cloudletLocation:cloudletList.getCloudletsList()) {
                     Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName()+" getCarrierName()="+cloudletLocation.getCarrierName());
+                    showMessage(" "+num+". "+cloudletLocation.getCloudletName());
+                    num++;
                     String carrierName = cloudletLocation.getCarrierName();
                     String cloudletName = cloudletLocation.getCloudletName();
                     List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
@@ -1045,7 +1080,7 @@ public class MainActivity extends AppCompatActivity
                     int publicPort = 0;
                     mTls = false;
                     List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
-                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, TLS: %b, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
+                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, TLS: %b, Container Port: %d, External Port: %d}";
                     for (Appcommon.AppPort aPort : ports) {
                         FQDNPrefix = aPort.getFqdnPrefix();
                         Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
@@ -1053,8 +1088,7 @@ public class MainActivity extends AppCompatActivity
                                     aPort.getFqdnPrefix(),
                                     aPort.getTls(),
                                     aPort.getInternalPort(),
-                                    aPort.getPublicPort(),
-                                    aPort.getPathPrefix()));
+                                    aPort.getPublicPort()));
 
                         // For our app, the first port is for an http/ws server and can be TLS.
                         // This server provides both CV and speedtest capabilities.
@@ -1110,6 +1144,7 @@ public class MainActivity extends AppCompatActivity
                     Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
                     if (!tempCloudlets.containsKey(cloudlet.getCloudletName())) {
                         Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
+                        showMessage(cloudlet.getCloudletName() + " has been removed");
                         Marker marker = cloudlet.getMarker();
                         marker.setSnippet("Has been removed");
                         marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_FAILURE, getBadgeText(cloudlet)));
@@ -1126,7 +1161,7 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "mUserLocationMarker="+mUserLocationMarker+" locationVerificationAttempted="+locationVerificationAttempted+" locationVerified="+locationVerified);
                 if(mUserLocationMarker == null) {
                     // Create the marker representing the user/mobile device.
-                    LatLng latLng = new LatLng(mLocationForMatching.getLatitude(), mLocationForMatching.getLongitude());
+                    LatLng latLng = new LatLng(getLocationForMatching().getLatitude(), getLocationForMatching().getLongitude());
                     Log.i(TAG, "addMarker for user location");
                     mUserLocationMarker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
                     initUserMobileIcon();
@@ -1195,11 +1230,17 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMapLongClick(LatLng latLng) {
         Log.i(TAG, "onMapLongClick("+latLng+")");
+        if (mUserLocationMarker == null) {
+            showError("User marker doesn't exist");
+            return;
+        }
+        mPrevMarkPosition = mUserLocationMarker.getPosition();
         showSpoofGpsDialog(latLng);
     }
 
     @Override
     public void onMarkerDragStart(Marker marker) {
+        mPrevMarkPosition = new LatLng(getLocationForMatching().getLatitude(), getLocationForMatching().getLongitude());
         Log.i(TAG, "onMarkerDragStart("+marker+")");
     }
 
@@ -1637,6 +1678,14 @@ public class MainActivity extends AppCompatActivity
                 Location location = locationList.get(locationList.size() - 1);
                 Log.i(TAG, "onLocationResult() Location: " + location.getLatitude() + " " + location.getLongitude());
                 mLastKnownLocation = locationResult.getLastLocation();
+
+                if (mClosestCloudlet != null) {
+                    if (mMatchingEngineHelper.getSpoofedLocation() == null) {
+                        Log.e(TAG, "Posting location to DME");
+                        mMatchingEngineHelper.getMatchingEngine().getDmeConnection().postLocationUpdate(location, mClosestCloudlet);
+                    }
+                }
+
                 if(!gpsInitialized) {
                     getCloudlets(true);
                     gpsInitialized = true;
@@ -1651,5 +1700,13 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
+
+    public Location getLocationForMatching() {
+        if(mMatchingEngineHelper.getSpoofedLocation() == null) {
+            return mLastKnownLocation;
+        } else {
+            return mMatchingEngineHelper.getSpoofedLocation();
+        }
+    }
 }
 

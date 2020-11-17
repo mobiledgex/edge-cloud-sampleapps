@@ -61,7 +61,6 @@ public class ComputerVisionRestUnitTest {
     public static final int cellID = 0;
     public static final String uniqueIDType = null;
     public static final String uniqueID = null;
-    public static final List<AppClient.Tag> tags = null;
 
     // Lat and long for San Jose
     public static final double latitude = 37.33;
