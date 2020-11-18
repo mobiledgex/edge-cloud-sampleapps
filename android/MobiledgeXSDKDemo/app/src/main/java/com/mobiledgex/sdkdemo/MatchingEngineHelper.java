@@ -90,7 +90,7 @@ public class MatchingEngineHelper {
         mMatchingEngine = new MatchingEngine(mContext);
         mMatchingEngine.setSSLEnabled(false); //TODO: Remove. Only here to connect to DIND DME
 
-        // Register ourselves. The Subscribe annotation will be called on ClientEdgeEvents.
+        // Register ourselves. The Subscribe annotation will be called on ServerEdgeEvents.
         mMatchingEngine.getEdgeEventBus().register(this);
         Log.i(TAG, "Subscribed to ServerEdgeEvents");
     }
@@ -279,8 +279,7 @@ public class MatchingEngineHelper {
                 netTest.testSites(netTest.TestTimeoutMS); // Test the one we just added.
 
                 mMatchingEngine.getDmeConnection().postLatencyResult(netTest.getSite(host),
-                        mMatchingEngineResultsInterface.getLocationForMatching(),
-                        mClosestCloudlet);
+                        mMatchingEngineResultsInterface.getLocationForMatching());
             }
         });
     }
@@ -627,7 +626,7 @@ public class MatchingEngineHelper {
         if (mClosestCloudlet != null) {
             Log.e(TAG, "Posting location to DME");
             mMatchingEngineResultsInterface.showMessage("Posting location to DME");
-            mMatchingEngine.getDmeConnection().postLocationUpdate(spoofedLocation, mClosestCloudlet);
+            mMatchingEngine.getDmeConnection().postLocationUpdate(spoofedLocation);
         }
 
         mSpoofLocation = spoofedLocation;

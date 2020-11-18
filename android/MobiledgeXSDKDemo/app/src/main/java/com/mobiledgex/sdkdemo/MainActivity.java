@@ -1682,7 +1682,7 @@ public class MainActivity extends AppCompatActivity
                 if (mClosestCloudlet != null) {
                     if (mMatchingEngineHelper.getSpoofedLocation() == null) {
                         Log.e(TAG, "Posting location to DME");
-                        mMatchingEngineHelper.getMatchingEngine().getDmeConnection().postLocationUpdate(location, mClosestCloudlet);
+                        mMatchingEngineHelper.getMatchingEngine().getDmeConnection().postLocationUpdate(location);
                     }
                 }
 
