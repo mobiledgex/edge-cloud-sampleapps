@@ -32,17 +32,25 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.common.eventbus.Subscribe;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.MatchingEngine;
+import com.mobiledgex.matchingengine.performancemetrics.NetTest;
+import com.mobiledgex.matchingengine.performancemetrics.Site;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import distributed_match_engine.AppClient;
+import distributed_match_engine.Appcommon;
+import distributed_match_engine.LocOuterClass;
 import io.grpc.StatusRuntimeException;
 
+import static com.mobiledgex.sdkdemo.MainActivity.DEFAULT_SPEED_TEST_PORT;
 import static com.mobiledgex.sdkdemo.MainActivity.mAppName;
 import static com.mobiledgex.sdkdemo.MainActivity.mAppVersion;
 import static com.mobiledgex.sdkdemo.MainActivity.mCarrierName;
@@ -80,7 +88,201 @@ public class MatchingEngineHelper {
         mContext = context;
         mView = view;
         mMatchingEngine = new MatchingEngine(mContext);
+        mMatchingEngine.setSSLEnabled(false); //TODO: Remove. Only here to connect to DIND DME
+
+        // Register ourselves. The Subscribe annotation will be called on ServerEdgeEvents.
+        mMatchingEngine.getEdgeEventBus().register(this);
+        Log.i(TAG, "Subscribed to ServerEdgeEvents");
     }
+
+    /**
+     * Subscribe to ServerEdgeEvents! (Guava Interface)
+     * To optionally post messages to the DME, use MatchingEngine's DMEConnection.
+     */
+    @Subscribe
+    public void onMessageEvent(AppClient.ServerEdgeEvent event) {
+        Log.i(TAG, "onMessageEvent: "+event);
+        Map<String, String> tagsMap = event.getTagsMap();
+
+        switch (event.getEventType()) {
+            case EVENT_INIT_CONNECTION:
+                Log.i(TAG, "Received Init response: " + event);
+                mMatchingEngineResultsInterface.showMessage("Received: " + event.getEventType());
+                break;
+            case EVENT_APPINST_HEALTH:
+                Log.i(TAG, "Received: AppInst Health: " + event);
+                handleAppInstHealth(event);
+                break;
+            case EVENT_CLOUDLET_STATE:
+                Log.i(TAG, "Received: Cloutlet State event: " + event);
+                handleCloudletState(event);
+                break;
+            case EVENT_CLOUDLET_MAINTENANCE:
+                Log.i(TAG, "Received: Cloutlet Maintenance event." + event);
+                handleCloudletMaintenance(event);
+                break;
+            case EVENT_LATENCY_PROCESSED:
+                Log.i(TAG, "Received: Latency has been processed on server: " + event);
+                handleEventLatencyResults(event);
+                break;
+            case EVENT_LATENCY_REQUEST:
+                Log.i(TAG, "Received: Latency has been requested to be tested (client perspective): " + event);
+                handleLatencyRequest(event);
+                break;
+            case EVENT_CLOUDLET_UPDATE:
+                Log.i(TAG, "Received: Server pushed a new FindCloudletReply to switch to: " + event);
+                handleFindCloudletServerPush(event);
+                break;
+            case EVENT_UNKNOWN:
+                Log.i(TAG, "Received UnknownEvent.");
+                break;
+            default:
+                Log.i(TAG, "Event Received: " + event.getEventType());
+        }
+        // TODO: Need event switch of some kind to handle.
+        if (tagsMap.containsKey("shutdown")) {
+            // unregister self.
+            mMatchingEngine.getEdgeEventBus().unregister(this);
+        }
+    }
+
+    private void handleEventLatencyResults(AppClient.ServerEdgeEvent event) {
+        mMatchingEngineResultsInterface.showMessage("Received: " + event.getEventType());
+        LocOuterClass.Latency l = event.getLatency();
+        String message = "Latency results: min/avg/max/stddev="+l.getMin()+"/"+l.getAvg()+"/"+l.getMax()+"/"+l.getStdDev();
+        mMatchingEngineResultsInterface.showMessage(message);
+    }
+
+    void handleFindCloudletServerPush(AppClient.ServerEdgeEvent event) {
+        // In a real app:
+        // Sync any user app data
+        // switch servers
+        // restore state to continue.
+
+        mMatchingEngineResultsInterface.showMessage("Received: " + event.getEventType());
+
+        // In this demo case, use our existing interface to display the newly selected cloudlet on the map.
+        mClosestCloudlet = event.getNewCloudlet();
+        mMatchingEngineResultsInterface.onFindCloudlet(mClosestCloudlet);
+    }
+
+    void handleAppInstHealth(AppClient.ServerEdgeEvent event) {
+        if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_APPINST_HEALTH) {
+            return;
+        }
+
+        switch (event.getHealthCheck()) {
+            case HEALTH_CHECK_FAIL_ROOTLB_OFFLINE:
+            case HEALTH_CHECK_FAIL_SERVER_FAIL:
+                doEnhancedLocationUpdateInBackground(mMatchingEngineResultsInterface.getLocationForMatching());
+                break;
+            case HEALTH_CHECK_OK:
+                Log.i(TAG, "AppInst Health is OK");
+                break;
+            case UNRECOGNIZED:
+                // fall through
+            default:
+                Log.i(TAG, "AppInst Health event: " + event.getHealthCheck());
+        }
+    }
+
+    void handleCloudletMaintenance(AppClient.ServerEdgeEvent event) {
+        if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_CLOUDLET_MAINTENANCE) {
+            return;
+        }
+
+        mMatchingEngineResultsInterface.showMessage("Received: " + event.getEventType());
+
+        switch (event.getMaintenanceState()) {
+            case NORMAL_OPERATION:
+                Log.i(TAG, "Maintenance state is all good!");
+                break;
+            default:
+                Log.i(TAG, "Server maintenance: " + event.getMaintenanceState());
+        }
+    }
+
+    void handleCloudletState(AppClient.ServerEdgeEvent event) {
+        if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_CLOUDLET_STATE) {
+            return;
+        }
+
+        mMatchingEngineResultsInterface.showMessage("Received: " + event.getEventType());
+
+        switch (event.getCloudletState()) {
+            case CLOUDLET_STATE_INIT:
+                Log.i(TAG, "Cloudlet is not ready yet. Wait or FindCloudlet again.");
+                break;
+            case CLOUDLET_STATE_NOT_PRESENT:
+                Log.i(TAG, "Cloudlet is not present.");
+            case CLOUDLET_STATE_UPGRADE:
+                Log.i(TAG, "Cloudlet is upgrading");
+            case CLOUDLET_STATE_OFFLINE:
+                Log.i(TAG, "Cloudlet is offline");
+            case CLOUDLET_STATE_ERRORS:
+                Log.i(TAG, "Cloudlet is offline");
+            case CLOUDLET_STATE_READY:
+                // Timer Retry or just retry.
+                doEnhancedLocationUpdateInBackground(mMatchingEngineResultsInterface.getLocationForMatching());
+                break;
+            case CLOUDLET_STATE_NEED_SYNC:
+                Log.i(TAG, "Cloudlet data needs to sync.");
+                break;
+            default:
+                Log.i(TAG, "Not handled");
+        }
+    }
+    // Only the app knows with any certainty which AppPort (and internal port array)
+    // it wants to test, so this is in the application.
+    // TODO: This has things hard-coded to allow a demo even though the app can't reach
+    //  the app instances. When the DME code is released and doesn't have to be run on EdgeBox,
+    //  this needs to be reworked.
+    void handleLatencyRequest(AppClient.ServerEdgeEvent event) {
+        if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_LATENCY_REQUEST) {
+            return;
+        }
+
+        mMatchingEngineResultsInterface.showMessage("Received: " + event.getEventType());
+
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                // NetTest
+                // Local copy:
+                NetTest netTest = new NetTest();
+
+                // If there's a current FindCloudlet, we'd just use that.
+                if (mClosestCloudlet == null) {
+                    return;
+                }
+
+                // Assuming some knowledge of your own internal un-remapped server port
+                // discover, and test with the PerformanceMetrics API:
+                int publicPort;
+                HashMap<Integer, Appcommon.AppPort> ports = mMatchingEngine.getAppConnectionManager().getTCPMap(mClosestCloudlet);
+                Appcommon.AppPort anAppPort = ports.get(7777);
+                if (anAppPort == null) {
+                    Log.e(TAG, "The expected server (or port) doesn't seem to be here!");
+                    return;
+                }
+
+                // Test with default network in use:
+                publicPort = anAppPort.getPublicPort();
+                String host = mMatchingEngine.getAppConnectionManager().getHost(mClosestCloudlet, anAppPort);
+
+                // Bad find cloudlet string (test.dme)
+                host = "acrotopia.com";
+                publicPort = 8008;//mMatchingEngine.getPort(); // We'll just ping a known host since the EdgeBox AppInst can't be reached..
+                Site site = new Site(mContext, NetTest.TestType.CONNECT, 5, host, publicPort);
+                netTest.addSite(site);
+                netTest.testSites(netTest.TestTimeoutMS); // Test the one we just added.
+
+                mMatchingEngine.getDmeConnection().postLatencyResult(netTest.getSite(host),
+                        mMatchingEngineResultsInterface.getLocationForMatching());
+            }
+        });
+    }
+
 
     /**
      * This method performs several actions with the matching engine in the background,
@@ -242,7 +444,8 @@ public class MatchingEngineHelper {
             } catch (IOException | StatusRuntimeException | IllegalArgumentException
                     | ExecutionException | InterruptedException ex) {
                 ex.printStackTrace();
-                toastOnUiThread(ex.getMessage(), Toast.LENGTH_LONG);
+//                toastOnUiThread(ex.getMessage(), Toast.LENGTH_LONG);
+                mMatchingEngineResultsInterface.showError("Error from DME: "+ex.getMessage());
             }
             return null;
         }
@@ -405,7 +608,7 @@ public class MatchingEngineHelper {
         this.mMatchingEngine = mMatchingEngine;
     }
 
-    public MatchingEngineResultsInterface getmMatchingEngineResultsInterface() {
+    public MatchingEngineResultsInterface getMatchingEngineResultsInterface() {
         return mMatchingEngineResultsInterface;
     }
 
@@ -417,8 +620,14 @@ public class MatchingEngineHelper {
         return mSpoofLocation;
     }
 
-    public void setSpoofedLocation(Location mSpoofLocation) {
-        Log.i(TAG, "setSpoofedLocation("+mSpoofLocation+")");
-        this.mSpoofLocation = mSpoofLocation;
+    public void setSpoofedLocation(Location spoofedLocation) {
+        Log.i(TAG, "setSpoofedLocation("+spoofedLocation+")");
+        if (mClosestCloudlet != null) {
+            Log.e(TAG, "Posting location to DME");
+            mMatchingEngineResultsInterface.showMessage("Posting location to DME");
+            mMatchingEngine.getDmeConnection().postLocationUpdate(spoofedLocation);
+        }
+
+        mSpoofLocation = spoofedLocation;
     }
 }

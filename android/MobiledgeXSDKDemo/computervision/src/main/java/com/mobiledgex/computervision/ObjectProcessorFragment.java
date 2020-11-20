@@ -28,6 +28,8 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,6 +38,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import org.json.JSONArray;
@@ -222,7 +225,9 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         mStatusText.setVisibility(View.GONE);
         mObjectClassRenderer = view.findViewById(R.id.object_class_renderer);
 
-        setupLogViewer(view);
+        RecyclerView eventsRecyclerView = view.findViewById(R.id.events_recycler_view);
+        FloatingActionButton logExpansionButton = view.findViewById(R.id.fab);
+        mEventLogViewer = new EventLogViewer(getActivity(), logExpansionButton, eventsRecyclerView);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         prefs.registerOnSharedPreferenceChangeListener(this);

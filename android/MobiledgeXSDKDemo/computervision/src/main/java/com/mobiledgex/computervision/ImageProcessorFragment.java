@@ -17,7 +17,6 @@
 
 package com.mobiledgex.computervision;
 
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -40,7 +39,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
@@ -54,7 +52,6 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -80,8 +77,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -125,11 +120,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected TextView mCloudStd2;
     protected TextView mEdgeStd2;
     protected TextView mStatusText;
-    protected RecyclerView mEventsRecyclerView;
     private TextView mProgressText;
     private ProgressBar mProgressBarTraining;
     protected Toolbar mCameraToolbar;
-    public List<EventItem> mEventItemList = new ArrayList<>();
 
     protected Rect mImageRect;
     private FaceBoxRenderer mCloudFaceBoxRenderer;
@@ -189,14 +182,11 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public static final String EXTRA_LATITUDE = "EXTRA_LATITUDE";
     public static final String EXTRA_LONGITUDE = "EXTRA_LONGITUDE";
     protected String mVideoFilename;
-    private MyEventRecyclerViewAdapter mEventRecyclerViewAdapter;
-    private FloatingActionButton mLogExpansionButton;
     private MatchingEngine.FindCloudletMode mFindCloudletMode;
     private int mAppInstancesLimit;
     protected boolean registerClientComplete;
-    private boolean isLogExpanded = false;
-    private int mLogViewHeight;
     protected boolean mAttached;
+    protected EventLogViewer mEventLogViewer;
 
     /**
      * Return statistics information to be displayed in dialog after activity -- a combination
@@ -226,7 +216,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      */
     @Override
     public void showMessage(final String text) {
-        addEventItem(INFO, text);
+        mEventLogViewer.addEventItem(INFO, text);
     }
 
     /**
@@ -236,24 +226,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      */
     @Override
     public void showError(final String text) {
-        addEventItem(ERROR, text);
-    }
-
-    public void addEventItem(EventItem.EventType type, String text) {
-        if (!isLogExpanded) {
-            logViewAnimate(0, mLogViewHeight);
-            isLogExpanded = true;
-        }
-
-        mEventItemList.add(new EventItem(type, text));
-        if (getActivity() != null) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mEventRecyclerViewAdapter.itemAdded();
-                }
-            });
-        }
+        mEventLogViewer.addEventItem(ERROR, text);
     }
 
     @Override
@@ -294,7 +267,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         String message;
         if (mImageSenderEdge == null) {
             message = "Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
-            initialLogsComplete();
+            mEventLogViewer.initialLogsComplete();
         } else {
             message = "Restarting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
             mImageSenderEdge.closeConnection();
@@ -991,7 +964,9 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         mStatusText.setVisibility(View.GONE);
         mStatusText.setText("");
 
-        setupLogViewer(view);
+        RecyclerView eventsRecyclerView = view.findViewById(R.id.events_recycler_view);
+        FloatingActionButton logExpansionButton = view.findViewById(R.id.fab);
+        mEventLogViewer = new EventLogViewer(getActivity(), logExpansionButton, eventsRecyclerView);
 
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
@@ -1174,114 +1149,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         //One more call to get preferences for ImageSenders
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         onSharedPreferenceChanged(prefs, "ALL");
-    }
-
-    protected void setupLogViewer(View view) {
-        mLogViewHeight = (int) (getResources().getDisplayMetrics().heightPixels*.4);
-        mEventsRecyclerView = view.findViewById(R.id.events_recycler_view);
-        final LinearLayoutManager layout = new LinearLayoutManager(view.getContext());
-        mEventsRecyclerView.setLayoutManager(layout);
-        mEventRecyclerViewAdapter = new MyEventRecyclerViewAdapter(mEventItemList);
-        mEventRecyclerViewAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                layout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
-            }
-
-        });
-        mEventsRecyclerView.setAdapter(mEventRecyclerViewAdapter);
-        mEventsRecyclerView.getLayoutParams().height = 0;
-        mEventsRecyclerView.requestLayout();
-
-        mLogExpansionButton = view.findViewById(R.id.fab);
-        mLogExpansionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.i(TAG, "mEventsRecyclerView.getLayoutParams().height="+mEventsRecyclerView.getLayoutParams().height);
-                Log.i(TAG, "mLogExpansionButton.getHeight()="+mLogExpansionButton.getHeight());
-                Log.i(TAG, "isLogExpanded="+isLogExpanded);
-                layout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
-                if(!isLogExpanded){
-                    logViewAnimate(0, mLogViewHeight);
-                    isLogExpanded = true;
-                }
-                else{
-                    logViewAnimate(mLogViewHeight, 0);
-                    isLogExpanded = false;
-                }
-            }
-        });
-        mLogExpansionButton.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                        .setTitle(R.string.verify_clear_logs_title)
-                        .setMessage(R.string.verify_clear_logs_message)
-                        .setNegativeButton(android.R.string.cancel,
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                })
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                mEventItemList.clear();
-                                mEventRecyclerViewAdapter.notifyDataSetChanged();
-                                Toast.makeText(getContext(), "Log viewer cleared", Toast.LENGTH_LONG).show();
-                            }
-                        })
-                        .show();
-                return true;
-            }
-        });
-    }
-
-    /**
-     * Calling this method indicates the initial logs that the activity always shows are complete.
-     * Start a timer to hide the logs. Note that the logviewer will automatically be expanded if
-     * additional logs are displayed.
-     */
-    protected void initialLogsComplete() {
-        Log.i(TAG, "initialLogsComplete()");
-        Timer myTimer = new Timer();
-        myTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (isLogExpanded) {
-                    logViewAnimate(mLogViewHeight, 0);
-                    isLogExpanded = false;
-                }
-            }
-        }, 3000);
-    }
-
-    protected void logViewAnimate(final int start, final int end) {
-        Log.i(TAG, "logViewAnimate start="+start+" end="+end);
-        if (getActivity() == null) {
-            Log.e(TAG, "logViewAnimate called after Activity has gone away.");
-            return;
-        }
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ValueAnimator va = ValueAnimator.ofInt(start, end);
-                va.setDuration(500);
-                va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    public void onAnimationUpdate(ValueAnimator animation) {
-                        if (animation == null) {
-                            Log.e(TAG, "onAnimationUpdate called with null animation.");
-                            return;
-                        }
-                        Integer value = (Integer) animation.getAnimatedValue();
-                        mEventsRecyclerView.getLayoutParams().height = value.intValue();
-                        mEventsRecyclerView.requestLayout();
-                    }
-                });
-                va.start();
-            }
-        });
     }
 
     protected void getCommonIntentExtras(Intent intent) {
