@@ -20,7 +20,9 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <include layout="@layout/content_main" />
+    <include
+        android:id="@+id/include"
+        layout="@layout/content_main" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
@@ -45,5 +47,29 @@
         android:visibility="gone"
         app:layout_anchor="@id/fab"
         app:layout_anchorGravity="top" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/events_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_above="@+id/statusTextView"
+        android:background="#FFFFFF"
+        app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="bottom|center" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_log_viewer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/statusTextView"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="5dp"
+        android:clickable="true"
+        android:scaleX="-1"
+        app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="start|bottom"
+        android:layout_margin="@dimen/fab_margin"
+        app:srcCompat="@drawable/ic_baseline_more_24" />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
