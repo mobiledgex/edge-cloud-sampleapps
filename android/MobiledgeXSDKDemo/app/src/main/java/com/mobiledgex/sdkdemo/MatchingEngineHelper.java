@@ -171,7 +171,6 @@ public class MatchingEngineHelper {
             return;
         }
 
-
         switch (event.getHealthCheck()) {
             case HEALTH_CHECK_FAIL_ROOTLB_OFFLINE:
             case HEALTH_CHECK_FAIL_SERVER_FAIL:
