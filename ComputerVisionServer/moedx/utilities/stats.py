@@ -4,6 +4,7 @@ class RunningStats:
 
     def __init__(self):
         self.n = 0
+        self.current = 0
         self.old_m = 0
         self.new_m = 0
         self.old_s = 0
@@ -13,6 +14,7 @@ class RunningStats:
         self.n = 0
 
     def push(self, x):
+        self.current = x
         self.n += 1
 
         if self.n == 1:

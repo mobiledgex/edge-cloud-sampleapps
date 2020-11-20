@@ -12,6 +12,7 @@ longitude = -96.916345
 # dme = "262-01.dme.mobiledgex.net"
 # dme = "us-mexdemo.dme.mobiledgex.net"
 dme = "eu-mexdemo.dme.mobiledgex.net"
+# dme = "emeraldeyeconstruct.mywire.org"
 # dme = "eu-tef.dme.mobiledgex.net"
 # dme = "eu-qa.dme.mobiledgex.net"
 # dme = "eu-stage.dme.mobiledgex.net"
@@ -54,6 +55,12 @@ app_vers = "2.2"
 # app_vers = "02.00.rc2-2923"
 # carrier_name = "TDG"
 
+# dme = "eu-qa.dme.mobiledgex.net"
+# app_name = "automation-sdk-porttest"
+# org_name = "MobiledgeX"
+# app_vers = "1.0"
+# carrier_name = "TDG"
+
 print("dme: %s, app_name: %s, org_name: %s, app_vers: %s, carrier_name: %s" %(dme, app_name, org_name, app_vers, carrier_name))
 url = "https://%s:38001/v1/registerclient" %dme
 data = {
@@ -66,7 +73,7 @@ resp = requests.post(url, data=json.dumps(data))
 # print(resp.content)
 decoded_json = json.loads(resp.content)
 if "status" not in decoded_json:
-    print("'status' not returned:\n"+resp.content)
+    print("'status' not returned:\n%s" %resp.content)
     sys.exit()
 status = decoded_json["status"]
 session_cookie = decoded_json["session_cookie"]

@@ -30,7 +30,9 @@ python manage.py collectstatic --noinput
 cd pytorch_objectdetecttrack/config/
 wget http://opencv.facetraining.mobiledgex.net/files/yolov3.weights
 cd ../..
-uvicorn moedx.asgi:application --host 0.0.0.0 --port 8008
+gunicorn moedx.asgi:application --bind 0.0.0.0:8008 -k uvicorn.workers.UvicornWorker
+#or
+python manage.py runserver 0:8008
 ```
 ### How to install OpenPose on a GPU-enabled server
 This assumes CUDA and CUDNN are already installed.
