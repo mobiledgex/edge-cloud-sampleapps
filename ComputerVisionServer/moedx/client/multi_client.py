@@ -97,10 +97,10 @@ class Client:
         self.stats_mem_util = RunningStats()
         self.stats_gpu_util = RunningStats()
         self.stats_gpu_util_max = RunningStats()
-        # self.stats_gpu_util_avg = RunningStats()
+        self.stats_gpu_util_avg = RunningStats()
         self.stats_gpu_mem_util = RunningStats()
         self.stats_gpu_mem_util_max = RunningStats()
-        # self.stats_gpu_mem_util_avg = RunningStats()
+        self.stats_gpu_mem_util_avg = RunningStats()
         self.media_file_name = None
         self.latency_start_time = 0
         self.loop_count = 0
@@ -213,7 +213,7 @@ class Client:
             if 'gpu_mem_util_avg' in decoded_json:
                 self.stats_gpu_mem_util_avg.push(float(decoded_json['gpu_mem_util_avg']))
                 Client.stats_gpu_mem_util_avg.push(float(decoded_json['gpu_mem_util_avg']))
-            if self.show_responses or True:
+            if self.show_responses:
                 logger.info(requests.get(url).content)
             time.sleep(SERVER_STATS_INTERVAL)
 
@@ -554,14 +554,6 @@ def benchmark(arguments=None, django=False):
         client.skip_frames = args.skip_frames
         client.tls = args.tls
         client.tls_verify = not args.noverify
-
-        Client.stats_latency_full_process.clear()
-        Client.stats_latency_network_only.clear()
-        Client.stats_server_processing_time.clear()
-        Client.stats_cpu_util.clear()
-        Client.stats_mem_util.clear()
-        Client.stats_gpu_util.clear()
-        Client.stats_gpu_mem_util.clear()
 
         thread = Thread(target=client.start)
         thread.start()

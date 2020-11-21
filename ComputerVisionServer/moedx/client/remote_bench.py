@@ -96,12 +96,10 @@ def remote_download(url):
 
 urls = [
     "http://80.187.140.9:8008",
-    # "https://cv-gpu-cluster.frankfurt-main.tdg.mobiledgex.net:8008",
     # "https://cv-gpu-cluster.hamburg-main.tdg.mobiledgex.net:8008",
     "https://cv-gpu-cluster.berlin-main.tdg.mobiledgex.net:8008",
     "https://cv-gpu-cluster.munich-main.tdg.mobiledgex.net:8008",
     "https://cv-gpu-cluster.dusseldorf-main.tdg.mobiledgex.net:8008",
-    # "https://cv-cluster.hamburg-main.tdg.mobiledgex.net:8008",
     "https://cv-cluster.berlin-main.tdg.mobiledgex.net:8008",
 ]
 
