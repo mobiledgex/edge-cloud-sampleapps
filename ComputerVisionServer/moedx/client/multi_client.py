@@ -497,6 +497,18 @@ def benchmark(arguments=None, django=False):
     parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
     args = parser.parse_args(arguments)
 
+    # Clear the Class variables. Otherwise, in the case we are instantiated by
+    # a Django view, the accumulation of stats would continue session to session.
+    Client.stats_latency_full_process.clear()
+    Client.stats_latency_network_only.clear()
+    Client.stats_server_processing_time.clear()
+    Client.stats_gpu_util.clear()
+    Client.stats_gpu_util_max.clear()
+    Client.stats_gpu_util_avg.clear()
+    Client.stats_gpu_mem_util.clear()
+    Client.stats_gpu_mem_util_max.clear()
+    Client.stats_gpu_mem_util_avg.clear()
+
     start_time = time.time()
 
     if args.threads > 1:
