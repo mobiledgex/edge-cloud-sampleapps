@@ -31,6 +31,29 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from PIL import Image
 import cv2
+import json
+import logging
+from threading import Thread
+
+util_dir = "../utilities"
+sys.path.append(os.path.join(os.path.dirname(__file__), util_dir))
+from stats import RunningStats
+from utilization import usage_cpu_and_mem, usage_gpu
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler('object_detector.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+SERVER_STATS_INTERVAL = 1.5 # Seconds
+SERVER_STATS_DELAY = 2 # Seconds
 
 package_dir = os.path.dirname(os.path.abspath(__file__))+"/"+submodule
 config_path=package_dir+'/config/yolov3.cfg'
@@ -55,13 +78,121 @@ else:
 model.eval()
 classes = utils.load_classes(class_path)
 
-# Globals
-total_server_processing_time = 0
-count_server_processing_time = 0
-
 class ObjectDetector(object):
+    MULTI_THREADED = False
+    stats_processing_time = RunningStats()
+    stats_cpu_utilization = RunningStats()
+    stats_mem_utilization = RunningStats()
+    stats_gpu_utilization = RunningStats()
+    stats_gpu_mem_utilization = RunningStats()
+
     def __init__(self):
+        self.stats_processing_time = RunningStats()
+        self.stats_cpu_utilization = RunningStats()
+        self.stats_mem_utilization = RunningStats()
+        self.stats_gpu_utilization = RunningStats()
+        self.stats_gpu_mem_utilization = RunningStats()
+        self.media_file_name = None
+        self.loop_count = 0
+        self.num_repeat = 0
+        self.num_vid_repeat = 0
+        self.filename_list = []
+        self.filename_list_index = 0
+        self.video = None
+        self.resize = True
+        self.resize_long = 240
+        self.resize_short = 180
+        self.skip_frames = 1
         pass
+
+    def start(self):
+        self.running = True
+        logger.debug("media file(s) %s" %(self.filename_list))
+        video_extensions = ('mp4', 'avi', 'mov')
+        if self.filename_list[0].endswith(video_extensions):
+            logger.debug("It's a video")
+            self.media_file_name = self.filename_list[0]
+            self.video = cv2.VideoCapture(self.media_file_name)
+
+        while True:
+            image = self.get_next_image()
+            if image is None:
+                break
+
+            results = self.process_image(image, self.outdir)
+            if self.show_responses:
+                logger.info(results)
+
+        self.display_results()
+
+    def get_next_image(self):
+        if self.video is not None:
+            for x in range(self.skip_frames):
+                ret, image = self.video.read()
+                if not ret:
+                    logger.debug("End of video")
+
+                    return None
+            vw = image.shape[1]
+            vh = image.shape[0]
+            logger.debug("Video size: %dx%d" %(vw, vh))
+            if self.resize:
+                if vw > vh:
+                    resize_w = self.resize_long
+                    resize_h = self.resize_short
+                else:
+                    resize_w = self.resize_short
+                    resize_h = self.resize_long
+                image = cv2.resize(image, (resize_w, resize_h))
+                logger.debug("Resized image to: %dx%d" %(resize_w, resize_h))
+        else:
+            # If the filename_list array has more than 1, get the next value.
+            if len(self.filename_list) > 1:
+                self.filename_list_index += 1
+                if self.filename_list_index >= len(self.filename_list):
+                    self.filename_list_index = 0
+            else:
+                self.filename_list_index = 0
+
+            if self.stats_processing_time.n >= self.num_repeat:
+                return None
+
+            self.media_file_name = self.filename_list[self.filename_list_index]
+            image = cv2.imread(self.media_file_name)
+
+        return image
+
+    def display_results(self):
+        self.running = False
+        if not self.show_responses or not ObjectDetector.MULTI_THREADED:
+            return
+
+        if self.stats_processing_time.n > 0:
+            logger.info("====> Average Processing Time=%.3f ms (stddev=%.3f)" %(self.stats_processing_time.mean(), self.stats_processing_time.stddev()))
+
+    def measure_server_stats(self):
+        time.sleep(SERVER_STATS_DELAY)
+        while self.running:
+            ret1 = usage_cpu_and_mem()
+            ret2 = usage_gpu()
+            ret = ret1.copy()
+            ret.update(ret2)
+            decoded_json = ret
+            if 'cpu_utilization' in decoded_json:
+                self.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
+                ObjectDetector.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
+            if 'mem_utilization' in decoded_json:
+                self.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
+                ObjectDetector.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
+            if 'gpu_utilization' in decoded_json:
+                self.stats_gpu_utilization.push(float(decoded_json['gpu_utilization']))
+                ObjectDetector.stats_gpu_utilization.push(float(decoded_json['gpu_utilization']))
+            if 'gpu_mem_utilization' in decoded_json:
+                self.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
+                ObjectDetector.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
+            if self.show_responses:
+                logger.info(json.dumps(decoded_json))
+            time.sleep(SERVER_STATS_INTERVAL)
 
     def is_gpu_supported(self):
         return gpu_support
@@ -92,16 +223,14 @@ class ObjectDetector(object):
         save the processed image there. (Only for command-line executions.
         It will always be None when called by the Django server.)
         """
-        global total_server_processing_time
-        global count_server_processing_time
         # load image and get detections
         img = Image.fromarray(img, 'RGB')
         prev_time = time.time()
         detections = self.detect_image(img)
         millis = (time.time() - prev_time)*1000
         elapsed = "%.3f" %millis
-        count_server_processing_time += 1
-        total_server_processing_time += millis
+        self.stats_processing_time.push(millis)
+        ObjectDetector.stats_processing_time.push(millis)
 
         if outdir is not None:
             filename = img.filename
@@ -154,42 +283,94 @@ class ObjectDetector(object):
 
         return objects
 
-if __name__ == "__main__":
+def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--filename", required=False, help="Name of image file to send.")
     parser.add_argument("-d", "--directory", required=False, help="Directory containing image files to process.")
     parser.add_argument("-o", "--outdir", required=False, help="Directory to output processed images to.")
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
+    parser.add_argument("-t", "--threads", type=int, default=1, help="Number of concurrent execution threads.")
+    parser.add_argument("--show-responses", action='store_true', help="Show responses.")
+    parser.add_argument("--skip-frames", type=int, default=1, help="For video, send every Nth frame.")
+    parser.add_argument("--fullsize", action='store_true', help="Maintain original image size. Default is to shrink the image before sending.")
+    parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
     args = parser.parse_args()
 
-    if args.filename != None and args.directory != None:
-        print("Can't include both filename and directory arguments")
-        sys.exit()
-    if args.filename is None and args.directory is None:
-        print("Must include either filename or directory arguments")
-        sys.exit()
+    start_time = time.time()
 
-    detector = ObjectDetector()
+    if args.threads > 1:
+        ObjectDetector.MULTI_THREADED = True
+    for x in range(args.threads):
+        detector = ObjectDetector()
+        if args.filename != None and args.directory != None:
+            logger.error("Can't include both filename and directory arguments")
+            parser.print_usage()
+            return False
 
-    if args.filename != None:
-        files = [args.filename]
-        dir_prefix = ""
+        if args.filename != None:
+            if not os.path.isfile(args.filename):
+                return [False, "%s doesn't exist" %args.filename]
+            detector.filename_list.append(args.filename)
 
-    elif args.directory != None:
-        files = os.listdir(args.directory)
-        dir_prefix = args.directory+"/"
+        elif args.directory != None:
+            if not os.path.isdir(args.directory):
+                return [False, "%s doesn't exist" %args.directory]
+            valid_extensions = ('jpg','jpeg', 'png')
+            files = os.listdir(args.directory)
+            for file in files:
+                if file.endswith(valid_extensions):
+                    detector.filename_list.append(args.directory+"/"+file)
+            if len(detector.filename_list) == 0:
+                return [False, "%s contains no valid image files" %args.directory]
 
-    valid_extensions = ('jpg', 'jpeg', 'png')
+        else:
+            logger.error("Must include either filename or directory argument")
+            parser.print_usage()
+            return False
 
-    for x in range(args.repeat):
-        for image_name in files:
-            if not image_name.endswith(valid_extensions):
-                continue
-            img = cv2.imread(dir_prefix+image_name)
-            results = detector.process_image(img, args.outdir)
-            print(image_name, results)
+        detector.filename_list_index = -1
+        detector.num_repeat = args.repeat * len(detector.filename_list)
+        detector.resize = not args.fullsize
+        detector.skip_frames = args.skip_frames
+        detector.outdir = args.outdir
+        detector.show_responses = args.show_responses
+        detector.do_server_stats = args.server_stats
 
-    if count_server_processing_time > 0:
-        average_server_processing_time = total_server_processing_time / count_server_processing_time
-        print("Average Server Processing Time=%.3f ms" %average_server_processing_time)
+        thread = Thread(target=detector.start)
+        thread.start()
+        logger.debug("Started %s" %thread)
+
+    if args.server_stats:
+        thread = Thread(target=detector.measure_server_stats)
+        thread.start()
+        logger.debug("Started background measure_server_stats %s" %thread)
+
+    logger.info("All started")
+    thread.join()
+
+    session_time = time.time() - start_time
+
+    if ObjectDetector.stats_processing_time.n > 0:
+        fps = ObjectDetector.stats_processing_time.n / session_time
+        header1 = "Grand totals"
+        header2 = "%d threads repeated %d times on %d files. %d total frames. FPS=%.2f" %(args.threads, args.repeat, len(detector.filename_list), ObjectDetector.stats_processing_time.n, fps)
+        separator = ""
+        for s in header2: separator += "="
+        logger.info(separator)
+        logger.info(header1)
+        logger.info(header2)
+        logger.info(separator)
+        fps = 1/ObjectDetector.stats_processing_time.mean()*1000 * args.threads
+        logger.info("====> Average Processing Time=%.3f ms (stddev=%.3f) FPS=%.2f" %(ObjectDetector.stats_processing_time.mean(), ObjectDetector.stats_processing_time.stddev(), fps))
+        if ObjectDetector.stats_cpu_utilization.n > 0:
+            logger.info("====> Average CPU Utilization=%.1f%%" %(ObjectDetector.stats_cpu_utilization.mean()))
+        if ObjectDetector.stats_mem_utilization.n > 0:
+            logger.info("====> Average Memory Utilization=%.1f%%" %(ObjectDetector.stats_mem_utilization.mean()))
+        if ObjectDetector.stats_gpu_utilization.n > 0:
+            logger.info("====> Average GPU Utilization=%.1f%%" %(ObjectDetector.stats_gpu_utilization.mean()))
+        if ObjectDetector.stats_gpu_mem_utilization.n > 0:
+            logger.info("====> Average GPU Memory Utilization=%.1f%%" %(ObjectDetector.stats_gpu_mem_utilization.mean()))
+
+if __name__ == "__main__":
+    print(main())

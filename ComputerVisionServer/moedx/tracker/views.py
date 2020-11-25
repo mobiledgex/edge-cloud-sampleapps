@@ -20,6 +20,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from tracker.models import CentralizedTraining
 from tracker.apps import myFaceDetector, myFaceRecognizer, myOpenPose, myOpWrapper
 from tracker.apps import myObjectDetector
+from utilities.utilization import usage_cpu_and_mem, usage_gpu
 
 import ast
 import numpy as np
@@ -330,7 +331,6 @@ def server_capabilities(request):
 
 @csrf_exempt
 def server_usage(request):
-    from client.utilization import usage_cpu_and_mem, usage_gpu
     """
     Get CPU and GPU usage summary.
     """

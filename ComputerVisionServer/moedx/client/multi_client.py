@@ -36,10 +36,10 @@ from io import StringIO
 import cv2
 import argparse
 from threading import Thread
-try:
-    from stats import RunningStats
-except Exception as e:
-    from .stats import RunningStats
+
+util_dir = "../utilities"
+sys.path.append(os.path.join(os.path.dirname(__file__), util_dir))
+from stats import RunningStats
 
 WEBSOCKET_OPCODE_BINARY = 0x2
 PING_INTERVAL = 1 # Seconds
@@ -74,10 +74,14 @@ class Client:
     stats_latency_full_process = RunningStats()
     stats_latency_network_only = RunningStats()
     stats_server_processing_time = RunningStats()
-    stats_cpu_utilization = RunningStats()
-    stats_mem_utilization = RunningStats()
-    stats_gpu_utilization = RunningStats()
-    stats_gpu_mem_utilization = RunningStats()
+    stats_cpu_util = RunningStats()
+    stats_mem_util = RunningStats()
+    stats_gpu_util = RunningStats()
+    stats_gpu_util_max = RunningStats()
+    stats_gpu_util_avg = RunningStats()
+    stats_gpu_mem_util = RunningStats()
+    stats_gpu_mem_util_max = RunningStats()
+    stats_gpu_mem_util_avg = RunningStats()
 
     def __init__(self, host, port):
         # Initialize instance variables.
@@ -89,10 +93,14 @@ class Client:
         self.stats_latency_full_process = RunningStats()
         self.stats_latency_network_only = RunningStats()
         self.stats_server_processing_time = RunningStats()
-        self.stats_cpu_utilization = RunningStats()
-        self.stats_mem_utilization = RunningStats()
-        self.stats_gpu_utilization = RunningStats()
-        self.stats_gpu_mem_utilization = RunningStats()
+        self.stats_cpu_util = RunningStats()
+        self.stats_mem_util = RunningStats()
+        self.stats_gpu_util = RunningStats()
+        self.stats_gpu_util_max = RunningStats()
+        self.stats_gpu_util_avg = RunningStats()
+        self.stats_gpu_mem_util = RunningStats()
+        self.stats_gpu_mem_util_max = RunningStats()
+        self.stats_gpu_mem_util_avg = RunningStats()
         self.media_file_name = None
         self.latency_start_time = 0
         self.loop_count = 0
@@ -181,18 +189,30 @@ class Client:
         time.sleep(SERVER_STATS_DELAY)
         while self.running:
             decoded_json = json.loads(requests.get(url).content)
-            if 'cpu_utilization' in decoded_json:
-                self.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
-                Client.stats_cpu_utilization.push(float(decoded_json['cpu_utilization']))
-            if 'mem_utilization' in decoded_json:
-                self.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
-                Client.stats_mem_utilization.push(float(decoded_json['mem_utilization']))
-            if 'gpu_utilization' in decoded_json:
-                self.stats_gpu_utilization.push(float(decoded_json['gpu_utilization']))
-                Client.stats_gpu_utilization.push(float(decoded_json['gpu_utilization']))
-            if 'gpu_mem_utilization' in decoded_json:
-                self.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
-                Client.stats_gpu_mem_utilization.push(float(decoded_json['gpu_mem_utilization']))
+            if 'cpu_util' in decoded_json:
+                self.stats_cpu_util.push(float(decoded_json['cpu_util']))
+                Client.stats_cpu_util.push(float(decoded_json['cpu_util']))
+            if 'mem_util' in decoded_json:
+                self.stats_mem_util.push(float(decoded_json['mem_util']))
+                Client.stats_mem_util.push(float(decoded_json['mem_util']))
+            if 'gpu_util' in decoded_json:
+                self.stats_gpu_util.push(float(decoded_json['gpu_util']))
+                Client.stats_gpu_util.push(float(decoded_json['gpu_util']))
+            if 'gpu_util_max' in decoded_json:
+                self.stats_gpu_util_max.push(float(decoded_json['gpu_util_max']))
+                Client.stats_gpu_util_max.push(float(decoded_json['gpu_util_max']))
+            if 'gpu_util_avg' in decoded_json:
+                self.stats_gpu_util_avg.push(float(decoded_json['gpu_util_avg']))
+                Client.stats_gpu_util_avg.push(float(decoded_json['gpu_util_avg']))
+            if 'gpu_mem_util' in decoded_json:
+                self.stats_gpu_mem_util.push(float(decoded_json['gpu_mem_util']))
+                Client.stats_gpu_mem_util.push(float(decoded_json['gpu_mem_util']))
+            if 'gpu_mem_util_max' in decoded_json:
+                self.stats_gpu_mem_util_max.push(float(decoded_json['gpu_mem_util_max']))
+                Client.stats_gpu_mem_util_max.push(float(decoded_json['gpu_mem_util_max']))
+            if 'gpu_mem_util_avg' in decoded_json:
+                self.stats_gpu_mem_util_avg.push(float(decoded_json['gpu_mem_util_avg']))
+                Client.stats_gpu_mem_util_avg.push(float(decoded_json['gpu_mem_util_avg']))
             if self.show_responses:
                 logger.info(requests.get(url).content)
             time.sleep(SERVER_STATS_INTERVAL)
@@ -447,7 +467,7 @@ def benchmark(arguments=None, django=False):
     # can be accessed with log_stream.getvalue()
     log_stream = StringIO()
     sh = logging.StreamHandler(log_stream)
-    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(process)d - %(message)s')
     sh.setLevel(logging.INFO)
     sh.setFormatter(formatter)
     logger.addHandler(sh)
@@ -476,6 +496,18 @@ def benchmark(arguments=None, django=False):
     parser.add_argument("--show-responses", action='store_true', help="Show responses.")
     parser.add_argument("--server-stats", action='store_true', help="Get server stats every Nth frame.")
     args = parser.parse_args(arguments)
+
+    # Clear the Class variables. Otherwise, in the case we are instantiated by
+    # a Django view, the accumulation of stats would continue session to session.
+    Client.stats_latency_full_process.clear()
+    Client.stats_latency_network_only.clear()
+    Client.stats_server_processing_time.clear()
+    Client.stats_gpu_util.clear()
+    Client.stats_gpu_util_max.clear()
+    Client.stats_gpu_util_avg.clear()
+    Client.stats_gpu_mem_util.clear()
+    Client.stats_gpu_mem_util_max.clear()
+    Client.stats_gpu_mem_util_avg.clear()
 
     start_time = time.time()
 
@@ -535,14 +567,6 @@ def benchmark(arguments=None, django=False):
         client.tls = args.tls
         client.tls_verify = not args.noverify
 
-        Client.stats_latency_full_process.clear()
-        Client.stats_latency_network_only.clear()
-        Client.stats_server_processing_time.clear()
-        Client.stats_cpu_utilization.clear()
-        Client.stats_mem_utilization.clear()
-        Client.stats_gpu_utilization.clear()
-        Client.stats_gpu_mem_utilization.clear()
-
         thread = Thread(target=client.start)
         thread.start()
         logger.debug("Started %s" %thread)
@@ -580,22 +604,31 @@ def benchmark(arguments=None, django=False):
         if Client.stats_server_processing_time.n > 0:
             logger.info("====> Average Server Processing Time=%.3f ms (stddev=%.3f)" %(Client.stats_server_processing_time.mean(), Client.stats_server_processing_time.stddev()))
 
-        if Client.stats_cpu_utilization.n > 0:
-            logger.info("====> Average CPU Utilization=%.1f%%" %(Client.stats_cpu_utilization.mean()))
-        if Client.stats_mem_utilization.n > 0:
-            logger.info("====> Average Memory Utilization=%.1f%%" %(Client.stats_mem_utilization.mean()))
-        if Client.stats_gpu_utilization.n > 0:
-            logger.info("====> Average GPU Utilization=%.1f%%" %(Client.stats_gpu_utilization.mean()))
-        if Client.stats_gpu_mem_utilization.n > 0:
-            logger.info("====> Average GPU Memory Utilization=%.1f%%" %(Client.stats_gpu_mem_utilization.mean()))
+        if Client.stats_cpu_util.n > 0:
+            logger.info("====> Average CPU Utilization=%.1f%%" %(Client.stats_cpu_util.mean()))
+        if Client.stats_mem_util.n > 0:
+            logger.info("====> Average Memory Utilization=%.1f%%" %(Client.stats_mem_util.mean()))
+        if Client.stats_gpu_util.n > 0:
+            logger.info("====> Average GPU Utilization=%.1f%%" %(Client.stats_gpu_util.mean()))
+        if Client.stats_gpu_util_max.n > 0:
+            logger.info("====> Average GPU Utilization Max=%.1f%%" %(Client.stats_gpu_util_max.mean()))
+        if Client.stats_gpu_util_avg.n > 0:
+            logger.info("====> Average GPU Utilization Avg=%.1f%%" %(Client.stats_gpu_util_avg.current))
+        if Client.stats_gpu_mem_util.n > 0:
+            logger.info("====> Average GPU Memory Utilization=%.1f%%" %(Client.stats_gpu_mem_util.mean()))
+        if Client.stats_gpu_mem_util_max.n > 0:
+            logger.info("====> Average GPU Memory Utilization Max=%.1f%%" %(Client.stats_gpu_mem_util_max.mean()))
+        if Client.stats_gpu_mem_util_avg.n > 0:
+            logger.info("====> Average GPU Memory Utilization Avg=%.1f%%" %(Client.stats_gpu_mem_util_avg.current))
 
 
         # The following line outputs CSV data that can be imported to a spreadsheet.
         logger.info("")
-        logger.info("Server, Full Process, Network Only, Server Time, CPU Util, Mem Util, GPU Util, GPU Mem Util")
-        logger.info("%s, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" %(args.server, Client.stats_latency_full_process.mean(),
-            Client.stats_latency_network_only.mean(), Client.stats_server_processing_time.mean(), Client.stats_cpu_utilization.mean(),
-            Client.stats_mem_utilization.mean(), Client.stats_gpu_utilization.mean(), Client.stats_gpu_mem_utilization.mean()))
+        logger.info("Server, Full Process, Network Only, Server Time, CPU Util, Mem Util, GPU Util, GPU Util Max, GPU Util Avg, GPU Mem Util, GPU Mem Util Max, GPU Mem Util Avg")
+        logger.info("%s, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" %(args.server, Client.stats_latency_full_process.mean(),
+            Client.stats_latency_network_only.mean(), Client.stats_server_processing_time.mean(), Client.stats_cpu_util.mean(),
+            Client.stats_mem_util.mean(), Client.stats_gpu_util.mean(),  Client.stats_gpu_util_max.mean(),  Client.stats_gpu_util_avg.current,
+            Client.stats_gpu_mem_util.mean(), Client.stats_gpu_mem_util_max.mean(), Client.stats_gpu_mem_util_avg.current))
 
         logger.info("TEST_PASS=%r" %TEST_PASS)
     else:
