@@ -42,11 +42,8 @@ classes = MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes
 # create predictor
 predictor = DefaultPredictor(cfg)
 
+# TODO: Programmatically determine if GPU support exists.
 gpu_support = False
-# if torch.cuda.is_available():
-#     gpu_support = True
-# else:
-#     cfg.MODEL.DEVICE = "cpu" # use a CPU Detectron copy
 
 # Globals
 total_server_processing_time = 0
