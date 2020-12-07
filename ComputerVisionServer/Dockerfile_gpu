@@ -20,7 +20,13 @@ RUN git clone https://github.com/CMU-Perceptual-Computing-Lab/openpose.git .
 WORKDIR /openpose/build
 #patch because dataset server posefs1.perception.cs.cmu.edu horribly slow (2020-09-04)
 RUN sed -i 's/posefs1.perception.cs.cmu.edu/opencv.facetraining.mobiledgex.net/g' /openpose/CMakeLists.txt
-RUN cmake -DBUILD_PYTHON=ON .. && make -j `nproc`
+# patch to comment this line out because our version of Cuda doesn't support AMPERE architecture
+# TODO: 2020-12-01: When 11.0-cudnn8-devel-ubuntu20.04 is available, we will revisit this.
+# Check for updates here: https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md
+RUN sed -i 's/set(AMPERE "80 86")/#set(AMPERE "80 86")/g' /openpose/cmake/Cuda.cmake
+RUN cmake -DBUILD_PYTHON=ON ..
+RUN sed -i 's/set(AMPERE "80 86")/#set(AMPERE "80 86")/g' /openpose/3rdparty/caffe/cmake/Cuda.cmake
+RUN make -j `nproc`
 
 # Use a virtualenv for all of our Python requirements.
 RUN apt-get install -y python3.7-venv
