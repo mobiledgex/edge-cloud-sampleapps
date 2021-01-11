@@ -78,6 +78,7 @@ namespace MobiledgeXComputerVision
                 }
             }
         }
+
         public enum ServiceMode
         {
             FaceDetection,
@@ -90,6 +91,7 @@ namespace MobiledgeXComputerVision
             CAMERA,
             nReal
         }
+
         public static ServiceMode serviceMode;
         public static DataSource source;
         public static bool urlFound; // trigger indicating RegisterAndFindCloudlet and  GetUrl() occured

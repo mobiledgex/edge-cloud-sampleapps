@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using MobiledgeX;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace MobiledgeXComputerVision
@@ -50,10 +51,29 @@ namespace MobiledgeXComputerVision
 
         }
 
-        void SetRegion(int region)
+        public void SetRegion(int regionId)
         {
-            NetworkManager.regionIndex = region;
-            networkManager.GetEDGE();
+            string region;
+            switch (regionId)
+            {
+                default:
+                case 0:
+                    region = "Nearest";
+                    break;
+                case 1:
+                    region = "EU";
+                    break;
+                case 2:
+                    region = "US";
+                    break;
+                case 3:
+                    region = "JP";
+                    break;
+
+            }
+            Resources.Load<MobiledgeXSettings>("MobiledgeXSettings").region = region;
+            
+            FindObjectOfType<NetworkManager>().GetEDGE();
         }
     }
 }

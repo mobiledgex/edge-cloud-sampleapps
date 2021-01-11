@@ -61,7 +61,6 @@ namespace MobiledgeXComputerVision {
         #region MonoBehaviour Callbacks
         IEnumerator Start()
         {
-            regionsDmeList = new List<string>() { "wifi", "eu-mexdemo", "us-mexdemo", "jp-mexdemo", "kr-mexdemo" };
             integration = new MobiledgeXIntegration();
 
 #if UNITY_EDITOR
@@ -79,6 +78,7 @@ namespace MobiledgeXComputerVision {
             yield return StartCoroutine(MobiledgeX.LocationService.EnsureLocation());
             GetEDGE();
         }
+
         private void Update()
         {
             if (client == null)
@@ -102,6 +102,7 @@ namespace MobiledgeXComputerVision {
             NotConnectedToEdgePanel.SetActive(false);
             appManager.DisableInteraction();
             integration.UseWifiOnly(true);
+            integration.useSelectedRegionInProduction = true;
             EdgePanel.SetActive(false); // Disables User Input
             NotConnectedToEdgePanel.SetActive(false);
             try
@@ -156,11 +157,11 @@ namespace MobiledgeXComputerVision {
             {
                 case ConnectionMode.WebSocket:
                     appPort = integration.GetAppPort(LProto.L_PROTO_TCP);
-                    url = integration.GetUrl("ws");
+                    url = integration.GetUrl("wss");
                     return url;
                 case ConnectionMode.Rest:
                     appPort = integration.GetAppPort(LProto.L_PROTO_TCP);
-                    url = integration.GetUrl("http");
+                    url = integration.GetUrl("https");
                     return url;
                 default:
                     return "";
