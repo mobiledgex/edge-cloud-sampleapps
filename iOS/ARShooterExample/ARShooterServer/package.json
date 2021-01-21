@@ -4,7 +4,7 @@
   "description": "ARShooter Server Example using socket.io",
   "main": "shooter-server.js",
   "dependencies": {
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.4.0"
   },
   "devDependencies": {},
   "scripts": {
