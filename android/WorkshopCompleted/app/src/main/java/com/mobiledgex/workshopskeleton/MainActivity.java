@@ -66,6 +66,7 @@ import com.mobiledgex.matchingengine.util.RequestPermissions;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -286,9 +287,9 @@ public class MainActivity extends AppCompatActivity
         // NOTICE: In a real app, these values could be determined by the SDK, but we are reusing
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "ComputerVision";
-        orgName = "MobiledgeX";
+        orgName = "MobiledgeX-Samples";
         carrierName = "GDDT";
-        appVersion = "2.0";
+        appVersion = "2.2";
 
         //NOTICE: A real app would request permission to enable this.
         MatchingEngine.setMatchingEngineLocationAllowed(true);
@@ -304,6 +305,11 @@ public class MainActivity extends AppCompatActivity
         AppClient.RegisterClientRequest registerClientRequest;
         registerClientRequest = matchingEngine.createDefaultRegisterClientRequest(ctx, orgName)
                 .setAppName(appName).setAppVers(appVersion).build();
+        Log.i(TAG, "registerClientRequest: host="+host+" port="+port
+                +" getAppName()="+registerClientRequest.getAppName()
+                +" getAppVers()="+registerClientRequest.getAppVers()
+                +" getOrgName()="+registerClientRequest.getOrgName()
+                +" getCarrierName()="+registerClientRequest.getCarrierName());
         AppClient.RegisterClientReply registerStatus
                 = matchingEngine.registerClient (registerClientRequest, host, port, 10000);
         /////////////////////////////////////////////////////////////////////////////////////
@@ -323,13 +329,8 @@ public class MainActivity extends AppCompatActivity
             return false;
         }
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
-        try {
-            String uuid = matchingEngine.getUniqueId(this);
-            Log.i(TAG, "uuid="+uuid);
-        } catch (NoSuchAlgorithmException e) {
-            Log.e(TAG, "Can't get uuid:", e);
-            e.printStackTrace();
-        }
+        HashMap<String, String> deviceDetails = matchingEngine.getDeviceInfo();
+        Log.i(TAG, "deviceDetails="+deviceDetails);
 
         return true;
     }
@@ -380,7 +381,7 @@ public class MainActivity extends AppCompatActivity
         //Find FqdnPrefix from Port structure.
         String FqdnPrefix = "";
         List<distributed_match_engine.Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
-        String appPortFormat = "{Protocol: %d, FqdnPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
+        String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
         for (Appcommon.AppPort aPort : ports) {
             FqdnPrefix = aPort.getFqdnPrefix();
             // assign first port number to portNumberTvStr
@@ -389,10 +390,9 @@ public class MainActivity extends AppCompatActivity
             }
             Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                     aPort.getProto().getNumber(),
-                    aPort.getFqdnPrefix(),
                     aPort.getInternalPort(),
                     aPort.getPublicPort(),
-                    aPort.getPathPrefix()));
+                    aPort.getEndPort()));
         }
         // Build full hostname.
         mClosestCloudletHostname = FqdnPrefix+mClosestCloudlet.getFqdn();

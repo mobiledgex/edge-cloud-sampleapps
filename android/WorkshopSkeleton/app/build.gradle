@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.jfrog.artifactory'
-def grpcVersion = '1.20.0'
+
+def grpcVersion = '1.32.1'
+
 android {
     compileSdkVersion 28
     defaultConfig {
@@ -32,7 +34,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
 
     // Matching Engine SDK
-    implementation 'com.mobiledgex:matchingengine:2.1.2rc5'
+    implementation 'com.mobiledgex:matchingengine:2.4.0'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
