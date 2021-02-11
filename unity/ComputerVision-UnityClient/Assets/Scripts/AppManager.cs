@@ -78,6 +78,7 @@ namespace MobiledgeXComputerVision
                 }
             }
         }
+
         public enum ServiceMode
         {
             FaceDetection,
@@ -90,6 +91,7 @@ namespace MobiledgeXComputerVision
             CAMERA,
             nReal
         }
+
         public static ServiceMode serviceMode;
         public static DataSource source;
         public static bool urlFound; // trigger indicating RegisterAndFindCloudlet and  GetUrl() occured
@@ -174,13 +176,13 @@ namespace MobiledgeXComputerVision
             }
         }
 
-        public void HandleServerRespone(string response)
+        public void HandleServerResponse(string response)
         {
             switch (serviceMode)
             {
                 case ServiceMode.FaceDetection:
                     FaceDetectionResponse faceDetectionResponse = Messaging<FaceDetectionResponse>.Deserialize(response);
-                    networkManager.ServerProcessingTimeCalculator(faceDetectionResponse.server_processing_time);
+                    networkManager.UpdateAverageLatency(networkManager.ServerProcessingTimeRollingAvgQueue, faceDetectionResponse.server_processing_time);
                     showGUI = faceDetectionResponse.success;
                     if (faceDetectionResponse.success)
                     {
@@ -194,7 +196,7 @@ namespace MobiledgeXComputerVision
 
                 case ServiceMode.FaceRecognition:
                     FaceRecognitionResponse faceRecognitionResponse = Messaging<FaceRecognitionResponse>.Deserialize(response);
-                    networkManager.ServerProcessingTimeCalculator(faceRecognitionResponse.server_processing_time);
+                    networkManager.UpdateAverageLatency(networkManager.ServerProcessingTimeRollingAvgQueue, faceRecognitionResponse.server_processing_time);
                     if (faceRecognitionResponse.success)
                     {
                         faceRecognitionRect = faceRecognitionResponse.rect;
@@ -209,7 +211,7 @@ namespace MobiledgeXComputerVision
                     break;
                 case ServiceMode.ObjectDetection:
                     ObjectDetectionResponse objectDetectionResponse = Messaging<ObjectDetectionResponse>.Deserialize(response);
-                    networkManager.ServerProcessingTimeCalculator(objectDetectionResponse.server_processing_time);
+                    networkManager.UpdateAverageLatency(networkManager.ServerProcessingTimeRollingAvgQueue, objectDetectionResponse.server_processing_time);
                     showGUI = objectDetectionResponse.success;
                     if (objectDetectionResponse.success)
                     {
@@ -351,6 +353,13 @@ namespace MobiledgeXComputerVision
         public void EnableInteraction()
         {
             placeholder.gameObject.SetActive(false);
+        }
+        /// <summary>
+        /// Disable user interaction for a new FindClouldet request
+        /// </summary>
+        public void DisableInteraction()
+        {
+            placeholder.gameObject.SetActive(true);
         }
         #endregion
     }
