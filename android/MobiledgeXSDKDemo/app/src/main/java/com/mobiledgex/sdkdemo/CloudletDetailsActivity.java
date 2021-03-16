@@ -74,6 +74,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         }
         Log.i(TAG, "cloudlet="+cloudlet+" "+cloudlet.getCloudletName());
         cloudlet.setSpeedTestResultsListener(this);
+        cloudlet.setContext(getApplicationContext());
 
         cloudletNameTv = findViewById(R.id.cloudletName);
         appNameTv = findViewById(R.id.appName);

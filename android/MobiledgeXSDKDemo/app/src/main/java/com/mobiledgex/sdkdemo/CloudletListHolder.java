@@ -62,7 +62,8 @@ public class CloudletListHolder {
 
     public enum LatencyTestMethod {
         ping,
-        socket
+        socket,
+        NetTest
     }
 
     private CloudletListHolder() {

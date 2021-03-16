@@ -105,10 +105,12 @@
     <string-array name="pref_latency_test_method_titles">
         <item>System Ping (ICMP)</item>
         <item>Socket</item>
+        <item>SDK NetTest</item>
     </string-array>
     <string-array name="pref_latency_test_method_values">
         <item>ping</item>
         <item>socket</item>
+        <item>NetTest</item>
     </string-array>
 
     <string name="pref_find_cloudlet_mode">find_cloudlet_mode</string>

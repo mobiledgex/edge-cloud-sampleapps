@@ -47,7 +47,6 @@ public class MatchingEngineUnitTest {
     public static final String carrierName = "wifi";
     public static final String authToken = null;
     public static final int cellID = 0;
-    public static final List<AppClient.Tag> tags = new ArrayList<>();
     public static final int lteCategory = 0;
     public static final AppClient.BandSelection bandSelection = null;
 

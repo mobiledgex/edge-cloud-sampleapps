@@ -18,12 +18,15 @@
 package com.mobiledgex.sdkdemo;
 
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.mobiledgex.matchingengine.performancemetrics.NetTest;
+import com.mobiledgex.matchingengine.performancemetrics.Site;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,6 +44,8 @@ import fr.bmartel.speedtest.SpeedTestReport;
 import fr.bmartel.speedtest.SpeedTestSocket;
 import fr.bmartel.speedtest.inter.ISpeedTestListener;
 import fr.bmartel.speedtest.model.SpeedTestError;
+
+import static com.mobiledgex.sdkdemo.MainActivity.DEFAULT_SPEED_TEST_PORT;
 
 public class Cloudlet implements Serializable {
     private static final String TAG = "Cloudlet";
@@ -77,7 +82,7 @@ public class Cloudlet implements Serializable {
     private SpeedTestResultsInterface mSpeedTestResultsInterface;
 
     private String mHostName;
-    private int mOpenPort = 8008;
+    private int mOpenPort = DEFAULT_SPEED_TEST_PORT;
     private final int socketTimeout = 3000;
     private boolean latencyTestTaskRunning = false;
     private boolean speedTestDownloadTaskRunning = false;
@@ -90,6 +95,7 @@ public class Cloudlet implements Serializable {
     private String mScheme;
     private CloudletListHolder.LatencyTestMethod mLatencyTestMethod;
     private boolean mLatencyTestMethodForced = false;
+    private Context mContext;
 
     public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, String fqdnPrefix, boolean tls, Marker marker, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
@@ -210,6 +216,8 @@ public class Cloudlet implements Serializable {
             new LatencyTestTaskSocket().execute();
         } else if (mLatencyTestMethod == CloudletListHolder.LatencyTestMethod.ping) {
             new LatencyTestTaskPing().execute();
+        } else if (mLatencyTestMethod == CloudletListHolder.LatencyTestMethod.NetTest) {
+            new LatencyTestTaskNetTest().execute();
         } else {
             Log.e(TAG, "Unknown mLatencyTestMethod: " + mLatencyTestMethod);
         }
@@ -248,6 +256,10 @@ public class Cloudlet implements Serializable {
             ex.printStackTrace();
             return false;
         }
+    }
+
+    public void setContext(Context context) {
+        mContext = context;
     }
 
     public class LatencyTestTaskSocket extends AsyncTask<Void, Integer, String> {
@@ -548,6 +560,30 @@ public class Cloudlet implements Serializable {
         @Override
         protected void onPostExecute(Void result) {
             mSpeedTestResultsInterface.onIpAddressResolved();
+        }
+    }
+
+    private class LatencyTestTaskNetTest extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            NetTest netTest = new NetTest();
+            Site site = new Site(mContext, NetTest.TestType.CONNECT, mNumPackets, mHostName, mOpenPort);
+            netTest.addSite(site);
+            netTest.testSites(netTest.TestTimeoutMS);
+            latencyMin = 0;
+            latencyAvg = site.average;
+            latencyMax = 0;
+            latencyStddev = site.stddev;
+
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Void result) {
+            latencyTestProgress = pingFailed ? 0 : 100;
+            latencyTestTaskRunning = false;
+            if(mSpeedTestResultsInterface != null) {
+                mSpeedTestResultsInterface.onLatencyProgress();
+            }
         }
     }
 
