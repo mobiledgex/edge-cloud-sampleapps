@@ -16,6 +16,7 @@ websockets
 websocket-client
 uvloop
 httptools
+twisted==20.3.0
 channels==2.4.0
 uvicorn
 redis
