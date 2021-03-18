@@ -38,7 +38,7 @@ allprojects {
                 username artifactory_user
                 password artifactory_password
             }
-            url "https://artifactory.mobiledgex.net/artifactory/maven-development/"
+            url "https://artifactory.mobiledgex.net/artifactory/maven-releases/"
         }
     }
 }
