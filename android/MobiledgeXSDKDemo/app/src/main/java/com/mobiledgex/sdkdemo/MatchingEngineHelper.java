@@ -88,7 +88,6 @@ public class MatchingEngineHelper {
         mContext = context;
         mView = view;
         mMatchingEngine = new MatchingEngine(mContext);
-        mMatchingEngine.setSSLEnabled(false); //TODO: Remove. Only here to connect to DIND DME
 
         // Register ourselves. The Subscribe annotation will be called on ServerEdgeEvents.
         mMatchingEngine.getEdgeEventBus().register(this);
@@ -139,7 +138,7 @@ public class MatchingEngineHelper {
             default:
                 Log.i(TAG, "Event Received: " + event.getEventType());
         }
-        // TODO: Need event switch of some kind to handle.
+        // TODO: EdgeEvents: Need event switch of some kind to handle.
         if (tagsMap.containsKey("shutdown")) {
             // unregister self.
             mMatchingEngine.getEdgeEventBus().unregister(this);
@@ -148,8 +147,8 @@ public class MatchingEngineHelper {
 
     private void handleEventLatencyResults(AppClient.ServerEdgeEvent event) {
         mMatchingEngineResultsInterface.showMessage("Received: " + event.getEventType());
-        LocOuterClass.Latency l = event.getLatency();
-        String message = "Latency results: min/avg/max/stddev="+l.getMin()+"/"+l.getAvg()+"/"+l.getMax()+"/"+l.getStdDev();
+        LocOuterClass.Statistics s = event.getStatistics();
+        String message = "Latency results: min/avg/max/stddev="+s.getMin()+"/"+s.getAvg()+"/"+s.getMax()+"/"+s.getStdDev();
         mMatchingEngineResultsInterface.showMessage(message);
     }
 
@@ -234,9 +233,6 @@ public class MatchingEngineHelper {
     }
     // Only the app knows with any certainty which AppPort (and internal port array)
     // it wants to test, so this is in the application.
-    // TODO: This has things hard-coded to allow a demo even though the app can't reach
-    //  the app instances. When the DME code is released and doesn't have to be run on EdgeBox,
-    //  this needs to be reworked.
     void handleLatencyRequest(AppClient.ServerEdgeEvent event) {
         if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_LATENCY_REQUEST) {
             return;
@@ -251,8 +247,9 @@ public class MatchingEngineHelper {
                 // Local copy:
                 NetTest netTest = new NetTest();
 
-                // If there's a current FindCloudlet, we'd just use that.
+                // You must have performed FindCloudlet before you can do a NetTest.
                 if (mClosestCloudlet == null) {
+                    mMatchingEngineResultsInterface.showError("You must first perform Find Cloudlet.");
                     return;
                 }
 
@@ -260,7 +257,7 @@ public class MatchingEngineHelper {
                 // discover, and test with the PerformanceMetrics API:
                 int publicPort;
                 HashMap<Integer, Appcommon.AppPort> ports = mMatchingEngine.getAppConnectionManager().getTCPMap(mClosestCloudlet);
-                Appcommon.AppPort anAppPort = ports.get(7777);
+                Appcommon.AppPort anAppPort = ports.get(DEFAULT_SPEED_TEST_PORT);
                 if (anAppPort == null) {
                     Log.e(TAG, "The expected server (or port) doesn't seem to be here!");
                     return;
@@ -269,10 +266,6 @@ public class MatchingEngineHelper {
                 // Test with default network in use:
                 publicPort = anAppPort.getPublicPort();
                 String host = mMatchingEngine.getAppConnectionManager().getHost(mClosestCloudlet, anAppPort);
-
-                // Bad find cloudlet string (test.dme)
-                host = "acrotopia.com";
-                publicPort = 8008;//mMatchingEngine.getPort(); // We'll just ping a known host since the EdgeBox AppInst can't be reached..
                 Site site = new Site(mContext, NetTest.TestType.CONNECT, 5, host, publicPort);
                 netTest.addSite(site);
                 netTest.testSites(netTest.TestTimeoutMS); // Test the one we just added.
