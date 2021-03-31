@@ -62,6 +62,11 @@ const runningFullProcess = new RunningStatsCalculator("Full Process");
 const ctx = canvasOutput.getContext('2d');
 const ctx2 = canvasResize.getContext('2d');
 
+var wsPrefix = "wss";
+if (window.location.protocol == "http:") {
+  wsPrefix = "ws";
+}
+
 startCamera();
 
 function switchCamera() {
@@ -113,7 +118,7 @@ function restartProcessing() {
   }
 
   if (currentProtocol == protocolWebSocket) {
-    openWSConnection("wss", window.location.hostname, window.location.port, "/ws" + currentEndpoint);
+    openWSConnection(wsPrefix, window.location.hostname, window.location.port, "/ws" + currentEndpoint);
   }
 
   runningNetwork.reset();
@@ -520,7 +525,15 @@ function sendImageToServer(image) {
         }
         return response;
       })
-      .then(response => response.json())
+      .then(response => {
+        ignorableError = "Internal Server Error";
+        if (response == ignorableError) {
+          console.log("Ignoring: " + ignorableError)
+          return {"success": "false"};
+        } else {
+          return response.json();
+        }
+      })
       .then(data => {
         handleResponse(data);
       })
