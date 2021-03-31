@@ -80,7 +80,7 @@ Test the REST interface of the container with a curl command (of course you can 
 
 	curl -X POST "http://localhost:8008/object/detect/" --data-binary "@objects_001.jpg" -H "Content-Type: image/jpeg"
 
-Similar to the tests above, the output should be a JSON list of detected objects with bounding box values and class names
+Similar to the tests above, the output should be a JSON list of detected objects with bounding box values and class names.
 
 ### Deploy to Cloudlet
 
