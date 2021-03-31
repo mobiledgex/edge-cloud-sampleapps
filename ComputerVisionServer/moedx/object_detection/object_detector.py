@@ -1,4 +1,4 @@
-# Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+# Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
 # MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -74,7 +74,6 @@ if torch.cuda.is_available():
     gpu_support = True
 else:
     Tensor = torch.FloatTensor
-
 model.eval()
 classes = utils.load_classes(class_path)
 
@@ -160,6 +159,7 @@ class ObjectDetector(object):
             self.media_file_name = self.filename_list[self.filename_list_index]
             image = cv2.imread(self.media_file_name)
 
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
 
     def display_results(self):
@@ -233,7 +233,7 @@ class ObjectDetector(object):
         ObjectDetector.stats_processing_time.push(millis)
 
         if outdir is not None:
-            filename = img.filename
+            filename = self.media_file_name
             img = np.array(img)
             # Get bounding-box colors
             cmap = plt.get_cmap('tab20b')
@@ -258,7 +258,7 @@ class ObjectDetector(object):
                 n_cls_preds = len(unique_labels)
                 bbox_colors = random.sample(colors, n_cls_preds)
             # browse detections and draw bounding boxes
-            for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+            for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections.cpu():
                 box_h = ((y2 - y1) / unpad_h) * img.shape[0]
                 box_w = ((x2 - x1) / unpad_w) * img.shape[1]
                 y1 = ((y1 - pad_y // 2) / unpad_h) * img.shape[0]
