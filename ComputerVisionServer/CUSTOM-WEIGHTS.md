@@ -42,7 +42,9 @@ Now copy your custom files into the config directory.
 	cp <location of custom files>/coco.names .
 	cp <location of custom files>/yolov3.weights .
 
-It may be confusing to have your file named coco.names if your model is not actually based on the COCO dataset. If you prefer, you can edit object_detector.py and change the `class_path` variable to point to your names file with your preferred name. Example:
+In this same directory, you will need to edit yolov3.cfg and change some values that depend on the number of classes you have. Change the "classes=" on lines 610, 696, and 783 to the number of classes in your model. Change the "filters=" on lines 603, 689, and 776 to (classes+5)\*3. For example, for 4 classes, you would use (4+5)\*3=27, so the lines would look like this: `filters=27`.
+
+It may be confusing to have your "names" file named coco.names if your model is not actually based on the COCO dataset. If you prefer, you can edit object_detector.py and change the `class_path` variable to point to your names file with your preferred name. Example:
 
 	class_path=package_dir+'/config/custom.names'
 
