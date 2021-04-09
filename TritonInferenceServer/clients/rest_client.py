@@ -33,7 +33,6 @@ import io
 import cv2
 import argparse
 from threading import Thread
-from imageio import imread, imwrite
 import numpy as np
 
 util_dir = "../utilities"

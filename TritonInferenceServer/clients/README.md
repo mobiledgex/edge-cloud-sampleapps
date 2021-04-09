@@ -1,6 +1,5 @@
 Sample client programs to demonstrate usage of the included models.
 
-
 ## rest_client.py
 This Python script makes calls to the REST endpoints, e.g. `/v2/models/ensemble_dali_yolov4/infer` and does not require any Nvidia or Triton specific packages.
 
