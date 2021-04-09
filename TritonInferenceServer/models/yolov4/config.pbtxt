@@ -1,0 +1,24 @@
+name: "yolov4"
+platform: "tensorrt_plan"
+max_batch_size: 1
+input [
+  {
+    name: "data"
+    data_type: TYPE_FP32
+    format: FORMAT_NCHW
+    dims: [ 3, 608, 608 ]
+  }
+]
+output [
+  {
+    name: "prob"
+    data_type: TYPE_FP32
+    dims: [7001, 1, 1]
+  }
+]
+instance_group [
+  {
+    kind: KIND_GPU
+    count: 1
+  }
+]

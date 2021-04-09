@@ -1,0 +1,11 @@
+*#*#
+*~
+*__pycache__*
+*migrations*
+*/db.sqlite3
+env/*
+.DS_Store
+logfile*
+staticfiles/*
+*.log
+.vscode
