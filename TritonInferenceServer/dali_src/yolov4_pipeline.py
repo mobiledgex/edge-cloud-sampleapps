@@ -17,6 +17,8 @@ import nvidia.dali as dali
 import nvidia.dali.types as types
 import argparse
 
+YOLOV4_REQUIRED_SIZE = 608
+
 def main(filename):
     pipe = dali.pipeline.Pipeline(batch_size=3, num_threads=1, device_id=0)
     shapes = dali.ops.Shapes(device = "cpu")
@@ -24,11 +26,11 @@ def main(filename):
         images = dali.fn.external_source(device="cpu", name="RAW_IMAGE")
         images = dali.fn.image_decoder(images, device="cpu", output_type=types.BGR)
         shapes = shapes(images)
-        images = dali.fn.resize(images, resize_x=608, resize_y=608)
+        images = dali.fn.resize(images, resize_x=YOLOV4_REQUIRED_SIZE, resize_y=YOLOV4_REQUIRED_SIZE)
         images = dali.fn.crop_mirror_normalize(images,
                                                dtype=types.FLOAT,
                                                output_layout="CHW",
-                                               crop=(608, 608))
+                                               crop=(YOLOV4_REQUIRED_SIZE, YOLOV4_REQUIRED_SIZE))
         images /= 255.0
         pipe.set_outputs(images, shapes)
         pipe.serialize(filename=filename)

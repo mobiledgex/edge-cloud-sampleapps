@@ -1,4 +1,4 @@
-# Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+# Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
 # MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,86 +40,38 @@ fh.setFormatter(formatter)
 
 gpu_supported = True
 
-def usage_gpu():
+def usage_gpu(): 
     """
     Execute the "nvidia-smi" command and parse the output to get the GPU usage.
-    """
-    global gpu_supported
-    if not gpu_supported:
-        return {}
-
-    nvidia_smi = "nvidia-smi"
-    try:
-        p = Popen([nvidia_smi, "-q", "-d", "UTILIZATION"], stdout=PIPE)
-    except FileNotFoundError:
-        logger.error("%s not found. Check if your Nvidia driver install is correct. GPU usage not supported." %nvidia_smi)
-        return {} # Empty dict
-
-    stdout, stderror = p.communicate()
-    output = stdout.decode('UTF-8')
-    # Split on line break
-    lines = output.split(os.linesep)
-
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        if line.strip() == "Utilization":
-            line = lines[index+1]
-            vals = line.split()
-            gpu_util_snap = vals[2]
-            line = lines[index+2]
-            vals = line.split()
-            gpu_mem_util_snap = vals[2]
-        elif line.strip() == "GPU Utilization Samples":
-            line = lines[index+3]
-            vals = line.split()
-            gpu_util_max = vals[2]
-            line = lines[index+5]
-            vals = line.split()
-            gpu_util_avg = vals[2]
-        elif line.strip() == "Memory Utilization Samples":
-            line = lines[index+3]
-            vals = line.split()
-            gpu_mem_util_max = vals[2]
-            line = lines[index+5]
-            vals = line.split()
-            gpu_mem_util_avg = vals[2]
-        elif line.strip() == "ENC Utilization Samples":
-            # When we hit this line, we're done
-            break
-        index += 1
-
-    ret = {"gpu_util": gpu_util_snap,
-            "gpu_util_max": gpu_util_max,
-            "gpu_util_avg": gpu_util_avg,
-            "gpu_mem_util": gpu_mem_util_snap,
-            "gpu_mem_util_max": gpu_mem_util_max,
-            "gpu_mem_util_avg": gpu_mem_util_avg}
-    logger.debug("GPU Stats: %s" %(ret))
-    return ret
-
-def usage_gpu2():
-    """
-    Execute the "nvidia-smi" command and parse the output to get the GPU usage.
+    This is an example command line. We will use a version below with no header or units.
+    nvidia-smi --query-gpu=utilization.gpu,utilization.memory,memory.total,memory.used --format=csv
+    utilization.gpu [%], utilization.memory [%], memory.total [MiB], memory.used [MiB]
+    0 %, 0 %, 7980 MiB, 5135 MiB
     """
     global gpu_supported
     if not gpu_supported:
         return {}
 
     try:
-        p = Popen(["nvidia-smi", "dmon", "-s", "u", "-c", "1"], stdout=PIPE)
+        p = Popen(["nvidia-smi", 
+            "--query-gpu=utilization.gpu,utilization.memory,memory.total,memory.used,memory.free",
+            "--format=csv,noheader,nounits"], stdout=PIPE)
     except FileNotFoundError:
         logger.error("'nvidia-smi' not found. Check if your Nvidia driver install is correct. GPU usage not supported.")
         gpu_supported = False
         return {} # Empty dict
     stdout, stderror = p.communicate()
     output = stdout.decode('UTF-8')
-    # Split on line break
-    lines = output.split(os.linesep)
-    vals = lines[2].split()
-    gpu_util = vals[1]
-    gpu_mem_util = vals[2]
-    ret = {"gpu_util": gpu_util, "gpu_mem_util": gpu_mem_util}
+    # The output is a single line in this format:
+    # 0, 0, 7980, 5135
+    vals = output.split(",")
+    gpu_util = vals[0].strip()
+    gpu_mem_util = vals[1].strip()
+    memory_total = vals[2].strip()
+    memory_used = vals[3].strip()
+    memory_free = vals[4].strip()
+    ret = {"gpu_util": gpu_util, "gpu_mem_util": gpu_mem_util, 
+        "memory_total": memory_total, "memory_used":memory_used, "memory_free":memory_free}
     logger.debug("GPU Stats: %s" %(ret))
     return ret
 
@@ -148,12 +100,11 @@ if __name__ == "__main__":
     stats_mem_util = RunningStats()
     stats_gpu_util = RunningStats()
     stats_gpu_mem_util = RunningStats()
-    stats_gpu_util_max = RunningStats()
-    stats_gpu_mem_util_max = RunningStats()
-    stats_gpu_util_avg = -1
-    stats_gpu_mem_util_avg = -1
+    stats_memory_total = RunningStats()
+    stats_memory_used = RunningStats()
+    stats_memory_free = RunningStats()
 
-    print ("%CPU, %MEM, %GPU, %GPU_MAX, %GPU_AVG, %GPU_MEM, %GPU_MEM_MAX, %GPU_MEM_AVG")
+    print ("%CPU, %MEM, %GPU, %GPU_MEM, MEM_TOTAL (MiB), MEM_TOTAL (MiB), MEM_FREE (MiB),")
     time.sleep(float(0.1))
     finish_time = datetime.datetime.now() + datetime.timedelta(seconds=float(args.seconds))
     while datetime.datetime.now() < finish_time:
@@ -164,46 +115,24 @@ if __name__ == "__main__":
             ret.update(ret2)
         decoded_json = ret
         json_ret = json.dumps(ret)
-        # print(json_ret)
         output = ""
         stats_cpu_util.push(float(decoded_json['cpu_util']))
         output += str(decoded_json['cpu_util'])
         stats_mem_util.push(float(decoded_json['mem_util']))
         output += ", " + str(decoded_json['mem_util'])
-        if 'gpu_util' in decoded_json:
+        if gpu_supported:
             stats_gpu_util.push(float(decoded_json['gpu_util']))
             output += ", " + str(decoded_json['gpu_util'])
-        else:
-            output += ", X"
-        if 'gpu_util_max' in decoded_json:
-            stats_gpu_util_max.push(float(decoded_json['gpu_util_max']))
-            output += ", " + str(decoded_json['gpu_util_max'])
-        else:
-            output += ", X"
-        if 'gpu_util_avg' in decoded_json:
-            stat = float(decoded_json['gpu_util_avg'])
-            if stat > stats_gpu_util_avg:
-                stats_gpu_util_avg = stat
-            output += ", " + str(stat)
-        else:
-            output += ", X"
-        if 'gpu_mem_util' in decoded_json:
             stats_gpu_mem_util.push(float(decoded_json['gpu_mem_util']))
             output += ", " + str(decoded_json['gpu_mem_util'])
+            stats_memory_total.push(float(decoded_json['memory_total']))
+            output += ", " + str(decoded_json['memory_total'])
+            stats_memory_used.push(float(decoded_json['memory_used']))
+            output += ", " + str(decoded_json['memory_used'])
+            stats_memory_free.push(float(decoded_json['memory_free']))
+            output += ", " + str(decoded_json['memory_free'])
         else:
-            output += ", X"
-        if 'gpu_mem_util_max' in decoded_json:
-            stats_gpu_mem_util_max.push(float(decoded_json['gpu_mem_util_max']))
-            output += ", " + str(decoded_json['gpu_mem_util_max'])
-        else:
-            output += ", X"
-        if 'gpu_mem_util_avg' in decoded_json:
-            stat = float(decoded_json['gpu_mem_util_avg'])
-            if stat > stats_gpu_mem_util_avg:
-                stats_gpu_mem_util_avg = stat
-            output += ", " + str(stat)
-        else:
-            output += ", X"
+            output += "X, X, X, X, X"
         print(output)
         time.sleep(float(args.delay))
 
@@ -213,17 +142,15 @@ if __name__ == "__main__":
     if stats_mem_util.n > 0:
         logger.info("====> Average Memory Utilization=%.1f%%" %(stats_mem_util.mean()))
     if stats_gpu_util.n > 0:
-        logger.info("====> Average GPU Utilization Snapshot=%.1f%%" %(stats_gpu_util.mean()))
-    if stats_gpu_util_max.n > 0:
-        logger.info("====> Average GPU Utilization Max=%.1f%%" %(stats_gpu_util_max.mean()))
-    if stats_gpu_util_avg > 0:
-        logger.info("====> Average GPU Utilization Avg=%.1f%%" %(stats_gpu_util_avg))
+        logger.info("====> Average GPU Utilization=%.1f%%" %(stats_gpu_util.mean()))
     if stats_gpu_mem_util.n > 0:
-        logger.info("====> Average GPU Memory Utilization Snapshot=%.1f%%" %(stats_gpu_mem_util.mean()))
-    if stats_gpu_mem_util_max.n > 0:
-        logger.info("====> Average GPU Memory Utilization Max=%.1f%%" %(stats_gpu_mem_util_max.mean()))
-    if stats_gpu_mem_util_avg > 0:
-        logger.info("====> Average GPU Memory Utilization Avg=%.1f%%" %(stats_gpu_mem_util_avg))
-    print("%.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %.1f" %(stats_cpu_util.mean(), stats_mem_util.mean(),
-        stats_gpu_util.mean(), stats_gpu_util_max.mean(), stats_gpu_util_avg,
-        stats_gpu_mem_util.mean(), stats_gpu_mem_util_max.mean(), stats_gpu_mem_util_avg))
+        logger.info("====> Average GPU Memory Utilization=%.1f%%" %(stats_gpu_mem_util.mean()))
+    if stats_memory_total.n > 0:
+        logger.info("====> Average GPU Memory Total=%d" %(stats_memory_total.mean()))
+    if stats_memory_used.n > 0:
+        logger.info("====> Average GPU Memory Used=%d" %(stats_memory_used.mean()))
+    if stats_memory_free.n > 0:
+        logger.info("====> Average GPU Memory Free=%d" %(stats_memory_free.mean()))
+    print("%.1f, %.1f, %.1f, %.1f, %d, %d, %d" %(stats_cpu_util.mean(), stats_mem_util.mean(),
+        stats_gpu_util.mean(), stats_gpu_mem_util.mean(), stats_memory_total.mean(), stats_memory_used.mean(),
+        stats_memory_free.mean()))

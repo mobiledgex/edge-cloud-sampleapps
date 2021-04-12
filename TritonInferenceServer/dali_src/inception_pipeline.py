@@ -23,17 +23,18 @@ import nvidia.dali as dali
 import nvidia.dali.types as types
 import argparse
 
+INCEPTION_REQUIRED_SIZE = 299
 
 def main(filename):
     pipe = dali.pipeline.Pipeline(batch_size=3, num_threads=1, device_id=0)
     with pipe:
         images = dali.fn.external_source(device="cpu", name="DALI_INPUT_0")
         images = dali.fn.image_decoder(images, device="mixed", output_type=types.RGB)
-        images = dali.fn.resize(images, resize_x=299, resize_y=299)
+        images = dali.fn.resize(images, resize_x=INCEPTION_REQUIRED_SIZE, resize_y=INCEPTION_REQUIRED_SIZE)
         images = dali.fn.crop_mirror_normalize(images,
                                                dtype=types.FLOAT,
                                                output_layout="HWC",
-                                               crop=(299, 299),
+                                               crop=(INCEPTION_REQUIRED_SIZE, INCEPTION_REQUIRED_SIZE),
                                                mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
                                                std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
         pipe.set_outputs(images)

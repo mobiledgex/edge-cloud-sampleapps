@@ -22,7 +22,8 @@ RUN curl http://opencv.facetraining.mobiledgex.net/TritonInferenceServer/models/
 
 COPY ./models /models
 COPY ./plugins /plugins
-COPY ./dali /dali
+# dali_src not needed to function, but good to have available for reference.
+COPY ./dali_src /dali_src
 
 # ports for REST, GRPC, and Stats
 EXPOSE 8000/tcp

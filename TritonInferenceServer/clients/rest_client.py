@@ -51,7 +51,7 @@ for h in hex_colors:
     h = h.lstrip('#')
     colors.append(tuple(int(h[i:i+2], 16) for i in (0, 2, 4)))
 
-colors = colors * 3 # Extend array in case we get more than 20 objects detected
+colors = colors * 5 # Extend array in case we get more than 20 objects detected
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -101,6 +101,7 @@ class Client:
         self.loop_count = 0
         self.num_repeat = 0
         self.num_vid_repeat = 0
+        self.num_vid_plays = 0
         self.filename_list = []
         self.filename_list_index = 0
         self.video = None
@@ -124,11 +125,19 @@ class Client:
         if self.video is not None:
             for x in range(self.skip_frames):
                 ret, image = self.video.read()
-                self.media_file_name = f"video-frame-{self.video_frame_num:04}.jpg"
+                self.out_file_name = f"video-frame-{self.video_frame_num:04}.jpg"
                 self.video_frame_num += 1
                 if not ret:
                     logger.debug("End of video")
-                    return None
+                    self.num_vid_plays += 1
+                    print(f"{self.num_vid_repeat=} {self.num_vid_plays=}")
+                    if self.num_vid_plays < self.num_vid_repeat:
+                        logger.info("Restarting the video")
+                        self.video = cv2.VideoCapture(self.media_file_name)
+                        return self.get_next_image()
+                    else:
+                        logger.info("Done with repeats")
+                        return None
         else:
             # If the filename_list array has more than 1, get the next value.
             if len(self.filename_list) > 1:
@@ -142,6 +151,7 @@ class Client:
                 return None
 
             self.media_file_name = self.filename_list[self.filename_list_index]
+            self.out_file_name = self.media_file_name
             image = cv2.imread(self.media_file_name)
 
         if self.resize:
@@ -207,7 +217,6 @@ class Client:
         p_ping_out = str(p_ping.communicate()[0])
 
         if (p_ping.wait() == 0):
-            # logger.info(p_ping_out)
             # rtt min/avg/max/mdev = 61.994/61.994/61.994/0.000 ms
             search = re.search(PING_REGEX, p_ping_out, re.M|re.I)
             ping_rtt = float(search.group(2))
@@ -251,7 +260,6 @@ class Client:
             if self.out_dir is not None:
                 nparr = np.frombuffer(image, np.uint8)
                 img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                # img_np = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
                 image_w = img_np.shape[1]
                 image_h = img_np.shape[0]
                 ratio_x = image_w / 608
@@ -267,12 +275,12 @@ class Client:
                     x2 = int(rect[2] * ratio_x)
                     y2 = int(rect[3] * ratio_y)
                     text = f"{label} ({percent}%)"
-                    retval, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.67, 2)
+                    retval, _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.50, 2)
                     cv2.rectangle(img_np, (x1, y1), (x2, y2), colors[obj_num], 2)
                     cv2.putText(img_np, text, (x1 + 2, y1 + retval[1] + 2), cv2.FONT_HERSHEY_SIMPLEX, 0.67, colors[obj_num], 2)
                     obj_num += 1
 
-                cv2.imwrite(self.out_dir + "/" + os.path.basename(self.media_file_name), img_np)  
+                cv2.imwrite(self.out_dir + "/" + os.path.basename(self.out_file_name), img_np)  
 
         if self.show_responses:
             elapsed = "%.3f" %millis
@@ -428,6 +436,7 @@ def benchmark(arguments=None, django=False):
 
         client.filename_list_index = -1
         client.num_repeat = args.repeat * len(client.filename_list)
+        client.num_vid_repeat = args.repeat
         client.do_server_stats = args.server_stats
         client.show_responses = args.show_responses
         client.model_name = args.model_name

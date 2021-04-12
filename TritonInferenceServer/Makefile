@@ -4,11 +4,7 @@ IMAGENAME = triton_server
 
 default: docker-build docker-push
 
-submodule-update:
-	git submodule init
-	git submodule update
-
-docker-build: submodule-update
+docker-build:
 	docker build -t ${ORGNAME}/${IMAGENAME}:${TAG} .
 
 docker-push:
