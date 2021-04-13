@@ -13,13 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-import os
 import subprocess
-import struct
 import json
-import time
-import logging
 import datetime
 import time
 import psutil
