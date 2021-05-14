@@ -1,0 +1,17 @@
+FROM ubuntu:latest
+
+# Install tools required for project
+RUN apt update
+RUN apt -y install jq ca-certificates 
+
+
+# Need this to work
+COPY vegeta /usr/local/bin/vegeta
+COPY run.sh /usr/local/bin/run.sh
+
+# Default env
+ENV THERATE=30
+ENV THEDURATION=30s
+
+# This results in a single layer image
+ENTRYPOINT ["/usr/local/bin/run.sh"]
