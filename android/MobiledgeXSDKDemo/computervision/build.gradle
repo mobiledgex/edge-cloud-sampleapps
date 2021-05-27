@@ -2,11 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.jfrog.artifactory'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 28
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 30
+        targetSdkVersion 28
         versionCode 2
         versionName "1.1.4"
 
@@ -42,8 +42,6 @@ dependencies {
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf-lite:${grpcVersion}"
-    implementation project(path: ':matchingenginehelper')
-
 }
 
 artifactoryPublish.dependsOn('build')

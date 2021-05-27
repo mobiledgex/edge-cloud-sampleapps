@@ -13,6 +13,45 @@
     <string name="action_verify_location">Verify Location</string>
     <string name="action_find_cloudlet">Find Closest Cloudlet</string>
 
+    <!-- Strings related to Settings -->
+    <string name="action_settings">Settings</string>
+    <string name="preference_first_time_use">first_time_use</string>
+    <string name="preference_allow_find_before_verify">allow_find_before_verify</string>
+    <string name="enhanced_location_permission">This application uses enhanced features of carrier networks to validate your device location. Please enable in app settings.</string>
+    <string name="preference_matching_engine_location_verification">location_verification</string>
+    <string name="preference_matching_engine_location_verification_title">Location Verification</string>
+    <string name="preference_matching_engine_location_verification_summary">Enhanced Network Location Services</string>
+    <string name="preference_net_switching_allowed">net_switching_allowed</string>
+    <string name="preference_net_switching_allowed_title">Network Switching Enabled</string>
+    <string name="preference_net_switching_allowed_summary">Wifi to Cell network switching</string>
+
+    <!-- Strings related to first-use screen -->
+    <string name="why">Why?</string>
+    <string name="needed_permissions_text">We need these permissions to make everything work:</string>
+    <string name="location_permission_summary">We need to have access to your device location</string>
+    <string name="location_carrier_permission_summary">We want to verify your location with your mobile operator</string>
+    <string name="location_device_permission_title">Device Location Verification</string>
+    <string name="location_device_permission_explanation">Location with Device Supplied Location Permission Explanation</string>
+    <string name="location_carrier_permission_title">Carrier Location Verification</string>
+    <string name="location_carrier_permission_explanation">To ensure that all players experience fair game play, we need to validate if your device\'s location corresponds with your location in the mobile network.</string>
+
+    <string name="drag_to_spoof">Drag to spoof GPS</string>
+
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_main">MobiledgeX SDK Demo</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">MobiledgeX</string>
+    <string name="nav_header_subtitle">android@mobiledgex.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_get_app_inst_list">Get App Instances</string>
+    <string name="action_about">About</string>
+    <string name="preference_matching_engine_settings">Matching Engine Settings</string>
+    <string name="preference_speed_test_settings">Speed Test Settings</string>
+    <string name="preference_general_settings">General Settings</string>
+
     <!-- Settings for Speed Test -->
     <string name="pref_title_download_size">Download Size</string>
     <string name="download_size">download_size</string>
@@ -61,31 +100,6 @@
         <item>20</item>
     </string-array>
 
-    <!-- Strings related to first-use screen -->
-    <string name="why">Why?</string>
-    <string name="needed_permissions_text">We need these permissions to make everything work:</string>
-    <string name="location_permission_summary">We need to have access to your device location</string>
-    <string name="location_carrier_permission_summary">We want to verify your location with your mobile operator</string>
-    <string name="location_device_permission_title">Device Location Verification</string>
-    <string name="location_device_permission_explanation">Location with Device Supplied Location Permission Explanation</string>
-    <string name="location_carrier_permission_title">Carrier Location Verification</string>
-    <string name="location_carrier_permission_explanation">To ensure that all players experience fair game play, we need to validate if your device\'s location corresponds with your location in the mobile network.</string>
-
-    <string name="drag_to_spoof">Drag to spoof GPS</string>
-
-    <string name="title_activity_maps">Map</string>
-    <string name="title_activity_main">MobiledgeX SDK Demo</string>
-    <string name="title_activity_settings">Settings</string>
-
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">MobiledgeX</string>
-    <string name="nav_header_subtitle">android@mobiledgex.com</string>
-    <string name="nav_header_desc">Navigation header</string>
-    <string name="action_get_app_inst_list">Get App Instances</string>
-    <string name="action_about">About</string>
-    <string name="preference_speed_test_settings">Speed Test Settings</string>
-
     <string name="pref_title_latency_method">Latency Test Method</string>
     <string name="latency_method">latency_method</string>
     <string-array name="pref_latency_test_method_titles">
@@ -99,25 +113,81 @@
         <item>NetTest</item>
     </string-array>
 
+    <string name="pref_find_cloudlet_mode">find_cloudlet_mode</string>
+    <string name="pref_find_cloudlet_mode_title">FindCloudlet Mode</string>
+    <string name="pref_find_cloudlet_mode_summary">%s</string>
+    <string-array name="pref_find_cloudlet_mode_titles">
+        <item>Proximity</item>
+        <item>Performance</item>
+    </string-array>
+    <string-array name="pref_find_cloudlet_mode_values">
+        <item>PROXIMITY</item>
+        <item>PERFORMANCE</item>
+    </string-array>
+
+    <string name="pref_app_instances_limit">app_instances_limit</string>
+    <string name="pref_app_instances_limit_title">Get App Instances Limit</string>
+    <string name="pref_app_instances_limit_summary">%s</string>
+    <string-array name="pref_app_instances_limit_titles">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+    <string-array name="pref_app_instances_limit_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+
     <string name="pref_latency_autostart">latency_autostart</string>
     <string name="pref_latency_autostart_title">Latency Test Auto-Start</string>
     <string name="pref_latency_autostart_summary">Automatically start latency test when cloudlet is discovered.</string>
 
+    <string name="pref_default_app_definition">pref_default_app_definition</string>
+    <string name="pref_value_default_app_definition">pref_value_default_app_definition</string>
+    <string name="pref_title_default_app_definition">Use Default App Definition</string>
+    <string name="pref_summary_default_app_definition">These values may be overridden to show a different set of app instances.</string>
+    <string name="pref_app_name">pref_app_name</string>
+    <string name="pref_title_app_name">App Name</string>
+    <string name="pref_app_version">pref_app_version</string>
+    <string name="pref_title_app_version">App Version</string>
+    <string name="pref_org_name">pref_org_name</string>
+    <string name="pref_title_org_name">Organization Name</string>
+
+    <string name="pref_operator_name">pref_operator</string>
+    <string name="pref_title_operator_name">Operator</string>
+    <string name="pref_summary_operator_name">The operator or carrier name</string>
+    <string name="pref_default_operator_name">pref_default_operator</string>
+    <string name="pref_value_default_operator_name">pref_value_default_operator</string>
+    <string name="pref_title_default_operator_name">Use Default Operator</string>
+    <string name="pref_summary_default_operator_name">The operator or carrier name from the cellular provider</string>
+    <string name="pref_dme_hostname">pref_dme_hostname</string>
+    <string name="pref_title_dme_hostname">Region Selection</string>
+    <string name="pref_summary_dme_hostname">Select region to display</string>
+    <string name="pref_default_dme_hostname">pref_default_dme_hostname</string>
+    <string name="pref_value_default_dme_hostname">pref_value_default_dme_hostname</string>
+    <string name="pref_title_default_dme_hostname">Use Default Region Selection</string>
+    <string name="pref_summary_default_dme_hostname">Region determined by the cellular provider</string>
     <string name="pref_summary_latency_method">Select socket connection or ICMP ping</string>
     <string name="pref_summary_latency_packets">Number of times to repeat latency test</string>
     <string name="pref_summary_upload_size">Number of Megabytes to upload for speed test</string>
     <string name="pref_summary_download_size">Number of Megabytes to download for speed test</string>
-
-    <string name="route_mode">Route Mode</string>
-    <string name="route_mode_flying">Flying</string>
-    <string name="route_mode_driving">Driving</string>
-    <string name="map_type_normal">Normal</string>
-    <string name="map_type_satellite">Satellite</string>
-    <string name="map_type_terrain">Terrain</string>
-    <string name="map_type_hybrid">Hybrid</string>
-    <string name="map_type_silver">Silver</string>
-    <string name="map_type_retro">Retro</string>
-
+    <string-array name="pref_dme_hostname_titles">
+        <item>Demo (mexdemo)</item>
+    </string-array>
+    <string-array name="pref_dme_hostname_values">
+        <item>eu-mexdemo.dme.mobiledgex.net:50051</item>
+    </string-array>
     <string name="title_activity_qoe_map">Predictive QoS</string>
     <string name="map_type">Map Type</string>
     <string name="pqoe_point_mode">Point Mode</string>
@@ -131,7 +201,6 @@
     <string name="pqoe_map_type_terrain">Terrain</string>
     <string name="pqoe_map_type_hybrid">Hybrid</string>
     <string name="pqoe_map_type_silver">Silver</string>
-    <string name="pqoe_map_type_retro">Retro</string>
     <string name="upload_speed_test">UL Speed Test</string>
     <string name="download_speed_test">DL Speed Test</string>
     <string name="menu_sign_in_with_google">Sign in with Google</string>

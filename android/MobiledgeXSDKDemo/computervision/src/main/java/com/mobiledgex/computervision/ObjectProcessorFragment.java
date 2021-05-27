@@ -39,14 +39,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.mobiledgex.matchingenginehelper.EventLogViewer;
-import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
+import com.mobiledgex.matchingengine.MatchingEngine;
 
 import org.json.JSONArray;
 
 import java.text.DecimalFormat;
-
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
 public class ObjectProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
@@ -210,6 +207,8 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated ObjectProcessorFragment savedInstanceState="+savedInstanceState);
 
+        mMatchingEngine = new MatchingEngine(getContext());
+
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
@@ -242,14 +241,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
 
         mVideoFilename = VIDEO_FILE_NAME;
 
-        meHelper = new MatchingEngineHelper.Builder()
-                .setActivity(getActivity())
-                .setMeHelperInterface(this)
-                .setView(mObjectClassRenderer)
-                .build();
-
-        setAppNameForGpu();
-
         if (mGpuHostNameOverride) {
             mEdgeHostList.clear();
             mEdgeHostListIndex = 0;
@@ -257,7 +248,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
             showMessage("Overriding GPU host. Host=" + mHostDetectionEdge);
             restartImageSenderEdge();
         } else {
-            meHelper.findCloudletInBackground();
+            findCloudletGpuInBackground();
         }
     }
 
@@ -279,6 +270,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
 
         // Declutter the menu, but keep the code in place in case we need it later.
         menu.findItem(R.id.action_camera_debug).setVisible(false);
+
     }
 
     @Override
