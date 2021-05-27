@@ -1,4 +1,4 @@
-package com.mobiledgex.computervision;
+package com.mobiledgex.matchingenginehelper;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,11 +19,11 @@ import java.util.List;
 /**
  * {@link RecyclerView.Adapter} that can display a {@link EventItem}.
  */
-public class MyEventRecyclerViewAdapter extends RecyclerView.Adapter<MyEventRecyclerViewAdapter.ViewHolder> {
+public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecyclerViewAdapter.ViewHolder> {
 
     private final List<EventItem> mValues;
 
-    public MyEventRecyclerViewAdapter(List<EventItem> items) {
+    public EventRecyclerViewAdapter(List<EventItem> items) {
         mValues = items;
     }
 
@@ -73,12 +74,14 @@ public class MyEventRecyclerViewAdapter extends RecyclerView.Adapter<MyEventRecy
         public final TextView mTimestampView;
         public final TextView mContentView;
         public EventItem mItem;
+        public ImageView mIconView;
 
         public ViewHolder(final View view) {
             super(view);
             mView = view;
-            mTimestampView = (TextView) view.findViewById(R.id.timestamp);
-            mContentView = (TextView) view.findViewById(R.id.content);
+            mTimestampView = view.findViewById(R.id.timestamp);
+            mContentView = view.findViewById(R.id.content);
+            mIconView = view.findViewById(R.id.imageView);
 
             //Long Press
             view.setOnLongClickListener(new View.OnLongClickListener() {

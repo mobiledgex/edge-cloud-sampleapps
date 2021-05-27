@@ -1,4 +1,4 @@
-package com.mobiledgex.computervision;
+package com.mobiledgex.matchingenginehelper;
 
 import android.text.format.DateFormat;
 

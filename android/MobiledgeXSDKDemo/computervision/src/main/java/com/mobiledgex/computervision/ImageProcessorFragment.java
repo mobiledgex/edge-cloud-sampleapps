@@ -21,26 +21,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -53,6 +42,14 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -61,7 +58,9 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.mobiledgex.matchingengine.MatchingEngine;
+import com.mobiledgex.matchingenginehelper.EventLogViewer;
+import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
+import com.mobiledgex.matchingenginehelper.MatchingEngineHelperInterface;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -77,16 +76,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 
-import static com.mobiledgex.computervision.EventItem.EventType.ERROR;
-import static com.mobiledgex.computervision.EventItem.EventType.INFO;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
-public class ImageProcessorFragment extends Fragment implements ImageServerInterface, ImageProviderInterface,
+public class ImageProcessorFragment extends Fragment implements MatchingEngineHelperInterface,
+        ImageServerInterface, ImageProviderInterface,
         ActivityCompat.OnRequestPermissionsResultCallback,
         SharedPreferences.OnSharedPreferenceChangeListener,
         TrainGuestDialog.TrainGuestDialogListener {
@@ -95,17 +92,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public static final String EXTRA_FACE_STROKE_WIDTH = "EXTRA_FACE_STROKE_WIDTH";
     private static final String VIDEO_FILE_NAME = "Jason.mp4";
 
-    protected MatchingEngine mMatchingEngine;
-    //The following defaults may be overridden by passing EXTRA values to the Intent.
-    public String mAppName = "ComputerVision";
-    public String mAppVersion = "2.2";
-    public String mOrgName = "MobiledgeX-Samples";
-    public String mCarrierName = "TDG";
-    public String mDmeHostname = "wifi.dme.mobiledgex.net";
-    public int mDmePort = 50051;
-    private double mLatitude;
-    private double mLongitude;
-    private AppClient.FindCloudletReply mClosestCloudlet;
+    protected MatchingEngineHelper meHelper;
 
     protected Camera2BasicFragment mCamera2BasicFragment;
     protected Menu mOptionsMenu;
@@ -150,7 +137,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     private boolean mTlsEdge = true;
     private boolean mTlsCloud = true;
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
-    public static final String DEF_HOSTNAME_PLACEHOLDER = "Default";
 
     private String mDefaultHostCloud;
     private String mDefaultHostEdge;
@@ -167,24 +153,15 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     protected int mEdgeHostListIndex;
 
     protected boolean mGpuHostNameOverride = false;
-    private boolean mEdgeHostNameOverride = false;
+    protected boolean mEdgeHostNameOverride = false;
     private boolean mCloudHostNameOverride = false;
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
     public static final String EXTRA_EDGE_CLOUDLET_HOSTNAME = "EXTRA_EDGE_CLOUDLET_HOSTNAME";
-    public static final String EXTRA_FIND_CLOUDLET_MODE = "EXTRA_FIND_CLOUDLET_MODE";
-    public static final String EXTRA_APP_INSTANCES_LIMIT = "EXTRA_APP_INSTANCES_LIMIT";
-    public static final String EXTRA_APP_NAME = "EXTRA_APP_NAME";
-    public static final String EXTRA_APP_VERSION = "EXTRA_APP_VERSION";
-    public static final String EXTRA_ORG_NAME = "EXTRA_ORG_NAME";
-    public static final String EXTRA_DME_HOSTNAME = "EXTRA_DME_HOSTNAME";
-    public static final String EXTRA_CARRIER_NAME = "EXTRA_CARRIER_NAME";
+    public static final String EXTRA_SPOOF_GPS = "EXTRA_SPOOF_GPS";
     public static final String EXTRA_LATITUDE = "EXTRA_LATITUDE";
     public static final String EXTRA_LONGITUDE = "EXTRA_LONGITUDE";
     protected String mVideoFilename;
-    private MatchingEngine.FindCloudletMode mFindCloudletMode;
-    private int mAppInstancesLimit;
-    protected boolean registerClientComplete;
     protected boolean mAttached;
     protected EventLogViewer mEventLogViewer;
 
@@ -209,6 +186,67 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         return statsText;
     }
 
+    @Override
+    public void onRegister() {
+        showMessage("registerClient successful for "+meHelper.mAppName);
+    }
+
+    @Override
+    public void onVerifyLocation(AppClient.VerifyLocationReply.GPSLocationStatus status, double gpsLocationAccuracyKM) {
+
+    }
+
+    @Override
+    public void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet) {
+        mEdgeHostList.clear();
+        mEdgeHostListIndex = 0;
+        mHostDetectionEdge = meHelper.mAppInstHostname;
+        mEdgeHostList.add(mHostDetectionEdge);
+
+        restartImageSenderEdge();
+    }
+
+    @Override
+    public void onGetCloudletList(AppClient.AppInstListReply cloudletList) {
+        mEdgeHostList.clear();
+        mEdgeHostListIndex = 0;
+        List<AppClient.CloudletLocation> sortableCloudletList = new ArrayList<>(cloudletList.getCloudletsList());
+        Collections.sort(sortableCloudletList, new Comparator<AppClient.CloudletLocation>() {
+            @Override public int compare(AppClient.CloudletLocation c1, AppClient.CloudletLocation c2) {
+                return (int) (c1.getDistance() - c2.getDistance());
+            }
+        });
+        for (AppClient.CloudletLocation cloudlet : sortableCloudletList) {
+            AppClient.Appinstance appInst = cloudlet.getAppinstances(0);
+            Log.i(TAG, cloudlet.getCloudletName()+" Distance="+cloudlet.getDistance());
+            //Find fqdnPrefix from Port structure.
+            String fqdnPrefix = "";
+            List<Appcommon.AppPort> ports = appInst.getPortsList();
+            // Get data only from first port.
+            Appcommon.AppPort aPort = ports.get(0);
+            if (aPort != null) {
+                Log.i(TAG, "Got port "+aPort+" TLS="+aPort.getTls()+" fqdnPrefix="+fqdnPrefix);
+                fqdnPrefix = aPort.getFqdnPrefix();
+                meHelper.mAppInstTls = aPort.getTls();
+                Log.i(TAG, "Setting EDGE TLS="+ meHelper.mAppInstTls);
+            }
+//            String hostname = fqdnPrefix + appInst.getFqdn();
+            // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
+            // Note that Docker deployments don't even have FqdnPrefix, so this workaround
+            // is only needed for k8s, but the same code will work for both.
+            String hostname = appInst.getFqdn();
+            mEdgeHostList.add(hostname);
+            showMessage("Found " + hostname);
+        }
+
+        Log.i(TAG, "onGetCloudletList cloudletList.getCloudletsCount()=" + cloudletList.getCloudletsCount());
+        Log.i(TAG, "onGetCloudletList mEdgeHostList=" + mEdgeHostList);
+
+        mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
+        Log.i(TAG, "onGetCloudletList mHostDetectionEdge=" + mHostDetectionEdge);
+        restartImageSenderEdge();
+    }
+
     /**
      * Adds a informational message to the log viewer.
      *
@@ -216,7 +254,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      */
     @Override
     public void showMessage(final String text) {
-        mEventLogViewer.addEventItem(INFO, text);
+        mEventLogViewer.showMessage(text);
     }
 
     /**
@@ -226,7 +264,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
      */
     @Override
     public void showError(final String text) {
-        mEventLogViewer.addEventItem(ERROR, text);
+        mEventLogViewer.showError(text);
+    }
+
+    @Override
+    public void getCloudlets(boolean clearExisting) {
+
     }
 
     @Override
@@ -249,7 +292,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
                     if (mEdgeHostList.size() > 1) {
                         showMessage("Host list exhausted.");
                     }
-                    findCloudletInBackground();
+                    meHelper.findCloudletInBackground();
                 }
             } else {
                 String message = "Please perform 'Find Closest Cloudlet' or 'Find App Instances'.";
@@ -573,14 +616,14 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         if (id == R.id.action_camera_swap) {
             mCamera2BasicFragment.switchCamera();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-            String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+            String prefKeyFrontCamera = getResources().getString(R.string.pref_cv_front_camera);
             prefs.edit().putInt(prefKeyFrontCamera, mCamera2BasicFragment.getCameraLensFacingDirection()).apply();
             return true;
         }
 
         if (id == R.id.action_camera_settings) {
             Intent intent = new Intent(getContext(), SettingsActivity.class);
-            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.FaceDetectionSettingsFragment.class.getName() );
+            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.ComputerVisionSettingsFragment.class.getName() );
             intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
             startActivity(intent);
             return true;
@@ -602,12 +645,14 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
 
         if (id == R.id.action_find_cloudlet) {
-            findCloudletInBackground();
+            mEdgeHostNameOverride = false;
+            meHelper.findCloudletInBackground();
             return true;
         }
 
         if (id == R.id.action_get_app_inst_list) {
-            getAppInstListInBackground();
+            mEdgeHostNameOverride = false;
+            meHelper.getAppInstListInBackground();
             return true;
         }
 
@@ -721,6 +766,13 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         return false;
     }
 
+    protected void setAppNameForGpu() {
+        String appName = getResources().getString(R.string.dme_app_name);
+        if (meHelper.mAppName.equals(appName)) {
+            meHelper.mAppName += "-GPU";
+        }
+    }
+
     private void getCustomVideoName() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Custom Video");
@@ -769,6 +821,13 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     }
 
     @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy()");
+        super.onDestroy();
+        meHelper.onDestroy();
+    }
+
+    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Log.i(TAG, "onSharedPreferenceChanged("+key+")");
         if(getContext() == null) {
@@ -776,27 +835,28 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             return;
         }
         String prefKeyLatencyMethod = getResources().getString(R.string.fd_latency_method);
-        String prefKeyConnectionMode = getResources().getString(R.string.preference_fd_connection_mode);
-        String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
-        String prefKeyLegacyCamera = getResources().getString(R.string.preference_fd_legacy_camera);
-        String prefKeyMultiFace = getResources().getString(R.string.preference_fd_multi_face);
-        String prefKeyShowFullLatency = getResources().getString(R.string.preference_fd_show_full_latency);
-        String prefKeyShowNetLatency = getResources().getString(R.string.preference_fd_show_net_latency);
-        String prefKeyShowStdDev = getResources().getString(R.string.preference_fd_show_stddev);
-        String prefKeyUseRollingAvg = getResources().getString(R.string.preference_fd_use_rolling_avg);
-        String prefKeyAutoFailover = getResources().getString(R.string.preference_fd_auto_failover);
-        String prefKeyShowCloudOutput = getResources().getString(R.string.preference_fd_show_cloud_output);
+        String prefKeyConnectionMode = getResources().getString(R.string.pref_cv_connection_mode);
+        String prefKeyFrontCamera = getResources().getString(R.string.pref_cv_front_camera);
+        String prefKeyLegacyCamera = getResources().getString(R.string.pref_cv_legacy_camera);
+        String prefKeyMultiFace = getResources().getString(R.string.pref_cv_multi_face);
+        String prefKeyShowFullLatency = getResources().getString(R.string.pref_cv_show_full_latency);
+        String prefKeyShowNetLatency = getResources().getString(R.string.pref_cv_show_net_latency);
+        String prefKeyShowStdDev = getResources().getString(R.string.pref_cv_show_stddev);
+        String prefKeyUseRollingAvg = getResources().getString(R.string.pref_cv_use_rolling_avg);
+        String prefKeyAutoFailover = getResources().getString(R.string.pref_cv_auto_failover);
+        String prefKeyShowCloudOutput = getResources().getString(R.string.pref_cv_show_cloud_output);
         String prefKeyHostCloudOverride = getResources().getString(R.string.pref_override_cloud_cloudlet_hostname);
-        String prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+        String prefKeyHostCloud = getResources().getString(R.string.pref_cv_host_cloud);
         String prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
-        String prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
-        String prefKeyHostTraining = getResources().getString(R.string.preference_fd_host_training);
+        String prefKeyHostEdge = getResources().getString(R.string.pref_cv_host_edge);
+        String prefKeyHostTraining = getResources().getString(R.string.pref_cv_host_training);
 
         // Cloud Hostname handling
         if (key.equals(prefKeyHostCloudOverride) || key.equals("ALL")) {
             mCloudHostNameOverride = sharedPreferences.getBoolean(prefKeyHostCloudOverride, false);
             Log.i(TAG, "key="+key+" mCloudHostNameOverride="+ mCloudHostNameOverride);
             if (mCloudHostNameOverride) {
+                mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER);
                 mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER);
                 Log.i(TAG, "key="+key+" mHostDetectionCloud="+ mHostDetectionCloud);
             }
@@ -915,8 +975,6 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated savedInstanceState="+savedInstanceState);
 
-        mMatchingEngine = new MatchingEngine(getContext());
-
         mCameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
 
@@ -998,6 +1056,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
 
+        meHelper = new MatchingEngineHelper.Builder()
+                .setActivity(getActivity())
+                .setMeHelperInterface(this)
+                .setView(frameLayout)
+                .build();
+
         getProvisioningData();
     }
 
@@ -1034,10 +1098,10 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             Log.d(TAG, "jsonObject=" + jsonObject);
             JSONObject regions = jsonObject.getJSONObject("regions");
             Log.d(TAG, "regions=" + regions);
-            Log.d(TAG, "mDmeHostname="+mDmeHostname);
-            if (regions.has(mDmeHostname)) {
-                Log.d(TAG, "getting region data for "+mDmeHostname);
-                dataForRegion = regions.getJSONObject(mDmeHostname);
+            Log.d(TAG, "mDmeHostname="+meHelper.mDmeHostname);
+            if (regions.has(meHelper.mDmeHostname)) {
+                Log.d(TAG, "getting region data for "+meHelper.mDmeHostname);
+                dataForRegion = regions.getJSONObject(meHelper.mDmeHostname);
             } else {
                 Log.d(TAG, "getting region data for default");
                 dataForRegion = regions.getJSONObject("default");
@@ -1132,7 +1196,7 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             showMessage("Overriding Edge host. Host=" + mHostDetectionEdge);
             restartImageSenderEdge();
         } else {
-            findCloudletInBackground();
+            meHelper.findCloudletInBackground();
         }
 
         mImageSenderTraining = new ImageSender.Builder()
@@ -1159,25 +1223,12 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
             mEdgeHostNameOverride = true;
             mHostDetectionEdge = edgeCloudletHostname;
         }
-        mAppName = intent.getStringExtra(EXTRA_APP_NAME);
-        mAppVersion = intent.getStringExtra(EXTRA_APP_VERSION);
-        mOrgName = intent.getStringExtra(EXTRA_ORG_NAME);
-        mCarrierName = intent.getStringExtra(EXTRA_CARRIER_NAME);
-        mDmeHostname = intent.getStringExtra(EXTRA_DME_HOSTNAME);
-        mLatitude = intent.getDoubleExtra(EXTRA_LATITUDE, 1);
-        mLongitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 1);
-
-        String findCloudletMode = intent.getStringExtra(EXTRA_FIND_CLOUDLET_MODE);
-        Log.i(TAG, "EXTRA_FIND_CLOUDLET_MODE: "+findCloudletMode);
-        if (findCloudletMode != null && !findCloudletMode.isEmpty()) {
-            mFindCloudletMode = MatchingEngine.FindCloudletMode.valueOf(findCloudletMode);
-        } else {
-            mFindCloudletMode = MatchingEngine.FindCloudletMode.PROXIMITY;
+        boolean spoofGps = intent.getBooleanExtra(EXTRA_SPOOF_GPS, false);
+        if (spoofGps) {
+            double latitude = intent.getDoubleExtra(EXTRA_LATITUDE, 1);
+            double longitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 1);
+            meHelper.setSpoofedLocation(latitude, longitude);
         }
-        Log.i(TAG, "mFindCloudletMode: "+mFindCloudletMode);
-
-        mAppInstancesLimit = intent.getIntExtra(EXTRA_APP_INSTANCES_LIMIT, 4);
-        Log.i(TAG, "mAppInstancesLimit: "+mAppInstancesLimit);
     }
 
     protected void toggleViews() {
@@ -1261,249 +1312,4 @@ public class ImageProcessorFragment extends Fragment implements ImageServerInter
         }
     }
 
-    public class DistanceComparator implements Comparator<AppClient.CloudletLocation>
-    {
-        public int compare(AppClient.CloudletLocation left, AppClient.CloudletLocation right) {
-            return (int) (left.getDistance() - right.getDistance());
-        }
-    }
-
-    public boolean registerClient() throws ExecutionException, InterruptedException,
-            io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
-        if (registerClientComplete) {
-            return true;
-        }
-
-        AppClient.RegisterClientRequest registerClientRequest;
-        Future<AppClient.RegisterClientReply> registerReplyFuture;
-        registerClientRequest = mMatchingEngine.createDefaultRegisterClientRequest(getActivity(), mOrgName)
-                .setAppName(mAppName).setAppVers(mAppVersion).setCarrierName(mCarrierName).build();
-        registerReplyFuture = mMatchingEngine.registerClientFuture(registerClientRequest, mDmeHostname, mDmePort,10000);
-        AppClient.RegisterClientReply reply = registerReplyFuture.get();
-
-        Log.i(TAG, "registerClientRequest="+registerClientRequest);
-        Log.i(TAG, "registerStatus.getStatus()="+reply.getStatus());
-
-        if (reply.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
-            String registerStatusText = "registerClient Failed. Error: " + reply.getStatus();
-            Log.e(TAG, registerStatusText);
-            showError(registerStatusText);
-            return false;
-        }
-        Log.i(TAG, "SessionCookie:" + reply.getSessionCookie());
-        showMessage("registerClient successful for "+mAppName);
-        registerClientComplete = true;
-        return true;
-    }
-
-    protected void findCloudletInBackground() {
-        mEdgeHostNameOverride = false;
-        new Thread(new Runnable() {
-            @Override public void run() {
-                try {
-                    registerClient();
-                    findCloudlet();
-                } catch (ExecutionException | InterruptedException
-                        | PackageManager.NameNotFoundException | IllegalArgumentException e) {
-                    Log.e(TAG, "Exception in findCloudletInBackground() for "+
-                            mAppName+", "+mAppVersion+", "+mOrgName);
-                    e.printStackTrace();
-                    showError(e.getLocalizedMessage());
-                }
-            }
-        }).start();
-    }
-
-    protected void findCloudletGpuInBackground() {
-        mEdgeHostNameOverride = false;
-        String defaultAppName = getResources().getString(R.string.dme_app_name);
-        if (mAppName.isEmpty() || mAppName.equals(defaultAppName)) {
-            mAppName = defaultAppName + "-GPU";
-        }
-        if (mAppVersion.isEmpty()) {
-            mAppVersion = getResources().getString(R.string.app_version);
-        }
-        if (mOrgName.isEmpty()) {
-            mOrgName = getResources().getString(R.string.org_name);
-        }
-        showMessage("Register and findCloudlet for app "+mAppName+"...");
-
-        Log.i(TAG, "findCloudletGpuInBackground mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
-
-        new Thread(new Runnable() {
-            @Override public void run() {
-                try {
-                    registerClient();
-                    findCloudlet();
-                } catch (ExecutionException | InterruptedException
-                        | PackageManager.NameNotFoundException | IllegalArgumentException e) {
-                    Log.e(TAG, "Exception in findCloudletGpuInBackground() for "+
-                            mAppName+", "+mAppVersion+", "+mOrgName);
-                    e.printStackTrace();
-                    showError(e.getLocalizedMessage());
-                }
-            }
-        }).start();
-    }
-
-    protected void getAppInstListInBackground() {
-        mEdgeHostNameOverride = false;
-        String defaultAppName = getResources().getString(R.string.dme_app_name);
-        if (mAppName.isEmpty() || mAppName.equals(defaultAppName)) {
-            mAppName = defaultAppName + "-GPU";
-        }
-        if (mAppVersion.isEmpty()) {
-            mAppVersion = getResources().getString(R.string.app_version);
-        }
-        if (mOrgName.isEmpty()) {
-            mOrgName = getResources().getString(R.string.org_name);
-        }
-        showMessage("Get App Instances for app "+mAppName+"...");
-
-        Log.i(TAG, "getAppInstListInBackground mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
-
-        new Thread(new Runnable() {
-            @Override public void run() {
-                try {
-                    if (registerClientComplete || registerClient()) {
-                        registerClientComplete = true;
-                        getAppInstList();
-                    }
-                } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
-                    Log.e(TAG, "Exception in getAppInstListInBackground() for "+
-                            mAppName+", "+mAppVersion+", "+mOrgName);
-                    e.printStackTrace();
-                    showError(e.getLocalizedMessage());
-                }
-            }
-        }).start();
-    }
-
-    public boolean findCloudlet() throws ExecutionException, InterruptedException, IllegalArgumentException {
-        Location location = new Location("MEX");
-        location.setLatitude(mLatitude);
-        location.setLongitude(mLongitude);
-        location.setLongitude(mLongitude);
-        Log.i(TAG, "findCloudlet location="+location);
-
-        AppClient.FindCloudletRequest findCloudletRequest;
-        findCloudletRequest = mMatchingEngine.createDefaultFindCloudletRequest(getContext(), location).setCarrierName(mCarrierName).build();
-        Future<AppClient.FindCloudletReply> reply = mMatchingEngine.findCloudletFuture(findCloudletRequest, mDmeHostname, mDmePort,10000, mFindCloudletMode);
-
-        mClosestCloudlet = reply.get();
-
-        Log.i(TAG, "findCloudlet mClosestCloudlet="+mClosestCloudlet);
-        if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
-            String findCloudletStatusText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
-            Log.e(TAG, findCloudletStatusText);
-            return false;
-        }
-        Log.i(TAG, "mClosestCloudlet.getFqdn()=" + mClosestCloudlet.getFqdn());
-
-        //Find fqdnPrefix from Port structure.
-        String fqdnPrefix = "";
-        List<Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
-        // Get data only from first port.
-        Appcommon.AppPort aPort = ports.get(0);
-        if (aPort != null) {
-            Log.i(TAG, "Got port "+aPort+" TLS="+aPort.getTls()+" fqdnPrefix="+fqdnPrefix);
-            fqdnPrefix = aPort.getFqdnPrefix();
-            mTlsEdge = aPort.getTls();
-            Log.i(TAG, "Setting TLS="+ mTlsEdge);
-        }
-        // Build full hostname.
-        if (!mTlsEdge) {
-            mHostDetectionEdge = fqdnPrefix + mClosestCloudlet.getFqdn();
-        } else {
-            // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
-            // Note that Docker deployments don't even have FqdnPrefix, so this workaround
-            // is only needed for k8s, but the same code will work for both.
-            mHostDetectionEdge = mClosestCloudlet.getFqdn();
-        }
-        mEdgeHostList.clear();
-        mEdgeHostListIndex = 0;
-        mEdgeHostList.add(mHostDetectionEdge);
-
-        showMessage("findCloudlet successful. Host=" + mHostDetectionEdge);
-
-        restartImageSenderEdge();
-        return true;
-    }
-
-    private boolean getAppInstList() throws InterruptedException, ExecutionException {
-        Location location = new Location("MEX");
-        location.setLatitude(mLatitude);
-        location.setLongitude(mLongitude);
-        Log.i(TAG, "getAppInstList location="+location);
-        AppClient.AppInstListRequest appInstListRequest
-                = mMatchingEngine.createDefaultAppInstListRequest(getContext(), location).setCarrierName(mCarrierName).setLimit(mAppInstancesLimit).build();
-        if(appInstListRequest != null) {
-            AppClient.AppInstListReply cloudletList = mMatchingEngine.getAppInstList(appInstListRequest,
-                    mDmeHostname, mDmePort, 10000);
-            Log.i(TAG, "cloudletList.getStatus()="+cloudletList.getStatus());
-            if (cloudletList.getStatus() != AppClient.AppInstListReply.AIStatus.AI_SUCCESS) {
-                String message = "getAppInstList failed. Status="+cloudletList.getStatus();
-                Log.e(TAG, message);
-                showError(message);
-                return false;
-            }
-
-            mEdgeHostList.clear();
-            mEdgeHostListIndex = 0;
-            List<AppClient.CloudletLocation> sortableCloudletList = new ArrayList<>(cloudletList.getCloudletsList());
-            Collections.sort(sortableCloudletList, new Comparator<AppClient.CloudletLocation>() {
-                @Override public int compare(AppClient.CloudletLocation c1, AppClient.CloudletLocation c2) {
-                    return (int) (c1.getDistance() - c2.getDistance());
-                }
-            });
-            for (AppClient.CloudletLocation cloudlet : sortableCloudletList) {
-                AppClient.Appinstance appInst = cloudlet.getAppinstances(0);
-                Log.i(TAG, cloudlet.getCloudletName()+" Distance="+cloudlet.getDistance());
-                //Find fqdnPrefix from Port structure.
-                String fqdnPrefix = "";
-                List<Appcommon.AppPort> ports = appInst.getPortsList();
-                // Get data only from first port.
-                Appcommon.AppPort aPort = ports.get(0);
-                if (aPort != null) {
-                    Log.i(TAG, "Got port "+aPort+" TLS="+aPort.getTls()+" fqdnPrefix="+fqdnPrefix);
-                    fqdnPrefix = aPort.getFqdnPrefix();
-                    mTlsEdge = aPort.getTls();
-                    Log.i(TAG, "Setting EDGE TLS="+ mTlsEdge);
-                }
-//                String hostname = fqdnPrefix + appInst.getFqdn();
-                // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
-                // Note that Docker deployments don't even have FqdnPrefix, so this workaround
-                // is only needed for k8s, but the same code will work for both.
-                String hostname = appInst.getFqdn();
-                mEdgeHostList.add(hostname);
-                showMessage("Found " + hostname);
-            }
-
-            Log.i(TAG, "getAppInstList cloudletList.getCloudletsCount()=" + cloudletList.getCloudletsCount());
-            Log.i(TAG, "getAppInstList mEdgeHostList=" + mEdgeHostList);
-
-            mHostDetectionEdge = mEdgeHostList.get(mEdgeHostListIndex);
-            Log.i(TAG, "getAppInstList mHostDetectionEdge=" + mHostDetectionEdge);
-            restartImageSenderEdge();
-            return true;
-
-        } else {
-            String message = "Cannot create AppInstListRequest object";
-            Log.e(TAG, message);
-            showError(message);
-            return false;
-        }
-    }
-
-    public ImageSender getImageSenderEdge() {
-        return mImageSenderEdge;
-    }
-
-    public ImageSender getImageSenderCloud() {
-        return mImageSenderCloud;
-    }
-
-    public ImageSender getImageSenderTraining() {
-        return mImageSenderTraining;
-    }
 }

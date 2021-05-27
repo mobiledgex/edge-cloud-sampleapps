@@ -24,6 +24,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -31,13 +32,27 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import androidx.appcompat.app.ActionBar;
 
+import android.preference.PreferenceScreen;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.List;
 
-import static com.mobiledgex.computervision.ImageProcessorFragment.DEF_HOSTNAME_PLACEHOLDER;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_CARRIER_NAME;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_DME_HOSTNAME;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -168,11 +183,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     protected boolean isValidFragment(String fragmentName) {
         Log.i(TAG, "isValidFragment("+fragmentName+")");
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || FaceDetectionSettingsFragment.class.getName().equals(fragmentName);
+                || ComputerVisionSettingsFragment.class.getName().equals(fragmentName);
     }
 
     // Face Detection Preferences.
-    public static class FaceDetectionSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+    public static class ComputerVisionSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         private String prefKeyResetCvHosts;
         private String prefKeyHostCloudOverride;
@@ -190,11 +205,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
 
-            prefKeyResetCvHosts = getResources().getString(R.string.preference_fd_reset_all_hosts);
+            prefKeyResetCvHosts = getResources().getString(R.string.pref_cv_reset_all_hosts);
             prefKeyHostCloudOverride = getResources().getString(R.string.pref_override_cloud_cloudlet_hostname);
-            prefKeyHostCloud = getResources().getString(R.string.preference_fd_host_cloud);
+            prefKeyHostCloud = getResources().getString(R.string.pref_cv_host_cloud);
             prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
-            prefKeyHostEdge = getResources().getString(R.string.preference_fd_host_edge);
+            prefKeyHostEdge = getResources().getString(R.string.pref_cv_host_edge);
             prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
             prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
 

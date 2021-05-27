@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -570,6 +570,8 @@ public class Cloudlet implements Serializable {
             Site site = new Site(mContext, NetTest.TestType.CONNECT, mNumPackets, mHostName, mOpenPort);
             netTest.addSite(site);
             netTest.testSites(netTest.TestTimeoutMS);
+
+            // Values for the UI to display
             latencyMin = 0;
             latencyAvg = site.average;
             latencyMax = 0;

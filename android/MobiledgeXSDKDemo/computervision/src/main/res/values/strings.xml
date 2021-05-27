@@ -1,8 +1,4 @@
 <resources>
-    <string name="dme_app_name">ComputerVision</string>
-    <string name="app_version">2.2</string>
-    <string name="org_name">MobiledgeX-Samples</string>
-
     <string name="title_activity_face_detection">Face Detection</string>
     <string name="title_activity_face_recognition">Face Recognition</string>
     <string name="title_activity_object_detection">Object Detection</string>
@@ -16,46 +12,46 @@
     <string name="request_camera_permission">This app needs camera permission.</string>
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
 
-    <string name="preference_fd_settings">Computer Vision Settings</string>
+    <string name="pref_cv_settings">Computer Vision Settings</string>
 
-    <string name="preference_fd_front_camera">fd_front_camera</string>
-    <string name="preference_fd_multi_face">fd_multi_face</string>
-    <string name="preference_fd_multi_face_title">Multi-face</string>
-    <string name="preference_fd_multi_face_summary">Track multiple faces</string>
-    <string name="preference_fd_show_full_latency">fd_show_full_latency</string>
-    <string name="preference_fd_show_full_latency_title">Show full process latency</string>
-    <string name="preference_fd_show_full_latency_summary">Measures image upload, face detection, results being returned.</string>
-    <string name="preference_fd_show_net_latency">fd_show_net_latency</string>
-    <string name="preference_fd_show_net_latency_title">Show network latency</string>
-    <string name="preference_fd_show_net_latency_summary">Measures only network latency.</string>
-    <string name="preference_fd_show_stddev">fd_show_stddev</string>
-    <string name="preference_fd_show_stddev_title">Show Stddev</string>
-    <string name="preference_fd_show_stddev_summary">Standard deviation</string>
-    <string name="preference_fd_use_rolling_avg">fd_use_rolling_avg</string>
-    <string name="preference_fd_use_rolling_avg_title">Use Rolling Average</string>
-    <string name="preference_fd_use_rolling_avg_summary">Show individual measurements or rolling average</string>
-    <string name="preference_fd_show_cloud_output">fd_show_cloud_output</string>
-    <string name="preference_fd_show_cloud_output_title">Show Cloud Output</string>
-    <string name="preference_fd_show_cloud_output_summary">Show or hide results from public cloud image processing</string>
-    <string name="preference_fd_auto_failover">fd_auto_failover</string>
-    <string name="preference_fd_auto_failover_title">Auto Failover</string>
-    <string name="preference_fd_auto_failover_summary">Automatically switch to next available server when failure encountered</string>
-    <string name="preference_fd_host_training">fd_host_training</string>
-    <string name="preference_fd_host_cloud">fd_host_cloud</string>
-    <string name="preference_fd_host_cloud_title">Cloud Server</string>
-    <string name="preference_fd_host_cloud_summary">Enter a custom IP or hostname.</string>
-    <string name="preference_fd_host_edge">fd_host_edge</string>
-    <string name="preference_fd_host_edge_title">Edge Server</string>
-    <string name="preference_fd_host_edge_summary">Enter a custom IP or hostname.</string>
-    <string name="preference_fd_reset_all_hosts">fd_reset_both_hosts</string>
-    <string name="preference_fd_reset_all_hosts_title">Reset hosts to default.</string>
-    <string name="preference_fd_reset_all_hosts_message">Are you sure?</string>
-    <string name="preference_fd_legacy_camera">fd_legacy_camera</string>
-    <string name="preference_fd_legacy_camera_title">Legacy Camera</string>
-    <string name="preference_fd_legacy_camera_summary">Camera handling for older devices</string>
-    <string name="preference_fd_show_latency_stats_dialog">fd_show_latency_stats_dialog</string>
-    <string name="preference_fd_show_latency_stats_dialog_title">Show Latency Stats after session</string>
-    <string name="preference_fd_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
+    <string name="pref_cv_front_camera">fd_front_camera</string>
+    <string name="pref_cv_multi_face">fd_multi_face</string>
+    <string name="pref_cv_multi_face_title">Multi-face</string>
+    <string name="pref_cv_multi_face_summary">Track multiple faces</string>
+    <string name="pref_cv_show_full_latency">fd_show_full_latency</string>
+    <string name="pref_cv_show_full_latency_title">Show full process latency</string>
+    <string name="pref_cv_show_full_latency_summary">Measures image upload, face detection, results being returned.</string>
+    <string name="pref_cv_show_net_latency">fd_show_net_latency</string>
+    <string name="pref_cv_show_net_latency_title">Show network latency</string>
+    <string name="pref_cv_show_net_latency_summary">Measures only network latency.</string>
+    <string name="pref_cv_show_stddev">fd_show_stddev</string>
+    <string name="pref_cv_show_stddev_title">Show Stddev</string>
+    <string name="pref_cv_show_stddev_summary">Standard deviation</string>
+    <string name="pref_cv_use_rolling_avg">fd_use_rolling_avg</string>
+    <string name="pref_cv_use_rolling_avg_title">Use Rolling Average</string>
+    <string name="pref_cv_use_rolling_avg_summary">Show individual measurements or rolling average</string>
+    <string name="pref_cv_show_cloud_output">fd_show_cloud_output</string>
+    <string name="pref_cv_show_cloud_output_title">Show Cloud Output</string>
+    <string name="pref_cv_show_cloud_output_summary">Show or hide results from public cloud image processing</string>
+    <string name="pref_cv_auto_failover">fd_auto_failover</string>
+    <string name="pref_cv_auto_failover_title">Auto Failover</string>
+    <string name="pref_cv_auto_failover_summary">Automatically switch to next available server when failure encountered</string>
+    <string name="pref_cv_host_training">fd_host_training</string>
+    <string name="pref_cv_host_cloud">fd_host_cloud</string>
+    <string name="pref_cv_host_cloud_title">Cloud Server</string>
+    <string name="pref_cv_host_cloud_summary">Enter a custom IP or hostname.</string>
+    <string name="pref_cv_host_edge">fd_host_edge</string>
+    <string name="pref_cv_host_edge_title">Edge Server</string>
+    <string name="pref_cv_host_edge_summary">Enter a custom IP or hostname.</string>
+    <string name="pref_cv_reset_all_hosts">fd_reset_both_hosts</string>
+    <string name="pref_cv_reset_all_hosts_title">Reset hosts to default.</string>
+    <string name="pref_cv_reset_all_hosts_message">Are you sure?</string>
+    <string name="pref_cv_legacy_camera">fd_legacy_camera</string>
+    <string name="pref_cv_legacy_camera_title">Legacy Camera</string>
+    <string name="pref_cv_legacy_camera_summary">Camera handling for older devices</string>
+    <string name="pref_cv_show_latency_stats_dialog">fd_show_latency_stats_dialog</string>
+    <string name="pref_cv_show_latency_stats_dialog_title">Show Latency Stats after session</string>
+    <string name="pref_cv_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
     <string-array name="pref_fd_reset_all_hosts_choices">
         <item>Yes. Reset hosts to default.</item>
         <item>No. Retain current values.</item>
@@ -72,8 +68,6 @@
     <string name="sign_in_required_message">Return to main menu and choose \"Sign in with Google\".</string>
     <string name="verify_delete_title">Delete Training Data</string>
     <string name="verify_delete_message">Are you sure you want to delete your face training data from the server?</string>
-    <string name="verify_clear_logs_title">Clear Log Viewer</string>
-    <string name="verify_clear_logs_message">Are you sure you want to clear the log entries?</string>
 
     <string name="pref_latency_method">latency_method</string>
     <string name="pref_latency_method_title">Latency Test Method</string>
@@ -87,15 +81,15 @@
         <item>socket</item>
     </string-array>
 
-    <string name="preference_fd_connection_mode">fd_connection_mode</string>
-    <string name="preference_fd_connection_mode_title">Connection Mode</string>
-    <string name="preference_fd_connection_mode_summary">%s</string>
-    <string-array name="pref_fd_connection_mode_titles">
+    <string name="pref_cv_connection_mode">fd_connection_mode</string>
+    <string name="pref_cv_connection_mode_title">Connection Mode</string>
+    <string name="pref_cv_connection_mode_summary">%s</string>
+    <string-array name="pref_cv_connection_mode_titles">
         <item>REST</item>
         <item>Persistent TCP</item>
         <item>WebSocket</item>
     </string-array>
-    <string-array name="pref_fd_connection_mode_values">
+    <string-array name="pref_cv_connection_mode_values">
         <item>REST</item>
         <item>PERSISTENT_TCP</item>
         <item>WEBSOCKET</item>
@@ -112,5 +106,4 @@
     <string name="pref_override_cloud_cloudlet_hostname">pref_override_cloud_cloudlet_hostname</string>
     <string name="pref_summary_override_cloud_cloudlet_hostname">Select this to enter a Cloud Server hostname to override default provisioned value.</string>
     <string name="pref_title_override_cloud_cloudlet_hostname">Override Cloud cloudlet hostname</string>
-
 </resources>

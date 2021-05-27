@@ -8,13 +8,5 @@
         android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$GeneralSettingsFragment"
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="@string/preference_general_settings"/>
-    <header
-        android:fragment="com.mobiledgex.sdkdemo.SettingsActivity$SpeedTestSettingsFragment"
-        android:icon="@android:drawable/ic_menu_recent_history"
-        android:title="@string/preference_speed_test_settings"/>
-    <header
-        android:fragment="com.mobiledgex.computervision.SettingsActivity$ComputerVisionSettingsFragment"
-        android:icon="@android:drawable/ic_menu_camera"
-        android:title="@string/pref_cv_settings"/>
 
 </preference-headers>
