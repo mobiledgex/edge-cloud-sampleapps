@@ -20,37 +20,20 @@ package com.mobiledgex.sdkdemo;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.preference.PreferenceScreen;
 
 import androidx.appcompat.app.ActionBar;
 import android.util.Log;
 import android.view.MenuItem;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.List;
-
-import static com.mobiledgex.sdkdemo.MainActivity.DEFAULT_CARRIER_NAME;
-import static com.mobiledgex.sdkdemo.MainActivity.DEFAULT_DME_HOSTNAME;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -181,227 +164,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || MatchingEngineSettingsFragment.class.getName().equals(fragmentName)
-                || GeneralSettingsFragment.class.getName().equals(fragmentName)
-                || com.mobiledgex.computervision.SettingsActivity.FaceDetectionSettingsFragment.class.getName().equals(fragmentName)
+                || com.mobiledgex.matchingenginehelper.SettingsActivity.MatchingEngineSettingsFragment.class.getName().equals(fragmentName)
+                || com.mobiledgex.matchingenginehelper.SettingsActivity.GeneralSettingsFragment.class.getName().equals(fragmentName)
+                || com.mobiledgex.computervision.SettingsActivity.ComputerVisionSettingsFragment.class.getName().equals(fragmentName)
                 || SpeedTestSettingsFragment.class.getName().equals(fragmentName);
-    }
-
-    // Matching Engine Preferences.
-    public static class MatchingEngineSettingsFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_matching_engine);
-            setHasOptionsMenu(true);
-        }
-
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
-            }
-            return super.onOptionsItemSelected(item);
-        }
     }
 
     // Speed Test Preferences.
     public static class SpeedTestSettingsFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_speed_test);
-            setHasOptionsMenu(true);
-        }
-
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
-            }
-            return super.onOptionsItemSelected(item);
-        }
-    }
-
-    // General Preferences.
-    public static class GeneralSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
-        String prefKeyDmeHostname;
-        String prefKeyOperatorName;
-        String prefKeyDefaultDmeHostname;
-        String prefKeyDefaultOperatorName;
-        String prefKeyDefaultAppInfo;
-        String prefKeyAppName;
-        String prefKeyAppVersion;
-        String prefKeyOrgName;
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            Log.i(TAG, "onCreate()");
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_general);
-            setHasOptionsMenu(true);
-
-            prefKeyDefaultOperatorName = getResources().getString(R.string.pref_default_operator_name);
-            prefKeyDefaultDmeHostname = getResources().getString(R.string.pref_default_dme_hostname);
-            prefKeyOperatorName = getResources().getString(R.string.pref_operator_name);
-            prefKeyDmeHostname = getResources().getString(R.string.pref_dme_hostname);
-            prefKeyDefaultAppInfo = getResources().getString(R.string.pref_default_app_definition);
-            prefKeyAppName = getResources().getString(R.string.pref_app_name);
-            prefKeyAppVersion = getResources().getString(R.string.pref_app_version);
-            prefKeyOrgName = getResources().getString(R.string.pref_org_name);
-
-            // Initialize summary values for these keys.
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            onSharedPreferenceChanged(prefs, prefKeyDefaultOperatorName);
-            onSharedPreferenceChanged(prefs, prefKeyDefaultDmeHostname);
-            onSharedPreferenceChanged(prefs, prefKeyOperatorName);
-            onSharedPreferenceChanged(prefs, prefKeyDefaultAppInfo);
-            // prefKeyDmeHostname does not need initialized here, because it is initialized with
-            // the results of the dme-list.html call below.
-
-            bindPreferenceSummaryToValue(findPreference(prefKeyAppName));
-            bindPreferenceSummaryToValue(findPreference(prefKeyAppVersion));
-            bindPreferenceSummaryToValue(findPreference(prefKeyOrgName));
-
-            // Instantiate the RequestQueue.
-            RequestQueue queue = Volley.newRequestQueue(getActivity());
-            String url = "http://dme-inventory.mobiledgex.net/dme-list.html";
-
-            // Request a string response from the provided URL.
-            // If the dme-inventory request fails, or can't be parsed, the DME list will retain the
-            // default values from the preferences XML.
-            StringRequest stringRequest = new StringRequest(url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            Log.i(TAG, "dme-inventory response=" + response);
-                            try {
-                                List<String> listNames = new ArrayList<String>();
-                                List<String> listAddresses = new ArrayList<String>();
-                                JSONArray jsonArray = new JSONArray(response);
-                                Log.d(TAG, "jsonArray=" + jsonArray);
-                                for(int i = 0; i < jsonArray.length(); i++) {
-                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-                                    String name = jsonObject.getString("name");
-                                    String address = jsonObject.getString("address");
-                                    listNames.add(name);
-                                    listAddresses.add(address);
-                                    Log.d(TAG, "name=" + name + " address=" + address);
-                                }
-                                CharSequence[] charSequenceNames = listNames.toArray(new CharSequence[listNames.size()]);
-                                CharSequence[] charSequenceAddresses = listAddresses.toArray(new CharSequence[listAddresses.size()]);
-                                String prefKeyDmeHostname = getResources().getString(R.string.pref_dme_hostname);
-                                PreferenceScreen screen = getPreferenceScreen();
-                                ListPreference dmeListPref = (ListPreference) screen.findPreference(prefKeyDmeHostname);
-                                dmeListPref.setEntries(charSequenceNames);
-                                dmeListPref.setEntryValues(charSequenceAddresses);
-                                String summary = getResources().getString(R.string.pref_summary_dme_hostname);
-                                dmeListPref.setSummary(summary + ": " + getRegionFromDme(dmeListPref));
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.e(TAG, "That didn't work! error=" + error);
-                }
-            });
-
-            // Add the request to the RequestQueue.
-            queue.add(stringRequest);
-        }
-
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
-            }
-            return super.onOptionsItemSelected(item);
-        }
-
-        @Override
-        public void onResume() {
-            Log.i(TAG, "onResume()");
-            super.onResume();
-            // Set up a listener whenever a key changes
-            getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-        }
-
-        @Override
-        public void onPause() {
-            super.onPause();
-            // Set up a listener whenever a key changes
-            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
-        }
-
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            Log.i(TAG, "onSharedPreferenceChanged(" + key + ")");
-            Preference pref = findPreference(key);
-            if (key.equals(prefKeyDefaultDmeHostname)) {
-                String summary = getResources().getString(R.string.pref_summary_default_dme_hostname);
-                String prefKeyValueDefaultDmeHostname = getResources().getString(R.string.pref_value_default_dme_hostname);
-                String dmeHostname = sharedPreferences.getString(prefKeyValueDefaultDmeHostname, DEFAULT_DME_HOSTNAME);
-                summary = summary + ": " + dmeHostname;
-                pref.setSummary(summary);
-            }
-
-            if (key.equals(prefKeyDefaultOperatorName)) {
-                String summary = getResources().getString(R.string.pref_summary_default_operator_name);
-                String prefKeyValueDefaultOperatorName = getResources().getString(R.string.pref_value_default_operator_name);
-                String operatorName = sharedPreferences.getString(prefKeyValueDefaultOperatorName, DEFAULT_CARRIER_NAME);
-                if (operatorName.isEmpty()) {
-                    operatorName = "<blank>";
-                }
-                summary = summary + ": " + operatorName;
-                pref.setSummary(summary);
-            }
-
-            if (key.equals(prefKeyDmeHostname)) {
-                String summary = getResources().getString(R.string.pref_summary_dme_hostname);
-                pref.setSummary(summary + ": " + getRegionFromDme((ListPreference) pref));
-            }
-
-            if (key.equals(prefKeyOperatorName)) {
-                String summary = getResources().getString(R.string.pref_summary_operator_name);
-                pref.setSummary(summary + ": " + ((EditTextPreference)pref).getText());
-            }
-
-            if (key.equals(prefKeyDefaultAppInfo)) {
-                String summary = getResources().getString(R.string.pref_summary_default_app_definition);
-                String appName = getResources().getString(R.string.dme_app_name);
-                String appVersion = getResources().getString(R.string.app_version);
-                String orgName = getResources().getString(R.string.org_name);
-                summary = summary + "\n    Name=" + appName + "\n    Version=" + appVersion + "\n    Org=" + orgName;
-                pref.setSummary(summary);
-            }
-
-
-        }
-    }
-
-    private static String getRegionFromDme(ListPreference dmeListPref) {
-        String region;
-        // See if we can get a simplified version of the selected region.
-        int index = dmeListPref.findIndexOfValue(dmeListPref.getValue());
-        if (index >= 0) {
-            region = (String) dmeListPref.getEntries()[index];
-        } else {
-            region = dmeListPref.getValue();
-        }
-        return region;
-    }
-
-    // TODO: Implement this
-    // About Preferences.
-    public static class AboutFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);

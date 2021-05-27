@@ -49,7 +49,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
         mRpUtil = new RequestPermissions();
         self = this;
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
+        prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.pref_matching_engine_location_verification);
 
         TextView devLocationWhy = findViewById(R.id.permission_location_device_why);
         devLocationWhy.setOnClickListener(new View.OnClickListener() {
@@ -106,7 +106,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
                 if (shouldFinish(activity)) {
 
                     // Disable first time use.
-                    String firstTimeUseKey = getResources().getString(R.string.preference_first_time_use);
+                    String firstTimeUseKey = getResources().getString(R.string.pref_first_time_use);
                     prefs.edit()
                             .putBoolean(firstTimeUseKey, false)
                             .apply();
@@ -121,7 +121,7 @@ public class FirstTimeUseActivity extends AppCompatActivity {
     }
 
     private boolean shouldFinish(Activity activity) {
-        final String prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
+        final String prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.pref_matching_engine_location_verification);
         boolean mobiledgeXLocationAllowed = prefs.getBoolean(prefKeyAllowMatchingEngineLocation, false);
 
         Log.d(TAG, "mobiledgeXLocationAllowed: " + mobiledgeXLocationAllowed);

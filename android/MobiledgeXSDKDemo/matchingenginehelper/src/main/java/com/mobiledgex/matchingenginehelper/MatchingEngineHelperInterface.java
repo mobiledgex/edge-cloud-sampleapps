@@ -15,18 +15,18 @@
  * limitations under the License.
  */
 
-package com.mobiledgex.sdkdemo;
+package com.mobiledgex.matchingenginehelper;
 
 import android.location.Location;
 
 import distributed_match_engine.AppClient;
 
-public interface MatchingEngineResultsInterface {
-    Location getLocationForMatching();
-    void onRegister(String sessionCookie);
+    public interface MatchingEngineHelperInterface {
+    void onRegister();
     void onVerifyLocation(AppClient.VerifyLocationReply.GPSLocationStatus status, double gpsLocationAccuracyKM);
     void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet);
     void onGetCloudletList(AppClient.AppInstListReply cloudletList);
     void showMessage(String text);
     void showError(String text);
+    void getCloudlets(boolean clearExisting);
 }
