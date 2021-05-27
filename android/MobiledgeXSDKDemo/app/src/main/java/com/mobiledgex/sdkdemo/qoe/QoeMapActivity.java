@@ -958,7 +958,6 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     @Override
     public void onStop() {
         Log.i(TAG, "onStop()");
-//        unregisterReceiver(mBroadcastReceiver);
         super.onStop();
     }
 
@@ -1089,37 +1088,40 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     @Override
     public void onRegister() {
-
-    }
-
-    @Override
-    public void onVerifyLocation(AppClient.VerifyLocationReply.GPSLocationStatus status, double gpsLocationAccuracyKM) {
-
-    }
-
-    @Override
-    public void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet) {
-
-    }
-
-    @Override
-    public void onGetCloudletList(AppClient.AppInstListReply cloudletList) {
-
+        Log.i(TAG, "Client registered.");
     }
 
     @Override
     public void showMessage(String text) {
-
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void showError(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    }
 
+    // The following methods of the MatchingEngineHelperInterface should not be called,
+    // because we only use getQosPositionKpi. They must be implemented though,
+    // so just emit a log for each.
+    @Override
+    public void onVerifyLocation(AppClient.VerifyLocationReply.GPSLocationStatus status, double gpsLocationAccuracyKM) {
+        Log.i(TAG, "Location verified. status: "+status);
+    }
+
+    @Override
+    public void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet) {
+        Log.i(TAG, "Cloudlet found. closestCloudlet: "+closestCloudlet);
+    }
+
+    @Override
+    public void onGetCloudletList(AppClient.AppInstListReply cloudletList) {
+        Log.i(TAG, "Cloudlet list returned. cloudletList: "+cloudletList);
     }
 
     @Override
     public void getCloudlets(boolean clearExisting) {
-
+        Log.i(TAG, "getCloudlets called. Nothing to do for this implementation");
     }
 
 }
