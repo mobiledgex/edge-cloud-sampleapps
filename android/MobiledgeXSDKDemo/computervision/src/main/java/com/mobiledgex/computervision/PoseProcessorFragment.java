@@ -39,11 +39,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.mobiledgex.matchingengine.MatchingEngine;
+import com.mobiledgex.matchingenginehelper.EventLogViewer;
+import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 
 import org.json.JSONArray;
 
 import java.text.DecimalFormat;
+
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
 public class PoseProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
@@ -209,8 +212,6 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated PoseProcessorFragment savedInstanceState="+savedInstanceState);
 
-        mMatchingEngine = new MatchingEngine(getContext());
-
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
@@ -249,6 +250,14 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
 
         mVideoFilename = VIDEO_FILE_NAME;
 
+        meHelper = new MatchingEngineHelper.Builder()
+                .setActivity(getActivity())
+                .setMeHelperInterface(this)
+                .setView(mPoseRenderer)
+                .build();
+
+        setAppNameForGpu();
+
         if (mGpuHostNameOverride) {
             mEdgeHostList.clear();
             mEdgeHostListIndex = 0;
@@ -256,7 +265,7 @@ public class PoseProcessorFragment extends ImageProcessorFragment implements Ima
             showMessage("Overriding GPU host. Host=" + mHostDetectionEdge);
             restartImageSenderEdge();
         } else {
-            findCloudletGpuInBackground();
+            meHelper.findCloudletInBackground();
         }
     }
 

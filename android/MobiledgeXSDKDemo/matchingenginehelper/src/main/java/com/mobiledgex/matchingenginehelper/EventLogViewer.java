@@ -1,4 +1,4 @@
-package com.mobiledgex.computervision;
+package com.mobiledgex.matchingenginehelper;
 
 import android.animation.ValueAnimator;
 import android.app.Activity;
@@ -17,16 +17,19 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.mobiledgex.matchingenginehelper.EventItem.EventType.ERROR;
+import static com.mobiledgex.matchingenginehelper.EventItem.EventType.INFO;
+
 public class EventLogViewer {
     private static final String TAG = "EventLogViewer";
     private Activity mActivity;
     public List<EventItem> mEventItemList = new ArrayList<>();
     private RecyclerView mEventsRecyclerView;
-    private MyEventRecyclerViewAdapter mEventRecyclerViewAdapter;
+    private EventRecyclerViewAdapter mEventRecyclerViewAdapter;
     private FloatingActionButton mLogExpansionButton;
     private boolean isLogExpanded = false;
     private int mLogViewHeight;
-
+    public boolean mAutoExpand = true;
 
     public EventLogViewer(Activity activity, FloatingActionButton button, RecyclerView recyclerView) {
         mActivity = activity;
@@ -39,7 +42,7 @@ public class EventLogViewer {
     protected void setupLogViewer() {
         final LinearLayoutManager layout = new LinearLayoutManager(mEventsRecyclerView.getContext());
         mEventsRecyclerView.setLayoutManager(layout);
-        mEventRecyclerViewAdapter = new MyEventRecyclerViewAdapter(mEventItemList);
+        mEventRecyclerViewAdapter = new EventRecyclerViewAdapter(mEventItemList);
         mEventRecyclerViewAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
@@ -100,7 +103,7 @@ public class EventLogViewer {
      * Start a timer to hide the logs. Note that the logviewer will automatically be expanded if
      * additional logs are displayed.
      */
-    protected void initialLogsComplete() {
+    public void initialLogsComplete() {
         Log.i(TAG, "initialLogsComplete()");
         Timer myTimer = new Timer();
         myTimer.schedule(new TimerTask() {
@@ -143,8 +146,10 @@ public class EventLogViewer {
 
     public void addEventItem(EventItem.EventType type, String text) {
         if (!isLogExpanded) {
-            logViewAnimate(0, mLogViewHeight);
-            isLogExpanded = true;
+            if (mAutoExpand) {
+                logViewAnimate(0, mLogViewHeight);
+                isLogExpanded = true;
+            }
         }
 
         mEventItemList.add(new EventItem(type, text));
@@ -156,5 +161,13 @@ public class EventLogViewer {
                 }
             });
         }
+    }
+
+    public void showMessage(String text) {
+        addEventItem(INFO, text);
+    }
+
+    public void showError(String text) {
+        addEventItem(ERROR, text);
     }
 }
