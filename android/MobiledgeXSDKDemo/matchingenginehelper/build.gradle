@@ -1,6 +1,5 @@
-plugins {
-    id 'com.android.library'
-}
+apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.artifactory'
 
 android {
     compileSdkVersion 30
@@ -43,4 +42,21 @@ dependencies {
     implementation "com.mobiledgex:matchingengine:${matchingengineVersion}"
     implementation "com.mobiledgex:mel:${melVersion}"
 
+}
+
+artifactoryPublish.dependsOn('build')
+publishing {
+    publications {
+        aar(MavenPublication) {
+            groupId = "com.mobiledgex"
+            artifactId = project.getName()
+            version = android.defaultConfig.versionName
+            // Tell maven to prepare the generated "*.aar" file for publishing
+            artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+        }
+    }
+}
+
+artifactoryPublish {
+    publications(publishing.publications.aar)
 }
