@@ -183,7 +183,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         backgroundEdgeEventsConfig.latencyInternalPort = DEFAULT_LATENCY_PORT;
         backgroundEdgeEventsConfig.latencyUpdateConfig.maxNumberOfUpdates = 10; // Or Long.MAX_VALUE if you want. Default is 0.
         backgroundEdgeEventsConfig.latencyUpdateConfig.updateIntervalSeconds = 7; // The default is 30.
-//        backgroundEdgeEventsConfig.latencyThresholdTrigger = 300;
+        backgroundEdgeEventsConfig.latencyThresholdTrigger = 300;
         backgroundEdgeEventsConfig.latencyTriggerTestMode = MatchingEngine.FindCloudletMode.PROXIMITY;
 
         me.startEdgeEvents(backgroundEdgeEventsConfig);
@@ -290,7 +290,8 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public boolean registerClient() throws ExecutionException, InterruptedException,
             io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
         if (!verifyMeRequirements()) {
-            String message = "Matching engine requirements not met. Please allow app permissions.";
+            String message = "Matching engine requirements not met. Please allow app permissions " +
+                    "and enable Enhanced Location Verification in Matching Engine Settings";
             Log.e(TAG, message);
             meHelperInterface.showError(message);
             return false;
@@ -339,8 +340,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public void findCloudletInBackground() {
         new Thread(() -> {
             try {
-                if (!mRegisterClientComplete) {
-                    registerClient();
+                if (mRegisterClientComplete || registerClient()) {
+                    mRegisterClientComplete = true;
+                } else {
+                    return;
                 }
                 findCloudlet();
             } catch (ExecutionException | InterruptedException
@@ -377,8 +380,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public void verifyLocationInBackground() {
         new Thread(() -> {
             try {
-                if (!mRegisterClientComplete) {
-                    registerClient();
+                if (mRegisterClientComplete || registerClient()) {
+                    mRegisterClientComplete = true;
+                } else {
+                    return;
                 }
                 verifyLocation();
             } catch (ExecutionException | InterruptedException
@@ -395,8 +400,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public void doQosRequestInBackground(ArrayList<AppClient.QosPosition> kpiPositions) {
         new Thread(() -> {
             try {
-                if (!mRegisterClientComplete) {
-                    registerClient();
+                if (mRegisterClientComplete || registerClient()) {
+                    mRegisterClientComplete = true;
+                } else {
+                    return;
                 }
                 getQosPositionKpi(kpiPositions);
             } catch (ExecutionException | InterruptedException
