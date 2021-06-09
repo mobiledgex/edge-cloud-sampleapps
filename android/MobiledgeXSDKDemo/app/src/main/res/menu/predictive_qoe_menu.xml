@@ -21,29 +21,29 @@
         <menu>
             <group>
                 <item
-                    android:id="@+id/action_pqoe_map_type_normal"
+                    android:id="@+id/action_map_type_normal"
                     android:checkable="true"
-                    android:onClick="onTypeGroupItemClick"
+                    android:onClick="onMapTypeGroupItemClick"
                     android:title="@string/pqoe_map_type_normal" />
                 <item
-                    android:id="@+id/action_pqoe_map_type_silver"
+                    android:id="@+id/action_map_type_silver"
                     android:checkable="true"
-                    android:onClick="onTypeGroupItemClick"
+                    android:onClick="onMapTypeGroupItemClick"
                     android:title="@string/pqoe_map_type_silver" />
                 <item
-                    android:id="@+id/action_pqoe_map_type_satellite"
+                    android:id="@+id/action_map_type_satellite"
                     android:checkable="true"
-                    android:onClick="onTypeGroupItemClick"
+                    android:onClick="onMapTypeGroupItemClick"
                     android:title="@string/pqoe_map_type_satellite" />
                 <item
-                    android:id="@+id/action_pqoe_map_type_terrain"
+                    android:id="@+id/action_map_type_terrain"
                     android:checkable="true"
-                    android:onClick="onTypeGroupItemClick"
+                    android:onClick="onMapTypeGroupItemClick"
                     android:title="@string/pqoe_map_type_terrain" />
                 <item
-                    android:id="@+id/action_pqoe_map_type_hybrid"
+                    android:id="@+id/action_map_type_hybrid"
                     android:checkable="true"
-                    android:onClick="onTypeGroupItemClick"
+                    android:onClick="onMapTypeGroupItemClick"
                     android:title="@string/pqoe_map_type_hybrid" />
             </group>
         </menu>

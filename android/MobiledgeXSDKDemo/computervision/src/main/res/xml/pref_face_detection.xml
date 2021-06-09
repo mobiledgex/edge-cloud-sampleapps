@@ -6,19 +6,19 @@
     android:id="@+id/fd_preference_screen">
 
     <SwitchPreference
-        android:key="@string/preference_fd_legacy_camera"
-        android:title="@string/preference_fd_legacy_camera_title"
-        android:summary="@string/preference_fd_legacy_camera_summary"
+        android:key="@string/pref_cv_legacy_camera"
+        android:title="@string/pref_cv_legacy_camera_title"
+        android:summary="@string/pref_cv_legacy_camera_summary"
         android:defaultValue="false" />
     <ListPreference
         android:defaultValue="REST"
-        android:entries="@array/pref_fd_connection_mode_titles"
-        android:entryValues="@array/pref_fd_connection_mode_values"
-        android:key="@string/preference_fd_connection_mode"
+        android:entries="@array/pref_cv_connection_mode_titles"
+        android:entryValues="@array/pref_cv_connection_mode_values"
+        android:key="@string/pref_cv_connection_mode"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
-        android:summary="@string/preference_fd_connection_mode_summary"
-        android:title="@string/preference_fd_connection_mode_title" />
+        android:summary="@string/pref_cv_connection_mode_summary"
+        android:title="@string/pref_cv_connection_mode_title" />
     <ListPreference
         android:defaultValue="socket"
         android:entries="@array/pref_latency_test_method_titles"
@@ -29,46 +29,46 @@
         android:summary="@string/pref_latency_method_summary"
         android:title="@string/pref_latency_method_title" />
     <SwitchPreference
-        android:key="@string/preference_fd_multi_face"
-        android:title="@string/preference_fd_multi_face_title"
-        android:summary="@string/preference_fd_multi_face_summary"
+        android:key="@string/pref_cv_multi_face"
+        android:title="@string/pref_cv_multi_face_title"
+        android:summary="@string/pref_cv_multi_face_summary"
         android:defaultValue="true" />
     <SwitchPreference
-        android:key="@string/preference_fd_show_full_latency"
-        android:title="@string/preference_fd_show_full_latency_title"
-        android:summary="@string/preference_fd_show_full_latency_summary"
+        android:key="@string/pref_cv_show_full_latency"
+        android:title="@string/pref_cv_show_full_latency_title"
+        android:summary="@string/pref_cv_show_full_latency_summary"
         android:defaultValue="true" />
     <SwitchPreference
-        android:key="@string/preference_fd_show_net_latency"
-        android:title="@string/preference_fd_show_net_latency_title"
-        android:summary="@string/preference_fd_show_net_latency_summary"
+        android:key="@string/pref_cv_show_net_latency"
+        android:title="@string/pref_cv_show_net_latency_title"
+        android:summary="@string/pref_cv_show_net_latency_summary"
         android:defaultValue="true" />
     <SwitchPreference
-        android:key="@string/preference_fd_show_stddev"
-        android:title="@string/preference_fd_show_stddev_title"
-        android:summary="@string/preference_fd_show_stddev_summary"
+        android:key="@string/pref_cv_show_stddev"
+        android:title="@string/pref_cv_show_stddev_title"
+        android:summary="@string/pref_cv_show_stddev_summary"
         android:defaultValue="false" />
     <SwitchPreference
-        android:key="@string/preference_fd_use_rolling_avg"
-        android:title="@string/preference_fd_use_rolling_avg_title"
-        android:summary="@string/preference_fd_use_rolling_avg_summary"
+        android:key="@string/pref_cv_use_rolling_avg"
+        android:title="@string/pref_cv_use_rolling_avg_title"
+        android:summary="@string/pref_cv_use_rolling_avg_summary"
         android:defaultValue="false" />
     <SwitchPreference
-        android:key="@string/preference_fd_auto_failover"
-        android:title="@string/preference_fd_auto_failover_title"
-        android:summary="@string/preference_fd_auto_failover_summary"
+        android:key="@string/pref_cv_auto_failover"
+        android:title="@string/pref_cv_auto_failover_title"
+        android:summary="@string/pref_cv_auto_failover_summary"
         android:defaultValue="false" />
     <SwitchPreference
-        android:key="@string/preference_fd_show_cloud_output"
-        android:title="@string/preference_fd_show_cloud_output_title"
-        android:summary="@string/preference_fd_show_cloud_output_summary"
+        android:key="@string/pref_cv_show_cloud_output"
+        android:title="@string/pref_cv_show_cloud_output_title"
+        android:summary="@string/pref_cv_show_cloud_output_summary"
         android:defaultValue="true" />
     <ListPreference
         android:defaultValue="invalid"
         android:entries="@array/pref_fd_reset_all_hosts_choices"
         android:entryValues="@array/pref_fd_reset_all_hosts_choices"
-        android:key="@string/preference_fd_reset_all_hosts"
-        android:title="@string/preference_fd_reset_all_hosts_title" />
+        android:key="@string/pref_cv_reset_all_hosts"
+        android:title="@string/pref_cv_reset_all_hosts_title" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="@string/pref_override_cloud_cloudlet_hostname"
@@ -77,11 +77,11 @@
     <EditTextPreference
         android:dependency="@string/pref_override_cloud_cloudlet_hostname"
         android:defaultValue="Default"
-        android:key="@string/preference_fd_host_cloud"
+        android:key="@string/pref_cv_host_cloud"
         android:selectAllOnFocus="true"
         android:singleLine="false"
-        android:summary="@string/preference_fd_host_cloud_summary"
-        android:title="@string/preference_fd_host_cloud_title" />
+        android:summary="@string/pref_cv_host_cloud_summary"
+        android:title="@string/pref_cv_host_cloud_title" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="@string/pref_override_edge_cloudlet_hostname"
@@ -90,11 +90,11 @@
     <EditTextPreference
         android:dependency="@string/pref_override_edge_cloudlet_hostname"
         android:defaultValue="Default"
-        android:key="@string/preference_fd_host_edge"
+        android:key="@string/pref_cv_host_edge"
         android:selectAllOnFocus="true"
         android:singleLine="false"
-        android:summary="@string/preference_fd_host_edge_summary"
-        android:title="@string/preference_fd_host_edge_title" />
+        android:summary="@string/pref_cv_host_edge_summary"
+        android:title="@string/pref_cv_host_edge_title" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="@string/pref_override_gpu_cloudlet_hostname"
@@ -109,9 +109,9 @@
         android:summary="@string/preference_gpu_host_edge_summary"
         android:title="@string/preference_gpu_host_edge_title" />
     <SwitchPreference
-        android:key="@string/preference_fd_show_latency_stats_dialog"
-        android:title="@string/preference_fd_show_latency_stats_dialog_title"
-        android:summary="@string/preference_fd_show_latency_stats_dialog_summary"
+        android:key="@string/pref_cv_show_latency_stats_dialog"
+        android:title="@string/pref_cv_show_latency_stats_dialog_title"
+        android:summary="@string/pref_cv_show_latency_stats_dialog_summary"
         android:defaultValue="true" />
 
 </PreferenceScreen>
