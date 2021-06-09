@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,8 +44,6 @@ import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 
 import org.json.JSONArray;
 
-import java.text.DecimalFormat;
-
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
 public class ObjectProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
@@ -53,11 +51,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     private static final String TAG = "ObjectProcessorFragment";
     private static final String VIDEO_FILE_NAME = "objects.mp4";
     private ObjectClassRenderer mObjectClassRenderer;
-
-    private TextView mLatencyFull;
-    private TextView mLatencyNet;
-    private TextView mStdFull;
-    private TextView mStdNet;
 
     public static ObjectProcessorFragment newInstance() {
         return new ObjectProcessorFragment();
@@ -141,64 +134,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         throw new UnsupportedOperationException();
     }
 
-    public void updateFullProcessStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
-        final long stdDev = rollingAverage.getStdDev();
-        final long latency;
-        if(prefUseRollingAvg) {
-            latency = rollingAverage.getAverage();
-        } else {
-            latency = rollingAverage.getCurrent();
-        }
-        if(getActivity() == null) {
-            Log.w(TAG, "Activity has gone away. Abort UI update");
-            return;
-        }
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                switch(cloudletType) {
-                    case EDGE:
-                    case CLOUD:
-                        mLatencyFull.setText("Full Process Latency: " + String.valueOf(latency/1000000) + " ms");
-                        mStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev/1000000) + " ms");
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-    }
-
-    @Override
-    public void updateNetworkStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
-        final long stdDev = rollingAverage.getStdDev();
-        final long latency;
-        if(prefUseRollingAvg) {
-            latency = rollingAverage.getAverage();
-        } else {
-            latency = rollingAverage.getCurrent();
-        }
-
-        if(getActivity() == null) {
-            Log.w(TAG, "Activity has gone away. Abort UI update");
-            return;
-        }
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                switch(cloudletType) {
-                    case EDGE:
-                    case CLOUD:
-                        mLatencyNet.setText("Network Only Latency: " + String.valueOf(latency/1000000) + " ms");
-                        mStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev/1000000) + " ms");
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -218,10 +153,10 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         mCameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
 
-        mLatencyFull = view.findViewById(R.id.full_latency);
-        mLatencyNet = view.findViewById(R.id.network_latency);
-        mStdFull = view.findViewById(R.id.full_std_dev);
-        mStdNet = view.findViewById(R.id.network_std_dev);
+        mEdgeLatencyFull = view.findViewById(R.id.full_latency);
+        mEdgeLatencyNet = view.findViewById(R.id.network_latency);
+        mEdgeStdFull = view.findViewById(R.id.full_std_dev);
+        mEdgeStdNet = view.findViewById(R.id.network_std_dev);
         mStatusText = view.findViewById(R.id.statusTextView);
         mStatusText.setVisibility(View.GONE);
         mObjectClassRenderer = view.findViewById(R.id.object_class_renderer);
@@ -246,6 +181,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
                 .setActivity(getActivity())
                 .setMeHelperInterface(this)
                 .setView(mObjectClassRenderer)
+                .setTestPort(FACE_DETECTION_HOST_PORT)
                 .build();
 
         setAppNameForGpu();
@@ -284,29 +220,29 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     @Override
     protected void toggleViews() {
         if(prefShowFullLatency) {
-            mLatencyFull.setVisibility(View.VISIBLE);
+            mEdgeLatencyFull.setVisibility(View.VISIBLE);
         } else {
-            mLatencyFull.setVisibility(View.INVISIBLE);
-            mStdFull.setVisibility(View.GONE);
-            mStdNet.setVisibility(View.GONE);
+            mEdgeLatencyFull.setVisibility(View.INVISIBLE);
+            mEdgeStdFull.setVisibility(View.GONE);
+            mEdgeStdNet.setVisibility(View.GONE);
         }
         if(prefShowNetLatency) {
-            mLatencyNet.setVisibility(View.VISIBLE);
-            mStdNet.setVisibility(View.VISIBLE);
+            mEdgeLatencyNet.setVisibility(View.VISIBLE);
+            mEdgeStdNet.setVisibility(View.VISIBLE);
         } else {
-            mLatencyNet.setVisibility(View.INVISIBLE);
-            mStdNet.setVisibility(View.GONE);
+            mEdgeLatencyNet.setVisibility(View.INVISIBLE);
+            mEdgeStdNet.setVisibility(View.GONE);
         }
         if(prefShowStdDev) {
             if(prefShowNetLatency) {
-                mStdFull.setVisibility(View.VISIBLE);
+                mEdgeStdFull.setVisibility(View.VISIBLE);
             }
             if(prefShowNetLatency) {
-                mStdNet.setVisibility(View.VISIBLE);
+                mEdgeStdNet.setVisibility(View.VISIBLE);
             }
         } else {
-            mStdFull.setVisibility(View.GONE);
-            mStdNet.setVisibility(View.GONE);
+            mEdgeStdFull.setVisibility(View.GONE);
+            mEdgeStdNet.setVisibility(View.GONE);
         }
     }
 

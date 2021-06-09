@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,10 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
+import com.mobiledgex.matchingenginehelper.SettingsActivity;
+
+import static com.mobiledgex.matchingenginehelper.SettingsActivity.EXTRA_SHOW_FRAGMENT;
+
 /**
  * Shows OK/Cancel confirmation dialog about needed permissions.
  */
@@ -40,6 +44,7 @@ public class EnhancedLocationDialog extends DialogFragment {
                     public void onClick(DialogInterface dialog, int which) {
                         // Open this App's Location settings:
                         Intent intent = new Intent(getActivity(), SettingsActivity.class);
+                        intent.putExtra(EXTRA_SHOW_FRAGMENT, SettingsActivity.MatchingEngineSettingsFragment.class.getName());
                         startActivity(intent);
                         dialog.dismiss();
                     }

@@ -1,0 +1,17 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:fragment="com.mobiledgex.computervision.SettingsActivity$NetworkFragment"
+        android:icon="@drawable/ic_settings_network"
+        android:title="@string/pref_network_settings"/>
+    <Preference
+        android:fragment="com.mobiledgex.computervision.SettingsActivity$UiFragment"
+        android:icon="@drawable/ic_settings_ui"
+        android:title="@string/pref_ui_settings"/>
+    <Preference
+        android:fragment="com.mobiledgex.computervision.SettingsActivity$OverridesFragment"
+        android:icon="@drawable/ic_settings_override"
+        android:title="@string/pref_overrides_settings"/>
+
+</PreferenceScreen>

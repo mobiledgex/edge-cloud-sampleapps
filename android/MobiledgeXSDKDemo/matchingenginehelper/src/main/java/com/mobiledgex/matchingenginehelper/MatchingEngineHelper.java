@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,14 +24,13 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
 import android.telephony.SubscriptionInfo;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.preference.PreferenceManager;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -54,14 +53,7 @@ import com.mobiledgex.matchingengine.edgeeventsconfig.FindCloudletEvent;
 import com.mobiledgex.matchingengine.performancemetrics.NetTest;
 import com.mobiledgex.matchingengine.performancemetrics.Site;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,11 +67,11 @@ import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 
+import static com.mobiledgex.matchingenginehelper.SettingsActivity.EXTRA_SHOW_FRAGMENT;
 import static distributed_match_engine.AppClient.ServerEdgeEvent.ServerEventType.EVENT_APPINST_HEALTH;
 
 public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = "MatchingEngineHelper";
-    private static final int DEFAULT_LATENCY_PORT = 8085;
     private Activity mActivity;
     private final View mView;
     private EdgeEventsSubscriber mEdgeEventsSubscriber;
@@ -115,16 +107,20 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private String someText = null;
     public String mAppInstHostname;
     public boolean mAppInstTls;
+    private final int mTestPort;
+    private boolean mRunConnectionTests = true;
 
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest mLocationRequest;
     private boolean mGpsInitialized;
-    private boolean mRunConnectionTests = true;
 
     public static class Builder {
         private Activity activity;
         private View view;
         private MatchingEngineHelperInterface meHelperInterface;
+        private String testUrl;
+        private String testExpectedResponse;
+        private int testPort;
 
         public Builder setActivity(Activity activity) {
             this.activity = activity;
@@ -138,6 +134,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             this.view = view;
             return this;
         }
+        public Builder setTestPort(int testPort) {
+            this.testPort = testPort;
+            return this;
+        }
 
         public MatchingEngineHelper build() {
             return new MatchingEngineHelper(this);
@@ -149,6 +149,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         mActivity = builder.activity;
         mView = builder.view;
         meHelperInterface = builder.meHelperInterface;
+        mTestPort = builder.testPort;
         me = new MatchingEngine(mActivity);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity);
@@ -180,7 +181,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         EdgeEventsConfig backgroundEdgeEventsConfig = me.createDefaultEdgeEventsConfig();
         backgroundEdgeEventsConfig.latencyTestType = NetTest.TestType.CONNECT;
         // This is the internal port, that has not been remapped to a public port for a particular appInst.
-        backgroundEdgeEventsConfig.latencyInternalPort = DEFAULT_LATENCY_PORT;
+        backgroundEdgeEventsConfig.latencyInternalPort = mTestPort;
         backgroundEdgeEventsConfig.latencyUpdateConfig.maxNumberOfUpdates = 10; // Or Long.MAX_VALUE if you want. Default is 0.
         backgroundEdgeEventsConfig.latencyUpdateConfig.updateIntervalSeconds = 7; // The default is 30.
         backgroundEdgeEventsConfig.latencyThresholdTrigger = 300;
@@ -245,8 +246,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(mActivity, SettingsActivity.class);
-                    intent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.MatchingEngineSettingsFragment.class.getName());
-                    intent.putExtra(PreferenceActivity.EXTRA_NO_HEADERS, true);
+                    intent.putExtra(EXTRA_SHOW_FRAGMENT, SettingsActivity.MatchingEngineSettingsFragment.class.getName());
                     mActivity.startActivity(intent);
                 }
             });
@@ -275,8 +275,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(mActivity, SettingsActivity.class);
-                        intent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.MatchingEngineSettingsFragment.class.getName());
-                        intent.putExtra(PreferenceActivity.EXTRA_NO_HEADERS, true);
+                        intent.putExtra(EXTRA_SHOW_FRAGMENT, SettingsActivity.MatchingEngineSettingsFragment.class.getName());
                         mActivity.startActivity(intent);
                     }
                 });
@@ -460,19 +459,22 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet) {
         mClosestCloudlet = closestCloudlet;
         meHelperInterface.onFindCloudlet(closestCloudlet);
-        mRunConnectionTests = true;
-        new Thread(new Runnable() {
-            @Override public void run() {
-                ConnectionTester tester = new ConnectionTester(mClosestCloudlet.getFqdn(),
-                        mAppName, DEFAULT_LATENCY_PORT);
-
-                if (tester.testConnection()) {
-                    meHelperInterface.showMessage("Successfully connected to app inst on "+tester.mUrl);
-                } else {
-                    meHelperInterface.showError("Failed to connect to app inst on "+tester.mUrl);
+        if (mRunConnectionTests) {
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    ConnectionTester tester = meHelperInterface.makeConnectionTester(mAppInstTls);
+                    if (tester == null) {
+                        // If the interface returns null, they don't want to do a connection test.
+                        return;
+                    }
+                    if (tester.testConnection()) {
+                        meHelperInterface.showMessage("Successfully connected to app inst on "+tester.mUrl);
+                    } else {
+                        meHelperInterface.showError("Failed to connect to app inst on "+tester.mUrl);
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     private boolean getAppInstList() throws InterruptedException, ExecutionException {
@@ -971,7 +973,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                     // discover, and test with the PerformanceMetrics API:
                     int publicPort;
                     HashMap<Integer, Appcommon.AppPort> ports = me.getAppConnectionManager().getTCPMap(mClosestCloudlet);
-                    Appcommon.AppPort anAppPort = ports.get(DEFAULT_LATENCY_PORT);
+                    Appcommon.AppPort anAppPort = ports.get(mTestPort);
                     if (anAppPort == null) {
                         Log.e(TAG, "The expected server (or port) doesn't seem to be here!");
                         return;

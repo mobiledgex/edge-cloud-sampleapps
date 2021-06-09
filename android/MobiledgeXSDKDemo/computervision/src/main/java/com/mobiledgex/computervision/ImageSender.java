@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 package com.mobiledgex.computervision;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -61,29 +62,30 @@ public class ImageSender {
     public static final int TRAINING_COUNT_TARGET = 10;
     private static final double RECOGNITION_CONFIDENCE_THRESHOLD = 120;
     private static final int NORMAL_CLOSURE_STATUS = 1000;
+    protected Context mContext;
 
-    private ImageServerInterface mImageServerInterface;
-    private RequestQueue mRequestQueue;
+    protected ImageServerInterface mImageServerInterface;
+    protected RequestQueue mRequestQueue;
 
-    private boolean mTls;
-    private String mScheme;
-    private String mHost;
-    private int mPort;
+    protected boolean mTls;
+    protected String mScheme;
+    protected String mHost;
+    protected int mPort;
     private int mPersistentTcpPort;
-    private RollingAverage mLatencyFullProcessRollingAvg;
-    private RollingAverage mLatencyNetOnlyRollingAvg;
+    protected RollingAverage mLatencyFullProcessRollingAvg;
+    protected RollingAverage mLatencyNetOnlyRollingAvg;
     private int mTrainingCount;
     protected boolean mBusy;
-    private boolean mInactive;
-    private boolean mInactiveBenchmark;
-    private boolean mInactiveFailure;
-    private long mLatency = 0;
-    private boolean mDoNetLatency = true;
+    protected boolean mInactive;
+    protected boolean mInactiveBenchmark;
+    protected boolean mInactiveFailure;
+    protected long mLatency = 0;
+    protected boolean mDoNetLatency = true;
     private final int mRollingAvgSize = 100;
-    private CameraMode mCameraMode;
+    protected CameraMode mCameraMode;
     private String mDjangoUrl = "/detector/detect/";
-    private ImageServerInterface.CloudletType mCloudLetType;
-    private Handler mHandler;
+    protected ImageServerInterface.CloudletType mCloudLetType;
+    protected Handler mHandler;
 
     //Variables for latency test
     private LatencyTestMethod mLatencyTestMethod = LatencyTestMethod.socket;
@@ -93,21 +95,22 @@ public class ImageSender {
     private String mGuestName = "";
 
     private static ConnectionMode preferencesConnectionMode = ConnectionMode.REST;
-    private ConnectionMode mConnectionMode;
+    protected ConnectionMode mConnectionMode;
     private SocketClientTcp mSocketClientTcp;
 
-    private long mStartTime;
+    protected long mStartTime;
     private int mOpcode;
 
     private OkHttpClient mWebSocketClient;
     private WebSocket mWebSocket;
-    private StringRequest mStringRequestMain;
+    protected StringRequest mStringRequestMain;
 
     public enum ConnectionMode {
         REST,
         PERSISTENT_TCP,
         WEBSOCKET,
-        QUIC
+        QUIC,
+        GRPC
     }
 
     public enum LatencyTestMethod {
@@ -180,24 +183,31 @@ public class ImageSender {
         }
     }
 
+    public ImageSender() {
+        Log.i(TAG, "Parameterless constructor");
+    }
+
     private ImageSender(final Builder builder) {
         mCloudLetType = builder.cloudLetType;
         mTls = builder.tls;
         mHost = builder.host;
         mPort = builder.port;
         mPersistentTcpPort = builder.persistentTcpPort;
+        mContext = builder.activity;
         setCameraMode(builder.cameraMode);
 
         mImageServerInterface = builder.imageServerInterface;
 
         Log.i(TAG, "ImageSender "+mCloudLetType+" "+mHost+":"+mPort+" mTls="+mTls+" mCameraMode="+mCameraMode);
+        init();
+    }
 
+    protected void init() {
         try {
-            mAccount = GoogleSignIn.getLastSignedInAccount(builder.activity);
+            mAccount = GoogleSignIn.getLastSignedInAccount(mContext);
         } catch (Exception e) {
             // This may occur when the user quits during a restart attempt and the activity has gone away.
             Log.e(TAG, "NPE occurred in GoogleSignIn code.", e);
-            return;
         }
         if(mAccount != null) {
             Log.i(TAG, "mAccount=" + mAccount.getDisplayName()+" "+mAccount.getId());
@@ -216,7 +226,7 @@ public class ImageSender {
 
         // Instantiate the RequestQueue.
         try {
-            mRequestQueue = Volley.newRequestQueue(builder.activity);
+            mRequestQueue = Volley.newRequestQueue(mContext);
         } catch (NullPointerException e) {
             // This may occur when the user quits during a restart attempt and the activity has gone away.
             Log.e(TAG, "NPE occurred in Volley.newRequestQueue code.", e);
@@ -230,6 +240,7 @@ public class ImageSender {
         } else {
             mConnectionMode = preferencesConnectionMode;
         }
+        Log.i(TAG, "mConnectionMode="+mConnectionMode);
 
         if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
             initTcpSocketConnection();
@@ -651,7 +662,7 @@ public class ImageSender {
      * @param host
      * @param cloudletType
      */
-    private void doSinglePing(String host, RollingAverage rollingAverage, ImageServerInterface.CloudletType cloudletType) {
+    public void doSinglePing(String host, RollingAverage rollingAverage, ImageServerInterface.CloudletType cloudletType) {
         long latency = 0;
         Log.d(TAG, "doSinglePing mLatencyTestMethod="+mLatencyTestMethod+" cloudletType="+cloudletType);
 

@@ -5,4 +5,11 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <application>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings_x"></activity>
+    </application>
+
 </manifest>

@@ -11,14 +11,17 @@
         android:key="@string/pref_matching_engine_location_verification"
         android:title="@string/pref_matching_engine_location_verification_title"
         android:summary="@string/pref_matching_engine_location_verification_summary"
-        android:defaultValue="false" />
+        android:defaultValue="false"
+        app:iconSpaceReserved="false"/>
+
     <SwitchPreference
         android:id="@+id/preference_net_switching_allowed"
         android:contentDescription="preference_net_switching_allowed"
         android:key="@string/pref_net_switching_allowed"
         android:title="@string/pref_net_switching_allowed_title"
         android:summary="@string/pref_net_switching_allowed_summary"
-        android:defaultValue="false" />
+        android:defaultValue="false"
+        app:iconSpaceReserved="false"/>
 
     <ListPreference
         android:defaultValue="PROXIMITY"
@@ -26,7 +29,8 @@
         android:entryValues="@array/pref_find_cloudlet_mode_values"
         android:key="@string/pref_find_cloudlet_mode"
         android:summary="@string/pref_find_cloudlet_mode_summary"
-        android:title="@string/pref_find_cloudlet_mode_title" />
+        android:title="@string/pref_find_cloudlet_mode_title"
+        app:iconSpaceReserved="false"/>
 
     <ListPreference
         android:defaultValue="4"
@@ -34,6 +38,7 @@
         android:entryValues="@array/pref_app_instances_limit_values"
         android:key="@string/pref_app_instances_limit"
         android:summary="@string/pref_app_instances_limit_summary"
-        android:title="@string/pref_app_instances_limit_title" />
+        android:title="@string/pref_app_instances_limit_title"
+        app:iconSpaceReserved="false"/>
 
 </PreferenceScreen>

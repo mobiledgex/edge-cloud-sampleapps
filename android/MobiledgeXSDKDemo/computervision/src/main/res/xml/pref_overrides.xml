@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fd_preference_screen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/pref_override_edge_cloudlet_hostname"
+        android:summary="@string/pref_summary_override_edge_cloudlet_hostname"
+        android:title="@string/pref_title_override_edge_cloudlet_hostname"
+        app:iconSpaceReserved="false"/>
+    <EditTextPreference
+        android:defaultValue="Default"
+        android:dependency="@string/pref_override_edge_cloudlet_hostname"
+        android:key="@string/pref_cv_host_edge"
+        android:selectAllOnFocus="true"
+        android:singleLine="false"
+        android:summary="@string/pref_cv_host_edge_summary"
+        android:title="@string/pref_cv_host_edge_title"
+        app:iconSpaceReserved="false"/>
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/pref_override_gpu_cloudlet_hostname"
+        android:summary="@string/pref_summary_override_gpu_cloudlet_hostname"
+        android:title="@string/pref_title_override_gpu_cloudlet_hostname"
+        app:iconSpaceReserved="false"/>
+    <EditTextPreference
+        android:defaultValue="posedetection.defaultedge.mobiledgex.net"
+        android:dependency="@string/pref_override_gpu_cloudlet_hostname"
+        android:key="@string/preference_gpu_host_edge"
+        android:selectAllOnFocus="true"
+        android:singleLine="false"
+        android:summary="@string/preference_gpu_host_edge_summary"
+        android:title="@string/preference_gpu_host_edge_title"
+        app:iconSpaceReserved="false"/>
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/pref_override_cloud_cloudlet_hostname"
+        android:summary="@string/pref_summary_override_cloud_cloudlet_hostname"
+        android:title="@string/pref_title_override_cloud_cloudlet_hostname"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="Default"
+        android:dependency="@string/pref_override_cloud_cloudlet_hostname"
+        android:key="@string/pref_cv_host_cloud"
+        android:selectAllOnFocus="true"
+        android:singleLine="false"
+        android:summary="@string/pref_cv_host_cloud_summary"
+        android:title="@string/pref_cv_host_cloud_title"
+        app:iconSpaceReserved="false" />
+    <ListPreference
+        android:defaultValue="invalid"
+        android:entries="@array/pref_fd_reset_all_hosts_choices"
+        android:entryValues="@array/pref_fd_reset_all_hosts_choices"
+        android:key="@string/pref_cv_reset_all_hosts"
+        android:title="@string/pref_cv_reset_all_hosts_title"
+        app:iconSpaceReserved="false" />
+
+</PreferenceScreen>
