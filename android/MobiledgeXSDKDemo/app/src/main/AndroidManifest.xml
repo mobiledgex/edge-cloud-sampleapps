@@ -10,13 +10,6 @@
     -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" />
-    <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <application
         android:usesCleartextTraffic="true"
@@ -40,7 +33,7 @@
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="${GOOGLE_MAPS_API_KEY}"/>
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.mobiledgex.sdkdemo.MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -49,11 +42,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.mobiledgex.sdkdemo.SettingsActivity"
             android:label="@string/title_activity_settings" />
-        <activity android:name=".CloudletDetailsActivity" />
+        <activity android:name="com.mobiledgex.sdkdemo.CloudletDetailsActivity" />
         <activity
-            android:name=".FirstTimeUseActivity"
+            android:name="com.mobiledgex.sdkdemo.FirstTimeUseActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait" />
         <activity
@@ -73,7 +66,7 @@
             android:label="@string/title_activity_settings"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".qoe.QoeMapActivity"
+            android:name="com.mobiledgex.sdkdemo.qoe.QoeMapActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/title_activity_qoe_map">
             <meta-data

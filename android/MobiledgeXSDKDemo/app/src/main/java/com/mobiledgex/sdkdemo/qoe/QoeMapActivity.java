@@ -70,9 +70,9 @@ import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.TravelMode;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.MatchingEngine;
+import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
+import com.mobiledgex.matchingenginehelper.MatchingEngineHelperInterface;
 import com.mobiledgex.sdkdemo.BuildConfig;
-import com.mobiledgex.sdkdemo.MainActivity;
-import com.mobiledgex.sdkdemo.MatchingEngineHelper;
 import com.mobiledgex.sdkdemo.R;
 
 import org.json.JSONArray;
@@ -96,10 +96,13 @@ import java.util.concurrent.ExecutionException;
 import distributed_match_engine.AppClient;
 import distributed_match_engine.LocOuterClass;
 
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_CARRIER_NAME;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_DME_HOSTNAME;
+
 public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener, GoogleMap.OnMarkerDragListener,
         GoogleMap.OnCameraIdleListener, DatePickerDialog.OnDateSetListener,
-        TimePickerDialog.OnTimeSetListener {
+        TimePickerDialog.OnTimeSetListener, MatchingEngineHelperInterface {
 
     private static final String TAG = "QoeMapActivity";
     public static final String EXTRA_HOSTNAME = "EXTRA_HOSTNAME";
@@ -128,7 +131,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private SimpleDateFormat dateTimeFormat;
     private Calendar mCalendar;
     private BroadcastReceiver mBroadcastReceiver;
-    private MatchingEngineHelper mMatchingEngineHelper;
+    private MatchingEngineHelper meHelper;
     private double gridSize;
 
     private enum pointMode {
@@ -147,16 +150,20 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mHostname = intent.getStringExtra(EXTRA_HOSTNAME);
         Log.i(TAG, "mHostname="+mHostname);
         if (mHostname == null) {
-            mHostname = MainActivity.DEFAULT_DME_HOSTNAME;
+            mHostname = DEFAULT_DME_HOSTNAME;
         }
         String carrierName = intent.getStringExtra(EXTRA_CARRIER_NAME);
         if (carrierName == null) {
-            carrierName = MainActivity.DEFAULT_CARRIER_NAME;
+            carrierName = DEFAULT_CARRIER_NAME;
         }
 
         View mapView = findViewById(R.id.map);
-        mMatchingEngineHelper = new MatchingEngineHelper(this, mapView);
-        mMatchingEngineHelper.registerClientInBackground();
+        meHelper = new MatchingEngineHelper.Builder()
+                .setActivity(this)
+                .setMeHelperInterface(this)
+                .setView(mapView)
+                .build();
+        meHelper.registerClientInBackground();
 
         // Build Legend Table View programmatically, based on colors and speed description values.
         TableLayout tl = findViewById(R.id.table_layout_legend);
@@ -288,7 +295,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         // checked items for our group, and manually uncheck it each time.
         modeGroupPrevItem = menu.findItem(R.id.action_pqoe_mode_route);
         modeGroupPrevItem.setChecked(true);
-        mapTypeGroupPrevItem = menu.findItem(R.id.action_pqoe_map_type_silver);
+        mapTypeGroupPrevItem = menu.findItem(R.id.action_map_type_silver);
         mapTypeGroupPrevItem.setChecked(true);
         return true;
     }
@@ -319,21 +326,21 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     public void onTypeGroupItemClick(MenuItem item) {
         mapTypeGroupPrevItem.setChecked(false);
         mapTypeGroupPrevItem = item;
-        if (item.getItemId() == R.id.action_pqoe_map_type_normal) {
+        if (item.getItemId() == R.id.action_map_type_normal) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
             setCustomMapStyle(mMap, R.raw.map_style_default);
-        } else if (item.getItemId() == R.id.action_pqoe_map_type_silver) {
+        } else if (item.getItemId() == R.id.action_map_type_silver) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
             setCustomMapStyle(mMap, R.raw.map_style_silver);
-        } else if (item.getItemId() == R.id.action_pqoe_map_type_satellite) {
+        } else if (item.getItemId() == R.id.action_map_type_satellite) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        } else if (item.getItemId() == R.id.action_pqoe_map_type_hybrid) {
+        } else if (item.getItemId() == R.id.action_map_type_hybrid) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        } else if (item.getItemId() == R.id.action_pqoe_map_type_terrain) {
+        } else if (item.getItemId() == R.id.action_map_type_terrain) {
             item.setChecked(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
         }
@@ -495,7 +502,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     /**
      * Based on a starting and ending point, get route from the Google Directions API, and use
-     * the returned data to build paths the draw on the map, and build a list of points to
+     * the returned data to build paths to draw on the map, and build a list of points to
      * collect QOS data for.
      *
      * @param startLatLng  The route's starting point.
@@ -516,6 +523,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
         GeoApiContext context = new GeoApiContext.Builder()
                 .apiKey(apiKey)
                 .build();
+        Log.i(TAG, "apiKey="+apiKey+" context="+context);
 
         try {
             DirectionsResult calculatedRoutes = DirectionsApi.newRequest(context)
@@ -856,7 +864,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             final int routeNum = (int) params[1];
             int reqNum = (int) params[2];
             Log.i(TAG, positions.size()+" positions routeNum="+routeNum+" reqNum="+reqNum);
-            MatchingEngine me = mMatchingEngineHelper.getMatchingEngine();
+            MatchingEngine me = meHelper.getMatchingEngine();
             final List<ColoredPoint> points = new ArrayList<>();
 
             try {
@@ -950,7 +958,6 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     @Override
     public void onStop() {
         Log.i(TAG, "onStop()");
-//        unregisterReceiver(mBroadcastReceiver);
         super.onStop();
     }
 
@@ -1078,4 +1085,43 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
             color = Color.parseColor(COLORS[score]);
         }
     }
+
+    @Override
+    public void onRegister() {
+        Log.i(TAG, "Client registered.");
+    }
+
+    @Override
+    public void showMessage(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void showError(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    }
+
+    // The following methods of the MatchingEngineHelperInterface should not be called,
+    // because we only use getQosPositionKpi. They must be implemented though,
+    // so just emit a log for each.
+    @Override
+    public void onVerifyLocation(AppClient.VerifyLocationReply.GPSLocationStatus status, double gpsLocationAccuracyKM) {
+        Log.i(TAG, "Location verified. status: "+status);
+    }
+
+    @Override
+    public void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet) {
+        Log.i(TAG, "Cloudlet found. closestCloudlet: "+closestCloudlet);
+    }
+
+    @Override
+    public void onGetCloudletList(AppClient.AppInstListReply cloudletList) {
+        Log.i(TAG, "Cloudlet list returned. cloudletList: "+cloudletList);
+    }
+
+    @Override
+    public void getCloudlets(boolean clearExisting) {
+        Log.i(TAG, "getCloudlets called. Nothing to do for this implementation");
+    }
+
 }
