@@ -927,12 +927,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
         }
-        if (key.equals(prefKeyLegacyCamera) || key.equals("ALL")) {
-            prefLegacyCamera = sharedPreferences.getBoolean(prefKeyLegacyCamera, true);
-            if(mCamera2BasicFragment != null) {
-                mCamera2BasicFragment.setLegacyCamera(prefLegacyCamera);
-            }
-        }
         if (key.equals(prefKeyShowFullLatency) || key.equals("ALL")) {
             prefShowFullLatency = sharedPreferences.getBoolean(prefKeyShowFullLatency, true);
         }

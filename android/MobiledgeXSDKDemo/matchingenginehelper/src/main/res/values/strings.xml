@@ -89,7 +89,7 @@
     </string-array>
 
     <string name="pref_google_map_type">pref_google_map_type</string>
-    <string name="title_activity_settings_x">SettingsActivityX</string>
+    <string name="title_activity_settings">SettingsActivity</string>
 
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>
