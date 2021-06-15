@@ -13,6 +13,9 @@
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
 
     <string name="pref_cv_settings">Computer Vision Settings</string>
+    <string name="pref_network_settings">Network Settings</string>
+    <string name="pref_ui_settings">UI Settings</string>
+    <string name="pref_overrides_settings">Override Hostnames</string>
 
     <string name="pref_cv_front_camera">fd_front_camera</string>
     <string name="pref_cv_multi_face">fd_multi_face</string>
@@ -20,7 +23,7 @@
     <string name="pref_cv_multi_face_summary">Track multiple faces</string>
     <string name="pref_cv_show_full_latency">fd_show_full_latency</string>
     <string name="pref_cv_show_full_latency_title">Show full process latency</string>
-    <string name="pref_cv_show_full_latency_summary">Measures image upload, face detection, results being returned.</string>
+    <string name="pref_cv_show_full_latency_summary">Measures image upload, image processing, results being returned.</string>
     <string name="pref_cv_show_net_latency">fd_show_net_latency</string>
     <string name="pref_cv_show_net_latency_title">Show network latency</string>
     <string name="pref_cv_show_net_latency_summary">Measures only network latency.</string>
@@ -106,4 +109,5 @@
     <string name="pref_override_cloud_cloudlet_hostname">pref_override_cloud_cloudlet_hostname</string>
     <string name="pref_summary_override_cloud_cloudlet_hostname">Select this to enter a Cloud Server hostname to override default provisioned value.</string>
     <string name="pref_title_override_cloud_cloudlet_hostname">Override Cloud cloudlet hostname</string>
+
 </resources>

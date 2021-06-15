@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package com.mobiledgex.sdkdemo;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
@@ -30,6 +29,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import static com.mobiledgex.sdkdemo.SettingsActivity.EXTRA_SHOW_FRAGMENT;
 
 public class CloudletDetailsActivity extends AppCompatActivity implements SpeedTestResultsInterface {
 
@@ -162,8 +163,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         }
         if (id == R.id.action_speedtest_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
-            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.SpeedTestSettingsFragment.class.getName() );
-            intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
+            intent.putExtra(EXTRA_SHOW_FRAGMENT, SettingsActivity.SpeedTestSettingsFragment.class.getName() );
             startActivity(intent);
             return true;
         }

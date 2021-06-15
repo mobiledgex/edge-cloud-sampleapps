@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fd_preference_screen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ListPreference
+        android:defaultValue="REST"
+        android:entries="@array/pref_cv_connection_mode_titles"
+        android:entryValues="@array/pref_cv_connection_mode_values"
+        android:key="@string/pref_cv_connection_mode"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:summary="@string/pref_cv_connection_mode_summary"
+        android:title="@string/pref_cv_connection_mode_title"
+        app:iconSpaceReserved="false"/>
+    <ListPreference
+        android:defaultValue="socket"
+        android:entries="@array/pref_latency_test_method_titles"
+        android:entryValues="@array/pref_latency_test_method_values"
+        android:key="@string/fd_latency_method"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:summary="@string/pref_latency_method_summary"
+        android:title="@string/pref_latency_method_title"
+        app:iconSpaceReserved="false"/>
+
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="@string/pref_cv_auto_failover"
+        android:summary="@string/pref_cv_auto_failover_summary"
+        android:title="@string/pref_cv_auto_failover_title"
+        app:iconSpaceReserved="false"/>
+
+</PreferenceScreen>

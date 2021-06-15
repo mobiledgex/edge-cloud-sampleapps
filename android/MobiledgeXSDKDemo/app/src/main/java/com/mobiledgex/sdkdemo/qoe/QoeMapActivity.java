@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,6 +70,7 @@ import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.TravelMode;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.MatchingEngine;
+import com.mobiledgex.matchingenginehelper.ConnectionTester;
 import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 import com.mobiledgex.matchingenginehelper.MatchingEngineHelperInterface;
 import com.mobiledgex.sdkdemo.BuildConfig;
@@ -98,6 +99,7 @@ import distributed_match_engine.LocOuterClass;
 
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_CARRIER_NAME;
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_DME_HOSTNAME;
+import static com.mobiledgex.sdkdemo.MainActivity.DEFAULT_SPEED_TEST_PORT;
 
 public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener, GoogleMap.OnMarkerDragListener,
@@ -162,6 +164,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .setActivity(this)
                 .setMeHelperInterface(this)
                 .setView(mapView)
+                .setTestPort(DEFAULT_SPEED_TEST_PORT)
                 .build();
         meHelper.registerClientInBackground();
 
@@ -1122,6 +1125,12 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     @Override
     public void getCloudlets(boolean clearExisting) {
         Log.i(TAG, "getCloudlets called. Nothing to do for this implementation");
+    }
+
+    @Override
+    public ConnectionTester makeConnectionTester(boolean tls) {
+        // Return null because we don't want to do a connection test.
+        return null;
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,57 +44,16 @@ import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 
 import org.json.JSONArray;
 
-import java.text.DecimalFormat;
-
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
-public class ObjectProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
+public class ObjectProcessorFragment extends EdgeOnlyImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
     private static final String TAG = "ObjectProcessorFragment";
     private static final String VIDEO_FILE_NAME = "objects.mp4";
     private ObjectClassRenderer mObjectClassRenderer;
 
-    private TextView mLatencyFull;
-    private TextView mLatencyNet;
-    private TextView mStdFull;
-    private TextView mStdNet;
-
     public static ObjectProcessorFragment newInstance() {
         return new ObjectProcessorFragment();
-    }
-
-    public String getStatsText() {
-        if (mImageSenderEdge != null) {
-            return mImageSenderEdge.getStatsText();
-        } else {
-            return "Edge never initialized.";
-        }
-    }
-
-    /**
-     * Perform any processing of the given bitmap.
-     *
-     * @param bitmap  The bitmap from the camera or video.
-     * @param imageRect  The coordinates of the image on the screen. Needed for scaling/offsetting
-     *                   resulting object coordinates.
-     */
-    @Override
-    public void onBitmapAvailable(Bitmap bitmap, Rect imageRect) {
-        if(bitmap == null) {
-            return;
-        }
-
-        mImageRect = imageRect;
-        mServerToDisplayRatioX = (float) mImageRect.width() / bitmap.getWidth();
-        mServerToDisplayRatioY = (float) mImageRect.height() / bitmap.getHeight();
-
-        Log.d(TAG, "mImageRect="+mImageRect.toShortString()+" mImageRect.height()="+mImageRect.height()+" bitmap.getWidth()="+bitmap.getWidth()+" bitmap.getHeight()="+bitmap.getHeight()+" mServerToDisplayRatioX=" + mServerToDisplayRatioX +" mServerToDisplayRatioY=" + mServerToDisplayRatioY);
-
-        if (mImageSenderEdge != null) {
-            mImageSenderEdge.sendImage(bitmap);
-        } else {
-            Log.d(TAG, "Waiting for mImageSenderEdge to be initialized.");
-        }
     }
 
     /**
@@ -137,69 +96,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
     }
 
     @Override
-    public void updateTrainingProgress(int trainingCount, ImageSender.CameraMode mode) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void updateFullProcessStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
-        final long stdDev = rollingAverage.getStdDev();
-        final long latency;
-        if(prefUseRollingAvg) {
-            latency = rollingAverage.getAverage();
-        } else {
-            latency = rollingAverage.getCurrent();
-        }
-        if(getActivity() == null) {
-            Log.w(TAG, "Activity has gone away. Abort UI update");
-            return;
-        }
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                switch(cloudletType) {
-                    case EDGE:
-                    case CLOUD:
-                        mLatencyFull.setText("Full Process Latency: " + String.valueOf(latency/1000000) + " ms");
-                        mStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev/1000000) + " ms");
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-    }
-
-    @Override
-    public void updateNetworkStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
-        final long stdDev = rollingAverage.getStdDev();
-        final long latency;
-        if(prefUseRollingAvg) {
-            latency = rollingAverage.getAverage();
-        } else {
-            latency = rollingAverage.getCurrent();
-        }
-
-        if(getActivity() == null) {
-            Log.w(TAG, "Activity has gone away. Abort UI update");
-            return;
-        }
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                switch(cloudletType) {
-                    case EDGE:
-                    case CLOUD:
-                        mLatencyNet.setText("Network Only Latency: " + String.valueOf(latency/1000000) + " ms");
-                        mStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev/1000000) + " ms");
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.i(TAG, "onCreateView ObjectProcessorFragment");
@@ -218,10 +114,10 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
         mCameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
 
-        mLatencyFull = view.findViewById(R.id.full_latency);
-        mLatencyNet = view.findViewById(R.id.network_latency);
-        mStdFull = view.findViewById(R.id.full_std_dev);
-        mStdNet = view.findViewById(R.id.network_std_dev);
+        mEdgeLatencyFull = view.findViewById(R.id.full_latency);
+        mEdgeLatencyNet = view.findViewById(R.id.network_latency);
+        mEdgeStdFull = view.findViewById(R.id.full_std_dev);
+        mEdgeStdNet = view.findViewById(R.id.network_std_dev);
         mStatusText = view.findViewById(R.id.statusTextView);
         mStatusText.setVisibility(View.GONE);
         mObjectClassRenderer = view.findViewById(R.id.object_class_renderer);
@@ -246,6 +142,7 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
                 .setActivity(getActivity())
                 .setMeHelperInterface(this)
                 .setView(mObjectClassRenderer)
+                .setTestPort(FACE_DETECTION_HOST_PORT)
                 .build();
 
         setAppNameForGpu();
@@ -258,91 +155,6 @@ public class ObjectProcessorFragment extends ImageProcessorFragment implements I
             restartImageSenderEdge();
         } else {
             meHelper.findCloudletInBackground();
-        }
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        Log.i(TAG, "onCreateOptionsMenu");
-        mOptionsMenu = menu;
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.camera_menu, menu);
-
-        //Remove these menu items.
-        menu.findItem(R.id.action_camera_training).setVisible(false);
-        menu.findItem(R.id.action_camera_training_guest).setVisible(false);
-        menu.findItem(R.id.action_camera_remove_training_data).setVisible(false);
-        menu.findItem(R.id.action_camera_remove_training_guest_data).setVisible(false);
-
-        //No Cloud available for benchmarking
-        menu.findItem(R.id.action_benchmark_cloud).setVisible(false);
-
-        // Declutter the menu, but keep the code in place in case we need it later.
-        menu.findItem(R.id.action_camera_debug).setVisible(false);
-    }
-
-    @Override
-    protected void toggleViews() {
-        if(prefShowFullLatency) {
-            mLatencyFull.setVisibility(View.VISIBLE);
-        } else {
-            mLatencyFull.setVisibility(View.INVISIBLE);
-            mStdFull.setVisibility(View.GONE);
-            mStdNet.setVisibility(View.GONE);
-        }
-        if(prefShowNetLatency) {
-            mLatencyNet.setVisibility(View.VISIBLE);
-            mStdNet.setVisibility(View.VISIBLE);
-        } else {
-            mLatencyNet.setVisibility(View.INVISIBLE);
-            mStdNet.setVisibility(View.GONE);
-        }
-        if(prefShowStdDev) {
-            if(prefShowNetLatency) {
-                mStdFull.setVisibility(View.VISIBLE);
-            }
-            if(prefShowNetLatency) {
-                mStdNet.setVisibility(View.VISIBLE);
-            }
-        } else {
-            mStdFull.setVisibility(View.GONE);
-            mStdNet.setVisibility(View.GONE);
-        }
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.i(TAG, "Object Detection onSharedPreferenceChanged("+key+")");
-        if(getContext() == null) {
-            //Can happen during rapid screen rotations.
-            return;
-        }
-        super.onSharedPreferenceChanged(sharedPreferences, key);
-
-        String prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
-        String prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
-
-        if (key.equals(prefKeyHostGpuOverride) || key.equals("ALL")) {
-            mGpuHostNameOverride = sharedPreferences.getBoolean(prefKeyHostGpuOverride, false);
-            Log.i(TAG, "key="+key+" mGpuHostNameOverride="+ mGpuHostNameOverride);
-            if (mGpuHostNameOverride) {
-                mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER);
-                Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
-            }
-        }
-        if (key.equals(prefKeyHostGpu) || key.equals("ALL")) {
-            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER);
-            Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
-        }
-
-        if (key.equals(prefKeyHostGpu) || key.equals(prefKeyHostGpuOverride)) {
-            if (mGpuHostNameOverride) {
-                mEdgeHostList.clear();
-                mEdgeHostListIndex = 0;
-                mEdgeHostList.add(mHostDetectionEdge);
-                showMessage("mHostDetectionEdge set to " + mHostDetectionEdge);
-                restartImageSenderEdge();
-            }
         }
     }
 }
