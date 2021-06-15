@@ -128,7 +128,7 @@ public class ObjectProcessorFragment extends EdgeOnlyImageProcessorFragment impl
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         prefs.registerOnSharedPreferenceChangeListener(this);
-        onSharedPreferenceChanged(prefs, "ALL");
+        onSharedPreferenceChanged(prefs, ALL_PREFS);
 
         Intent intent = getActivity().getIntent();
         getCommonIntentExtras(intent);

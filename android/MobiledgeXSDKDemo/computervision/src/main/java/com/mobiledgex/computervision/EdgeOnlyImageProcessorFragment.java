@@ -166,7 +166,7 @@ public abstract class EdgeOnlyImageProcessorFragment extends ImageProcessorFragm
         String prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
         String prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
 
-        if (key.equals(prefKeyHostGpuOverride) || key.equals("ALL")) {
+        if (key.equals(prefKeyHostGpuOverride) || key.equals(ALL_PREFS)) {
             mGpuHostNameOverride = sharedPreferences.getBoolean(prefKeyHostGpuOverride, false);
             Log.i(TAG, "key="+key+" mGpuHostNameOverride="+ mGpuHostNameOverride);
             if (mGpuHostNameOverride) {
@@ -174,7 +174,7 @@ public abstract class EdgeOnlyImageProcessorFragment extends ImageProcessorFragm
                 Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
             }
         }
-        if (key.equals(prefKeyHostGpu) || key.equals("ALL")) {
+        if (key.equals(prefKeyHostGpu) || key.equals(ALL_PREFS)) {
             mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER);
             Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
         }
