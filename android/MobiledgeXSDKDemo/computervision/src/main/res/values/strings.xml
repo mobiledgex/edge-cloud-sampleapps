@@ -46,6 +46,9 @@
     <string name="pref_cv_host_edge">fd_host_edge</string>
     <string name="pref_cv_host_edge_title">Edge Server</string>
     <string name="pref_cv_host_edge_summary">Enter a custom IP or hostname.</string>
+    <string name="pref_cv_host_edge_tls">fd_host_edge_tls</string>
+    <string name="pref_cv_host_edge_tls_title">TLS Enabled</string>
+    <string name="pref_cv_host_edge_tls_summary">Turn on to enable TLS for overridden hostname.</string>
     <string name="pref_cv_reset_all_hosts">fd_reset_both_hosts</string>
     <string name="pref_cv_reset_all_hosts_title">Reset hosts to default.</string>
     <string name="pref_cv_reset_all_hosts_message">Are you sure?</string>

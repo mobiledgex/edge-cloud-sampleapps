@@ -20,6 +20,12 @@
         android:summary="@string/pref_cv_host_edge_summary"
         android:title="@string/pref_cv_host_edge_title"
         app:iconSpaceReserved="false"/>
+    <SwitchPreference
+        android:defaultValue="false"
+        android:dependency="@string/pref_override_edge_cloudlet_hostname"
+        android:key="@string/pref_cv_host_edge_tls"
+        android:summary="@string/pref_cv_host_edge_tls_summary"
+        android:title="@string/pref_cv_host_edge_tls_title" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="@string/pref_override_gpu_cloudlet_hostname"
