@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,6 +56,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.preference.Preference;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
@@ -102,6 +103,7 @@ import com.mobiledgex.computervision.ObjectProcessorActivity;
 import com.mobiledgex.computervision.PoseProcessorActivity;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
+import com.mobiledgex.matchingenginehelper.ConnectionTester;
 import com.mobiledgex.matchingenginehelper.EventLogViewer;
 import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 import com.mobiledgex.matchingenginehelper.MatchingEngineHelperInterface;
@@ -192,6 +194,11 @@ public class MainActivity extends AppCompatActivity
     private MenuItem mapTypeGroupPrevItem;
     private boolean mRouteIsPlaying;
     private ValueAnimator mValueAnimator;
+    private int mDrivingAnimDuration;
+    private int mFlyingAnimDuration;
+    private static final int DEF_DRIVING_DURATION = 15; //Seconds
+    private static final int DEF_FLYING_DURATION = 7; //Seconds
+
     private String mApiKey = BuildConfig.GOOGLE_DIRECTIONS_API_KEY;
     private Polyline mRoutePolyLine;
     private List<LatLng> mCloudletLatLngs = new ArrayList();
@@ -310,6 +317,8 @@ public class MainActivity extends AppCompatActivity
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_method));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_autostart));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_driving_time_seekbar));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_flying_time_seekbar));
 
         // Watch for any updated preferences:
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -340,9 +349,9 @@ public class MainActivity extends AppCompatActivity
             mEventLogViewer.mAutoExpand = false;
             mUserLocationMarker.setPosition(mStartLatLng);
             if (mRouteMode == RouteMode.FLYING) {
-                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, 4000);
+                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mDrivingAnimDuration);
             } else if (mRouteMode == RouteMode.DRIVING) {
-                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, 10000);
+                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mFlyingAnimDuration);
             }
             mRouteIsPlaying = true;
         }
@@ -538,7 +547,20 @@ public class MainActivity extends AppCompatActivity
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         int itemId = prefs.getInt(getResources().getString(R.string.pref_google_map_type), R.id.action_map_type_silver);
+        // From one version of the app to another, the generated resource ID may have changed.
+        // Check that the stored preference is a valid menu item. If not, use a default.
+        if (itemId != R.id.action_map_type_hybrid
+                && itemId != R.id.action_map_type_normal
+                && itemId != R.id.action_map_type_retro
+                && itemId != R.id.action_map_type_satellite
+                && itemId != R.id.action_map_type_silver
+                && itemId != R.id.action_map_type_terrain) {
+            itemId = R.id.action_map_type_silver;
+        }
         mDefaultCloudletColor = cloudLetColors.get(itemId);
+        if (mDefaultCloudletColor == null) {
+            mDefaultCloudletColor = COLOR_NEUTRAL;
+        }
         mapTypeGroupPrevItem = menu.findItem(itemId);
         mapTypeGroupPrevItem.setChecked(true);
         onMapTypeGroupItemClick(mapTypeGroupPrevItem);
@@ -636,18 +658,12 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_pose_detection) {
             // Start the pose detection Activity
             Intent intent = new Intent(this, PoseProcessorActivity.class);
-            //Due to limited GPU availabilty, we don't want to override the default yet.
-            //It's still possible to override the default via preferences.
-            //TODO: Add this back when we have more cloudlets with GPU support.
-//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname1);
             putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
         } else if (id == R.id.nav_object_detection) {
             // Start the object detection Activity
             Intent intent = new Intent(this, ObjectProcessorActivity.class);
-            //TODO: Add this back when we have more cloudlets with GPU support.
-//            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, mClosestCloudletHostname1);
             putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
@@ -951,6 +967,23 @@ public class MainActivity extends AppCompatActivity
 
         showMessage("Performing getAppInstList");
         meHelper.getAppInstListInBackground();
+    }
+
+    @Override
+    public ConnectionTester makeConnectionTester(boolean tls) {
+        int testConnectionPort = DEFAULT_SPEED_TEST_PORT;
+        String testUrl = "/test/";
+        String expectedResponse = "Valid GET Request to server";
+        if (meHelper.mAppName.equals("sdktest") || meHelper.mAppName.equals("automation-sdk-porttest")) {
+            testUrl = "/automation.html";
+            expectedResponse = "test server is running";
+            testConnectionPort = 8085;
+            tls = false;
+        }
+        String scheme = tls ? "https" : "http";
+        String appInstUrl = scheme+"://"+meHelper.mClosestCloudlet.getFqdn()+":"+testConnectionPort+testUrl;
+
+        return new ConnectionTester(appInstUrl, expectedResponse);
     }
 
     public void showGpsWarning() {
@@ -1575,6 +1608,9 @@ public class MainActivity extends AppCompatActivity
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
         String prefKeyLatencyMethod = getResources().getString(R.string.pref_latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
+        String prefKeyDrivingAnimDuration = getResources().getString(R.string.pref_driving_time_seekbar);
+        String prefKeyFlyingAnimDuration = getResources().getString(R.string.pref_flying_time_seekbar);
+
         if (key.equals(prefKeyLatencyMethod)) {
             String latencyTestMethod = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestMethod);
@@ -1604,6 +1640,16 @@ public class MainActivity extends AppCompatActivity
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numPackets);
             CloudletListHolder.getSingleton().setNumPackets(numPackets);
         }
+
+        if (key.equals(prefKeyDrivingAnimDuration)) {
+            mDrivingAnimDuration = 1000 * sharedPreferences.getInt(prefKeyDrivingAnimDuration, DEF_DRIVING_DURATION);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mDrivingAnimDuration);
+        }
+
+        if (key.equals(prefKeyFlyingAnimDuration)) {
+            mFlyingAnimDuration = 1000 * sharedPreferences.getInt(prefKeyFlyingAnimDuration, DEF_FLYING_DURATION);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mFlyingAnimDuration);
+        }
     }
 
     @Override
@@ -1624,6 +1670,7 @@ public class MainActivity extends AppCompatActivity
                     .setActivity(this)
                     .setMeHelperInterface(this)
                     .setView(mMapFragment.getView())
+                    .setTestPort(DEFAULT_SPEED_TEST_PORT)
                     .build();
         }
 
@@ -1757,4 +1804,3 @@ public class MainActivity extends AppCompatActivity
         }
     }
 }
-

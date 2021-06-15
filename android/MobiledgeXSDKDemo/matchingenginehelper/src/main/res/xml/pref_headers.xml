@@ -1,13 +1,13 @@
-<preference-headers xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <header
+    <Preference
         android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$MatchingEngineSettingsFragment"
         app:icon="@drawable/ic_baseline_my_location_24"
         android:title="@string/preference_matching_engine_settings"/>
-    <header
+    <Preference
         android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$GeneralSettingsFragment"
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="@string/preference_general_settings"/>
 
-</preference-headers>
+</PreferenceScreen>

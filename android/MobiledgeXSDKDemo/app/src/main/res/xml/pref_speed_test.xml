@@ -1,8 +1,6 @@
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
-         dismiss it. -->
-    <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
     <ListPreference
         android:defaultValue="10485760"
         android:entries="@array/pref_download_size_titles"
@@ -11,7 +9,8 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:summary="@string/pref_summary_download_size"
-        android:title="@string/pref_title_download_size" />
+        android:title="@string/pref_title_download_size"
+        app:iconSpaceReserved="false"/>
 
     <ListPreference
         android:defaultValue="5242880"
@@ -21,7 +20,8 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:summary="@string/pref_summary_upload_size"
-        android:title="@string/pref_title_upload_size" />
+        android:title="@string/pref_title_upload_size"
+        app:iconSpaceReserved="false"/>
 
     <ListPreference
         android:defaultValue="4"
@@ -31,7 +31,8 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:summary="@string/pref_summary_latency_packets"
-        android:title="@string/pref_title_latency_packets" />
+        android:title="@string/pref_title_latency_packets"
+        app:iconSpaceReserved="false"/>
 
     <ListPreference
         android:defaultValue="ping"
@@ -41,13 +42,14 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:summary="@string/pref_latency_method_summary"
-        android:title="@string/pref_latency_method_title" />
+        android:title="@string/pref_latency_method_title"
+        app:iconSpaceReserved="false"/>
 
     <SwitchPreference
         android:key="@string/pref_latency_autostart"
         android:title="@string/pref_latency_autostart_title"
         android:summary="@string/pref_latency_autostart_summary"
-        android:defaultValue="true" />
-
+        android:defaultValue="true"
+        app:iconSpaceReserved="false"/>
 
 </PreferenceScreen>

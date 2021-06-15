@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import android.location.Location;
 
 import distributed_match_engine.AppClient;
 
-    public interface MatchingEngineHelperInterface {
+public interface MatchingEngineHelperInterface {
     void onRegister();
     void onVerifyLocation(AppClient.VerifyLocationReply.GPSLocationStatus status, double gpsLocationAccuracyKM);
     void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet);
@@ -29,4 +29,5 @@ import distributed_match_engine.AppClient;
     void showMessage(String text);
     void showError(String text);
     void getCloudlets(boolean clearExisting);
+    ConnectionTester makeConnectionTester(boolean tls);
 }

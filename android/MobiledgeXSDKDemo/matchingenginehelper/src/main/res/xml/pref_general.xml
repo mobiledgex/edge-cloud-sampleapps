@@ -10,7 +10,8 @@
         android:disableDependentsState="true"
         android:key="@string/pref_default_dme_hostname"
         android:summary="@string/pref_summary_default_dme_hostname"
-        android:title="@string/pref_title_default_dme_hostname" />
+        android:title="@string/pref_title_default_dme_hostname"
+        app:iconSpaceReserved="false"/>
 
     <ListPreference
         android:dependency="@string/pref_default_dme_hostname"
@@ -21,14 +22,16 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:summary="@string/pref_summary_dme_hostname"
-        android:title="@string/pref_title_dme_hostname" />
+        android:title="@string/pref_title_dme_hostname"
+        app:iconSpaceReserved="false"/>
 
     <CheckBoxPreference
         android:defaultValue="true"
         android:disableDependentsState="true"
         android:key="@string/pref_default_operator_name"
         android:summary="@string/pref_summary_default_operator_name"
-        android:title="@string/pref_title_default_operator_name" />
+        android:title="@string/pref_title_default_operator_name"
+        app:iconSpaceReserved="false"/>
 
     <EditTextPreference
         android:dependency="@string/pref_default_operator_name"
@@ -37,14 +40,16 @@
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:summary="@string/pref_summary_operator_name"
-        android:title="@string/pref_title_operator_name" />
+        android:title="@string/pref_title_operator_name"
+        app:iconSpaceReserved="false"/>
 
     <CheckBoxPreference
         android:defaultValue="true"
         android:disableDependentsState="true"
         android:key="@string/pref_default_app_definition"
         android:summary="@string/pref_summary_default_app_definition"
-        android:title="@string/pref_title_default_app_definition" />
+        android:title="@string/pref_title_default_app_definition"
+        app:iconSpaceReserved="false"/>
 
     <EditTextPreference
         android:dependency="@string/pref_default_app_definition"
@@ -52,7 +57,8 @@
         android:key="@string/pref_app_name"
         android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:title="@string/pref_title_app_name" />
+        android:title="@string/pref_title_app_name"
+        app:iconSpaceReserved="false"/>
 
     <EditTextPreference
         android:dependency="@string/pref_default_app_definition"
@@ -60,7 +66,8 @@
         android:key="@string/pref_app_version"
         android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:title="@string/pref_title_app_version" />
+        android:title="@string/pref_title_app_version"
+        app:iconSpaceReserved="false"/>
 
     <EditTextPreference
         android:dependency="@string/pref_default_app_definition"
@@ -68,6 +75,7 @@
         android:key="@string/pref_org_name"
         android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:title="@string/pref_title_org_name" />
+        android:title="@string/pref_title_org_name"
+        app:iconSpaceReserved="false"/>
 
 </PreferenceScreen>

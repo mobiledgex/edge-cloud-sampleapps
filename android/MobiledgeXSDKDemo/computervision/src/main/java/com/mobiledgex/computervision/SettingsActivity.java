@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,249 +17,111 @@
 
 package com.mobiledgex.computervision;
 
-import android.annotation.TargetApi;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import androidx.appcompat.app.ActionBar;
-
-import android.preference.PreferenceScreen;
 import android.util.Log;
-import android.view.MenuItem;
-import android.widget.Toast;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_CARRIER_NAME;
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_DME_HOSTNAME;
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
-
-/**
- * A {@link PreferenceActivity} that presents a set of application settings. On
- * handset devices, settings are presented as a single list. On tablets,
- * settings are split by category, with category headers shown to the left of
- * the list of settings.
- * <p>
- * See <a href="http://developer.android.com/design/patterns/settings.html">
- * Android Design: Settings</a> for design guidelines and the <a
- * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
- * API Guide</a> for more information on developing a Settings UI.
- */
-public class SettingsActivity extends AppCompatPreferenceActivity {
+public class SettingsActivity extends AppCompatActivity implements
+        PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
     private static final String TAG = "CV/SettingsActivity";
-    /**
-     * A preference value change listener that updates the preference's summary
-     * to reflect its new value.
-     */
-    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
-            String stringValue = value.toString();
-
-            if (preference instanceof ListPreference) {
-                // For list preferences, look up the correct display value in
-                // the preference's 'entries' list.
-                ListPreference listPreference = (ListPreference) preference;
-                int index = listPreference.findIndexOfValue(stringValue);
-
-                // Set the summary to reflect the new value.
-                preference.setSummary(
-                        index >= 0
-                                ? listPreference.getEntries()[index]
-                                : null);
-            } else {
-                // For all other preferences, set the summary to the value's
-                // simple string representation.
-                preference.setSummary(stringValue);
-            }
-            return true;
-        }
-    };
-
-    /**
-     * Helper method to determine if the device has an extra-large screen. For
-     * example, 10" tablets are extra-large.
-     */
-    private static boolean isXLargeTablet(Context context) {
-        return (context.getResources().getConfiguration().screenLayout
-                & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE;
-    }
-
-    /**
-     * Binds a preference's summary to its value. More specifically, when the
-     * preference's value is changed, its summary (line of text below the
-     * preference title) is updated to reflect the value. The summary is also
-     * immediately updated upon calling this method. The exact display format is
-     * dependent on the type of preference.
-     *
-     * @see #sBindPreferenceSummaryToValueListener
-     */
-    private static void bindPreferenceSummaryToValue(Preference preference) {
-        // Set the listener to watch for value changes.
-        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-
-        // Trigger the listener immediately with the preference's
-        // current value.
-        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
-    }
+    private static final String TITLE_TAG = "settingsActivityTitle";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setupActionBar();
-    }
-
-    /**
-     * Set up the {@link android.app.ActionBar}, if the API is available.
-     */
-    private void setupActionBar() {
+        setContentView(R.layout.settings_activity);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.settings, new HeaderFragment())
+                    .commit();
+        } else {
+            setTitle(savedInstanceState.getCharSequence(TITLE_TAG));
+        }
+        getSupportFragmentManager().addOnBackStackChangedListener(
+                new FragmentManager.OnBackStackChangedListener() {
+                    @Override
+                    public void onBackStackChanged() {
+                        if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                            setTitle(R.string.pref_cv_settings);
+                        }
+                    }
+                });
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            // Show the Up button in the action bar.
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
     }
 
-    /**
-     * This is needed for the Back Arrow button to work on Android version 6.
-     * @param item
-     * @return
-     */
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Save current activity title so we can set it again after a configuration change
+        outState.putCharSequence(TITLE_TAG, getTitle());
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        Log.i(TAG, "onSupportNavigateUp "+getTitle());
+        if (getTitle().equals(getResources().getString(R.string.pref_cv_settings))) {
             finish();
+        }
+        if (getSupportFragmentManager().popBackStackImmediate()) {
             return true;
         }
-        return super.onOptionsItemSelected(item);
+        return super.onSupportNavigateUp();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public boolean onIsMultiPane() {
-        return isXLargeTablet(this);
+    public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+        // Instantiate the new Fragment
+        final Bundle args = pref.getExtras();
+        final Fragment fragment = getSupportFragmentManager().getFragmentFactory().instantiate(
+                getClassLoader(),
+                pref.getFragment());
+        fragment.setArguments(args);
+        fragment.setTargetFragment(caller, 0);
+        // Replace the existing Fragment with the new Fragment
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.settings, fragment)
+                .addToBackStack(null)
+                .commit();
+        setTitle(pref.getTitle());
+        return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public void onBuildHeaders(List<Header> target) {
-        loadHeadersFromResource(R.xml.pref_headers, target);
-    }
-
-    /**
-     * This method stops fragment injection in malicious applications.
-     * Make sure to deny any unknown fragments here.
-     */
-    protected boolean isValidFragment(String fragmentName) {
-        Log.i(TAG, "isValidFragment("+fragmentName+")");
-        return PreferenceFragment.class.getName().equals(fragmentName)
-                || ComputerVisionSettingsFragment.class.getName().equals(fragmentName);
-    }
-
-    // Face Detection Preferences.
-    public static class ComputerVisionSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
-
-        private String prefKeyResetCvHosts;
-        private String prefKeyHostCloudOverride;
-        private String prefKeyHostCloud;
-        private String prefKeyHostEdgeOverride;
-        private String prefKeyHostEdge;
-        private String prefKeyHostGpuOverride;
-        private String prefKeyHostGpu;
-
+    public static class HeaderFragment extends PreferenceFragmentCompat {
         @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_face_detection);
-            setHasOptionsMenu(true);
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            prefs.registerOnSharedPreferenceChangeListener(this);
-
-            prefKeyResetCvHosts = getResources().getString(R.string.pref_cv_reset_all_hosts);
-            prefKeyHostCloudOverride = getResources().getString(R.string.pref_override_cloud_cloudlet_hostname);
-            prefKeyHostCloud = getResources().getString(R.string.pref_cv_host_cloud);
-            prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
-            prefKeyHostEdge = getResources().getString(R.string.pref_cv_host_edge);
-            prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
-            prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
-
-            bindPreferenceSummaryToValue(findPreference(prefKeyHostCloud));
-            bindPreferenceSummaryToValue(findPreference(prefKeyHostEdge));
-            bindPreferenceSummaryToValue(findPreference(prefKeyHostGpu));
-        }
-
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
-            }
-            return super.onOptionsItemSelected(item);
-        }
-
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            Log.i(TAG, "onSharedPreferenceChanged("+key+")");
-
-            if(key.equals(prefKeyResetCvHosts)) {
-                String value = sharedPreferences.getString(prefKeyResetCvHosts, "No");
-                Log.i(TAG, prefKeyResetCvHosts+" "+value);
-                if(value.startsWith("Yes")) {
-                    Log.i(TAG, "Resetting Computer Vision server hosts.");
-                    sharedPreferences.edit().putString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER)
-                        .putString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER)
-                        .putString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER)
-                        .putBoolean(prefKeyHostCloudOverride, false)
-                        .putBoolean(prefKeyHostEdgeOverride, false)
-                        .putBoolean(prefKeyHostGpuOverride, false).apply();
-                    Toast.makeText(getContext(), "Computer Vision hosts reset to default.", Toast.LENGTH_SHORT).show();
-                }
-                //Always set the value back to something so that either clicking Yes or No in the dialog
-                //will activate this "changed" call.
-                sharedPreferences.edit().putString(prefKeyResetCvHosts, "XXX_garbage_value").apply();
-
-                // Reinitialize this screen of preferences, since values may have changed.
-                // If an NPE occurs because the PreferenceManager has gone away,
-                // there's no need for any action. Just don't crash the app.
-                try {
-                    getPreferenceScreen().removeAll();
-                    addPreferencesFromResource(R.xml.pref_face_detection);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_cv_headers, rootKey);
         }
     }
 
+    public static class NetworkFragment extends PreferenceFragmentCompat {
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_network, rootKey);
+        }
+    }
+
+    public static class UiFragment extends PreferenceFragmentCompat {
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_ui, rootKey);
+        }
+    }
+
+    public static class OverridesFragment extends PreferenceFragmentCompat {
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_overrides, rootKey);
+        }
+    }
 }

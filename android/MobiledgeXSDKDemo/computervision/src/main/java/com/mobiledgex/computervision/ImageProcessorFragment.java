@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2020 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -58,6 +57,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.mobiledgex.matchingenginehelper.ConnectionTester;
 import com.mobiledgex.matchingenginehelper.EventLogViewer;
 import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 import com.mobiledgex.matchingenginehelper.MatchingEngineHelperInterface;
@@ -98,14 +98,14 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     protected Menu mOptionsMenu;
     private TextView mLatencyFullTitle;
     private TextView mLatencyNetTitle;
-    protected TextView mCloudLatency;
-    protected TextView mEdgeLatency;
-    protected TextView mCloudLatency2;
-    protected TextView mEdgeLatency2;
-    protected TextView mCloudStd;
-    protected TextView mEdgeStd;
-    protected TextView mCloudStd2;
-    protected TextView mEdgeStd2;
+    protected TextView mCloudLatencyFull;
+    protected TextView mEdgeLatencyFull;
+    protected TextView mCloudLatencyNet;
+    protected TextView mEdgeLatencyNet;
+    protected TextView mCloudStdFull;
+    protected TextView mEdgeStdFull;
+    protected TextView mCloudStdNet;
+    protected TextView mEdgeStdNet;
     protected TextView mStatusText;
     private TextView mProgressText;
     private ProgressBar mProgressBarTraining;
@@ -134,8 +134,8 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
     protected static final int PERSISTENT_TCP_PORT = 8011;
-    private boolean mTlsEdge = true;
-    private boolean mTlsCloud = true;
+    protected boolean mTlsEdge = true;
+    protected boolean mTlsCloud = true;
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
 
     private String mDefaultHostCloud;
@@ -269,7 +269,18 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
 
     @Override
     public void getCloudlets(boolean clearExisting) {
+        // Not used for this non-map activity.
+    }
 
+    @Override
+    public ConnectionTester makeConnectionTester(boolean tls) {
+        int testConnectionPort = FACE_DETECTION_HOST_PORT;
+        String testUrl = "/test/";
+        String expectedResponse = "Valid GET Request to server";
+        String scheme = tls ? "https" : "http";
+        String appInstUrl = scheme+"://"+meHelper.mClosestCloudlet.getFqdn()+":"+testConnectionPort+testUrl;
+
+        return new ConnectionTester(appInstUrl, expectedResponse);
     }
 
     @Override
@@ -491,12 +502,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             public void run() {
                 switch(cloudletType) {
                     case EDGE:
-                        mEdgeLatency.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
-                        mEdgeStd.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mEdgeLatencyFull.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
+                        mEdgeStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
                     case CLOUD:
-                        mCloudLatency.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
-                        mCloudStd.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mCloudLatencyFull.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
+                        mCloudStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
                     default:
                         break;
@@ -529,12 +540,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             public void run() {
                 switch(cloudletType) {
                     case EDGE:
-                        mEdgeLatency2.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
-                        mEdgeStd2.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mEdgeLatencyNet.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
+                        mEdgeStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
                     case CLOUD:
-                        mCloudLatency2.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
-                        mCloudStd2.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mCloudLatencyNet.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
+                        mCloudStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
                         break;
                     default:
                         break;
@@ -623,8 +634,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
 
         if (id == R.id.action_camera_settings) {
             Intent intent = new Intent(getContext(), SettingsActivity.class);
-            intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.ComputerVisionSettingsFragment.class.getName() );
-            intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
             startActivity(intent);
             return true;
         }
@@ -739,10 +748,10 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             mCameraToolbar.setVisibility(View.GONE);
             if (mImageSenderCloud != null) {
                 mImageSenderCloud.setInactiveBenchmark(true);
-                mCloudLatency.setVisibility(View.GONE);
-                mCloudLatency2.setVisibility(View.GONE);
-                mCloudStd.setVisibility(View.GONE);
-                mCloudStd2.setVisibility(View.GONE);
+                mCloudLatencyFull.setVisibility(View.GONE);
+                mCloudLatencyNet.setVisibility(View.GONE);
+                mCloudStdFull.setVisibility(View.GONE);
+                mCloudStdNet.setVisibility(View.GONE);
             }
             mCamera2BasicFragment.startVideo(mVideoFilename, false);
             mCamera2BasicFragment.runBenchmark(getContext(), "Edge");
@@ -753,10 +762,10 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             mCameraToolbar.setVisibility(View.GONE);
             if (mImageSenderEdge != null) {
                 mImageSenderEdge.setInactiveBenchmark(true);
-                mEdgeLatency.setVisibility(View.GONE);
-                mEdgeLatency2.setVisibility(View.GONE);
-                mEdgeStd.setVisibility(View.GONE);
-                mEdgeStd2.setVisibility(View.GONE);
+                mEdgeLatencyFull.setVisibility(View.GONE);
+                mEdgeLatencyNet.setVisibility(View.GONE);
+                mEdgeStdFull.setVisibility(View.GONE);
+                mEdgeStdNet.setVisibility(View.GONE);
             }
             mCamera2BasicFragment.startVideo(mVideoFilename, false);
             mCamera2BasicFragment.runBenchmark(getContext(), "Cloud");
@@ -918,12 +927,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
         }
-        if (key.equals(prefKeyLegacyCamera) || key.equals("ALL")) {
-            prefLegacyCamera = sharedPreferences.getBoolean(prefKeyLegacyCamera, true);
-            if(mCamera2BasicFragment != null) {
-                mCamera2BasicFragment.setLegacyCamera(prefLegacyCamera);
-            }
-        }
         if (key.equals(prefKeyShowFullLatency) || key.equals("ALL")) {
             prefShowFullLatency = sharedPreferences.getBoolean(prefKeyShowFullLatency, true);
         }
@@ -981,22 +984,22 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         FrameLayout frameLayout = view.findViewById(R.id.container);
         mLatencyFullTitle = view.findViewById(R.id.network_latency);
         mLatencyNetTitle = view.findViewById(R.id.latency_title2);
-        mCloudLatency = view.findViewById(R.id.cloud_latency);
-        mCloudLatency2 = view.findViewById(R.id.cloud_latency2);
-        mCloudLatency.setTextColor(Color.RED);
-        mCloudLatency2.setTextColor(Color.RED);
-        mEdgeLatency = view.findViewById(R.id.edge_latency);
-        mEdgeLatency2 = view.findViewById(R.id.edge_latency2);
-        mEdgeLatency.setTextColor(Color.GREEN);
-        mEdgeLatency2.setTextColor(Color.GREEN);
-        mCloudStd = view.findViewById(R.id.cloud_std_dev);
-        mCloudStd.setTextColor(Color.RED);
-        mEdgeStd = view.findViewById(R.id.edge_std_dev);
-        mEdgeStd.setTextColor(Color.GREEN);
-        mCloudStd2 = view.findViewById(R.id.cloud_std_dev2);
-        mCloudStd2.setTextColor(Color.RED);
-        mEdgeStd2 = view.findViewById(R.id.edge_std_dev2);
-        mEdgeStd2.setTextColor(Color.GREEN);
+        mCloudLatencyFull = view.findViewById(R.id.cloud_latency);
+        mCloudLatencyNet = view.findViewById(R.id.cloud_latency2);
+        mCloudLatencyFull.setTextColor(Color.RED);
+        mCloudLatencyNet.setTextColor(Color.RED);
+        mEdgeLatencyFull = view.findViewById(R.id.edge_latency);
+        mEdgeLatencyNet = view.findViewById(R.id.edge_latency2);
+        mEdgeLatencyFull.setTextColor(Color.GREEN);
+        mEdgeLatencyNet.setTextColor(Color.GREEN);
+        mCloudStdFull = view.findViewById(R.id.cloud_std_dev);
+        mCloudStdFull.setTextColor(Color.RED);
+        mEdgeStdFull = view.findViewById(R.id.edge_std_dev);
+        mEdgeStdFull.setTextColor(Color.GREEN);
+        mCloudStdNet = view.findViewById(R.id.cloud_std_dev2);
+        mCloudStdNet.setTextColor(Color.RED);
+        mEdgeStdNet = view.findViewById(R.id.edge_std_dev2);
+        mEdgeStdNet.setTextColor(Color.GREEN);
 
         mCloudFaceBoxRenderer = view.findViewById(R.id.cloudFaceBoxRender);
         mCloudFaceBoxRenderer.setColor(Color.RED);
@@ -1060,6 +1063,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setActivity(getActivity())
                 .setMeHelperInterface(this)
                 .setView(frameLayout)
+                .setTestPort(FACE_DETECTION_HOST_PORT)
                 .build();
 
         getProvisioningData();
@@ -1237,57 +1241,57 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             if (mImageSenderCloud != null) {
                 mImageSenderCloud.setInactive(false);
             }
-            mCloudLatency.setVisibility(View.VISIBLE);
-            mCloudLatency2.setVisibility(View.VISIBLE);
-            mCloudStd.setVisibility(View.VISIBLE);
-            mCloudStd2.setVisibility(View.VISIBLE);
+            mCloudLatencyFull.setVisibility(View.VISIBLE);
+            mCloudLatencyNet.setVisibility(View.VISIBLE);
+            mCloudStdFull.setVisibility(View.VISIBLE);
+            mCloudStdNet.setVisibility(View.VISIBLE);
         } else {
             if (mImageSenderCloud != null) {
                 mImageSenderCloud.setInactive(true);
             }
-            mCloudLatency.setVisibility(View.GONE);
-            mCloudLatency2.setVisibility(View.GONE);
-            mCloudStd.setVisibility(View.GONE);
-            mCloudStd2.setVisibility(View.GONE);
+            mCloudLatencyFull.setVisibility(View.GONE);
+            mCloudLatencyNet.setVisibility(View.GONE);
+            mCloudStdFull.setVisibility(View.GONE);
+            mCloudStdNet.setVisibility(View.GONE);
         }
         if(prefShowStdDev) {
-            mEdgeStd.setVisibility(View.VISIBLE);
-            mEdgeStd2.setVisibility(View.VISIBLE);
+            mEdgeStdFull.setVisibility(View.VISIBLE);
+            mEdgeStdNet.setVisibility(View.VISIBLE);
             if (prefShowCloudOutput) {
-                mCloudStd.setVisibility(View.VISIBLE);
-                mCloudStd2.setVisibility(View.VISIBLE);
+                mCloudStdFull.setVisibility(View.VISIBLE);
+                mCloudStdNet.setVisibility(View.VISIBLE);
             }
         } else {
-            mEdgeStd.setVisibility(View.GONE);
-            mEdgeStd2.setVisibility(View.GONE);
-            mCloudStd.setVisibility(View.GONE);
-            mCloudStd2.setVisibility(View.GONE);
+            mEdgeStdFull.setVisibility(View.GONE);
+            mEdgeStdNet.setVisibility(View.GONE);
+            mCloudStdFull.setVisibility(View.GONE);
+            mCloudStdNet.setVisibility(View.GONE);
         }
         if(prefShowFullLatency) {
             mLatencyFullTitle.setVisibility(View.VISIBLE);
-            mEdgeLatency.setVisibility(View.VISIBLE);
+            mEdgeLatencyFull.setVisibility(View.VISIBLE);
             if (prefShowCloudOutput) {
-                mCloudLatency.setVisibility(View.VISIBLE);
+                mCloudLatencyFull.setVisibility(View.VISIBLE);
             }
         } else {
             mLatencyFullTitle.setVisibility(View.GONE);
-            mEdgeLatency.setVisibility(View.GONE);
-            mEdgeStd.setVisibility(View.GONE);
-            mCloudLatency.setVisibility(View.GONE);
-            mCloudStd.setVisibility(View.GONE);
+            mEdgeLatencyFull.setVisibility(View.GONE);
+            mEdgeStdFull.setVisibility(View.GONE);
+            mCloudLatencyFull.setVisibility(View.GONE);
+            mCloudStdFull.setVisibility(View.GONE);
         }
         if(prefShowNetLatency) {
             mLatencyNetTitle.setVisibility(View.VISIBLE);
-            mEdgeLatency2.setVisibility(View.VISIBLE);
+            mEdgeLatencyNet.setVisibility(View.VISIBLE);
             if (prefShowCloudOutput) {
-                mCloudLatency2.setVisibility(View.VISIBLE);
+                mCloudLatencyNet.setVisibility(View.VISIBLE);
             }
         } else {
             mLatencyNetTitle.setVisibility(View.GONE);
-            mEdgeLatency2.setVisibility(View.GONE);
-            mEdgeStd2.setVisibility(View.GONE);
-            mCloudLatency2.setVisibility(View.GONE);
-            mCloudStd2.setVisibility(View.GONE);
+            mEdgeLatencyNet.setVisibility(View.GONE);
+            mEdgeStdNet.setVisibility(View.GONE);
+            mCloudLatencyNet.setVisibility(View.GONE);
+            mCloudStdNet.setVisibility(View.GONE);
         }
     }
 
