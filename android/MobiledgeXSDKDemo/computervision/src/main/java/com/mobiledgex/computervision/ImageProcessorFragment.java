@@ -154,6 +154,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
 
     protected boolean mGpuHostNameOverride = false;
     protected boolean mEdgeHostNameOverride = false;
+    protected boolean mEdgeHostNameTls = false;
     private boolean mCloudHostNameOverride = false;
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
@@ -328,11 +329,15 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         }
         Log.i(TAG, message);
         showMessage(message);
+        boolean tls = mTlsEdge;
+        if (mEdgeHostNameOverride) {
+            tls = mEdgeHostNameTls;
+        }
         mImageSenderEdge = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.EDGE)
-                .setTls(mTlsEdge)
+                .setTls(tls)
                 .setHost(mHostDetectionEdge)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
@@ -858,6 +863,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         String prefKeyHostCloud = getResources().getString(R.string.pref_cv_host_cloud);
         String prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
         String prefKeyHostEdge = getResources().getString(R.string.pref_cv_host_edge);
+        String prefKeyHostEdgeTls = getResources().getString(R.string.pref_cv_host_edge_tls);
         String prefKeyHostTraining = getResources().getString(R.string.pref_cv_host_training);
 
         // Cloud Hostname handling
@@ -883,10 +889,16 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
                 Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
             }
+            mEdgeHostNameTls = sharedPreferences.getBoolean(prefKeyHostEdgeTls, false);
+            Log.i(TAG, "prefKeyHostEdgeTls="+prefKeyHostEdgeTls+" mEdgeHostNameTls="+ mEdgeHostNameTls);
         }
         if (key.equals(prefKeyHostEdge) || key.equals("ALL")) {
             mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
             Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
+        }
+        if (key.equals(prefKeyHostEdgeTls) || key.equals("ALL")) {
+            mEdgeHostNameTls = sharedPreferences.getBoolean(prefKeyHostEdgeTls, false);
+            Log.i(TAG, "prefKeyHostEdgeTls="+prefKeyHostEdgeTls+" mEdgeHostNameTls="+ mEdgeHostNameTls);
         }
         if (key.equals(prefKeyHostEdge) || key.equals(prefKeyHostEdgeOverride)) {
             if (mEdgeHostNameOverride) {
