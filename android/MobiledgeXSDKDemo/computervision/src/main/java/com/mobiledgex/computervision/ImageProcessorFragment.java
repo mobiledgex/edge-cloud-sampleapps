@@ -91,6 +91,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     private static final String TAG = "ImageProcessorFragment";
     public static final String EXTRA_FACE_STROKE_WIDTH = "EXTRA_FACE_STROKE_WIDTH";
     private static final String VIDEO_FILE_NAME = "Jason.mp4";
+    public static final String ALL_PREFS = "ALL";
 
     protected MatchingEngineHelper meHelper;
 
@@ -154,6 +155,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
 
     protected boolean mGpuHostNameOverride = false;
     protected boolean mEdgeHostNameOverride = false;
+    protected boolean mEdgeHostNameTls = false;
     private boolean mCloudHostNameOverride = false;
 
     public static final String EXTRA_FACE_RECOGNITION = "EXTRA_FACE_RECOGNITION";
@@ -328,11 +330,15 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         }
         Log.i(TAG, message);
         showMessage(message);
+        boolean tls = mTlsEdge;
+        if (mEdgeHostNameOverride) {
+            tls = mEdgeHostNameTls;
+        }
         mImageSenderEdge = new ImageSender.Builder()
                 .setActivity(getActivity())
                 .setImageServerInterface(this)
                 .setCloudLetType(CloudletType.EDGE)
-                .setTls(mTlsEdge)
+                .setTls(tls)
                 .setHost(mHostDetectionEdge)
                 .setPort(FACE_DETECTION_HOST_PORT)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
@@ -858,10 +864,11 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         String prefKeyHostCloud = getResources().getString(R.string.pref_cv_host_cloud);
         String prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
         String prefKeyHostEdge = getResources().getString(R.string.pref_cv_host_edge);
+        String prefKeyHostEdgeTls = getResources().getString(R.string.pref_cv_host_edge_tls);
         String prefKeyHostTraining = getResources().getString(R.string.pref_cv_host_training);
 
         // Cloud Hostname handling
-        if (key.equals(prefKeyHostCloudOverride) || key.equals("ALL")) {
+        if (key.equals(prefKeyHostCloudOverride) || key.equals(ALL_PREFS)) {
             mCloudHostNameOverride = sharedPreferences.getBoolean(prefKeyHostCloudOverride, false);
             Log.i(TAG, "key="+key+" mCloudHostNameOverride="+ mCloudHostNameOverride);
             if (mCloudHostNameOverride) {
@@ -870,23 +877,29 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 Log.i(TAG, "key="+key+" mHostDetectionCloud="+ mHostDetectionCloud);
             }
         }
-        if (key.equals(prefKeyHostCloud) || key.equals("ALL")) {
+        if (key.equals(prefKeyHostCloud) || key.equals(ALL_PREFS)) {
             mHostDetectionCloud = sharedPreferences.getString(prefKeyHostCloud, DEF_HOSTNAME_PLACEHOLDER);
             Log.i(TAG, "prefKeyHostCloud="+prefKeyHostCloud+" mHostDetectionCloud="+ mHostDetectionCloud);
         }
 
         // Edge Hostname handling
-        if (key.equals(prefKeyHostEdgeOverride) || key.equals("ALL")) {
+        if (key.equals(prefKeyHostEdgeOverride) || key.equals(ALL_PREFS)) {
             mEdgeHostNameOverride = sharedPreferences.getBoolean(prefKeyHostEdgeOverride, false);
             Log.i(TAG, "key="+key+" mEdgeHostNameOverride="+ mEdgeHostNameOverride);
             if (mEdgeHostNameOverride) {
                 mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
                 Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
             }
+            mEdgeHostNameTls = sharedPreferences.getBoolean(prefKeyHostEdgeTls, false);
+            Log.i(TAG, "prefKeyHostEdgeTls="+prefKeyHostEdgeTls+" mEdgeHostNameTls="+ mEdgeHostNameTls);
         }
-        if (key.equals(prefKeyHostEdge) || key.equals("ALL")) {
+        if (key.equals(prefKeyHostEdge) || key.equals(ALL_PREFS)) {
             mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
             Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
+        }
+        if (key.equals(prefKeyHostEdgeTls) || key.equals(ALL_PREFS)) {
+            mEdgeHostNameTls = sharedPreferences.getBoolean(prefKeyHostEdgeTls, false);
+            Log.i(TAG, "prefKeyHostEdgeTls="+prefKeyHostEdgeTls+" mEdgeHostNameTls="+ mEdgeHostNameTls);
         }
         if (key.equals(prefKeyHostEdge) || key.equals(prefKeyHostEdgeOverride)) {
             if (mEdgeHostNameOverride) {
@@ -898,18 +911,18 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             }
         }
 
-        if (key.equals(prefKeyHostTraining) || key.equals("ALL")) {
+        if (key.equals(prefKeyHostTraining) || key.equals(ALL_PREFS)) {
             mHostTraining = sharedPreferences.getString(prefKeyHostTraining, DEF_FACE_HOST_TRAINING);
             Log.i(TAG, "prefKeyHostTraining="+prefKeyHostTraining+" mHostTraining="+mHostTraining);
         }
 
-        if (key.equals(prefKeyFrontCamera) || key.equals("ALL")) {
+        if (key.equals(prefKeyFrontCamera) || key.equals(ALL_PREFS)) {
             if(mCamera2BasicFragment != null) {
                 prefCameraLensFacingDirection = sharedPreferences.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT);
                 mCamera2BasicFragment.setCameraLensFacingDirection(prefCameraLensFacingDirection);
             }
         }
-        if (key.equals(prefKeyLatencyMethod) || key.equals("ALL")) {
+        if (key.equals(prefKeyLatencyMethod) || key.equals(ALL_PREFS)) {
             String latencyTestMethodString = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
             Log.i(TAG, "latencyTestMethod=" + latencyTestMethodString+" mImageSenderCloud="+mImageSenderCloud);
             if(mImageSenderCloud != null) {
@@ -919,30 +932,30 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 mImageSenderEdge.setLatencyTestMethod(ImageSender.LatencyTestMethod.valueOf(latencyTestMethodString));
             }
         }
-        if (key.equals(prefKeyConnectionMode) || key.equals("ALL")) {
+        if (key.equals(prefKeyConnectionMode) || key.equals(ALL_PREFS)) {
             String connectionModeString = sharedPreferences.getString(prefKeyConnectionMode, defaultConnectionMode);
             Log.i(TAG, "connectionMode=" + connectionModeString+" mImageSenderEdge="+mImageSenderEdge+" mImageSenderCloud="+mImageSenderCloud);
             ImageSender.setPreferencesConnectionMode(ImageSender.ConnectionMode.valueOf(connectionModeString), mImageSenderEdge, mImageSenderCloud);
         }
-        if (key.equals(prefKeyMultiFace) || key.equals("ALL")) {
+        if (key.equals(prefKeyMultiFace) || key.equals(ALL_PREFS)) {
             prefMultiFace = sharedPreferences.getBoolean(prefKeyMultiFace, true);
         }
-        if (key.equals(prefKeyShowFullLatency) || key.equals("ALL")) {
+        if (key.equals(prefKeyShowFullLatency) || key.equals(ALL_PREFS)) {
             prefShowFullLatency = sharedPreferences.getBoolean(prefKeyShowFullLatency, true);
         }
-        if (key.equals(prefKeyShowNetLatency) || key.equals("ALL")) {
+        if (key.equals(prefKeyShowNetLatency) || key.equals(ALL_PREFS)) {
             prefShowNetLatency = sharedPreferences.getBoolean(prefKeyShowNetLatency, true);
         }
-        if (key.equals(prefKeyShowStdDev) || key.equals("ALL")) {
+        if (key.equals(prefKeyShowStdDev) || key.equals(ALL_PREFS)) {
             prefShowStdDev = sharedPreferences.getBoolean(prefKeyShowStdDev, false);
         }
-        if (key.equals(prefKeyUseRollingAvg) || key.equals("ALL")) {
+        if (key.equals(prefKeyUseRollingAvg) || key.equals(ALL_PREFS)) {
             prefUseRollingAvg = sharedPreferences.getBoolean(prefKeyUseRollingAvg, false);
         }
-        if (key.equals(prefKeyAutoFailover) || key.equals("ALL")) {
+        if (key.equals(prefKeyAutoFailover) || key.equals(ALL_PREFS)) {
             prefAutoFailover = sharedPreferences.getBoolean(prefKeyAutoFailover, true);
         }
-        if (key.equals(prefKeyShowCloudOutput) || key.equals("ALL")) {
+        if (key.equals(prefKeyShowCloudOutput) || key.equals(ALL_PREFS)) {
             prefShowCloudOutput = sharedPreferences.getBoolean(prefKeyShowCloudOutput, true);
         }
 
@@ -1037,7 +1050,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         prefs.registerOnSharedPreferenceChangeListener(this);
         // Get preferences for everything we've instantiated so far.
-        onSharedPreferenceChanged(prefs, "ALL");
+        onSharedPreferenceChanged(prefs, ALL_PREFS);
 
         Intent intent = getActivity().getIntent();
         getCommonIntentExtras(intent);
@@ -1216,7 +1229,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
 
         //One more call to get preferences for ImageSenders
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        onSharedPreferenceChanged(prefs, "ALL");
+        onSharedPreferenceChanged(prefs, ALL_PREFS);
     }
 
     protected void getCommonIntentExtras(Intent intent) {
