@@ -464,10 +464,9 @@ public class ImageSender {
             mSocketClientTcp.send(mOpcode, bytes);
 
         } else if(mConnectionMode == ConnectionMode.REST) {
-            final String requestBody = Base64.encodeToString(bytes, Base64.DEFAULT);
             mScheme =  mTls ? "https" : "http";
             String url = mScheme+"://"+ mHost +":"+mPort + mDjangoUrl;
-            Log.i(TAG, "url="+url+" length: "+requestBody.length());
+            Log.i(TAG, "url="+url+" length: "+bytes.length);
 
             // Request a byte response from the provided URL.
             mStringRequestMain = new StringRequest(Request.Method.POST, url,
@@ -491,9 +490,21 @@ public class ImageSender {
             }) {
 
                 @Override
+                public byte[] getBody() {
+                    // Return the raw JPEG image bytes as the body.
+                    return bytes;
+                }
+
+                @Override
+                public Map getHeaders() {
+                    Map headers = new HashMap();
+                    headers.put("Content-Type", "image/jpeg");
+                    return headers;
+                }
+
+                @Override
                 protected Map<String, String> getParams() {
                     Map<String, String> params = getUserParams();
-                    params.put("image", requestBody);
                     return params;
                 }
             };
