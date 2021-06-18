@@ -288,7 +288,7 @@ public class MainActivity extends AppCompatActivity
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "ComputerVision";
         orgName = "MobiledgeX-Samples";
-        carrierName = "Magenta";
+        carrierName = "TDG";
         appVersion = "2.2";
 
         //NOTICE: A real app would request permission to enable this.
