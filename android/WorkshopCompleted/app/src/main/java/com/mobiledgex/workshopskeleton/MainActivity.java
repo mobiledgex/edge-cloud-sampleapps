@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2019-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -288,7 +288,7 @@ public class MainActivity extends AppCompatActivity
         // an existing app so we don't have to create new app provisioning data for this workshop.
         appName = "ComputerVision";
         orgName = "MobiledgeX-Samples";
-        carrierName = "TDG";
+        carrierName = "Magenta";
         appVersion = "2.2";
 
         //NOTICE: A real app would request permission to enable this.
@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest;
         registerClientRequest = matchingEngine.createDefaultRegisterClientRequest(ctx, orgName)
-                .setAppName(appName).setAppVers(appVersion).build();
+                .setAppName(appName).setAppVers(appVersion).setCarrierName(carrierName).build();
         Log.i(TAG, "registerClientRequest: host="+host+" port="+port
                 +" getAppName()="+registerClientRequest.getAppName()
                 +" getAppVers()="+registerClientRequest.getAppVers()
@@ -347,7 +347,8 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
         AppClient.FindCloudletRequest findCloudletRequest;
-        findCloudletRequest = matchingEngine.createDefaultFindCloudletRequest(ctx, location).build();
+        findCloudletRequest = matchingEngine.createDefaultFindCloudletRequest(ctx, location)
+                .setCarrierName(carrierName).build();
         mClosestCloudlet = matchingEngine.findCloudlet(findCloudletRequest, host, port, 10000);
         ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -376,7 +377,7 @@ public class MainActivity extends AppCompatActivity
 
         // Extract cloudlet name from FQDN
         String[] parts = mClosestCloudlet.getFqdn().split("\\.");
-        cloudletNameTvStr = parts[0];
+        cloudletNameTvStr = parts[1];
 
         //Find FqdnPrefix from Port structure.
         String FqdnPrefix = "";
