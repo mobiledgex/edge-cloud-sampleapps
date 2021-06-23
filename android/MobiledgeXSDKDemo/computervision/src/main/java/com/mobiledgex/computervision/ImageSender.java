@@ -23,7 +23,6 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Base64;
 import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -570,9 +569,9 @@ public class ImageSender {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        mLatencyFullProcessRollingAvg.add(latency);
+        mLatencyFullProcessRollingAvg.add(latency / 1000000); //ns->ms
         mImageServerInterface.updateFullProcessStats(mCloudLetType, mLatencyFullProcessRollingAvg);
-        Log.d(TAG, mCloudLetType + " mCameraMode=" + mCameraMode + " mLatency=" + (mLatency / 1000000.0)+" mHost="+mHost);
+        Log.d(TAG, mCloudLetType + " mCameraMode=" + mCameraMode + " mLatency=" + (latency / 1000000.0) + " mHost="+mHost);
     }
 
     /**
@@ -700,7 +699,7 @@ public class ImageSender {
                         matcher = pattern.matcher(inputLine);
                         if (matcher.find()) {
                             Log.d(TAG, "ping output=" + matcher.group(0));
-                            latency = (long) (Double.parseDouble(matcher.group(1)) * 1000000.0);
+                            latency = (long) (Double.parseDouble(matcher.group(1)));
                             rollingAverage.add(latency);
                         }
                         break;
@@ -724,8 +723,8 @@ public class ImageSender {
             if (reachable) {
                 long endTime = System.nanoTime();
                 latency = endTime - startTime;
-                rollingAverage.add(latency);
-                Log.d(TAG, host + " reachable=" + reachable + " Latency=" + (latency / 1000000.0) + " ms.");
+                rollingAverage.add(latency / 1000000);
+                Log.d(TAG, host + " reachable=" + reachable + " Latency=" + latency + " ms.");
             } else {
                 Log.d(TAG, host + " reachable=" + reachable);
             }

@@ -118,17 +118,17 @@ public class RollingAverage {
         long max = -1;
         for(int i = 0; i < fill; i++) {
             if(detailedStats) {
-                stats += i + ". time=" + decFor.format(window[i] / 1000000) + " ms\n";
+                stats += i + ". time=" + decFor.format(window[i]) + " ms\n";
             }
-            if(window[i] / 1000000 < min) {
-                min = window[i] / 1000000;
+            if(window[i] < min) {
+                min = window[i];
             }
-            if(window[i] / 1000000 > max) {
-                max = window[i] / 1000000;
+            if(window[i] > max) {
+                max = window[i];
             }
         }
-        String avg = decFor.format(getAverage() / 1000000);
-        String stdDev = decFor.format(getStdDev() / 1000000);
+        String avg = decFor.format(getAverage());
+        String stdDev = decFor.format(getStdDev());
         stats += "min/avg/max/stddev = "+decFor.format(min)+"/"+avg+"/"+decFor.format(max)+"/"+stdDev+" ms";
         return stats;
     }
