@@ -5,11 +5,11 @@ def grpcVersion = '1.32.1'
 
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     defaultConfig {
         applicationId "com.mobiledgex.workshopskeleton"
         minSdkVersion 24
-        targetSdkVersion 28
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -41,7 +41,7 @@ dependencies {
     implementation 'androidx.ads:ads-identifier:1.0.0-alpha04'
 
     // Matching Engine SDK
-    implementation 'com.mobiledgex:matchingengine:2.4.0'
+    implementation 'com.mobiledgex:matchingengine:2.4.2'
     implementation 'com.mobiledgex:mel:1.0.11'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
