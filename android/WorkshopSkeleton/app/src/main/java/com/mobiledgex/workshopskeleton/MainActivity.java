@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2019-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity
     private String latitudeTvStr = "";
     private TextView longitudeTv;
     private String longitudeTvStr = "";
-    private String mClosestCloudletHostName;
+    private String mClosestCloudletHostname;
 
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
@@ -214,7 +214,7 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.action_reset) {
             mClosestCloudlet = null;
-            mClosestCloudletHostName = null;
+            mClosestCloudletHostname = null;
             carrierNameTv.setText("none");
             appNameTv.setText("none");
             latitudeTv.setText("none");
@@ -344,12 +344,12 @@ public class MainActivity extends AppCompatActivity
 
         // Extract cloudlet name from FQDN
         String[] parts = mClosestCloudlet.getFqdn().split("\\.");
-        cloudletNameTvStr = parts[0];
+        cloudletNameTvStr = parts[1];
 
         //Find FqdnPrefix from Port structure.
         String FqdnPrefix = "";
         List<distributed_match_engine.Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
-        String appPortFormat = "{Protocol: %d, FqdnPrefix: %s, Container Port: %d, External Port: %d, Public Path: '%s'}";
+        String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
         for (Appcommon.AppPort aPort : ports) {
             FqdnPrefix = aPort.getFqdnPrefix();
             // assign first port number to portNumberTvStr
@@ -358,16 +358,15 @@ public class MainActivity extends AppCompatActivity
             }
             Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
                     aPort.getProto().getNumber(),
-                    aPort.getFqdnPrefix(),
                     aPort.getInternalPort(),
                     aPort.getPublicPort(),
-                    aPort.getPathPrefix()));
+                    aPort.getEndPort()));
         }
         // Build full hostname.
-        mClosestCloudletHostName = FqdnPrefix+mClosestCloudlet.getFqdn();
+        mClosestCloudletHostname = FqdnPrefix+mClosestCloudlet.getFqdn();
 
         // TODO: Copy/paste the output of this log into a terminal to test latency.
-        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostName);
+        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
 
         verifyLocationInBackground(location);
 
