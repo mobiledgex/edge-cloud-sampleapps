@@ -90,13 +90,13 @@ class LoginViewController: UIViewController, CLLocationManagerDelegate {
             dmePort = 38001
             appName = "ARShooter"
             appVers = "1.0"
-            orgName = "MobiledgeX"
+            orgName = "MobiledgeX-Samples"
             carrierName = ""
             location = MobiledgeXiOSLibrary.MatchingEngine.Loc(latitude: 37.459609, longitude: -122.149349) // Get actual location and ask user for permission
         } else {
             appName = "ARShooter"
             appVers = "1.0"
-            orgName = "MobiledgeX"
+            orgName = "MobiledgeX-Samples"
             carrierName = ""
         }
     }
