@@ -17,15 +17,10 @@
 
 package com.mobiledgex.computervision;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.hardware.camera2.CameraCharacteristics;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,21 +28,20 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.mobiledgex.matchingenginehelper.EventLogViewer;
-import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
-
 import org.json.JSONArray;
+
+import java.text.DecimalFormat;
 
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
-public abstract class EdgeOnlyImageProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
+/**
+ * This class is used for image processing on a GPU-equipped Edge cloudlet
+ * app instance (displayed as "Edge"). It is abstract an must be extended
+ * a more specific image processor fragment.
+ */
+public abstract class GpuImageProcessorFragment extends ImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
-    private static final String TAG = "EdgeOnlyImageProcessorFragment";
+    private static final String TAG = "GpuImageProcessorFragment";
 
     public String getStatsText() {
         if (mImageSenderEdge != null) {
@@ -156,31 +150,38 @@ public abstract class EdgeOnlyImageProcessorFragment extends ImageProcessorFragm
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.i(TAG, "Pose Detection onSharedPreferenceChanged("+key+")");
+        Log.i(TAG, "onSharedPreferenceChanged("+key+")");
         if(getContext() == null) {
             //Can happen during rapid screen rotations.
             return;
         }
         super.onSharedPreferenceChanged(sharedPreferences, key);
 
-        String prefKeyHostGpuOverride = getResources().getString(R.string.pref_override_gpu_cloudlet_hostname);
-        String prefKeyHostGpu = getResources().getString(R.string.preference_gpu_host_edge);
+        String prefKeyHostEdgeOverride = getResources().getString(R.string.pref_override_edge_cloudlet_hostname);
+        String prefKeyHostEdge = getResources().getString(R.string.pref_cv_host_edge);
+        String prefKeyHostEdgeTls = getResources().getString(R.string.pref_cv_host_edge_tls);
 
-        if (key.equals(prefKeyHostGpuOverride) || key.equals(ALL_PREFS)) {
-            mGpuHostNameOverride = sharedPreferences.getBoolean(prefKeyHostGpuOverride, false);
-            Log.i(TAG, "key="+key+" mGpuHostNameOverride="+ mGpuHostNameOverride);
-            if (mGpuHostNameOverride) {
-                mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER);
+        // Edge Hostname handling
+        if (key.equals(prefKeyHostEdgeOverride) || key.equals(ALL_PREFS)) {
+            mEdgeHostNameOverride = sharedPreferences.getBoolean(prefKeyHostEdgeOverride, false);
+            Log.i(TAG, "key="+key+" mEdgeHostNameOverride="+ mEdgeHostNameOverride);
+            if (mEdgeHostNameOverride) {
+                mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
                 Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
             }
+            mEdgeHostNameTls = sharedPreferences.getBoolean(prefKeyHostEdgeTls, false);
+            Log.i(TAG, "prefKeyHostEdgeTls="+prefKeyHostEdgeTls+" mEdgeHostNameTls="+ mEdgeHostNameTls);
         }
-        if (key.equals(prefKeyHostGpu) || key.equals(ALL_PREFS)) {
-            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostGpu, DEF_HOSTNAME_PLACEHOLDER);
-            Log.i(TAG, "key="+key+" mHostDetectionEdge="+ mHostDetectionEdge);
+        if (key.equals(prefKeyHostEdge) || key.equals(ALL_PREFS)) {
+            mHostDetectionEdge = sharedPreferences.getString(prefKeyHostEdge, DEF_HOSTNAME_PLACEHOLDER);
+            Log.i(TAG, "prefKeyHostEdge="+prefKeyHostEdge+" mHostDetectionEdge="+ mHostDetectionEdge);
         }
-
-        if (key.equals(prefKeyHostGpu) || key.equals(prefKeyHostGpuOverride)) {
-            if (mGpuHostNameOverride) {
+        if (key.equals(prefKeyHostEdgeTls) || key.equals(ALL_PREFS)) {
+            mEdgeHostNameTls = sharedPreferences.getBoolean(prefKeyHostEdgeTls, false);
+            Log.i(TAG, "prefKeyHostEdgeTls="+prefKeyHostEdgeTls+" mEdgeHostNameTls="+ mEdgeHostNameTls);
+        }
+        if (key.equals(prefKeyHostEdge) || key.equals(prefKeyHostEdgeOverride)) {
+            if (mEdgeHostNameOverride) {
                 mEdgeHostList.clear();
                 mEdgeHostListIndex = 0;
                 mEdgeHostList.add(mHostDetectionEdge);

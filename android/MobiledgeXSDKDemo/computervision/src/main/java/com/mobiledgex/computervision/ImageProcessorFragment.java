@@ -82,6 +82,10 @@ import distributed_match_engine.Appcommon;
 
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
+/**
+ * This class is used for image processing on both an Edge cloudlet app instance
+ * (displayed as "Edge"), and a public cloud app instance (displayed as "Cloud").
+ */
 public class ImageProcessorFragment extends Fragment implements MatchingEngineHelperInterface,
         ImageServerInterface, ImageProviderInterface,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -153,7 +157,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     protected List<String> mEdgeHostList = new ArrayList<>();
     protected int mEdgeHostListIndex;
 
-    protected boolean mGpuHostNameOverride = false;
     protected boolean mEdgeHostNameOverride = false;
     protected boolean mEdgeHostNameTls = false;
     private boolean mCloudHostNameOverride = false;
@@ -166,6 +169,8 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     protected String mVideoFilename;
     protected boolean mAttached;
     protected EventLogViewer mEventLogViewer;
+    protected int fullLatencyEdgeLabel;
+    protected int networkLatencyEdgeLabel;
 
     /**
      * Return statistics information to be displayed in dialog after activity -- a combination
@@ -490,7 +495,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if (rollingAverage.getCurrent() == 0) {
-            latency = (long)9999*1000*1000; //to indicate connection error.
+            latency = (long)9999; //to indicate connection error.
         } else {
             if (prefUseRollingAvg) {
                 latency = rollingAverage.getAverage();
@@ -508,12 +513,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             public void run() {
                 switch(cloudletType) {
                     case EDGE:
-                        mEdgeLatencyFull.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
-                        mEdgeStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mEdgeLatencyFull.setText(getResources().getString(fullLatencyEdgeLabel, latency));
+                        mEdgeStdFull.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     case CLOUD:
-                        mCloudLatencyFull.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
-                        mCloudStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mCloudLatencyFull.setText(getResources().getString(R.string.cloud_label, latency));
+                        mCloudStdFull.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     default:
                         break;
@@ -528,7 +533,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if (rollingAverage.getCurrent() == 0) {
-            latency = (long)9999*1000*1000; //to indicate connection error.
+            latency = (long)9999; //to indicate connection error.
         } else {
             if (prefUseRollingAvg) {
                 latency = rollingAverage.getAverage();
@@ -546,12 +551,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             public void run() {
                 switch(cloudletType) {
                     case EDGE:
-                        mEdgeLatencyNet.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
-                        mEdgeStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mEdgeLatencyNet.setText(getResources().getString(networkLatencyEdgeLabel, latency));
+                        mEdgeStdNet.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     case CLOUD:
-                        mCloudLatencyNet.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
-                        mCloudStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mCloudLatencyNet.setText(getResources().getString(R.string.cloud_label, latency));
+                        mCloudStdNet.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     default:
                         break;
@@ -1071,6 +1076,19 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
+
+        // Initialize all values to 0, otherwise we would see the formatting string "%d" all over the UI.
+        mEdgeLatencyFull.setText(getResources().getString(R.string.edge_label, 0));
+        mEdgeStdFull.setText(getResources().getString(R.string.stddev_label, 0));
+        mEdgeLatencyNet.setText(getResources().getString(R.string.edge_label, 0));
+        mEdgeStdNet.setText(getResources().getString(R.string.stddev_label, 0));
+        mCloudLatencyFull.setText(getResources().getString(R.string.cloud_label, 0));
+        mCloudStdFull.setText(getResources().getString(R.string.stddev_label, 0));
+        mCloudLatencyNet.setText(getResources().getString(R.string.cloud_label, 0));
+        mCloudStdNet.setText(getResources().getString(R.string.stddev_label, 0));
+
+        fullLatencyEdgeLabel = R.string.edge_label;
+        networkLatencyEdgeLabel = R.string.edge_label;
 
         meHelper = new MatchingEngineHelper.Builder()
                 .setActivity(getActivity())

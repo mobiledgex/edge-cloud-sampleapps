@@ -19,8 +19,6 @@ package com.mobiledgex.computervision;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,11 +30,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mobiledgex.matchingenginehelper.EventLogViewer;
@@ -44,9 +39,7 @@ import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 
 import org.json.JSONArray;
 
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
-
-public class ObjectProcessorFragment extends EdgeOnlyImageProcessorFragment implements ImageServerInterface,
+public class ObjectProcessorFragment extends GpuImageProcessorFragment implements ImageServerInterface,
         ImageProviderInterface {
     private static final String TAG = "ObjectProcessorFragment";
     private static final String VIDEO_FILE_NAME = "objects.mp4";
@@ -138,6 +131,15 @@ public class ObjectProcessorFragment extends EdgeOnlyImageProcessorFragment impl
 
         mVideoFilename = VIDEO_FILE_NAME;
 
+        // Initialize all values to 0, otherwise we would see the formatting string "%d" all over the UI.
+        mEdgeLatencyFull.setText(getResources().getString(R.string.full_process_latency_label, 0));
+        mEdgeStdFull.setText(getResources().getString(R.string.stddev_label, 0));
+        mEdgeLatencyNet.setText(getResources().getString(R.string.edge_label, 0));
+        mEdgeStdNet.setText(getResources().getString(R.string.stddev_label, 0));
+
+        fullLatencyEdgeLabel = R.string.full_process_latency_label;
+        networkLatencyEdgeLabel = R.string.network_latency_label;
+
         meHelper = new MatchingEngineHelper.Builder()
                 .setActivity(getActivity())
                 .setMeHelperInterface(this)
@@ -147,11 +149,11 @@ public class ObjectProcessorFragment extends EdgeOnlyImageProcessorFragment impl
 
         setAppNameForGpu();
 
-        if (mGpuHostNameOverride) {
+        if (mEdgeHostNameOverride) {
             mEdgeHostList.clear();
             mEdgeHostListIndex = 0;
             mEdgeHostList.add(mHostDetectionEdge);
-            showMessage("Overriding GPU host. Host=" + mHostDetectionEdge);
+            showMessage("Overriding Edge host. Host=" + mHostDetectionEdge);
             restartImageSenderEdge();
         } else {
             meHelper.findCloudletInBackground();
