@@ -58,7 +58,7 @@
                 android:id="@+id/full_latency"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Full Process Latency: 0 ms "
+                android:text="@string/full_process_latency_label"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="24sp" />
 
@@ -69,7 +69,7 @@
                 android:layout_below="@+id/full_latency"
                 android:layout_alignParentStart="true"
                 android:layout_marginStart="0dp"
-                android:text="Stddev: 0 ms"
+                android:text="@string/stddev_label"
                 android:textColor="@android:color/white"
                 android:textSize="20sp" />
 
@@ -85,7 +85,7 @@
                     android:id="@+id/network_latency"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Network Latency: 0 ms "
+                    android:text="@string/network_latency_label"
                     android:textColor="@android:color/darker_gray"
                     android:textSize="22sp" />
 
@@ -93,7 +93,7 @@
                     android:id="@+id/network_std_dev"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Stddev: 0 ms"
+                    android:text="@string/stddev_label"
                     android:textColor="@android:color/white"
                     android:textSize="20sp" />
             </LinearLayout>
