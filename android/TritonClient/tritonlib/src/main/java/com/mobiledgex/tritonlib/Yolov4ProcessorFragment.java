@@ -236,7 +236,6 @@ public class Yolov4ProcessorFragment extends GpuImageProcessorFragment implement
                 .setMeHelperInterface(this)
                 .setView(mObjectClassRenderer)
                 .build();
-        MatchingEngine.setMatchingEngineLocationAllowed(true); //TODO: Add preference
 
         if (mEdgeHostNameOverride) {
             mEdgeHostList.clear();

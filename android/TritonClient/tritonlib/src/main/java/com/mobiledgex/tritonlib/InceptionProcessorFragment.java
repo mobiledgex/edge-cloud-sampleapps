@@ -170,7 +170,6 @@ public class InceptionProcessorFragment extends GpuImageProcessorFragment implem
         onSharedPreferenceChanged(prefs, "ALL");
 
         Intent intent = getActivity().getIntent();
-        //getCommonIntentExtras(intent);
 
         mCameraMode = ImageSender.CameraMode.OBJECT_DETECTION;
         mModelName = "ensemble_dali_inception";
@@ -191,7 +190,6 @@ public class InceptionProcessorFragment extends GpuImageProcessorFragment implem
                 .setMeHelperInterface(this)
                 .setView(mInceptionClassRenderer)
                 .build();
-        MatchingEngine.setMatchingEngineLocationAllowed(true); //TODO: Add preference
 
         if (mEdgeHostNameOverride) {
             mEdgeHostList.clear();
