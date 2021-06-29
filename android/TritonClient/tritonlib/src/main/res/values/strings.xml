@@ -1,0 +1,120 @@
+<resources>
+    <string name="dme_app_name">TritonInferenceServer</string>
+    <string name="app_version">1.0</string>
+    <string name="org_name">MobiledgeX-Samples</string>
+
+    <string name="title_activity_face_detection">Face Detection</string>
+    <string name="title_activity_face_recognition">Face Recognition</string>
+    <string name="title_activity_object_detection">Object Detection</string>
+    <string name="title_activity_pose_detection">Pose Detection</string>
+    <string name="title_activity_yolov4">YOLOv4</string>
+    <string name="title_activity_inception">Inception</string>
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="ok">OK</string>
+    <string name="error">Error</string>
+
+    <string name="request_camera_permission">This app needs camera permission.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+
+    <string name="pref_triton_settings">Triton Client Settings</string>
+    <string name="pref_general_settings">General Settings</string>
+
+    <string name="pref_front_camera">front_camera</string>
+    <string name="pref_show_full_latency">show_full_latency</string>
+    <string name="pref_show_full_latency_title">Show full process latency</string>
+    <string name="pref_show_full_latency_summary">Measures image upload, image processing, results being returned.</string>
+    <string name="pref_show_net_latency">show_net_latency</string>
+    <string name="pref_show_net_latency_title">Show network latency</string>
+    <string name="pref_show_net_latency_summary">Measures only network latency.</string>
+    <string name="pref_show_stddev">show_stddev</string>
+    <string name="pref_show_stddev_title">Show Stddev</string>
+    <string name="pref_show_stddev_summary">Standard deviation</string>
+    <string name="pref_use_rolling_avg">use_rolling_avg</string>
+    <string name="pref_use_rolling_avg_title">Use Rolling Average</string>
+    <string name="pref_use_rolling_avg_summary">Show individual measurements or rolling average</string>
+    <string name="pref_auto_failover">auto_failover</string>
+    <string name="pref_auto_failover_title">Auto Failover</string>
+    <string name="pref_auto_failover_summary">Automatically switch to next available server when failure encountered</string>
+    <string name="pref_host_edge">host_edge</string>
+    <string name="pref_host_edge_title">Edge Server</string>
+    <string name="pref_host_edge_summary">Enter a custom IP or hostname.</string>
+    <string name="pref_show_latency_stats_dialog">show_latency_stats_dialog</string>
+    <string name="pref_show_latency_stats_dialog_title">Show Latency Stats after session</string>
+    <string name="pref_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
+    <string name="latency_method">latency_method</string>
+    <string name="verify_clear_logs_title">Clear Log Viewer</string>
+    <string name="verify_clear_logs_message">Are you sure you want to clear the log entries?</string>
+
+    <string name="pref_latency_method">latency_method</string>
+    <string name="pref_latency_method_title">Latency Test Method</string>
+    <string name="pref_latency_method_summary">%s</string>
+    <string-array name="pref_latency_test_method_titles">
+        <item>System Ping (ICMP)</item>
+        <item>Socket</item>
+    </string-array>
+    <string-array name="pref_latency_test_method_values">
+        <item>ping</item>
+        <item>socket</item>
+    </string-array>
+
+    <string name="pref_connection_mode">connection_mode</string>
+    <string name="pref_connection_mode_title">Connection Mode</string>
+    <string name="pref_connection_mode_summary">%s</string>
+    <string-array name="pref_connection_mode_titles">
+        <item>REST</item>
+    </string-array>
+    <string-array name="pref_connection_mode_values">
+        <item>REST</item>
+    </string-array>
+
+    <string name="pref_override_edge_cloudlet_hostname">pref_override_edge_cloudlet_hostname</string>
+    <string name="pref_summary_override_edge_cloudlet_hostname">Select this to enter an Edge Server hostname to override the FindCloudlet result.</string>
+    <string name="pref_title_override_edge_cloudlet_hostname">Override Edge cloudlet hostname</string>
+
+    <string name="pref_default_app_definition">pref_default_app_definition</string>
+    <string name="pref_value_default_app_definition">pref_value_default_app_definition</string>
+    <string name="pref_title_default_app_definition">Use Default App Definition</string>
+    <string name="pref_summary_default_app_definition">These values may be overridden to connect to a different app instance.</string>
+    <string name="pref_app_name">pref_app_name</string>
+    <string name="pref_title_app_name">App Name</string>
+    <string name="pref_app_version">pref_app_version</string>
+    <string name="pref_title_app_version">App Version</string>
+    <string name="pref_org_name">pref_org_name</string>
+    <string name="pref_title_org_name">Organization Name</string>
+
+    <string name="pref_operator_name">pref_operator</string>
+    <string name="pref_title_operator_name">Operator</string>
+    <string name="pref_summary_operator_name">The operator or carrier name</string>
+    <string name="pref_default_operator_name">pref_default_operator</string>
+    <string name="pref_value_default_operator_name">pref_value_default_operator</string>
+    <string name="pref_title_default_operator_name">Use Default Operator</string>
+    <string name="pref_summary_default_operator_name">The operator or carrier name from the cellular provider</string>
+    <string name="pref_dme_hostname">pref_dme_hostname</string>
+    <string name="pref_title_dme_hostname">Region Selection</string>
+    <string name="pref_summary_dme_hostname">Select region to display</string>
+    <string name="pref_default_dme_hostname">pref_default_dme_hostname</string>
+    <string name="pref_value_default_dme_hostname">pref_value_default_dme_hostname</string>
+    <string name="pref_title_default_dme_hostname">Use Default Region Selection</string>
+    <string name="pref_summary_default_dme_hostname">Region determined by the cellular provider</string>
+    <string-array name="pref_dme_hostname_titles">
+        <item>Demo (mexdemo)</item>
+    </string-array>
+    <string-array name="pref_dme_hostname_values">
+        <item>eu-mexdemo.dme.mobiledgex.net:50051</item>
+    </string-array>
+
+
+    <string name="title_activity_settings">Settings</string>
+
+    <string-array name="pref_cv_connection_mode_titles">
+        <item>REST</item>
+        <item>GRPC</item>
+    </string-array>
+    <string-array name="pref_cv_connection_mode_values">
+        <item>REST</item>
+        <item>GRPC</item>
+    </string-array>
+
+</resources>
