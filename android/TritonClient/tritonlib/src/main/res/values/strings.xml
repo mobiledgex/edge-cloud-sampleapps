@@ -110,11 +110,9 @@
 
     <string-array name="pref_cv_connection_mode_titles">
         <item>REST</item>
-        <item>GRPC</item>
     </string-array>
     <string-array name="pref_cv_connection_mode_values">
         <item>REST</item>
-        <item>GRPC</item>
     </string-array>
 
 </resources>
