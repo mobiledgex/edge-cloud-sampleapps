@@ -148,9 +148,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Intent intent = new Intent(this, InceptionProcessorActivity.class);
             startActivityForResult(intent, RC_STATS);
 
-//        } else {
-//            displayView(item.getItemId());
-//            return true;
         }
         return false;
     }
@@ -228,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     .replace("${appName}", mAppName)
                     .replace("${appVersion}", mAppVersion)
                     .replace("${orgName}", mOrgName)
-                    .replace("${operator}", mCarrierName)
+                    .replace("${carrier}", mCarrierName)
                     .replace("${region}", mHostname)
                     .replace(".dme.mobiledgex.net", "");
 
@@ -246,6 +243,4 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             e.printStackTrace();
         }
     }
-
-
 }
