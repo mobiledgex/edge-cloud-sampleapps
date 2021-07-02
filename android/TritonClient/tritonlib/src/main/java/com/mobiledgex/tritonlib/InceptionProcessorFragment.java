@@ -100,7 +100,7 @@ public class InceptionProcessorFragment extends GpuImageProcessorFragment implem
     /**
      * Update the object coordinates.
      *
-     * @param cloudletType  The cloudlet type. Not used for object detection.
+     * @param cloudletType  The cloudlet type. Not used for Inception full image classification.
      * @param objectsJsonArray  Not used for Inception full image classification.
      * @param className  The class name inferred for the image.
      */

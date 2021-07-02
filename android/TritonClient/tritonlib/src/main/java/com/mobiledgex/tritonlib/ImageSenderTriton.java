@@ -38,6 +38,7 @@ import java.util.Map;
 
 public class ImageSenderTriton extends ImageSender {
     private static final String TAG = "ImageSenderTriton";
+    public static final int INCEPTION_INFERENCE_HEADER_CONTENT_LENGTH = 235;
     private String mModelName;
     private String mTritonUrl;
 
@@ -261,7 +262,8 @@ public class ImageSenderTriton extends ImageSender {
 
             } else if (mModelName.equals("ensemble_dali_inception")) {
                 Log.i(TAG, "ensemble_dali_inception response="+response);
-                String inference = response.substring(239);
+                // Add 4 to ignore binary data before the actual inference data.
+                String inference = response.substring(INCEPTION_INFERENCE_HEADER_CONTENT_LENGTH+4);
                 Log.i(TAG, "inference="+inference);
                 String[] parts = inference.split(":");
                 Log.i(TAG, "parts="+parts[0]+" "+parts[1]+" "+parts[2]);
