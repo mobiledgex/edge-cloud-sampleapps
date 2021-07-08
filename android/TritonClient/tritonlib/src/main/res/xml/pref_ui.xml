@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fd_preference_screen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="@string/pref_cv_show_full_latency"
+        android:summary="@string/pref_cv_show_full_latency_summary"
+        android:title="@string/pref_cv_show_full_latency_title"
+        app:iconSpaceReserved="false"/>
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="@string/pref_cv_show_net_latency"
+        android:summary="@string/pref_cv_show_net_latency_summary"
+        android:title="@string/pref_cv_show_net_latency_title"
+        app:iconSpaceReserved="false"/>
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="@string/pref_cv_show_stddev"
+        android:summary="@string/pref_cv_show_stddev_summary"
+        android:title="@string/pref_cv_show_stddev_title"
+        app:iconSpaceReserved="false"/>
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="@string/pref_cv_show_latency_stats_dialog"
+        android:summary="@string/pref_cv_show_latency_stats_dialog_summary"
+        android:title="@string/pref_cv_show_latency_stats_dialog_title"
+        app:iconSpaceReserved="false"/>
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="@string/pref_cv_use_rolling_avg"
+        android:summary="@string/pref_cv_use_rolling_avg_summary"
+        android:title="@string/pref_cv_use_rolling_avg_title"
+        app:iconSpaceReserved="false" />
+</PreferenceScreen>

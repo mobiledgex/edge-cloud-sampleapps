@@ -1,0 +1,3 @@
+include ':tritonlib'
+include ':app'
+rootProject.name = "TritonClient"
