@@ -241,7 +241,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
         boolean locationVerificationAllowed = prefs.getBoolean(mActivity.getResources().getString(R.string.pref_matching_engine_location_verification), false);
         if (!locationVerificationAllowed) {
-            Snackbar snackbar = Snackbar.make(mView, "Enhanced Location not enabled", Snackbar.LENGTH_LONG);
+            Snackbar snackbar = Snackbar.make(mView, "Enhanced Location not enabled", Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction("Settings", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

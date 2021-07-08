@@ -511,7 +511,7 @@ public class MainActivity extends AppCompatActivity
                     .replace("${appName}", meHelper.mAppName)
                     .replace("${appVersion}", meHelper.mAppVersion)
                     .replace("${orgName}", meHelper.mOrgName)
-                    .replace("${operator}", meHelper.mCarrierName)
+                    .replace("${carrier}", meHelper.mCarrierName)
                     .replace("${region}", meHelper.mDmeHostname)
                     .replace(".dme.mobiledgex.net", "");
 

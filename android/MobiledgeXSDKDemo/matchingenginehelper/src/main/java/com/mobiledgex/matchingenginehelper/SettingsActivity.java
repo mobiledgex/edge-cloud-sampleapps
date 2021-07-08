@@ -38,6 +38,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.mobiledgex.matchingengine.MatchingEngine;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -146,6 +147,7 @@ public class SettingsActivity extends AppCompatActivity implements
     }
 
     public static class GeneralSettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+        String prefKeyMeLocationVerification;
         String prefKeyDmeHostname;
         String prefKeyOperatorName;
         String prefKeyDefaultDmeHostname;
@@ -164,6 +166,7 @@ public class SettingsActivity extends AppCompatActivity implements
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
+            prefKeyMeLocationVerification = getResources().getString(R.string.pref_matching_engine_location_verification);
             prefKeyDefaultOperatorName = getResources().getString(R.string.pref_default_operator_name);
             prefKeyDefaultDmeHostname = getResources().getString(R.string.pref_default_dme_hostname);
             prefKeyOperatorName = getResources().getString(R.string.pref_operator_name);
@@ -177,6 +180,7 @@ public class SettingsActivity extends AppCompatActivity implements
 
             // Initialize summary values for these keys.
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            onSharedPreferenceChanged(prefs, prefKeyMeLocationVerification);
             onSharedPreferenceChanged(prefs, prefKeyDefaultOperatorName);
             onSharedPreferenceChanged(prefs, prefKeyDefaultDmeHostname);
             onSharedPreferenceChanged(prefs, prefKeyOperatorName);
@@ -240,6 +244,12 @@ public class SettingsActivity extends AppCompatActivity implements
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             Log.i(TAG, "onSharedPreferenceChanged(" + key + ")");
             Preference pref = findPreference(key);
+
+            if (key.equals(prefKeyMeLocationVerification)) {
+                boolean allowed = sharedPreferences.getBoolean(prefKeyMeLocationVerification, false);
+                MatchingEngine.setMatchingEngineLocationAllowed(allowed);
+            }
+
             if (key.equals(prefKeyDefaultDmeHostname)) {
                 String summary = getResources().getString(R.string.pref_summary_default_dme_hostname);
                 String prefKeyValueDefaultDmeHostname = getResources().getString(R.string.pref_value_default_dme_hostname);
