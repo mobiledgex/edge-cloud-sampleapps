@@ -1,7 +1,7 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
-        app:fragment="com.mobiledgex.tritonlib.SettingsActivity$GeneralFragment"
+        app:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$GeneralSettingsFragment"
         app:icon="@drawable/ic_baseline_settings_applications_24"
         app:key="general_header"
         app:title="@string/pref_general_settings" />
@@ -10,7 +10,7 @@
         app:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$MatchingEngineSettingsFragment"
         app:icon="@drawable/ic_baseline_my_location_24"
         app:key="matchingengine_header"
-        app:title="@string/preference_matching_engine_settings" />
+        app:title="@string/pref_matching_engine_settings" />
 
     <Preference
         app:fragment="com.mobiledgex.computervision.SettingsActivity$HeaderFragment"

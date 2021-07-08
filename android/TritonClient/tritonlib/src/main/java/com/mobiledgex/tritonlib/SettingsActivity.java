@@ -38,7 +38,6 @@ public class SettingsActivity extends AppCompatActivity implements
                     }
                 });
         ActionBar actionBar = getSupportActionBar();
-        Log.i(TAG, "actionBar="+actionBar);
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
@@ -85,20 +84,6 @@ public class SettingsActivity extends AppCompatActivity implements
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.pref_header, rootKey);
-        }
-    }
-
-    public static class TritonFragment extends PreferenceFragmentCompat {
-        @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            setPreferencesFromResource(R.xml.pref_cv_headers, rootKey);
-        }
-    }
-
-    public static class GeneralFragment extends PreferenceFragmentCompat {
-        @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            setPreferencesFromResource(R.xml.pref_general, rootKey);
         }
     }
 }
