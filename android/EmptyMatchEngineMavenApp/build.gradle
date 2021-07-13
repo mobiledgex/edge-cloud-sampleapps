@@ -18,15 +18,13 @@ buildscript {
         mavenLocal()
         mavenCentral()
         google()
-        jcenter() {
-            content {
-                includeGroup("org.jfrog.buildinfo")
-            }
+        maven {
+            url "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.1'
-        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.13"
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.16"
 
         // JFrog Artifactory:
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.18.3"
@@ -42,8 +40,8 @@ allprojects {
         maven {
             credentials {
                 // Create these variables if you don't have them.
-                username artifactory_user
-                password artifactory_password
+                username "${artifactory_user}"
+                password "${artifactory_password}"
             }
             url "${mobiledgeXContextUrl}/${repoKey}"
         }
