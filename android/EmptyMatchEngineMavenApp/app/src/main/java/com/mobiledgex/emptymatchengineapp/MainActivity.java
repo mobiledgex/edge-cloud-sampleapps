@@ -254,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             backgroundEdgeEventsConfig.latencyTestType = NetTest.TestType.CONNECT;
 
             // This is the internal port, that has not been remapped to a public port for a particular appInst.
-            backgroundEdgeEventsConfig.latencyInternalPort = 3765; // 0 will grab first UDP port but will favor the first TCP port if found.
+            backgroundEdgeEventsConfig.latencyInternalPort = 3765; // 0 will favor the first TCP port if found for connect test.
             // Latency config. There is also a very similar location update config.
             backgroundEdgeEventsConfig.latencyUpdateConfig.maxNumberOfUpdates = 0; // Default is 0, which means test forever.
             backgroundEdgeEventsConfig.latencyUpdateConfig.updateIntervalSeconds = 7; // The default is 30.
@@ -546,10 +546,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                             aPort.getPublicPort(),
                             aPort.getEndPort());
 
-                    //String l7Url = mMatchingEngine.getAppConnectionManager().createUrl(closestCloudlet, aPort, aPort.getPublicPort(), "http", null);
-
                     String host = aPort.getFqdnPrefix() + closestCloudlet.getFqdn();
-                    int knownPort = 8008;
+                    int knownPort = 2015;
                     int serverPort = aPort.getPublicPort() == 0 ? knownPort : aPort.getPublicPort();
 
                     OkHttpClient client = new OkHttpClient(); //mMatchingEngine.getAppConnectionManager().getHttpClient(10000).get();
@@ -562,9 +560,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                 .url("http://" + host + ":" + serverPort + api)
                                 .build();
                         response = client.newCall(request).execute();
-                        someText += "[Test Server response: " + response.toString() + "]";
+                        someText += "[Test Server response: " + response.toString() + "]\n";
                     } catch (IOException | IllegalStateException e) {
-                        someText += "[Error connecting to host: " + host + ", port: " + serverPort + ", api: " + api + ", Reason: " + e.getMessage() + "]";
+                        someText += "[Error connecting to host: " + host + ", port: " + serverPort + ", api: " + api + ", Reason: " + e.getMessage() + "]\n";
                     } finally {
                         if (response != null) {
                             response.body().close();
@@ -601,7 +599,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                 + ", Ports: " + appinstance.getPortsList().toString();
 
                     }
-                    appInstListText += "]]";
+                    appInstListText += "]]\n";
                 }
                 if (!appInstListText.isEmpty()) {
                     someText += appInstListText;
