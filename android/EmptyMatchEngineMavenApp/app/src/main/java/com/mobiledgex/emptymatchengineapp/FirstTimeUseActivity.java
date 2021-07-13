@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,13 @@
 
 package com.mobiledgex.emptymatchengineapp;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -32,24 +31,29 @@ import android.widget.TextView;
 
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 
-
+//! [first_time_use_example]
+/*!
+ * Example First Time Use Activity. This asks for permissions to run the MobiledgeX MatchingEngine SDK.
+ */
 public class FirstTimeUseActivity extends AppCompatActivity {
 
     private final String TAG = "FirstTimeUseActivity";
     private RequestPermissions mRpUtil;
     private AppCompatActivity self;
     private SharedPreferences prefs;
-    private String prefKeyAllowMEX;
+    private String prefKeyAllowMatchingEngineLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_first_time_use);
 
+        //! [create_request_permissions_util]
         mRpUtil = new RequestPermissions();
+        //! [create_request_permissions_util]
         self = this;
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefKeyAllowMEX = getResources().getString(R.string.preference_matching_engine_location_verification);
+        prefKeyAllowMatchingEngineLocation = getResources().getString(R.string.preference_matching_engine_location_verification);
 
         TextView devLocationWhy = findViewById(R.id.permission_location_device_why);
         devLocationWhy.setOnClickListener(new View.OnClickListener() {
@@ -86,11 +90,11 @@ public class FirstTimeUseActivity extends AppCompatActivity {
             }
         });
 
-        Button ok = findViewById(R.id.okbutton);
+        Button ok = findViewById(R.id.ok_button);
         ok.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Activity activity = (Activity) view.getContext();
+                AppCompatActivity activity = (AppCompatActivity) view.getContext();
                 if (shouldFinish(activity)) {
 
                     // Disable first time use.
@@ -108,13 +112,12 @@ public class FirstTimeUseActivity extends AppCompatActivity {
 
     }
 
-    private boolean shouldFinish(Activity activity) {
-        final String prefKeyAllowMEX = getResources().getString(R.string.preference_matching_engine_location_verification);
-        boolean mexLocationAllowed = prefs.getBoolean(prefKeyAllowMEX, false);
+    private boolean shouldFinish(AppCompatActivity activity) {
+        boolean mobiledgeXLocationAllowed = prefs.getBoolean(prefKeyAllowMatchingEngineLocation, false);
 
-        Log.d(TAG, "mexLocationallowed: " + mexLocationAllowed);
+        Log.d(TAG, "mobiledgeXLocationAllowed: " + mobiledgeXLocationAllowed);
         Log.d(TAG, "Needs More Permissions: " + mRpUtil.getNeededPermissions(self).size());
-        if (mexLocationAllowed &&
+        if (mobiledgeXLocationAllowed &&
             (mRpUtil.getNeededPermissions(activity).size() == 0)) {
 
             // Nothing to ask for. Close FirstTimeUseActivity.
@@ -123,15 +126,21 @@ public class FirstTimeUseActivity extends AppCompatActivity {
         return false;
     }
 
+    /*!
+     * Check and ask for permissions needed for MobiledgeX MatchingEngine SDK and EdgeEvents.
+     */
     private void requestPermissions(AppCompatActivity appCompatActivity) {
+        //! [request_permissions_example]
         // As of Android 23, permissions can be asked for while the app is still running.
         if (mRpUtil.getNeededPermissions(appCompatActivity).size() > 0) {
             mRpUtil.requestMultiplePermissions(appCompatActivity);
         }
-        if (!prefs.getBoolean(prefKeyAllowMEX, false)) {
+        //! [request_permissions_example]
+        if (!prefs.getBoolean(prefKeyAllowMatchingEngineLocation, false)) {
             new EnhancedLocationDialog().show(appCompatActivity.getSupportFragmentManager(), "dialog");
         }
     }
+
 
     @Override
     public void onResume() {
@@ -152,3 +161,4 @@ public class FirstTimeUseActivity extends AppCompatActivity {
         mRpUtil.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
     }
 }
+//! [first_time_use_example]
