@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:defaultValue="onInterval"
+        android:entries="@array/pref_update_pattern_titles"
+        android:entryValues="@array/pref_update_pattern_values"
+        android:iconSpaceReserved="false"
+        android:key="@string/pref_update_pattern_location"
+        android:summary="@string/pref_update_pattern_summary"
+        android:title="@string/pref_update_pattern_title"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="30"
+        android:iconSpaceReserved="false"
+        android:key="@string/pref_update_interval_location"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_update_interval_summary"
+        android:title="@string/pref_update_interval_title"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="10"
+        android:iconSpaceReserved="false"
+        android:key="@string/pref_max_num_updates_location"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_max_num_updates_summary"
+        android:title="@string/pref_max_num_updates_title"
+        app:iconSpaceReserved="false" />
+</PreferenceScreen>

@@ -125,10 +125,19 @@ public class SettingsActivity extends AppCompatActivity implements
     }
 
     public static class RouteModeSettingsFragment extends PreferenceFragmentCompat {
-
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.pref_route_mode, rootKey);
         }
     }
+
+//    @Override
+//    public void onPause() {
+//        Log.i(TAG, "onPause() mEdgeEventsConfigUpdated=" + mEdgeEventsConfigUpdated);
+//        Intent resultIntent = new Intent();
+//        resultIntent.putExtra(EXTRA_EDGE_EVENTS_CONFIG_UPDATED, mEdgeEventsConfigUpdated);
+//        setResult(RESULT_OK, resultIntent);
+//        super.onPause();
+//    }
+
 }

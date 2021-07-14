@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:defaultValue="PING"
+        android:entries="@array/pref_latency_test_type_titles"
+        android:entryValues="@array/pref_latency_test_type_values"
+        android:key="@string/pref_latency_test_type"
+        android:summary="@string/pref_latency_test_type_summary"
+        android:title="@string/pref_latency_test_type_title"
+        app:iconSpaceReserved="false" />
+    <ListPreference
+        android:defaultValue="PROXIMITY"
+        android:entries="@array/pref_find_cloudlet_mode_titles"
+        android:entryValues="@array/pref_find_cloudlet_mode_values"
+        android:key="@string/pref_latency_test_trigger_mode"
+        android:summary="@string/pref_latency_test_trigger_mode_summary"
+        android:title="@string/pref_latency_test_trigger_mode_title"
+        app:iconSpaceReserved="false"/>
+    <ListPreference
+        android:defaultValue="onInterval"
+        android:entries="@array/pref_update_pattern_titles"
+        android:entryValues="@array/pref_update_pattern_values"
+        android:key="@string/pref_update_pattern_latency"
+        android:summary="@string/pref_update_pattern_summary"
+        android:title="@string/pref_update_pattern_title"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="30"
+        android:key="@string/pref_update_interval_latency"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_update_interval_summary"
+        android:title="@string/pref_update_interval_title"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="10"
+        android:key="@string/pref_max_num_updates_latency"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_max_num_updates_summary"
+        android:title="@string/pref_max_num_updates_title"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="0"
+        android:key="@string/pref_latency_test_port"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_latency_test_port_summary"
+        android:title="@string/pref_latency_test_port_title"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="250"
+        android:key="@string/pref_latency_threshold_ms"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_latency_threshold_ms_summary"
+        android:title="@string/pref_latency_threshold_ms_title"
+        app:iconSpaceReserved="false" />
+    <SeekBarPreference
+        android:defaultValue="0"
+        android:key="@string/pref_perf_margin_switch"
+        android:min="0"
+        android:max="100"
+        android:summary="@string/pref_perf_margin_switch_summary"
+        android:title="@string/pref_perf_margin_switch_title"
+        app:iconSpaceReserved="false"
+        app:showSeekBarValue="true" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/pref_automigration"
+        android:summary="@string/pref_automigration_summary"
+        android:title="@string/pref_automigration_title"
+        app:iconSpaceReserved="false" />
+</PreferenceScreen>

@@ -41,4 +41,23 @@
         android:title="@string/pref_app_instances_limit_title"
         app:iconSpaceReserved="false"/>
 
+    <PreferenceCategory android:title="@string/pref_edge_events_settings">
+        <MultiSelectListPreference
+            android:defaultValue="@array/pref_FindCloudletEventTrigger_values"
+            android:entries="@array/pref_FindCloudletEventTrigger_titles"
+            android:entryValues="@array/pref_FindCloudletEventTrigger_values"
+            android:icon="@drawable/ic_baseline_cloud_circle_24"
+            android:key="@string/pref_FindCloudletEventTrigger"
+            android:summary="@string/pref_FindCloudletEventTrigger_summary"
+            android:title="@string/pref_FindCloudletEventTrigger_title" />
+        <Preference
+            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LocationEventsSettingsFragment"
+            app:icon="@drawable/ic_baseline_my_location_24"
+            android:title="@string/pref_location_events_settings"/>
+        <Preference
+            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LatencyEventsSettingsFragment"
+            app:icon="@drawable/ic_settings_network"
+            android:title="@string/pref_latency_events_settings"/>
+    </PreferenceCategory>
+
 </PreferenceScreen>
