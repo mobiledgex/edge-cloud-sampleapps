@@ -144,11 +144,6 @@ public class SettingsActivity extends AppCompatActivity implements
         return true;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
     public static class HeaderFragment extends PreferenceFragmentCompat {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
