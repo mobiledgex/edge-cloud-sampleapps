@@ -92,6 +92,39 @@
     <string name="title_activity_settings">SettingsActivity</string>
 
     <!-- Settings for Edge Events -->
+    <string name="pref_edge_events_config">Edge Events Config</string>
+    <string name="pref_override_default_config">pref_override_default_config</string>
+    <string name="pref_override_default_config_title">Override Edge Events Default Config</string>
+    <string name="pref_override_default_config_summary">When turned off, default values from the SDK are used.</string>
+
+    <string name="pref_latency_test_port">pref_latency_test_port</string>
+    <string name="pref_latency_test_port_title">Latency Test Port</string>
+    <string name="pref_latency_test_port_summary"><b>%s</b> - Port to use for latency testing. Use 0 to test any app port.</string>
+    <string name="pref_latency_test_type">pref_latency_test_type</string>
+    <string name="pref_latency_test_type_title">Latency Test Type</string>
+    <string name="pref_latency_test_type_summary"><b>%s</b> - The type of latency test to be used.</string>
+    <string-array name="pref_latency_test_type_titles">
+        <item>Ping</item>
+        <item>Connect</item>
+    </string-array>
+    <string-array name="pref_latency_test_type_values">
+        <item>PING</item>
+        <item>CONNECT</item>
+    </string-array>
+
+    <string name="pref_latency_threshold_ms">pref_latency_threshold_ms</string>
+    <string name="pref_latency_threshold_ms_title">Latency Threshold (ms)</string>
+    <string name="pref_latency_threshold_ms_summary"><b>%s</b> - Latency Threshold (ms)", "Latency threshold in ms when new FindCloudlet is triggered if eventLatencyProcessed is in newFindCloudletEvents.</string>
+    <string name="pref_latency_test_trigger_mode">pref_latency_test_trigger_mode</string>
+    <string name="pref_latency_test_trigger_mode_title">Latency Test Trigger Mode</string>
+    <string name="pref_latency_test_trigger_mode_summary"><b>%s</b> - Determines how a latency test is triggered.</string>
+    <string name="pref_automigration">pref_automigration</string>
+    <string name="pref_automigration_title">AutoMigration</string>
+    <string name="pref_automigration_summary">Allow MobiledgeX EdgeEvents to automatically stop the current EdgeEvents connection and start a new EdgeEvents connection to receive events from the new cloudlet.</string>
+    <string name="pref_perf_margin_switch">pref_perf_margin_switch</string>
+    <string name="pref_perf_margin_switch_title">Performance Margin Switch</string>
+    <string name="pref_perf_margin_switch_summary">Average performance must be by better by this latency margin (0 to 100%) before notifying of switch.</string>
+
     <string name="pref_FindCloudletEventTrigger">pref_FindCloudletEventTrigger</string>
     <string name="pref_FindCloudletEventTrigger_title">FindCloudlet Event Triggers</string>
     <string name="pref_FindCloudletEventTrigger_summary">Choose which events will trigger FindCloudlet to be performed.</string>
@@ -110,10 +143,9 @@
         <item>CloserCloudlet</item>
     </string-array>
 
-    <!-- Settings for Location Events -->
-    <string name="pref_edge_events_settings">Edge Events Settings</string>
-    <string name="pref_location_events">pref_location_events</string>
-    <string name="pref_location_events_settings">Location Events Settings</string>
+
+    <!-- Settings for Location Update Config -->
+    <string name="pref_location_update_config">Location Update Config</string>
     <string name="pref_update_pattern_location">pref_update_pattern_location</string>
     <string name="pref_update_pattern_title">Update Pattern</string>
     <string name="pref_update_pattern_summary"><b>%s</b> - Update Pattern for sending client events. \'On Start\' will send one update when startEdgeEvents is called. \'On Interval\' will send updates at the specified interval. \'On Trigger\' means the application is responsible for sending the events.</string>
@@ -131,43 +163,15 @@
     <string name="pref_update_interval_location">pref_update_interval_location</string>
     <string name="pref_update_interval_title">Update Interval</string>
     <string name="pref_update_interval_summary"><b>%s</b> - Update interval in seconds.</string>
-
     <string name="pref_max_num_updates_location">pref_max_num_updates_location</string>
     <string name="pref_max_num_updates_title">Max Number of Updates</string>
     <string name="pref_max_num_updates_summary"><b>%s</b> - Maximum number of updates throughout the App connection lifetime. Set to 0 for updates to run till the EdgeEvents connection is closed.</string>
 
-    <!-- Settings for Latency Events -->
+    <!-- Settings for Latency Update Config -->
+    <!-- Titles and summaries will reuse the values from Location Update Config -->
+    <string name="pref_latency_update_config">Latency Update Config</string>
     <string name="pref_update_pattern_latency">pref_update_pattern_latency</string>
     <string name="pref_update_interval_latency">pref_update_interval_latency</string>
     <string name="pref_max_num_updates_latency">pref_max_num_updates_latency</string>
-    <string name="pref_latency_events_settings">Latency Events Settings</string>
-    <string name="pref_latency_test_port">pref_latency_test_port</string>
-    <string name="pref_latency_test_port_title">Latency Test Port</string>
-    <string name="pref_latency_test_port_summary"><b>%s</b> - Port to use for latency testing. Use 0 if you don\'t care which port is used.</string>
-    <string name="pref_latency_threshold_ms">pref_latency_threshold_ms</string>
-    <string name="pref_latency_threshold_ms_title">Latency Threshold (ms)</string>
-    <string name="pref_latency_threshold_ms_summary"><b>%s</b> - Latency Threshold (ms)", "Latency threshold in ms when new FindCloudlet is triggered if eventLatencyProcessed is in newFindCloudletEvents.</string>
-    <string name="pref_automigration">pref_automigration</string>
-    <string name="pref_automigration_title">AutoMigration</string>
-    <string name="pref_automigration_summary">Allow MobiledgeX EdgeEvents to automatically stop the current EdgeEvents connection and start a new EdgeEvents connection to receive events from the new cloudlet.</string>
-    <string name="pref_perf_margin_switch">pref_perf_margin_switch</string>
-    <string name="pref_perf_margin_switch_title">Performance Margin Switch</string>
-    <string name="pref_perf_margin_switch_summary">Average performance must be by better by this latency margin (0 to 100%) before notifying of switch.</string>
-
-    <string name="pref_latency_test_type">pref_latency_test_type</string>
-    <string name="pref_latency_test_type_title">Latency Test Type</string>
-    <string name="pref_latency_test_type_summary"><b>%s</b> - The type of latency test to be used.</string>
-    <string-array name="pref_latency_test_type_titles">
-        <item>Ping</item>
-        <item>Connect</item>
-    </string-array>
-    <string-array name="pref_latency_test_type_values">
-        <item>PING</item>
-        <item>CONNECT</item>
-    </string-array>
-
-    <string name="pref_latency_test_trigger_mode">pref_latency_test_trigger_mode</string>
-    <string name="pref_latency_test_trigger_mode_title">Latency Test Trigger Mode</string>
-    <string name="pref_latency_test_trigger_mode_summary"><b>%s</b> - Determines how a latency test is triggered.</string>
 
 </resources>

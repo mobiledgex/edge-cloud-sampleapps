@@ -324,7 +324,54 @@ public class SettingsActivity extends AppCompatActivity implements
         return region;
     }
 
-    public static class LocationEventsSettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+    public static class EdgeEventsConfigFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+        private String prefKeyLatencyTestPort;
+        private String prefKeyLatencyThreshold;
+        private String prefKeyAutoMigration;
+        private String prefKeyPerfMarginSwitch;
+
+        private EditTextPreference prefLatencyTestPort;
+        private EditTextPreference prefLatencyThreshold;
+        private CheckBoxPreference prefAutoMigration;
+        private SeekBarPreference prefPerfMarginSwitch;
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+            // Handled in MatchingEngineHelper.onSharedPreferenceChanged().
+        }
+
+        @Override
+        public void onCreate(@Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            prefKeyLatencyTestPort = getResources().getString(R.string.pref_latency_test_port);
+            prefKeyLatencyThreshold = getResources().getString(R.string.pref_latency_threshold_ms);
+            prefKeyAutoMigration = getResources().getString(R.string.pref_automigration);
+            prefKeyPerfMarginSwitch = getResources().getString(R.string.pref_perf_margin_switch);
+
+            prefLatencyTestPort = findPreference(prefKeyLatencyTestPort);
+            prefLatencyTestPort.setSummaryProvider(preference -> getResources().getString(R.string.pref_latency_test_port_summary, prefLatencyTestPort.getText()));
+            prefLatencyTestPort.setOnBindEditTextListener(editText -> {
+                SetEditTextNumerical(editText);
+            });
+
+            prefLatencyThreshold = findPreference(prefKeyLatencyThreshold);
+            prefLatencyThreshold.setSummaryProvider(preference -> getResources().getString(R.string.pref_latency_threshold_ms_summary, prefLatencyThreshold.getText()));
+            prefLatencyThreshold.setOnBindEditTextListener(editText -> {
+                SetEditTextNumerical(editText);
+            });
+
+            getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+
+            mEdgeEventsConfigUpdated = false;
+        }
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_edge_events, rootKey);
+        }
+    }
+
+    public static class LocationUpdateConfigFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
         String prefKeyUpdatePattern;
         String prefKeyUpdateInterval;
         String prefKeyMaxNumUpdates;
@@ -341,7 +388,7 @@ public class SettingsActivity extends AppCompatActivity implements
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            setPreferencesFromResource(R.xml.pref_location_events, rootKey);
+            setPreferencesFromResource(R.xml.pref_location_update_config, rootKey);
         }
 
         @Override
@@ -398,56 +445,16 @@ public class SettingsActivity extends AppCompatActivity implements
         }
     }
 
-    public static class LatencyEventsSettingsFragment extends LocationEventsSettingsFragment {
-        private String prefKeyLatencyTestPort;
-        private String prefKeyLatencyThreshold;
-        private String prefKeyAutoMigration;
-        private String prefKeyPerfMarginSwitch;
-
-        private EditTextPreference prefLatencyTestPort;
-        private EditTextPreference prefLatencyThreshold;
-        private CheckBoxPreference prefAutoMigration;
-        private SeekBarPreference prefPerfMarginSwitch;
-
+    public static class LatencyUpdateConfigFragment extends LocationUpdateConfigFragment {
         protected void defineKeys() {
             prefKeyUpdatePattern = getResources().getString(R.string.pref_update_pattern_latency);;
             prefKeyUpdateInterval = getResources().getString(R.string.pref_update_interval_latency);
             prefKeyMaxNumUpdates = getResources().getString(R.string.pref_max_num_updates_latency);
-            prefKeyLatencyTestPort = getResources().getString(R.string.pref_latency_test_port);
-            prefKeyLatencyThreshold = getResources().getString(R.string.pref_latency_threshold_ms);
-            prefKeyAutoMigration = getResources().getString(R.string.pref_automigration);
-            prefKeyPerfMarginSwitch = getResources().getString(R.string.pref_perf_margin_switch);
         }
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            setPreferencesFromResource(R.xml.pref_latency_events, rootKey);
-        }
-
-        @Override
-        public void onCreate(@Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
-            Log.i(TAG, "onCreate");
-            super.onCreate(savedInstanceState);
-
-            prefLatencyTestPort = findPreference(prefKeyLatencyTestPort);
-            prefLatencyTestPort.setSummaryProvider(preference -> getResources().getString(R.string.pref_latency_test_port_summary, prefLatencyTestPort.getText()));
-            prefLatencyTestPort.setOnBindEditTextListener(editText -> {
-                SetEditTextNumerical(editText);
-            });
-
-            prefLatencyThreshold = findPreference(prefKeyLatencyThreshold);
-            prefLatencyThreshold.setSummaryProvider(preference -> getResources().getString(R.string.pref_latency_threshold_ms_summary, prefLatencyThreshold.getText()));
-            prefLatencyThreshold.setOnBindEditTextListener(editText -> {
-                SetEditTextNumerical(editText);
-            });
-
-            getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-        }
-
-        @Override
-        public void onDestroyView() {
-            super.onDestroyView();
-            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+            setPreferencesFromResource(R.xml.pref_latency_update_config, rootKey);
         }
     }
 

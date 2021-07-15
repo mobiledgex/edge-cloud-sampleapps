@@ -111,6 +111,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private MatchingEngine me;
     private EdgeEventsConfig mEdgeEventsConfig;
     private boolean mEdgeEventsRunning;
+    private boolean mOverrideDefaultConfig;
 
     private String someText = null;
     public String mAppInstHostname;
@@ -123,6 +124,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private boolean mGpsInitialized;
 
     // Key values for Edge Events.
+    private final String prefKeyOverrideDefaultConfig;
     private final String prefKeyLocationUpdatePattern;
     private final String prefKeyLocationUpdateInterval;
     private final String prefKeyLocationMaxNumUpdates;
@@ -185,7 +187,6 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         meHelperInterface = builder.meHelperInterface;
         mTestPort = builder.testPort;
         me = new MatchingEngine(mActivity);
-        mEdgeEventsConfig = me.createDefaultEdgeEventsConfig();
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity);
 
@@ -205,6 +206,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         prefKeyAppVersion = resources.getString(R.string.pref_app_version);
         prefKeyOrgName = resources.getString(R.string.pref_org_name);
 
+        prefKeyOverrideDefaultConfig = resources.getString(R.string.pref_override_default_config);
         prefKeyLocationUpdatePattern = resources.getString(R.string.pref_update_pattern_location);
         prefKeyLocationUpdateInterval = resources.getString(R.string.pref_update_interval_location);
         prefKeyLocationMaxNumUpdates = resources.getString(R.string.pref_max_num_updates_location);
@@ -230,7 +232,17 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onSharedPreferenceChanged(prefs, prefKeyAppVersion);
         onSharedPreferenceChanged(prefs, prefKeyOrgName);
 
-        // Initialize all Edge Events settings.
+        Log.i(TAG, "mDmeHostname="+ mDmeHostname +" networkSwitchingAllowed="+mNetworkSwitchingAllowed+" mCarrierName="+mCarrierName);
+
+        // Watch for any updated preferences:
+        prefs.registerOnSharedPreferenceChangeListener(this);
+    }
+
+    /**
+     * Initialize all Edge Events settings.
+     */
+    protected void initEdgeEventsConfigPrefs() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
         onSharedPreferenceChanged(prefs, prefKeyLocationUpdatePattern);
         onSharedPreferenceChanged(prefs, prefKeyLocationUpdateInterval);
         onSharedPreferenceChanged(prefs, prefKeyLocationMaxNumUpdates);
@@ -244,11 +256,6 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onSharedPreferenceChanged(prefs, prefKeyLatencyThreshold);
         onSharedPreferenceChanged(prefs, prefKeyPerfMarginSwitch);
         onSharedPreferenceChanged(prefs, prefKeyAutoMigration);
-
-        Log.i(TAG, "mDmeHostname="+ mDmeHostname +" networkSwitchingAllowed="+mNetworkSwitchingAllowed+" mCarrierName="+mCarrierName);
-
-        // Watch for any updated preferences:
-        prefs.registerOnSharedPreferenceChangeListener(this);
     }
 
     public void startEdgeEvents() {
@@ -256,11 +263,23 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             Log.w(TAG, "Must perform findCloudlet before starting Edge Events.");
             return;
         }
-        new Thread(() -> {
-            mEdgeEventsSubscriber = new EdgeEventsSubscriber();
-            me.getEdgeEventsBus().register(mEdgeEventsSubscriber);
+        mEdgeEventsConfig = me.createDefaultEdgeEventsConfig();
+        Log.i(TAG, "Default EdgeEventsConfig="+mEdgeEventsConfig);
 
-            // All attributes for mEdgeEventsConfig have been set from Preferences.
+        if (mOverrideDefaultConfig) {
+            // In this case, all attributes for mEdgeEventsConfig will be set from Preferences.
+            // Otherwise, we retain the default values.
+            initEdgeEventsConfigPrefs();
+            Log.i(TAG, "Custom EdgeEventsConfig="+mEdgeEventsConfig);
+        }
+
+        new Thread(() -> {
+            // Only do this once.
+            if (mEdgeEventsSubscriber == null) {
+                mEdgeEventsSubscriber = new EdgeEventsSubscriber();
+                me.getEdgeEventsBus().register(mEdgeEventsSubscriber);
+            }
+
             Log.i(TAG, "mEdgeEventsConfig="+mEdgeEventsConfig.toString());
             meHelperInterface.showMessage("mEdgeEventsConfig="+mEdgeEventsConfig.toString());
 
@@ -813,7 +832,11 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
      */
     protected void onEdgeEventPreferenceChanged(SharedPreferences prefs, String key) {
         Log.i(TAG, "onEdgeEventPreferenceChanged("+key+")");
-        // Location Events Settings
+        if (mEdgeEventsConfig == null) {
+            Log.i(TAG, "mEdgeEventsConfig not created yet.");
+            return;
+        }
+        // Location Update Config
         if (key.equals(prefKeyLocationUpdatePattern)) {
             String pattern = prefs.getString(key, "onInterval");
             mEdgeEventsConfig.locationUpdateConfig.updatePattern = UpdateConfig.UpdatePattern.valueOf(pattern);
@@ -827,11 +850,21 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             mEdgeEventsConfig.locationUpdateConfig.maxNumberOfUpdates = value;
         }
 
-        // Latency Events Settings
+        // Latency Update Config
         if (key.equals(prefKeyLatencyUpdatePattern)) {
             String value = prefs.getString(key, "onInterval");
             mEdgeEventsConfig.latencyUpdateConfig.updatePattern = UpdateConfig.UpdatePattern.valueOf(value);
         }
+        if (key.equals(prefKeyLatencyMaxNumUpdates)) {
+            int value = Integer.parseInt(prefs.getString(key, "0"));
+            mEdgeEventsConfig.latencyUpdateConfig.maxNumberOfUpdates = value;
+        }
+        if (key.equals(prefKeyLatencyTestPort)) {
+            int value = Integer.parseInt(prefs.getString(key, "0"));
+            mEdgeEventsConfig.latencyInternalPort = value;
+        }
+
+        // Edge Events Config
         if (key.equals(prefKeyFindCloudletEventTrigger)) {
             Set<String> stringSet = new HashSet<>();
             Set<String> values = prefs.getStringSet(key, stringSet);
@@ -854,14 +887,6 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         if (key.equals(prefKeyLatencyUpdateInterval)) {
             int value = Integer.parseInt(prefs.getString(key, "30"));
             mEdgeEventsConfig.latencyUpdateConfig.updateIntervalSeconds = value;
-        }
-        if (key.equals(prefKeyLatencyMaxNumUpdates)) {
-            int value = Integer.parseInt(prefs.getString(key, "0"));
-            mEdgeEventsConfig.latencyUpdateConfig.maxNumberOfUpdates = value;
-        }
-        if (key.equals(prefKeyLatencyTestPort)) {
-            int value = Integer.parseInt(prefs.getString(key, "0"));
-            mEdgeEventsConfig.latencyInternalPort = value;
         }
         if (key.equals(prefKeyLatencyThreshold)) {
             int value = Integer.parseInt(prefs.getString(key, "0"));
