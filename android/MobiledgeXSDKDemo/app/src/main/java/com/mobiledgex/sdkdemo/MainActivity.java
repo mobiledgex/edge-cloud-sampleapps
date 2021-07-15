@@ -56,7 +56,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.preference.Preference;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
@@ -129,6 +128,8 @@ import java.util.Map;
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
+
+import static com.mobiledgex.matchingenginehelper.SettingsActivity.mEdgeEventsConfigUpdated;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -633,6 +634,7 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_settings) {
             // Open "Settings" UI
+            mEdgeEventsConfigUpdated = false;
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
@@ -792,6 +794,11 @@ public class MainActivity extends AppCompatActivity
             if (mUserLocationMarker != null) {
                 mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, mDefaultCloudletColor, ""));
             }
+        }
+
+        if (mGoogleMap == null) {
+            Log.w(TAG, "Map not ready. Will not modify.");
+            return;
         }
 
         if (item.getItemId() == R.id.action_map_type_normal) {
@@ -1672,6 +1679,11 @@ public class MainActivity extends AppCompatActivity
                     .setView(mMapFragment.getView())
                     .setTestPort(DEFAULT_SPEED_TEST_PORT)
                     .build();
+        }
+
+        Log.i(TAG, "onResume() mEdgeEventsConfigUpdated="+mEdgeEventsConfigUpdated);
+        if (mEdgeEventsConfigUpdated) {
+            meHelper.startEdgeEvents();
         }
 
         startLocationUpdates();

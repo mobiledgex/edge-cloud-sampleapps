@@ -8,21 +8,19 @@
     <SwitchPreference
         android:id="@+id/preference_matching_engine_location_verification"
         android:contentDescription="preference_matching_engine_location_verification"
-        android:key="@string/pref_matching_engine_location_verification"
-        android:title="@string/pref_matching_engine_location_verification_title"
-        android:summary="@string/pref_matching_engine_location_verification_summary"
         android:defaultValue="false"
-        app:iconSpaceReserved="false"/>
-
+        android:key="@string/pref_matching_engine_location_verification"
+        android:summary="@string/pref_matching_engine_location_verification_summary"
+        android:title="@string/pref_matching_engine_location_verification_title"
+        app:iconSpaceReserved="false" />
     <SwitchPreference
         android:id="@+id/preference_net_switching_allowed"
         android:contentDescription="preference_net_switching_allowed"
-        android:key="@string/pref_net_switching_allowed"
-        android:title="@string/pref_net_switching_allowed_title"
-        android:summary="@string/pref_net_switching_allowed_summary"
         android:defaultValue="false"
-        app:iconSpaceReserved="false"/>
-
+        android:key="@string/pref_net_switching_allowed"
+        android:summary="@string/pref_net_switching_allowed_summary"
+        android:title="@string/pref_net_switching_allowed_title"
+        app:iconSpaceReserved="false" />
     <ListPreference
         android:defaultValue="PROXIMITY"
         android:entries="@array/pref_find_cloudlet_mode_titles"
@@ -30,8 +28,7 @@
         android:key="@string/pref_find_cloudlet_mode"
         android:summary="@string/pref_find_cloudlet_mode_summary"
         android:title="@string/pref_find_cloudlet_mode_title"
-        app:iconSpaceReserved="false"/>
-
+        app:iconSpaceReserved="false" />
     <ListPreference
         android:defaultValue="4"
         android:entries="@array/pref_app_instances_limit_titles"
@@ -39,6 +36,28 @@
         android:key="@string/pref_app_instances_limit"
         android:summary="@string/pref_app_instances_limit_summary"
         android:title="@string/pref_app_instances_limit_title"
-        app:iconSpaceReserved="false"/>
+        app:iconSpaceReserved="false" />
+
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="@string/pref_override_default_config"
+        android:summary="@string/pref_override_default_config_summary"
+        android:title="@string/pref_override_default_config_title"
+        app:iconSpaceReserved="false" />
+        <Preference
+            android:dependency="@string/pref_override_default_config"
+            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$EdgeEventsConfigFragment"
+            android:icon="@drawable/ic_baseline_cloud_circle_24"
+            android:title="@string/pref_edge_events_config"/>
+        <Preference
+            android:dependency="@string/pref_override_default_config"
+            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LatencyUpdateConfigFragment"
+            android:icon="@drawable/ic_settings_network"
+            android:title="@string/pref_latency_update_config"/>
+        <Preference
+            android:dependency="@string/pref_override_default_config"
+            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LocationUpdateConfigFragment"
+            android:icon="@drawable/ic_baseline_my_location_24"
+            android:title="@string/pref_location_update_config"/>
 
 </PreferenceScreen>
