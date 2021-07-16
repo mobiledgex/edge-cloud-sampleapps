@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <MultiSelectListPreference
+        android:defaultValue="@array/pref_FindCloudletEventTrigger_values"
+        android:entries="@array/pref_FindCloudletEventTrigger_titles"
+        android:entryValues="@array/pref_FindCloudletEventTrigger_values"
+        android:key="@string/pref_FindCloudletEventTrigger"
+        android:summary="@string/pref_FindCloudletEventTrigger_summary"
+        android:title="@string/pref_FindCloudletEventTrigger_title"
+        app:iconSpaceReserved="false" />
+    <ListPreference
+        android:defaultValue="CONNECT"
+        android:entries="@array/pref_latency_test_type_titles"
+        android:entryValues="@array/pref_latency_test_type_values"
+        android:key="@string/pref_latency_test_type"
+        android:summary="@string/pref_latency_test_type_summary"
+        android:title="@string/pref_latency_test_type_title"
+        app:iconSpaceReserved="false" />
+    <ListPreference
+        android:defaultValue="PERFORMANCE"
+        android:entries="@array/pref_find_cloudlet_mode_titles"
+        android:entryValues="@array/pref_find_cloudlet_mode_values"
+        android:key="@string/pref_latency_test_trigger_mode"
+        android:summary="@string/pref_latency_test_trigger_mode_summary"
+        android:title="@string/pref_latency_test_trigger_mode_title"
+        app:iconSpaceReserved="false"/>
+    <EditTextPreference
+        android:defaultValue="0"
+        android:key="@string/pref_latency_test_port"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_latency_test_port_summary"
+        android:title="@string/pref_latency_test_port_title"
+        app:iconSpaceReserved="false" />
+    <EditTextPreference
+        android:defaultValue="50"
+        android:key="@string/pref_latency_threshold_ms"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_latency_threshold_ms_summary"
+        android:title="@string/pref_latency_threshold_ms_title"
+        app:iconSpaceReserved="false" />
+    <SeekBarPreference
+        android:defaultValue="5"
+        android:key="@string/pref_perf_margin_switch"
+        android:min="0"
+        android:max="100"
+        android:summary="@string/pref_perf_margin_switch_summary"
+        android:title="@string/pref_perf_margin_switch_title"
+        app:iconSpaceReserved="false"
+        app:showSeekBarValue="true" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="@string/pref_automigration"
+        android:summary="@string/pref_automigration_summary"
+        android:title="@string/pref_automigration_title"
+        app:iconSpaceReserved="false" />
+
+</PreferenceScreen>

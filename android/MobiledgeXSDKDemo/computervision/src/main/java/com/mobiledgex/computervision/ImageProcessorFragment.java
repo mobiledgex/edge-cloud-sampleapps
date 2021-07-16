@@ -677,11 +677,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         }
 
         if (id == R.id.action_manual_failover) {
-            new Thread(new Runnable() {
-                @Override public void run() {
-                    reportConnectionError("Manual Failover", mImageSenderEdge);
-                }
-            }).start();
+            new Thread(() -> reportConnectionError("Manual Failover", mImageSenderEdge)).start();
             return true;
         }
 

@@ -3,11 +3,12 @@
     <Preference
         android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$MatchingEngineSettingsFragment"
         android:icon="@android:drawable/ic_menu_compass"
-        android:title="@string/preference_matching_engine_settings"/>
+        android:title="@string/pref_matching_engine_settings"/>
+
     <Preference
         android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$GeneralSettingsFragment"
         android:icon="@android:drawable/ic_menu_preferences"
-        android:title="@string/preference_general_settings"/>
+        android:title="@string/pref_general_settings"/>
     <Preference
         android:fragment="com.mobiledgex.sdkdemo.SettingsActivity$SpeedTestSettingsFragment"
         android:icon="@android:drawable/ic_menu_recent_history"
