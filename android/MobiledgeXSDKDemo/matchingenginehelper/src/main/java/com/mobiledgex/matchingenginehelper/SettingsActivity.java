@@ -20,18 +20,23 @@ package com.mobiledgex.matchingenginehelper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
+import android.widget.EditText;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.CheckBoxPreference;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
+import androidx.preference.SeekBarPreference;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -58,6 +63,13 @@ public class SettingsActivity extends AppCompatActivity implements
     private static final String TITLE_TAG = "settingsActivityTitle";
     private boolean finishOnNavigateUp = false;
 
+    /**
+     * Static variable to flag whether EdgeEvents should be restarted.
+     * Set to false before opening Settings. Changing any Location Events Settings
+     * or any Latency Events Settings will set it to true.
+     */
+    public static boolean mEdgeEventsConfigUpdated = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,7 +83,7 @@ public class SettingsActivity extends AppCompatActivity implements
         Log.i(TAG, "savedInstanceState="+savedInstanceState);
         if (showFragment != null && showFragment.endsWith("MatchingEngineSettingsFragment")) {
             fragment = new MatchingEngineSettingsFragment();
-            setTitle(getResources().getString(R.string.preference_matching_engine_settings));
+            setTitle(getResources().getString(R.string.pref_matching_engine_settings));
         } else {
             fragment = new HeaderFragment();
         }
@@ -176,10 +188,10 @@ public class SettingsActivity extends AppCompatActivity implements
             prefKeyAppVersion = getResources().getString(R.string.pref_app_version);
             prefKeyOrgName = getResources().getString(R.string.pref_org_name);
 
-            getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            prefs.registerOnSharedPreferenceChangeListener(this);
 
             // Initialize summary values for these keys.
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             onSharedPreferenceChanged(prefs, prefKeyMeLocationVerification);
             onSharedPreferenceChanged(prefs, prefKeyDefaultOperatorName);
             onSharedPreferenceChanged(prefs, prefKeyDefaultDmeHostname);
@@ -241,19 +253,19 @@ public class SettingsActivity extends AppCompatActivity implements
         }
 
         @Override
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             Log.i(TAG, "onSharedPreferenceChanged(" + key + ")");
             Preference pref = findPreference(key);
 
             if (key.equals(prefKeyMeLocationVerification)) {
-                boolean allowed = sharedPreferences.getBoolean(prefKeyMeLocationVerification, false);
+                boolean allowed = prefs.getBoolean(prefKeyMeLocationVerification, false);
                 MatchingEngine.setMatchingEngineLocationAllowed(allowed);
             }
 
             if (key.equals(prefKeyDefaultDmeHostname)) {
                 String summary = getResources().getString(R.string.pref_summary_default_dme_hostname);
                 String prefKeyValueDefaultDmeHostname = getResources().getString(R.string.pref_value_default_dme_hostname);
-                String dmeHostname = sharedPreferences.getString(prefKeyValueDefaultDmeHostname, DEFAULT_DME_HOSTNAME);
+                String dmeHostname = prefs.getString(prefKeyValueDefaultDmeHostname, DEFAULT_DME_HOSTNAME);
                 summary = summary + ": " + dmeHostname;
                 pref.setSummary(summary);
             }
@@ -261,7 +273,7 @@ public class SettingsActivity extends AppCompatActivity implements
             if (key.equals(prefKeyDefaultOperatorName)) {
                 String summary = getResources().getString(R.string.pref_summary_default_operator_name);
                 String prefKeyValueDefaultOperatorName = getResources().getString(R.string.pref_value_default_operator_name);
-                String operatorName = sharedPreferences.getString(prefKeyValueDefaultOperatorName, DEFAULT_CARRIER_NAME);
+                String operatorName = prefs.getString(prefKeyValueDefaultOperatorName, DEFAULT_CARRIER_NAME);
                 if (operatorName.isEmpty()) {
                     operatorName = "<blank>";
                 }
@@ -292,6 +304,12 @@ public class SettingsActivity extends AppCompatActivity implements
                 pref.setSummary(((EditTextPreference)pref).getText());
             }
         }
+
+        @Override
+        public void onDestroyView() {
+            super.onDestroyView();
+            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        }
     }
 
     private static String getRegionFromDme(ListPreference dmeListPref) {
@@ -306,4 +324,148 @@ public class SettingsActivity extends AppCompatActivity implements
         return region;
     }
 
+    public static class EdgeEventsConfigFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+        private String prefKeyLatencyTestPort;
+        private String prefKeyLatencyThreshold;
+        private String prefKeyAutoMigration;
+        private String prefKeyPerfMarginSwitch;
+
+        private EditTextPreference prefLatencyTestPort;
+        private EditTextPreference prefLatencyThreshold;
+        private CheckBoxPreference prefAutoMigration;
+        private SeekBarPreference prefPerfMarginSwitch;
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+            // Handled in MatchingEngineHelper.onSharedPreferenceChanged().
+        }
+
+        @Override
+        public void onCreate(@Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            prefKeyLatencyTestPort = getResources().getString(R.string.pref_latency_test_port);
+            prefKeyLatencyThreshold = getResources().getString(R.string.pref_latency_threshold_ms);
+            prefKeyAutoMigration = getResources().getString(R.string.pref_automigration);
+            prefKeyPerfMarginSwitch = getResources().getString(R.string.pref_perf_margin_switch);
+
+            prefLatencyTestPort = findPreference(prefKeyLatencyTestPort);
+            prefLatencyTestPort.setSummaryProvider(preference -> getResources().getString(R.string.pref_latency_test_port_summary, prefLatencyTestPort.getText()));
+            prefLatencyTestPort.setOnBindEditTextListener(editText -> {
+                SetEditTextNumerical(editText);
+            });
+
+            prefLatencyThreshold = findPreference(prefKeyLatencyThreshold);
+            prefLatencyThreshold.setSummaryProvider(preference -> getResources().getString(R.string.pref_latency_threshold_ms_summary, prefLatencyThreshold.getText()));
+            prefLatencyThreshold.setOnBindEditTextListener(editText -> {
+                SetEditTextNumerical(editText);
+            });
+
+            getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+
+            mEdgeEventsConfigUpdated = false;
+        }
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_edge_events, rootKey);
+        }
+
+        @Override
+        public void onDestroyView() {
+            super.onDestroyView();
+            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        }
+    }
+
+    public static class LocationUpdateConfigFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+        String prefKeyUpdatePattern;
+        String prefKeyUpdateInterval;
+        String prefKeyMaxNumUpdates;
+
+        ListPreference prefUpdatePattern;
+        EditTextPreference prefUpdateInterval;
+        EditTextPreference prefMaxNumUpdates;
+
+        protected void defineKeys() {
+            prefKeyUpdatePattern = getResources().getString(R.string.pref_update_pattern_location);;
+            prefKeyUpdateInterval = getResources().getString(R.string.pref_update_interval_location);
+            prefKeyMaxNumUpdates = getResources().getString(R.string.pref_max_num_updates_location);
+        }
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_location_update_config, rootKey);
+        }
+
+        @Override
+        public void onCreate(@Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+            Log.i(TAG, "onCreate");
+            super.onCreate(savedInstanceState);
+            defineKeys();
+
+            prefUpdatePattern = findPreference(prefKeyUpdatePattern);
+            prefUpdatePattern.setSummaryProvider(preference -> getResources().getString(R.string.pref_update_pattern_summary, prefUpdatePattern.getEntry().toString()));
+
+            prefUpdateInterval = findPreference(prefKeyUpdateInterval);
+            prefUpdateInterval.setSummaryProvider(preference -> getResources().getString(R.string.pref_update_interval_summary, prefUpdateInterval.getText()));
+            prefUpdateInterval.setOnBindEditTextListener(editText -> {
+                SetEditTextNumerical(editText);
+            });
+
+            prefMaxNumUpdates = findPreference(prefKeyMaxNumUpdates);
+            prefMaxNumUpdates.setSummaryProvider(preference -> getResources().getString(R.string.pref_max_num_updates_summary, prefMaxNumUpdates.getText()));
+            prefMaxNumUpdates.setOnBindEditTextListener(editText -> {
+                SetEditTextNumerical(editText);
+            });
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            prefs.registerOnSharedPreferenceChangeListener(this);
+
+            // Initialize preferences.
+            onSharedPreferenceChanged(prefs, prefKeyUpdatePattern);
+            onSharedPreferenceChanged(prefs, prefKeyUpdateInterval);
+            onSharedPreferenceChanged(prefs, prefKeyMaxNumUpdates);
+
+            mEdgeEventsConfigUpdated = false;
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+            Log.i(TAG, "onSharedPreferenceChanged(" + key + ")");
+            Preference pref = findPreference(key);
+
+            if (key.equals(prefKeyUpdatePattern)) {
+                String value = prefs.getString(key, "onInterval");
+                boolean visible = value.equals("onInterval");
+                prefUpdateInterval.setVisible(visible);
+                prefMaxNumUpdates.setVisible(visible);
+            }
+
+            mEdgeEventsConfigUpdated = true;
+        }
+
+        @Override
+        public void onDestroyView() {
+            super.onDestroyView();
+            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        }
+    }
+
+    public static class LatencyUpdateConfigFragment extends LocationUpdateConfigFragment {
+        protected void defineKeys() {
+            prefKeyUpdatePattern = getResources().getString(R.string.pref_update_pattern_latency);;
+            prefKeyUpdateInterval = getResources().getString(R.string.pref_update_interval_latency);
+            prefKeyMaxNumUpdates = getResources().getString(R.string.pref_max_num_updates_latency);
+        }
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_latency_update_config, rootKey);
+        }
+    }
+
+    protected static void SetEditTextNumerical(EditText editText) {
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        editText.setSelectAllOnFocus(true);
+    }
 }
