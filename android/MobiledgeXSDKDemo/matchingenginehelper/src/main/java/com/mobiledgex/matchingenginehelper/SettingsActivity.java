@@ -369,6 +369,12 @@ public class SettingsActivity extends AppCompatActivity implements
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.pref_edge_events, rootKey);
         }
+
+        @Override
+        public void onDestroyView() {
+            super.onDestroyView();
+            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        }
     }
 
     public static class LocationUpdateConfigFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {

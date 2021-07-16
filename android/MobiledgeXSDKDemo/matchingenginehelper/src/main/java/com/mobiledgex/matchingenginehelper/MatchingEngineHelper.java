@@ -284,13 +284,17 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             meHelperInterface.showMessage("mEdgeEventsConfig="+mEdgeEventsConfig.toString());
 
             String message;
-            if (mEdgeEventsRunning) {
-                message = "Restarting ServerEdgeEvents";
-                me.stopEdgeEvents();
+            if (me.isAutoMigrateEdgeEventsConnection()) {
+                message = "Auto-migrating to new app inst";
             } else {
-                message = "Subscribed to ServerEdgeEvents";
+                if (mEdgeEventsRunning) {
+                    message = "Restarting ServerEdgeEvents";
+                    me.stopEdgeEvents();
+                } else {
+                    message = "Subscribed to ServerEdgeEvents";
+                }
+                me.startEdgeEvents(mEdgeEventsConfig);
             }
-            me.startEdgeEvents(mEdgeEventsConfig);
             Log.i(TAG, message);
             meHelperInterface.showMessage(message);
             mEdgeEventsRunning = true;
