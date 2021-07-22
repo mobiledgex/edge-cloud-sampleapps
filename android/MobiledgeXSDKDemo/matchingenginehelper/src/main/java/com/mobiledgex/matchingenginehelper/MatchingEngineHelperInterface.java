@@ -17,8 +17,6 @@
 
 package com.mobiledgex.matchingenginehelper;
 
-import android.location.Location;
-
 import distributed_match_engine.AppClient;
 
 public interface MatchingEngineHelperInterface {
