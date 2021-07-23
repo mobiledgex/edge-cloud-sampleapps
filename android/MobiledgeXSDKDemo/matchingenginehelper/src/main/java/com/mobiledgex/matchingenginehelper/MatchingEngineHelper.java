@@ -306,9 +306,9 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             if (mEdgeEventsRunning) {
                 if (me.isAutoMigrateEdgeEventsConnection()) {
                     if (newConnection) {
-                        message = "Retaining connection to existing app inst";
-                    } else {
                         message = "Auto-migrating to new app inst";
+                    } else {
+                        message = "Retaining connection to existing app inst";
                     }
                 } else {
                     message = "Restarting ServerEdgeEvents";
