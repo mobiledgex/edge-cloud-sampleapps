@@ -26,6 +26,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.telephony.SubscriptionInfo;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -55,14 +56,20 @@ import com.mobiledgex.matchingengine.edgeeventsconfig.UpdateConfig;
 import com.mobiledgex.matchingengine.performancemetrics.NetTest;
 import com.mobiledgex.matchingengine.performancemetrics.Site;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -101,7 +108,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public Location mLastKnownLocation;
     public Location mLocationInSimulator;
     public String mClosestCloudletHostname;
-    protected boolean mRegisterClientComplete;
+    private String mSessionCookie;
     public AppClient.FindCloudletReply mClosestCloudlet;
     public AppClient.AppInstListReply mAppInstanceReplyList;
     public boolean mAllowLocationSimulatorUpdate = false;
@@ -339,9 +346,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public void doEnhancedLocationUpdateInBackground() {
         new Thread(() -> {
             try {
-                if (mRegisterClientComplete || registerClient()) {
-                    mRegisterClientComplete = true;
-                } else {
+                if (!validateCookie(mSessionCookie)) {
                     Log.e(TAG, "registerClient failed. aborting doEnhancedLocationUpdateInBackground");
                     return;
                 }
@@ -448,9 +453,9 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             meHelperInterface.showError(registerStatusText);
             return false;
         }
-        Log.i(TAG, "SessionCookie:" + reply.getSessionCookie());
+        mSessionCookie = reply.getSessionCookie();
+        Log.i(TAG, "mSessionCookie:" + mSessionCookie);
         meHelperInterface.onRegister();
-        mRegisterClientComplete = true;
         return true;
     }
 
@@ -516,9 +521,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public void doQosRequestInBackground(ArrayList<AppClient.QosPosition> kpiPositions) {
         new Thread(() -> {
             try {
-                if (mRegisterClientComplete || registerClient()) {
-                    mRegisterClientComplete = true;
-                } else {
+                if (!validateCookie(mSessionCookie)) {
                     return;
                 }
                 getQosPositionKpi(kpiPositions);
@@ -534,9 +537,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     public boolean findCloudlet() throws ExecutionException, InterruptedException,
             IllegalArgumentException, PackageManager.NameNotFoundException {
-        if (mRegisterClientComplete || registerClient()) {
-            mRegisterClientComplete = true;
-        } else {
+        if (!validateCookie(mSessionCookie)) {
             return false;
         }
         AppClient.FindCloudletRequest findCloudletRequest;
@@ -610,9 +611,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public boolean getAppInstList() throws InterruptedException, ExecutionException {
         Log.i(TAG, "getAppInstList mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
         try {
-            if (mRegisterClientComplete || registerClient()) {
-                mRegisterClientComplete = true;
-            } else {
+            if (!validateCookie(mSessionCookie)) {
                 return false;
             }
         } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
@@ -620,6 +619,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                     mAppName+", "+mAppVersion+", "+mOrgName);
             e.printStackTrace();
             meHelperInterface.showError(e.getLocalizedMessage());
+            return false;
         }
 
         AppClient.AppInstListRequest appInstListRequest
@@ -647,9 +647,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     private boolean verifyLocation() throws InterruptedException, IOException,
             ExecutionException, PackageManager.NameNotFoundException {
-        if (mRegisterClientComplete || registerClient()) {
-            mRegisterClientComplete = true;
-        } else {
+        if (!validateCookie(mSessionCookie)) {
             return false;
         }
         // Location Verification (Blocking, or use verifyLocationFuture):
@@ -689,6 +687,53 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 Log.i(TAG, aR.getPositionResults(i).toString());
             }
             total += aR.getPositionResultsCount();
+        }
+    }
+
+    /**
+     * Decodes the given cookie and compares if the expiration time has already passed,
+     * performs another registerClient. Otherwise returns true;
+     * @param cookie
+     * @return
+     * @throws InterruptedException
+     * @throws ExecutionException
+     * @throws PackageManager.NameNotFoundException
+     */
+    private boolean validateCookie(String cookie) throws InterruptedException, ExecutionException, PackageManager.NameNotFoundException {
+        if (cookie != null) {
+            // We already have a cookie. Decode and validate it.
+            String[] parts = cookie.split("[.]");
+            String header = parts[0];
+            String body = parts[1];
+            byte[] decodedBytes = Base64.decode(body, Base64.URL_SAFE);
+            try {
+                String jsonString = new String(decodedBytes, "UTF-8");
+                Log.i(TAG, "jsonString="+jsonString);
+                JSONObject jsonObject = new JSONObject(jsonString);
+                long expTime = jsonObject.getLong("exp");
+                Calendar calNow = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                Calendar calExp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                calNow.setTimeInMillis(System.currentTimeMillis());
+                calExp.setTimeInMillis(expTime*1000);
+                int diff = calNow.compareTo(calExp);
+                if (diff <= 0) {
+                    Log.i(TAG, "Current cookie is valid");
+                    return true;
+                } else {
+                    Log.w(TAG, "Current cookie has expired");
+                    // Fall through and perform registerClient below.
+                }
+            } catch (UnsupportedEncodingException | JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        if (registerClient()) {
+            // cookie is brand new, so known good.
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -981,7 +1026,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void setDmeHostname(String hostname) {
-        mRegisterClientComplete = false;
+        mSessionCookie = null;
         mDmeHostname = hostname;
         mClosestCloudletHostname = null;
         checkForLocSimulator(mDmeHostname);

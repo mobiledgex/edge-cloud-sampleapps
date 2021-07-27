@@ -8,8 +8,12 @@ project.ext.grpcVersion = '1.32.1'
 buildscript {
 
     repositories {
-        google()
+        mavenLocal()
         mavenCentral()
+        google()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.0'
