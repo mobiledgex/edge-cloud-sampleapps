@@ -691,7 +691,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     /**
-     * Decodes the given cookie and compares if the expiration time has already passed,
+     * Decodes the given cookie and if the expiration time has already passed,
      * performs another registerClient. Otherwise returns true;
      * @param cookie
      * @return

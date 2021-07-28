@@ -523,7 +523,7 @@ public class MainActivity extends AppCompatActivity
             webView.loadData(htmlData, "text/html; charset=UTF-8",null);
             new AlertDialog.Builder(MainActivity.this)
                     .setView(webView)
-                    .setIcon(R.mipmap.ic_launcher_foreground)
+                    .setIcon(R.drawable.ic_launcher_foreground)
                     .setTitle(appName)
                     .setCancelable(true)
                     .setPositiveButton(R.string.ok, null)
