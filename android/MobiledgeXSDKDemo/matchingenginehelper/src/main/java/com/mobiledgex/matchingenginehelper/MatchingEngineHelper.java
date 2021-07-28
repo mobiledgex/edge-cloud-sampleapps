@@ -243,10 +243,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onSharedPreferenceChanged(prefs, prefKeyDefaultOperatorName);
         onSharedPreferenceChanged(prefs, prefKeyFindCloudletMode);
         onSharedPreferenceChanged(prefs, prefKeyAppInstancesLimit);
-        onSharedPreferenceChanged(prefs, prefKeyDefaultAppInfo);
         onSharedPreferenceChanged(prefs, prefKeyAppName);
         onSharedPreferenceChanged(prefs, prefKeyAppVersion);
         onSharedPreferenceChanged(prefs, prefKeyOrgName);
+        onSharedPreferenceChanged(prefs, prefKeyDefaultAppInfo);
 
         // Only initialize these on/off settings, but don't yet update the mEdgeEventsConfig.
         onEdgeEventPreferenceChanged(prefs, prefKeyEnableEdgeEvents);
@@ -660,6 +660,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             someText = "[Location Verified: Tower: " + verifiedLocation.getTowerStatus() +
                     ", GPS LocationStatus: " + verifiedLocation.getGpsLocationStatus() +
                     ", Location Accuracy: " + verifiedLocation.getGpsLocationAccuracyKm() + " ]\n";
+            Log.i(TAG, someText);
 
             if (meHelperInterface != null) {
                 meHelperInterface.onVerifyLocation(verifiedLocation.getGpsLocationStatus(),
