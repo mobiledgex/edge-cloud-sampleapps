@@ -1,6 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-project.ext.matchingengineVersion = "2.6.21"
+project.ext.matchingengineVersion = "2.6.22"
 project.ext.melVersion = "1.0.11"
 project.ext.grpcVersion = '1.32.1'
 
@@ -8,8 +8,12 @@ project.ext.grpcVersion = '1.32.1'
 buildscript {
 
     repositories {
-        google()
+        mavenLocal()
         mavenCentral()
+        google()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.0'

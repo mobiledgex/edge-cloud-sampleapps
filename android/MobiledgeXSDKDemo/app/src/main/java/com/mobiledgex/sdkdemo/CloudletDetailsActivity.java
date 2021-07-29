@@ -68,7 +68,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         intent = getIntent();
 
         String cloudletName = intent.getStringExtra("CloudletName");
-        cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
+        cloudlet = CloudletListHolder.getCloudletList().get(cloudletName);
         if(cloudlet == null) {
             Log.e(TAG, "cloudlet "+cloudletName+" not found in list. Aborting.");
             return;
@@ -195,7 +195,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+                CloudletListHolder.LatencyTestMethod latencyTestMethod = CloudletListHolder.getLatencyTestMethod();
                 String latencyMessage = "Method: "+cloudlet.getLatencyTestMethod();
                 if (cloudlet.getLatencyTestMethodForced()) {
                     latencyMessage += " (forced)";

@@ -108,14 +108,14 @@ public class Cloudlet implements Serializable {
         mMarker = marker;
         setUri(fqdnPrefix, fqdn, tls, port);
 
-        if(CloudletListHolder.getSingleton().getLatencyTestAutoStart()) {
+        if(CloudletListHolder.getLatencyTestAutoStart()) {
             //All AsyncTask instances are run on the same thread, so this queues up the tasks.
             startLatencyTest();
         } else {
             Log.i(TAG, "LatencyTestAutoStart is disabled");
         }
 
-        mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        mLatencyTestMethod = CloudletListHolder.getLatencyTestMethod();
     }
 
     /**
@@ -150,7 +150,7 @@ public class Cloudlet implements Serializable {
      * @return  The URI.
      */
     private String getDownloadUri() {
-        mNumBytes = CloudletListHolder.getSingleton().getNumBytesDownload();
+        mNumBytes = CloudletListHolder.getNumBytesDownload();
         return mScheme+"://"+ mHostName +":"+ mOpenPort +"/getdata/?numbytes="+ mNumBytes;
     }
 
@@ -181,7 +181,7 @@ public class Cloudlet implements Serializable {
             return;
         }
 
-        mNumPackets = CloudletListHolder.getSingleton().getNumPackets();
+        mNumPackets = CloudletListHolder.getNumPackets();
 
         latencyMin=9999;
         latencyAvg=0;
@@ -200,7 +200,7 @@ public class Cloudlet implements Serializable {
             Log.i(TAG, "NO, I am NOT an emulator.");
         }
 
-        mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        mLatencyTestMethod = CloudletListHolder.getLatencyTestMethod();
         if(mCarrierName.equalsIgnoreCase("azure")) {
             Log.i(TAG, "Socket test forced for Azure");
             mLatencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
@@ -537,7 +537,7 @@ public class Cloudlet implements Serializable {
                 }
             });
 
-            mNumBytes = CloudletListHolder.getSingleton().getNumBytesUpload();
+            mNumBytes = CloudletListHolder.getNumBytesUpload();
             speedTestSocket.startUpload(getUploadUri(), mNumBytes);
 
             return null;
