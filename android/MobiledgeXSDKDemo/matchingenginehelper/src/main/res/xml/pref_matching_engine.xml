@@ -39,25 +39,33 @@
         app:iconSpaceReserved="false" />
 
     <SwitchPreference
+        android:defaultValue="true"
+        android:key="@string/pref_enable_edge_events"
+        android:title="@string/pref_enable_edge_events_title"
+        app:iconSpaceReserved="false" />
+
+    <SwitchPreference
+        android:dependency="@string/pref_enable_edge_events"
         android:defaultValue="false"
         android:key="@string/pref_override_default_config"
         android:summary="@string/pref_override_default_config_summary"
         android:title="@string/pref_override_default_config_title"
         app:iconSpaceReserved="false" />
-        <Preference
-            android:dependency="@string/pref_override_default_config"
-            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$EdgeEventsConfigFragment"
-            android:icon="@drawable/ic_baseline_cloud_circle_24"
-            android:title="@string/pref_edge_events_config"/>
-        <Preference
-            android:dependency="@string/pref_override_default_config"
-            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LatencyUpdateConfigFragment"
-            android:icon="@drawable/ic_settings_network"
-            android:title="@string/pref_latency_update_config"/>
-        <Preference
-            android:dependency="@string/pref_override_default_config"
-            android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LocationUpdateConfigFragment"
-            android:icon="@drawable/ic_baseline_my_location_24"
-            android:title="@string/pref_location_update_config"/>
+
+    <Preference
+        android:dependency="@string/pref_override_default_config"
+        android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$EdgeEventsConfigFragment"
+        android:icon="@drawable/ic_baseline_cloud_circle_24"
+        android:title="@string/pref_edge_events_config"/>
+    <Preference
+        android:dependency="@string/pref_override_default_config"
+        android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LatencyUpdateConfigFragment"
+        android:icon="@drawable/ic_settings_network"
+        android:title="@string/pref_latency_update_config"/>
+    <Preference
+        android:dependency="@string/pref_override_default_config"
+        android:fragment="com.mobiledgex.matchingenginehelper.SettingsActivity$LocationUpdateConfigFragment"
+        android:icon="@drawable/ic_baseline_my_location_24"
+        android:title="@string/pref_location_update_config"/>
 
 </PreferenceScreen>

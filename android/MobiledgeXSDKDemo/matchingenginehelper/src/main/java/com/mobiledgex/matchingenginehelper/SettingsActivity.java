@@ -63,13 +63,6 @@ public class SettingsActivity extends AppCompatActivity implements
     private static final String TITLE_TAG = "settingsActivityTitle";
     private boolean finishOnNavigateUp = false;
 
-    /**
-     * Static variable to flag whether EdgeEvents should be restarted.
-     * Set to false before opening Settings. Changing any Location Events Settings
-     * or any Latency Events Settings will set it to true.
-     */
-    public static boolean mEdgeEventsConfigUpdated = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -362,7 +355,7 @@ public class SettingsActivity extends AppCompatActivity implements
 
             getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
-            mEdgeEventsConfigUpdated = false;
+            MatchingEngineHelper.mEdgeEventsConfigUpdated = false;
         }
 
         @Override
@@ -426,7 +419,7 @@ public class SettingsActivity extends AppCompatActivity implements
             onSharedPreferenceChanged(prefs, prefKeyUpdateInterval);
             onSharedPreferenceChanged(prefs, prefKeyMaxNumUpdates);
 
-            mEdgeEventsConfigUpdated = false;
+            MatchingEngineHelper.mEdgeEventsConfigUpdated = false;
         }
 
         @Override
@@ -441,7 +434,7 @@ public class SettingsActivity extends AppCompatActivity implements
                 prefMaxNumUpdates.setVisible(visible);
             }
 
-            mEdgeEventsConfigUpdated = true;
+            MatchingEngineHelper.mEdgeEventsConfigUpdated = true;
         }
 
         @Override

@@ -20,44 +20,38 @@ package com.mobiledgex.sdkdemo;
 import android.util.ArrayMap;
 
 /**
- * Singleton class to allow access to cloudlet list throughout the app.
+ * This class holds static variables to allow access throughout the app.
  */
 public class CloudletListHolder {
-    private static final CloudletListHolder ourInstance = new CloudletListHolder();
+    private static ArrayMap<String, Cloudlet> mCloudletList = new ArrayMap<>();
+    private static LatencyTestMethod latencyTestMethod = LatencyTestMethod.ping;
+    private static boolean latencyTestAutoStart;
+    private static int numBytesDownload;
+    private static int numBytesUpload;
+    private static int numPackets;
 
-    private ArrayMap<String, Cloudlet> mCloudletList = new ArrayMap<>();
-    private LatencyTestMethod latencyTestMethod = LatencyTestMethod.ping;
-    private boolean latencyTestAutoStart;
-    private int numBytesDownload;
-    private int numBytesUpload;
-    private int numPackets;
-
-    public static CloudletListHolder getSingleton() {
-        return ourInstance;
-    }
-
-    public int getNumBytesDownload() {
+    public static int getNumBytesDownload() {
         return numBytesDownload;
     }
 
-    public void setNumBytesDownload(int numBytes) {
-        this.numBytesDownload = numBytes;
+    public static void setNumBytesDownload(int numBytes) {
+        numBytesDownload = numBytes;
     }
 
-    public int getNumBytesUpload() {
+    public static int getNumBytesUpload() {
         return numBytesUpload;
     }
 
-    public void setNumBytesUpload(int numBytes) {
-        this.numBytesUpload = numBytes;
+    public static void setNumBytesUpload(int numBytes) {
+        numBytesUpload = numBytes;
     }
 
-    public int getNumPackets() {
+    public static int getNumPackets() {
         return numPackets;
     }
 
-    public void setNumPackets(int numPackets) {
-        this.numPackets = numPackets;
+    public static void setNumPackets(int count) {
+        numPackets = count;
     }
 
     public enum LatencyTestMethod {
@@ -69,28 +63,28 @@ public class CloudletListHolder {
     private CloudletListHolder() {
     }
 
-    public ArrayMap<String, Cloudlet> getCloudletList() {
+    public static ArrayMap<String, Cloudlet> getCloudletList() {
         return mCloudletList;
     }
 
-    public void setCloudlets(ArrayMap<String, Cloudlet> mCloudlets) {
-        this.mCloudletList = mCloudlets;
+    public static void setCloudlets(ArrayMap<String, Cloudlet> mCloudlets) {
+        mCloudletList = mCloudlets;
     }
 
-    public boolean getLatencyTestAutoStart() {
+    public static boolean getLatencyTestAutoStart() {
         return latencyTestAutoStart;
     }
 
-    public void setLatencyTestAutoStart(boolean latencyTestAutoStart) {
-        this.latencyTestAutoStart = latencyTestAutoStart;
+    public static void setLatencyTestAutoStart(boolean autoStart) {
+        latencyTestAutoStart = autoStart;
     }
 
-    public LatencyTestMethod getLatencyTestMethod() {
+    public static LatencyTestMethod getLatencyTestMethod() {
         return latencyTestMethod;
     }
 
-    public void setLatencyTestMethod(String latencyTestMethod) {
-        this.latencyTestMethod = LatencyTestMethod.valueOf(latencyTestMethod);
-        System.out.println("String latencyTestMethod="+latencyTestMethod+" enum latencyTestMethod="+this.latencyTestMethod);
+    public static void setLatencyTestMethod(String method) {
+        latencyTestMethod = LatencyTestMethod.valueOf(method);
+        System.out.println("String latencyTestMethod="+method+" enum latencyTestMethod="+latencyTestMethod);
     }
 }

@@ -93,6 +93,9 @@
 
     <!-- Settings for Edge Events -->
     <string name="pref_edge_events_config">Edge Events Config</string>
+    <string name="pref_enable_edge_events">pref_enable_edge_events</string>
+    <string name="pref_enable_edge_events_title">Enable Edge Events</string>
+    <string name="pref_enable_edge_events_summary">summary</string>
     <string name="pref_override_default_config">pref_override_default_config</string>
     <string name="pref_override_default_config_title">Override Edge Events Default Config</string>
     <string name="pref_override_default_config_summary">When turned off, default values from the SDK are used.</string>

@@ -124,12 +124,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 
-import static com.mobiledgex.matchingenginehelper.SettingsActivity.mEdgeEventsConfigUpdated;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsConfigUpdated;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsEnabled;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -521,7 +523,7 @@ public class MainActivity extends AppCompatActivity
             webView.loadData(htmlData, "text/html; charset=UTF-8",null);
             new AlertDialog.Builder(MainActivity.this)
                     .setView(webView)
-                    .setIcon(R.mipmap.ic_launcher_foreground)
+                    .setIcon(R.drawable.ic_launcher_foreground)
                     .setTitle(appName)
                     .setCancelable(true)
                     .setPositiveButton(R.string.ok, null)
@@ -601,7 +603,9 @@ public class MainActivity extends AppCompatActivity
 
             initUserMobileIcon();
 
-            updateLocSimLocation(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+            if(meHelper.mAllowLocationSimulatorUpdate) {
+                updateLocSimLocation(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+            }
             meHelper.mClosestCloudletHostname = null;
             getCloudlets(true);
             return true;
@@ -945,7 +949,6 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Gets list of cloudlets from DME, and populates map with markers.
-     *
      * @param clearExisting
      */
     public void getCloudlets(boolean clearExisting) {
@@ -962,18 +965,29 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (clearExisting) {
-            //Clear list so we don't show old cloudlets as transparent
-            //First, remove all cloudlet markers.
-            for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-                Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
-                cloudlet.getMarker().remove();
-            }
-            //Then clear the list.
-            CloudletListHolder.getSingleton().getCloudletList().clear();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    //Clear list so we don't show old cloudlets as transparent
+                    //First, remove all cloudlet markers.
+                    for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+                        Cloudlet cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
+                        cloudlet.getMarker().remove();
+                    }
+                    //Then clear the list.
+                    CloudletListHolder.getCloudletList().clear();
+                }
+            });
         }
 
         showMessage("Performing getAppInstList");
-        meHelper.getAppInstListInBackground();
+        try {
+            meHelper.getAppInstList();
+        } catch (InterruptedException | ExecutionException e) {
+            String message = "Error during getAppInstList: " + e;
+            Log.e(TAG, message);
+            showError(message);
+        }
     }
 
     @Override
@@ -1077,7 +1091,7 @@ public class MainActivity extends AppCompatActivity
                 switch (which) {
                     case 0:
                         Log.i(TAG, "Spoofing GPS at "+location);
-                        showMessage("GPS spoofing enabled.");
+                        showMessage("GPS spoofing activated.");
                         float[] results = new float[1];
                         Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
                         double distance = results[0]/1000;
@@ -1098,7 +1112,6 @@ public class MainActivity extends AppCompatActivity
                         Log.i(TAG, "Unknown dialog selection.");
                 }
                 dialog.dismiss();
-
             }
         });
 
@@ -1139,17 +1152,18 @@ public class MainActivity extends AppCompatActivity
             mUserLocationMarker.showInfoWindow();
         }
         locationVerificationAttempted = locationVerified = false;
-        if (mClosestCloudletPolyLine != null) {
-            mClosestCloudletPolyLine.remove();
-        }
+
+        // This will also erase any existing line, and will only
+        // draw the line if we actually have a closest cloudlet.
+        drawClosestCloudletLine();
     }
 
     /**
      * Reset all existing cloudlet markers to default state.
      */
     private void initAllCloudletMarkers() {
-        for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-            initCloudletMarker(CloudletListHolder.getSingleton().getCloudletList().valueAt(i));
+        for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+            initCloudletMarker(CloudletListHolder.getCloudletList().valueAt(i));
         }
     }
 
@@ -1253,10 +1267,12 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                // Get full list of cloudlets again in case any have been added or removed.
+                getCloudlets(false);
                 initAllCloudletMarkers();
                 Cloudlet cloudlet = null;
-                for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-                    cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
+                for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+                    cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
                     Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
                     if(cloudlet.getFqdn().equals(closestCloudlet.getFqdn()) ) {
                         Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
@@ -1279,8 +1295,8 @@ public class MainActivity extends AppCompatActivity
     /**
      * Callback for Matching Engine's getCloudletList results. Creates ArrayMap of cloudlets
      * keyed on the cloudlet name. A map marker is also created for each cloudlet.
-     *
      * @param cloudletList  List of found cloudlet instances.
+     *
      */
     @Override
     public void onGetCloudletList(final AppClient.AppInstListReply cloudletList) {
@@ -1317,72 +1333,10 @@ public class MainActivity extends AppCompatActivity
                     Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName()+" getCarrierName()="+cloudletLocation.getCarrierName());
                     showMessage(" "+num+". "+cloudletLocation.getCloudletName());
                     num++;
-                    String carrierName = cloudletLocation.getCarrierName();
-                    String cloudletName = cloudletLocation.getCloudletName();
-                    List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
-                    // There will only be a single match because we supply all of appName, appVer,
-                    // and orgName in the request. So we just get the first item.
-                    String fqdn = appInstances.get(0).getFqdn();
-                    String appName = appInstances.get(0).getAppName();
-                    String FQDNPrefix = "";
-                    int publicPort = 0;
-                    mTls = false;
-                    List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
-                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, TLS: %b, Container Port: %d, External Port: %d}";
-                    for (Appcommon.AppPort aPort : ports) {
-                        FQDNPrefix = aPort.getFqdnPrefix();
-                        Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
-                                    aPort.getProto().getNumber(),
-                                    aPort.getFqdnPrefix(),
-                                    aPort.getTls(),
-                                    aPort.getInternalPort(),
-                                    aPort.getPublicPort()));
-
-                        // For our app, the first port is for an http/ws server and can be TLS.
-                        // This server provides both CV and speedtest capabilities.
-                        // The second port is for a generic socket server.
-                        // Only choose the first port.
-                        if (publicPort == 0) {
-                            publicPort = aPort.getPublicPort();
-                            mTls = aPort.getTls();
-                            Log.i(TAG, "Using publicPort="+publicPort+" TLS="+mTls);
-                        }
-
-                        if (publicPort != DEFAULT_SPEED_TEST_PORT) {
-                            // Only the default port is currently supported. Set it here so the
-                            // above "first port" logic is overridden in case the port order in
-                            // the app definition was incorrect.
-                            Log.w(TAG, "Incorrect appInst first port "+publicPort+". Overriding with default: " + DEFAULT_SPEED_TEST_PORT);
-                            publicPort = DEFAULT_SPEED_TEST_PORT;
-                        }
-                    }
-                    double distance = cloudletLocation.getDistance();
-                    LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());
-                    Marker marker;
-                    Cloudlet cloudlet;
-                    if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
-                        Log.i(TAG, "Reusing existing marker for "+cloudletName);
-                        cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
-                        marker = cloudlet.getMarker();
-                    } else {
-                        Log.i(TAG, "addMarker for "+cloudletName);
-                        marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                        cloudlet = new CloudletBuilder()
-                                .setCloudletName(cloudletName)
-                                .setAppName(appName)
-                                .setCarrierName(carrierName)
-                                .setGpsLocation(latLng)
-                                .setDistance(distance).setFqdn(fqdn)
-                                .setFqdnPrefix(FQDNPrefix)
-                                .setTls(mTls)
-                                .setMarker(marker)
-                                .setPort(publicPort)
-                                .createCloudlet();
-                        initCloudletMarker(cloudlet);
-                    }
-                    tempCloudlets.put(cloudletName, cloudlet);
-                    builder.include(marker.getPosition());
-                    mCloudletLatLngs.add(marker.getPosition());
+                    Cloudlet cloudlet = makeCloudlet(cloudletLocation);
+                    tempCloudlets.put(cloudlet.getCloudletName(), cloudlet);
+                    builder.include(cloudlet.getMarker().getPosition());
+                    mCloudletLatLngs.add(cloudlet.getMarker().getPosition());
                 }
 
                 // Hide the log viewer after a short delay.
@@ -1392,8 +1346,8 @@ public class MainActivity extends AppCompatActivity
                 initAllCloudletMarkers();
 
                 //Now see if all cloudlets still exist. If removed, show as semi-transparent.
-                for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-                    Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
+                for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+                    Cloudlet cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
                     if (!tempCloudlets.containsKey(cloudlet.getCloudletName())) {
                         Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
                         showMessage(cloudlet.getCloudletName() + " has been removed");
@@ -1403,7 +1357,7 @@ public class MainActivity extends AppCompatActivity
                         marker.setAlpha((float) 0.33);
                     }
                 }
-                CloudletListHolder.getSingleton().setCloudlets(tempCloudlets);
+                CloudletListHolder.setCloudlets(tempCloudlets);
 
                 // Erase "closest cloudlet" line if it exists.
                 if (mClosestCloudletPolyLine != null) {
@@ -1451,6 +1405,71 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
+    protected Cloudlet makeCloudlet(AppClient.CloudletLocation cloudletLocation) {
+        String carrierName = cloudletLocation.getCarrierName();
+        String cloudletName = cloudletLocation.getCloudletName();
+        List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
+        // There will only be a single match because we supply all of appName, appVer,
+        // and orgName in the request. So we just get the first item.
+        String fqdn = appInstances.get(0).getFqdn();
+        String appName = appInstances.get(0).getAppName();
+        String FQDNPrefix = "";
+        int publicPort = 0;
+        mTls = false;
+        List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
+        String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, TLS: %b, Container Port: %d, External Port: %d}";
+        for (Appcommon.AppPort aPort : ports) {
+            FQDNPrefix = aPort.getFqdnPrefix();
+            Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
+                    aPort.getProto().getNumber(),
+                    aPort.getFqdnPrefix(),
+                    aPort.getTls(),
+                    aPort.getInternalPort(),
+                    aPort.getPublicPort()));
+
+            // For our app, the first port is for an http/ws server and can be TLS.
+            // This server provides both CV and speedtest capabilities.
+            // The second port is for a generic socket server.
+            // Only choose the first port.
+            if (publicPort == 0) {
+                publicPort = aPort.getPublicPort();
+                mTls = aPort.getTls();
+                Log.i(TAG, "Using publicPort="+publicPort+" TLS="+mTls);
+            }
+
+            if (publicPort != DEFAULT_SPEED_TEST_PORT) {
+                // Only the default port is currently supported. Set it here so the
+                // above "first port" logic is overridden in case the port order in
+                // the app definition was incorrect.
+                Log.w(TAG, "Incorrect appInst first port "+publicPort+". Overriding with default: " + DEFAULT_SPEED_TEST_PORT);
+                publicPort = DEFAULT_SPEED_TEST_PORT;
+            }
+        }
+        double distance = cloudletLocation.getDistance();
+        LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());
+        Cloudlet cloudlet;
+        if(CloudletListHolder.getCloudletList().containsKey(cloudletName)){
+            Log.i(TAG, "Reusing existing marker for "+cloudletName);
+            cloudlet = CloudletListHolder.getCloudletList().get(cloudletName);
+        } else {
+            Log.i(TAG, "addMarker for "+cloudletName);
+            Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng));
+            cloudlet = new CloudletBuilder()
+                    .setCloudletName(cloudletName)
+                    .setAppName(appName)
+                    .setCarrierName(carrierName)
+                    .setGpsLocation(latLng)
+                    .setDistance(distance).setFqdn(fqdn)
+                    .setFqdnPrefix(FQDNPrefix)
+                    .setTls(mTls)
+                    .setMarker(marker)
+                    .setPort(publicPort)
+                    .createCloudlet();
+            initCloudletMarker(cloudlet);
+        }
+        return cloudlet;
+    }
+
     @Override
     public boolean onMarkerClick(Marker marker) {
         Log.i(TAG, "onMarkerClick("+marker+"). Draggable="+marker.isDraggable());
@@ -1472,7 +1491,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         String cloudletName = (String) marker.getTag();
-        Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
+        Cloudlet cloudlet = CloudletListHolder.getCloudletList().get(cloudletName);
         Log.i(TAG, "1."+cloudlet+" "+cloudlet.getCloudletName()+" "+cloudlet.getSpeedTestDownloadResult());
 
         Intent intent = new Intent(getApplicationContext(), CloudletDetailsActivity.class);
@@ -1621,31 +1640,31 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyLatencyMethod)) {
             String latencyTestMethod = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestMethod);
-            CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
+            CloudletListHolder.setLatencyTestMethod(latencyTestMethod);
         }
 
         if (key.equals(prefKeyLatencyAutoStart)) {
             boolean latencyTestAutoStart = sharedPreferences.getBoolean(prefKeyLatencyAutoStart, true);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestAutoStart);
-            CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
+            CloudletListHolder.setLatencyTestAutoStart(latencyTestAutoStart);
         }
 
         if (key.equals(prefKeyDownloadSize)) {
             int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyDownloadSize, "10485760"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
-            CloudletListHolder.getSingleton().setNumBytesDownload(numBytes);
+            CloudletListHolder.setNumBytesDownload(numBytes);
         }
 
         if (key.equals(prefKeyUploadSize)) {
             int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyUploadSize, "5242880"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
-            CloudletListHolder.getSingleton().setNumBytesUpload(numBytes);
+            CloudletListHolder.setNumBytesUpload(numBytes);
         }
 
         if (key.equals(prefKeyNumPackets)) {
             int numPackets = Integer.parseInt(sharedPreferences.getString(prefKeyNumPackets, "5"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numPackets);
-            CloudletListHolder.getSingleton().setNumPackets(numPackets);
+            CloudletListHolder.setNumPackets(numPackets);
         }
 
         if (key.equals(prefKeyDrivingAnimDuration)) {
@@ -1682,8 +1701,8 @@ public class MainActivity extends AppCompatActivity
         }
 
         Log.i(TAG, "onResume() mEdgeEventsConfigUpdated="+mEdgeEventsConfigUpdated);
-        if (mEdgeEventsConfigUpdated) {
-            meHelper.startEdgeEvents();
+        if (mEdgeEventsEnabled && mEdgeEventsConfigUpdated) {
+            meHelper.startEdgeEvents(false);
         }
 
         startLocationUpdates();
