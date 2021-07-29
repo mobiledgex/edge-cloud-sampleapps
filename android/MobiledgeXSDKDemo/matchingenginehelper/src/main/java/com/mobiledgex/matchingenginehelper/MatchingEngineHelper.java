@@ -280,7 +280,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onEdgeEventPreferenceChanged(prefs, prefKeyAutoMigration);
     }
 
-    public void startEdgeEvents(boolean newConnection) {
+    public void startEdgeEvents() {
         if (!mEdgeEventsEnabled) {
             Log.e(TAG, "Aborting attempt to startEdgeEvents while mEdgeEventsEnabled="+ false);
             return;
@@ -292,7 +292,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
         new Thread(() -> {
             mEdgeEventsConfig = me.createDefaultEdgeEventsConfig();
-            String message = "Using Default EdgeEventsConfig=" + mEdgeEventsConfig;
+            String message = "Created Default EdgeEventsConfig=" + mEdgeEventsConfig;
             Log.i(TAG, message);
 
             if (mOverrideDefaultConfig) {
@@ -311,23 +311,15 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             }
 
             if (mEdgeEventsRunning) {
-                if (me.isAutoMigrateEdgeEventsConnection()) {
-                    if (newConnection) {
-                        message = "Auto-migrating to new app inst";
-                    } else {
-                        message = "Retaining connection to existing app inst";
-                    }
-                } else {
-                    message = "Restarting ServerEdgeEvents";
-                    me.stopEdgeEvents();
-                    me.startEdgeEvents(mEdgeEventsConfig);
-                }
+                message = "Restarting ServerEdgeEvents";
+                me.stopEdgeEvents();
             } else {
                 message = "Subscribed to ServerEdgeEvents";
-                me.startEdgeEvents(mEdgeEventsConfig);
+                Log.i(TAG, "me="+me);
             }
             Log.i(TAG, message);
             meHelperInterface.showMessage(message);
+            me.startEdgeEvents(mEdgeEventsConfig);
             mEdgeEventsRunning = true;
         }).start();
     }
@@ -582,9 +574,8 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     private void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet) {
-        boolean newConnection = false;
         if (closestCloudlet.equals(mClosestCloudlet)) {
-            newConnection = true;
+            Log.i(TAG, "New onFindCloudlet with same closestCloudlet:" +closestCloudlet);
         }
         mClosestCloudlet = closestCloudlet;
         meHelperInterface.onFindCloudlet(closestCloudlet);
@@ -604,7 +595,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }
 
         if (mEdgeEventsEnabled) {
-            startEdgeEvents(newConnection);
+            startEdgeEvents();
         }
     }
 
@@ -934,7 +925,9 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             } else {
                 message = "Edge Events Disabled";
             }
+            Log.i(TAG, message);
             meHelperInterface.showMessage(message);
+            return;
         }
         if (key.equals(prefKeyOverrideDefaultConfig)) {
             mEdgeEventsConfigUpdated = true;
@@ -946,7 +939,9 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             } else {
                 message = "Using Edge Events Default Config";
             }
+            Log.i(TAG, message);
             meHelperInterface.showMessage(message);
+            return;
         }
 
         if (mEdgeEventsConfig == null) {
@@ -1101,6 +1096,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
      */
     public void postLocationToEdgeEvents(Location location) {
         Log.i(TAG, "postLocationToEdgeEvents("+location+")");
+        if (!mEdgeEventsEnabled) {
+            Log.i(TAG, "mEdgeEventsEnabled=false. Not posting location.");
+            return;
+        }
         me.getEdgeEventsConnectionFuture()
                 .thenApply(connection -> {
                     if (connection != null) {
