@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity
 
     private String mApiKey = BuildConfig.GOOGLE_DIRECTIONS_API_KEY;
     private Polyline mRoutePolyLine;
-    private List<LatLng> mCloudletLatLngs = new ArrayList();
+    private List<LatLng> mCloudletLatLngs = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1702,7 +1702,7 @@ public class MainActivity extends AppCompatActivity
 
         Log.i(TAG, "onResume() mEdgeEventsConfigUpdated="+mEdgeEventsConfigUpdated);
         if (mEdgeEventsEnabled && mEdgeEventsConfigUpdated) {
-            meHelper.startEdgeEvents(false);
+            meHelper.startEdgeEvents();
         }
 
         startLocationUpdates();
@@ -1774,7 +1774,7 @@ public class MainActivity extends AppCompatActivity
 
             //Loop through legs and steps to get encoded polylines of each step
             for (DirectionsRoute route: calculatedRoutes.routes) {
-                List path = new ArrayList();
+                List<LatLng> path = new ArrayList<>();
 
                 if (route.legs !=null) {
                     for (int i=0; i<route.legs.length; i++) {
