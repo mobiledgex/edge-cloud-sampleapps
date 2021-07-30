@@ -99,7 +99,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         // TODO: Copy/paste the code to define a Camera2BasicFragment
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
-        String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+        String prefKeyFrontCamera = getResources().getString(R.string.pref_cv_front_camera);
         mCamera2BasicFragment.setCameraLensFacingDirection(prefs.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT));
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
         transaction.replace(com.mobiledgex.computervision.R.id.child_camera_fragment_container, mCamera2BasicFragment).commit();
@@ -239,12 +239,12 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         if (id == R.id.action_camera_swap) {
             mCamera2BasicFragment.switchCamera();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-            String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+            String prefKeyFrontCamera = getResources().getString(R.string.pref_cv_front_camera);
             prefs.edit().putInt(prefKeyFrontCamera, mCamera2BasicFragment.getCameraLensFacingDirection()).apply();
             return true;
         } else if (id == R.id.action_camera_video) {
             mCameraToolbar.setVisibility(View.GONE);
-            mCamera2BasicFragment.startVideo("portrait/Jason.mp4");
+            mCamera2BasicFragment.startVideo("Jason.mp4", false);
             return true;
         } else if (id == R.id.action_camera_debug) {
             mCamera2BasicFragment.showDebugInfo();

@@ -43,6 +43,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -55,17 +56,24 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.common.eventbus.Subscribe;
 import com.google.maps.android.SphericalUtil;
 
 
 // Matching Engine API:
+import com.mobiledgex.matchingengine.EdgeEventsConnection;
 import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.DmeDnsException;
+import com.mobiledgex.matchingengine.edgeeventsconfig.EdgeEventsConfig;
+import com.mobiledgex.matchingengine.edgeeventsconfig.FindCloudletEvent;
+import com.mobiledgex.matchingengine.performancemetrics.NetTest;
+import com.mobiledgex.matchingengine.performancemetrics.Site;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
+import com.mobiledgex.matchingenginehelper.EventLogViewer;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -76,6 +84,8 @@ import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 import io.grpc.StatusRuntimeException;
+
+import static distributed_match_engine.AppClient.ServerEdgeEvent.ServerEventType.EVENT_APPINST_HEALTH;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -124,6 +134,9 @@ public class MainActivity extends AppCompatActivity
     private String findCloudletStatusText;
     private String verifyLocStatusText;
     private String getQosPosStatusText;
+    private EventLogViewer mEventLogViewer;
+    private EdgeEventsSubscriber mEdgeEventsSubscriber;
+    private Location mLastKnownLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,6 +169,11 @@ public class MainActivity extends AppCompatActivity
                 registerClientInBackground();
             }
         });
+
+        RecyclerView eventsRecyclerView = findViewById(R.id.events_recycler_view);
+        FloatingActionButton logExpansionButton = findViewById(R.id.fabEventLogs);
+        mEventLogViewer = new EventLogViewer(this, logExpansionButton, eventsRecyclerView);
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -329,25 +347,27 @@ public class MainActivity extends AppCompatActivity
             return false;
         }
         Log.i(TAG, "SessionCookie:" + registerStatus.getSessionCookie());
+        mEventLogViewer.showMessage("RegisterClient successful");
         HashMap<String, String> deviceDetails = matchingEngine.getDeviceInfo();
         Log.i(TAG, "deviceDetails="+deviceDetails);
+        mEventLogViewer.showMessage("deviceDetails="+deviceDetails);
 
         return true;
     }
 
     public boolean findCloudlet() throws ExecutionException, InterruptedException, PackageManager.NameNotFoundException {
         //(Blocking call, or use findCloudletFuture):
-        Location location = new Location("MEX");
+        mLastKnownLocation = new Location("MobiledgeX");
         ////////////////////////////////////////////////////////////
         // TODO: Change these coordinates to where you're actually located.
         // Of course a real app would use GPS to acquire the exact location.
-        location.setLatitude(52.52);
-        location.setLongitude(13.4040);    //Berlin
+        mLastKnownLocation.setLatitude(52.52);
+        mLastKnownLocation.setLongitude(13.4040);    //Berlin
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to find the cloudlet closest to you. Replace "= null" here.
         AppClient.FindCloudletRequest findCloudletRequest;
-        findCloudletRequest = matchingEngine.createDefaultFindCloudletRequest(ctx, location)
+        findCloudletRequest = matchingEngine.createDefaultFindCloudletRequest(ctx, mLastKnownLocation)
                 .setCarrierName(carrierName).build();
         mClosestCloudlet = matchingEngine.findCloudlet(findCloudletRequest, host, port, 10000);
         ////////////////////////////////////////////////////////////////////////////////////////////
@@ -365,11 +385,27 @@ public class MainActivity extends AppCompatActivity
         }
         Log.i(TAG, "REQ_FIND_CLOUDLET mClosestCloudlet.uri=" + mClosestCloudlet.getFqdn());
 
+        startEdgeEvents();
+
         // Populate cloudlet details.
+        populateCloudletDetails();
+
+        // TODO: Copy/paste the output of this log into a terminal to test latency.
+        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
+
+        verifyLocationInBackground(mLastKnownLocation);
+
+        getQoSPositionKpiInBackground(mLastKnownLocation);
+
+        return true;
+    }
+
+    private void populateCloudletDetails() {
+        Log.i(TAG, "populateCloudletDetails() mClosestCloudlet="+mClosestCloudlet);
         latitudeTvStr = ""+mClosestCloudlet.getCloudletLocation().getLatitude();
         longitudeTvStr = ""+mClosestCloudlet.getCloudletLocation().getLongitude();
         fqdnTvStr = mClosestCloudlet.getFqdn();
-        LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+        LatLng userLatLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
         LatLng cloudletLatLng = new LatLng(mClosestCloudlet.getCloudletLocation().getLatitude(),
                 mClosestCloudlet.getCloudletLocation().getLongitude());
         double distance = SphericalUtil.computeDistanceBetween(userLatLng, cloudletLatLng)/1000;
@@ -381,7 +417,7 @@ public class MainActivity extends AppCompatActivity
 
         //Find FqdnPrefix from Port structure.
         String FqdnPrefix = "";
-        List<distributed_match_engine.Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
+        List<Appcommon.AppPort> ports = mClosestCloudlet.getPortsList();
         String appPortFormat = "{Protocol: %d, Container Port: %d, External Port: %d, Path Prefix: '%s'}";
         for (Appcommon.AppPort aPort : ports) {
             FqdnPrefix = aPort.getFqdnPrefix();
@@ -398,26 +434,32 @@ public class MainActivity extends AppCompatActivity
         // Build full hostname.
         mClosestCloudletHostname = FqdnPrefix+mClosestCloudlet.getFqdn();
 
-        // TODO: Copy/paste the output of this log into a terminal to test latency.
-        Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
+        checkboxCloudletFound.setChecked(true);
+        checkboxCloudletFound.setText(R.string.cloudlet_found);
+        cloudletNameTv.setText(cloudletNameTvStr);
+        fqdnTv.setText(fqdnTvStr);
+        portNumberTv.setText(portNumberTvStr);
+        latitudeTv.setText(latitudeTvStr);
+        longitudeTv.setText(longitudeTvStr);
+        distanceTv.setText(distanceTvStr);
 
-        verifyLocationInBackground(location);
-
-        getQoSPositionKpiInBackground(location);
-
-        return true;
+        mEventLogViewer.showMessage("Closest cloudlet is now "+mClosestCloudletHostname);
     }
 
     private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
         AppClient.VerifyLocationRequest verifyLocationRequest
                 = matchingEngine.createDefaultVerifyLocationRequest(ctx, loc)
                 .setCarrierName(carrierName).build();
+        String TAG = "verifyLocation";
+        Log.i(TAG, "verifyLocationRequest="+verifyLocationRequest);
         if (verifyLocationRequest != null) {
             try {
                 AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
-                Log.i(TAG, "[Location Verified: Tower: " + verifyLocationReply.getTowerStatus() +
-                        ", GPS LocationStatus: " + verifyLocationReply.getGpsLocationStatus() +
-                        ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() + " ]\n");
+                String message = "GPS LocationStatus: " + verifyLocationReply.getGpsLocationStatus() +
+                        ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() +
+                        ", Location Verified: Tower: " + verifyLocationReply.getTowerStatus();
+                Log.i(TAG, message);
+                mEventLogViewer.showMessage(message);
                 return true;
             } catch(NetworkOnMainThreadException ne) {
                 verifyLocStatusText = "Network thread exception";
@@ -462,6 +504,28 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, getQosPosStatusText);
             return false;
         }
+    }
+
+    private void startEdgeEvents() {
+        mEdgeEventsSubscriber = new EdgeEventsSubscriber();
+        matchingEngine.getEdgeEventsBus().register(mEdgeEventsSubscriber);
+
+        // set a default config.
+        // There is also a parameterized version to further customize.
+        EdgeEventsConfig backgroundEdgeEventsConfig = matchingEngine.createDefaultEdgeEventsConfig();
+
+        // Modify the default config with a few custom attribute values:
+        backgroundEdgeEventsConfig.latencyTestType = NetTest.TestType.CONNECT;
+        // This is the internal port, that has not been remapped to a public port for a particular appInst.
+        backgroundEdgeEventsConfig.latencyInternalPort = 8008; // 0 will grab first UDP port but will favor the first TCP port if found.
+        // Latency config. There is also a very similar location update config.
+        backgroundEdgeEventsConfig.latencyUpdateConfig.maxNumberOfUpdates = 0; // Default is 0, which means test forever.
+        backgroundEdgeEventsConfig.latencyUpdateConfig.updateIntervalSeconds = 7; // The default is 30.
+        backgroundEdgeEventsConfig.latencyThresholdTrigger = 186;
+
+        String message = "Subscribed to ServerEdgeEvents";
+        Log.i(TAG, message);
+        mEventLogViewer.showMessage(message);
     }
 
     private void registerClientInBackground() {
@@ -641,16 +705,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Boolean cloudletFound) {
-            if(cloudletFound) {
-                checkboxCloudletFound.setChecked(true);
-                checkboxCloudletFound.setText(R.string.cloudlet_found);
-                cloudletNameTv.setText(cloudletNameTvStr);
-                fqdnTv.setText(fqdnTvStr);
-                portNumberTv.setText(portNumberTvStr);
-                latitudeTv.setText(latitudeTvStr);
-                longitudeTv.setText(longitudeTvStr);
-                distanceTv.setText(distanceTvStr);
-            } else {
+            if(!cloudletFound) {
                 findCloudletStatusText = "Failed to find cloudlet. " + findCloudletStatusText;
                 Log.e(TAG, findCloudletStatusText);
                 showErrorMsg(findCloudletStatusText);
@@ -725,6 +780,47 @@ public class MainActivity extends AppCompatActivity
                 Log.e(TAG, getQosPosStatusText);
                 showErrorMsg(getQosPosStatusText);
             }
+        }
+    }
+
+    // (Guava EventBus Interface)
+    // This class encapsulates what an app might implement to watch for edge events. Not every event
+    // needs to be implemented. If you just want FindCloudlet, just @Subscribe to FindCloudletEvent.
+    //
+    class EdgeEventsSubscriber {
+
+        // Subscribe to error handlers!
+        @Subscribe
+        public void onMessageEvent(EdgeEventsConnection.EdgeEventsError error) {
+            Log.d(TAG, "EdgeEvents error reported, reason: " + error);
+            if (error.toString().equals("eventTriggeredButCurrentCloudletIsBest")) {
+                return;
+            }
+            mEventLogViewer.showError(error.toString());
+        }
+
+        // Subscribe to FindCloudletEvent updates to appInst. Reasons to do so include
+        // the AppInst Health and Latency spec for this application.
+        @Subscribe
+        public void onMessageEvent(FindCloudletEvent findCloudletEvent) {
+            Log.i(TAG, "Cloudlet update, reason: " + findCloudletEvent.trigger);
+
+            // Connect to new Cloudlet in the event here, preferably in a background task.
+            Log.i(TAG, "FindCloudletEvent. Cloudlet: " + findCloudletEvent.newCloudlet);
+
+            String someText = findCloudletEvent.newCloudlet.getFqdn();
+            mEventLogViewer.showMessage("FindCloudletEvent. FQDN: "+someText);
+
+            Log.i(TAG, "Received: Server pushed a new FindCloudletReply to switch to: " + findCloudletEvent);
+            handleFindCloudletServerPush(findCloudletEvent);
+        }
+
+        void handleFindCloudletServerPush(FindCloudletEvent event) {
+            mEventLogViewer.showMessage("Received: FindCloudletEvent");
+
+            // In this demo case, use our existing interface to display the newly selected cloudlet on the map.
+            mClosestCloudlet = event.newCloudlet;
+            populateCloudletDetails();
         }
     }
 }
