@@ -330,7 +330,9 @@ public class SettingsActivity extends AppCompatActivity implements
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-            // Handled in MatchingEngineHelper.onSharedPreferenceChanged().
+            MatchingEngineHelper.mEdgeEventsConfigUpdated = true;
+            // Updating the config with changed values is handled in
+            // MatchingEngineHelper.onSharedPreferenceChanged().
         }
 
         @Override
