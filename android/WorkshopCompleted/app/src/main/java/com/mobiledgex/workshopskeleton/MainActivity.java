@@ -444,6 +444,8 @@ public class MainActivity extends AppCompatActivity
         distanceTv.setText(distanceTvStr);
 
         mEventLogViewer.showMessage("Closest cloudlet is now "+mClosestCloudletHostname);
+        // Hide the log viewer after a short delay.
+        mEventLogViewer.initialLogsComplete();
     }
 
     private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {

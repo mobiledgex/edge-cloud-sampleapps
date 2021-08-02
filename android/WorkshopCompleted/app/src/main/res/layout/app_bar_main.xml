@@ -35,7 +35,8 @@
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:layout_above="@+id/fabEventLogs"
-            android:background="#FFFFFF" />
+            android:background="#EEEEEE"
+            android:padding="2dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabEventLogs"
