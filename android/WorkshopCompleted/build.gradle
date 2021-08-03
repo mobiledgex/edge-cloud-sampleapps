@@ -10,8 +10,11 @@ buildscript {
 
     repositories {
         mavenLocal()
+        mavenCentral()
         google()
-        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.0'
@@ -30,15 +33,15 @@ allprojects {
     apply plugin: 'maven-publish'
     repositories {
         google()
-        jcenter()
         mavenLocal()
+        mavenCentral()
         maven {
             credentials {
                 // Create these variables in local.properties if you don't have them.
                 username artifactory_user
                 password artifactory_password
             }
-            url "https://artifactory.mobiledgex.net/artifactory/maven-releases/"
+            url "https://artifactory.mobiledgex.net/artifactory/maven-development/"
         }
     }
 }
