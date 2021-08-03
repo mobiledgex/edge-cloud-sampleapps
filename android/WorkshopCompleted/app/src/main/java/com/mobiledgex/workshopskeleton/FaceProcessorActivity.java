@@ -81,7 +81,7 @@ public class FaceProcessorActivity extends AppCompatActivity {
         String appName = "ComputerVision";
         String appVersion = "2.0";
         String orgName = "MobiledgeX";
-        Location location = new Location("MEX");
+        Location location = new Location("MobiledgeX");
         location.setLatitude(52.52);
         location.setLongitude(13.4040);    //Beacon
 

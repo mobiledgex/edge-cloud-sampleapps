@@ -315,7 +315,6 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 me.stopEdgeEvents();
             } else {
                 message = "Subscribed to ServerEdgeEvents";
-                Log.i(TAG, "me="+me);
             }
             Log.i(TAG, message);
             meHelperInterface.showMessage(message);
