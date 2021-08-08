@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "artifactType": {
     "type": "APK",
     "kind": "Directory"
@@ -10,10 +10,8 @@
     {
       "type": "SINGLE",
       "filters": [],
-      "properties": [],
       "versionCode": 62,
-      "versionName": "1.1.13",
-      "enabled": true,
+      "versionName": "1.1.14",
       "outputFile": "MobiledgeXSDKDemo-release.apk"
     }
   ]

@@ -61,6 +61,17 @@ public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecycler
         this.notifyItemInserted(id);
     }
 
+    public void copyAllItemsAsText(View view) {
+        // Gets a handle to the clipboard service.
+        ClipboardManager clipboard = (ClipboardManager)
+                view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+        // Creates a new text clip to put on the clipboard
+        ClipData clip = ClipData.newPlainText("simple text", getAllItemsAsText());
+        // Set the clipboard's primary clip.
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(view.getContext(), "Items copied to clipboard.", Toast.LENGTH_SHORT).show();
+    }
+
     public String getAllItemsAsText() {
         StringBuilder sb = new StringBuilder();
         for (EventItem eventItem : mValues) {
@@ -87,15 +98,8 @@ public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecycler
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    // Gets a handle to the clipboard service.
-                    ClipboardManager clipboard = (ClipboardManager)
-                            view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                    // Creates a new text clip to put on the clipboard
-                    ClipData clip = ClipData.newPlainText("simple text", getAllItemsAsText());
-                    // Set the clipboard's primary clip.
-                    clipboard.setPrimaryClip(clip);
-                    Toast.makeText(view.getContext(), "Items copied to clipboard.", Toast.LENGTH_SHORT).show();
-                    return false;
+                    copyAllItemsAsText(view);
+                    return true;
                 }
             });
         }
