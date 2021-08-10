@@ -177,4 +177,8 @@
     <string name="pref_update_interval_latency">pref_update_interval_latency</string>
     <string name="pref_max_num_updates_latency">pref_max_num_updates_latency</string>
 
+    <string name="action_elv_auto_expand">Auto Expand</string>
+    <string name="action_elv_clear">Clear Logs</string>
+    <string name="action_elv_copy">Copy All Items</string>
+
 </resources>

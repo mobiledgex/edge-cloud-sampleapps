@@ -4,9 +4,11 @@ import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,7 +22,7 @@ import java.util.TimerTask;
 import static com.mobiledgex.matchingenginehelper.EventItem.EventType.ERROR;
 import static com.mobiledgex.matchingenginehelper.EventItem.EventType.INFO;
 
-public class EventLogViewer {
+public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
     private static final String TAG = "EventLogViewer";
     private Activity mActivity;
     public List<EventItem> mEventItemList = new ArrayList<>();
@@ -74,28 +76,49 @@ public class EventLogViewer {
         mLogExpansionButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                new androidx.appcompat.app.AlertDialog.Builder(mActivity)
-                        .setTitle(R.string.verify_clear_logs_title)
-                        .setMessage(R.string.verify_clear_logs_message)
-                        .setNegativeButton(android.R.string.cancel,
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                })
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                mEventItemList.clear();
-                                mEventRecyclerViewAdapter.notifyDataSetChanged();
-                                Toast.makeText(mActivity, "Log viewer cleared", Toast.LENGTH_LONG).show();
-                            }
-                        })
-                        .show();
-                return true;
+                PopupMenu popup = new PopupMenu(mActivity, v);
+                popup.setOnMenuItemClickListener(EventLogViewer.this);
+                popup.inflate(R.menu.event_viewer_popup);
+                popup.show();
+                popup.getMenu().findItem(R.id.action_elv_auto_expand).setChecked(mAutoExpand);
+                return false;
             }
         });
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        if (item.getItemId() == R.id.action_elv_clear) {
+            clearAllLogs();
+        } else if (item.getItemId() == R.id.action_elv_copy) {
+            mEventRecyclerViewAdapter.copyAllItemsAsText(mEventsRecyclerView);
+        } else if (item.getItemId() == R.id.action_elv_auto_expand) {
+            mAutoExpand = !mAutoExpand;
+            item.setChecked(mAutoExpand);
+        }
+        return true;
+    }
+
+    private void clearAllLogs() {
+        new androidx.appcompat.app.AlertDialog.Builder(mActivity)
+                .setTitle(R.string.verify_clear_logs_title)
+                .setMessage(R.string.verify_clear_logs_message)
+                .setNegativeButton(android.R.string.cancel,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        mEventItemList.clear();
+                        mEventRecyclerViewAdapter.notifyDataSetChanged();
+                        Toast.makeText(mActivity, "Log viewer cleared", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .show();
     }
 
     /**

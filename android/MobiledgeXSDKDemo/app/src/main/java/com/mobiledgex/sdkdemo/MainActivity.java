@@ -199,8 +199,8 @@ public class MainActivity extends AppCompatActivity
     private ValueAnimator mValueAnimator;
     private int mDrivingAnimDuration;
     private int mFlyingAnimDuration;
-    private static final int DEF_DRIVING_DURATION = 15; //Seconds
-    private static final int DEF_FLYING_DURATION = 7; //Seconds
+    private static final int DEF_DRIVING_DURATION = 18; //Seconds
+    private static final int DEF_FLYING_DURATION = 12; //Seconds
 
     private String mApiKey = BuildConfig.GOOGLE_DIRECTIONS_API_KEY;
     private Polyline mRoutePolyLine;
@@ -352,9 +352,9 @@ public class MainActivity extends AppCompatActivity
             mEventLogViewer.mAutoExpand = false;
             mUserLocationMarker.setPosition(mStartLatLng);
             if (mRouteMode == RouteMode.FLYING) {
-                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mDrivingAnimDuration);
-            } else if (mRouteMode == RouteMode.DRIVING) {
                 animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mFlyingAnimDuration);
+            } else if (mRouteMode == RouteMode.DRIVING) {
+                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mDrivingAnimDuration);
             }
             mRouteIsPlaying = true;
         }
@@ -414,16 +414,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     protected void drawClosestCloudletLine() {
-        // Erase "closest cloudlet" line if it exists.
-        if (mClosestCloudletPolyLine != null) {
-            mClosestCloudletPolyLine.remove();
-        }
-        if (getClosestCloudletPosition() != null) {
-            mClosestCloudletPolyLine = mGoogleMap.addPolyline(new PolylineOptions()
-                    .add(mUserLocationMarker.getPosition(), getClosestCloudletPosition())
-                    .width(8)
-                    .color(COLOR_VERIFIED));
-        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Erase "closest cloudlet" line if it exists.
+                if (mClosestCloudletPolyLine != null) {
+                    mClosestCloudletPolyLine.remove();
+                }
+                if (getClosestCloudletPosition() != null) {
+                    mClosestCloudletPolyLine = mGoogleMap.addPolyline(new PolylineOptions()
+                            .add(mUserLocationMarker.getPosition(), getClosestCloudletPosition())
+                            .width(8)
+                            .color(COLOR_VERIFIED));
+                }
+            }
+        });
     }
 
     private interface LatLngInterpolator {
@@ -722,7 +727,6 @@ public class MainActivity extends AppCompatActivity
             fabPlayRoute.setVisibility(View.GONE);
             return;
         }
-        fabPlayRoute.setVisibility(View.VISIBLE);
 
         if (routeModePrevItem != null) {
             routeModePrevItem.setChecked(false);
@@ -1172,12 +1176,17 @@ public class MainActivity extends AppCompatActivity
      * @param cloudlet
      */
     private void initCloudletMarker(Cloudlet cloudlet) {
-        Marker marker = cloudlet.getMarker();
-        String cloudletName = cloudlet.getCloudletName();
-        marker.setTitle(cloudletName + " Cloudlet");
-        marker.setSnippet("Click for details");
-        marker.setTag(cloudletName); // This is used by automation testing.
-        marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, mDefaultCloudletColor, getBadgeText(cloudlet)));
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Marker marker = cloudlet.getMarker();
+                String cloudletName = cloudlet.getCloudletName();
+                marker.setTitle(cloudletName + " Cloudlet");
+                marker.setSnippet("Click for details");
+                marker.setTag(cloudletName); // This is used by automation testing.
+                marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, mDefaultCloudletColor, getBadgeText(cloudlet)));
+            }
+        });
     }
 
     @Override
@@ -1264,32 +1273,34 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Get full list of cloudlets again in case any have been added or removed.
-                getCloudlets(false);
-                initAllCloudletMarkers();
-                Cloudlet cloudlet = null;
-                for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
-                    cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
-                    Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
-                    if(cloudlet.getFqdn().equals(closestCloudlet.getFqdn()) ) {
-                        Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
-                        cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, getBadgeText(cloudlet)));
-                        cloudlet.setBestMatch(true);
-                        break;
+        // Get full list of cloudlets again in case any have been added or removed.
+        getCloudlets(false);
+        initAllCloudletMarkers();
+        Cloudlet cloudlet = null;
+        for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+            cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
+            Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
+            if(cloudlet.getFqdn().equals(closestCloudlet.getFqdn()) ) {
+                Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
+                Marker marker = cloudlet.getMarker();
+                String badgeText = getBadgeText(cloudlet);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, badgeText));
                     }
-                }
-                if (cloudlet != null) {
-                    drawClosestCloudletLine();
-                    //Save the hostname for use by the Computer Vision Activity.
-                    meHelper.mClosestCloudletHostname = cloudlet.getHostName();
-                    Log.i(TAG, "mClosestCloudletHostname: "+ meHelper.mClosestCloudletHostname);
-                    showMessage("Closest Cloudlet is now: " + meHelper.mClosestCloudletHostname);
-                }
+                });
+                cloudlet.setBestMatch(true);
+                break;
             }
-        });
+        }
+        if (cloudlet != null) {
+            drawClosestCloudletLine();
+            //Save the hostname for use by the Computer Vision Activity.
+            meHelper.mClosestCloudletHostname = cloudlet.getHostName();
+            Log.i(TAG, "mClosestCloudletHostname: "+ meHelper.mClosestCloudletHostname);
+            showMessage("Closest Cloudlet is now: " + meHelper.mClosestCloudletHostname);
+        }
     }
 
     /**
@@ -1768,9 +1779,11 @@ public class MainActivity extends AppCompatActivity
             if (calculatedRoutes == null || calculatedRoutes.routes.length == 0) {
                 Log.w(TAG, "calculatedRoutes has no content");
                 showError("No driving route found.");
+                fabPlayRoute.setVisibility(View.GONE);
                 return;
             }
             Log.d(TAG, "calculatedRoutes="+calculatedRoutes.routes.length);
+            fabPlayRoute.setVisibility(View.VISIBLE);
 
             //Loop through legs and steps to get encoded polylines of each step
             for (DirectionsRoute route: calculatedRoutes.routes) {
