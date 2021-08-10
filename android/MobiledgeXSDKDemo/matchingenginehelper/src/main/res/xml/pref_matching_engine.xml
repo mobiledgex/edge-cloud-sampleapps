@@ -21,6 +21,14 @@
         android:summary="@string/pref_net_switching_allowed_summary"
         android:title="@string/pref_net_switching_allowed_title"
         app:iconSpaceReserved="false" />
+    <SwitchPreference
+        android:id="@+id/preference_use_wifi_only"
+        android:contentDescription="preference_use_wifi_only"
+        android:defaultValue="false"
+        android:key="@string/pref_use_wifi_only"
+        android:summary="@string/pref_use_wifi_only_summary"
+        android:title="@string/pref_use_wifi_only_title"
+        app:iconSpaceReserved="false" />
     <ListPreference
         android:defaultValue="PROXIMITY"
         android:entries="@array/pref_find_cloudlet_mode_titles"
