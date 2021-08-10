@@ -749,7 +749,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void setSpoofedLocation(double latitude, double longitude) {
-        Location location = new Location("MEX");
+        Location location = new Location("MobiledgeX");
         location.setLatitude(latitude);
         location.setLongitude(longitude);
         setSpoofedLocation(location);
@@ -901,6 +901,8 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onEdgeEventPreferenceChanged(prefs, key);
 
         if (appInfoChanged) {
+            mSessionCookie = null;
+            mClosestCloudletHostname = null;
             meHelperInterface.getCloudlets(true);
         }
     }
@@ -1015,6 +1017,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void setCarrierName(String carrierName) {
+        mSessionCookie = null;
         mCarrierName = carrierName;
         mClosestCloudletHostname = null;
         meHelperInterface.getCloudlets(true);
@@ -1099,20 +1102,15 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             Log.i(TAG, "mEdgeEventsEnabled=false. Not posting location.");
             return;
         }
-        me.getEdgeEventsConnectionFuture()
-                .thenApply(connection -> {
-                    if (connection != null) {
-                        Log.i(TAG, "Posting location to DME");
-                        DecimalFormat decFor = new DecimalFormat("#.#####");
-                        meHelperInterface.showMessage("Posting location to DME: "
-                                + decFor.format(location.getLatitude()) + ", "
-                                + decFor.format(location.getLongitude()));
-                        connection.postLocationUpdate(location);
-                    } else {
-                        Log.e(TAG, "No connection for postLocationUpdate()");
-                    }
-                    return null;
-                });
+
+        AsyncTask.execute(() -> {
+            Log.i(TAG, "Posting location to DME");
+            DecimalFormat decFor = new DecimalFormat("#.#####");
+            meHelperInterface.showMessage("Posting location to DME: "
+                    + decFor.format(location.getLatitude()) + ", "
+                    + decFor.format(location.getLongitude()));
+            me.getEdgeEventsConnection().postLocationUpdate(location);
+        });
     }
 
     // (Guava EventBus Interface)

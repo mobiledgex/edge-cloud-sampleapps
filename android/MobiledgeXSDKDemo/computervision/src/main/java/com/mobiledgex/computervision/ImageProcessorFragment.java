@@ -40,6 +40,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -260,7 +261,11 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
      */
     @Override
     public void showMessage(final String text) {
-        mEventLogViewer.showMessage(text);
+        if (mEventLogViewer != null) {
+            mEventLogViewer.showMessage(text);
+        } else {
+            Toast.makeText(getContext(), text, Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
@@ -270,7 +275,11 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
      */
     @Override
     public void showError(final String text) {
-        mEventLogViewer.showError(text);
+        if (mEventLogViewer != null) {
+            mEventLogViewer.showError(text);
+        } else {
+            Toast.makeText(getContext(), text, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -839,7 +848,9 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     public void onDestroy() {
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
-        meHelper.onDestroy();
+        if (meHelper != null) {
+            meHelper.onDestroy();
+        }
     }
 
     @Override

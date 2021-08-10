@@ -54,6 +54,7 @@
         android:layout_height="200dp"
         android:layout_above="@+id/fab"
         android:layout_marginBottom="45dp"
+        android:paddingTop="10dp"
         android:background="#FFFFFF"
         app:layout_anchor="@+id/include"
         app:layout_anchorGravity="bottom|center" />
