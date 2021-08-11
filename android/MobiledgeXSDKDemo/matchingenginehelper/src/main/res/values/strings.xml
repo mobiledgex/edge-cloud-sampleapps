@@ -51,6 +51,9 @@
     <string name="pref_net_switching_allowed">net_switching_allowed</string>
     <string name="pref_net_switching_allowed_title">Network Switching Enabled</string>
     <string name="pref_net_switching_allowed_summary">Wifi to Cell network switching</string>
+    <string name="pref_use_wifi_only">use_wifi_only</string>
+    <string name="pref_use_wifi_only_title">Use Wifi Only</string>
+    <string name="pref_use_wifi_only_summary">Disables using the mobile network</string>
 
     <string name="pref_find_cloudlet_mode">find_cloudlet_mode</string>
     <string name="pref_find_cloudlet_mode_title">FindCloudlet Mode</string>

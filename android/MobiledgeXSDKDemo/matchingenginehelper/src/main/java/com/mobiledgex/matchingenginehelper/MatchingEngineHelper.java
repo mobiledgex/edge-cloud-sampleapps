@@ -103,6 +103,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public String mOrgName;
     public  MatchingEngine.FindCloudletMode mFindCloudletMode;
     private boolean mNetworkSwitchingAllowed;
+    private boolean mUseWifiOnly;
     protected int mAppInstancesLimit;
 
     public Location mLastKnownLocation;
@@ -130,7 +131,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private String someText = null;
     public String mAppInstHostname;
     public boolean mAppInstTls;
-    private final int mTestPort;
+    private int mTestPort;
     private boolean mRunConnectionTests = true;
 
     private FusedLocationProviderClient mFusedLocationClient;
@@ -156,6 +157,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     private final String prefKeyAllowMatchingEngineLocation;
     private final String prefKeyAllowNetSwitch;
+    private final String prefKeyUseWifiOnly;
     private final String prefKeyDmeHostname;
     private final String prefKeyOperatorName;
     private final String prefKeyDefaultDmeHostname;
@@ -210,6 +212,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
         prefKeyAllowMatchingEngineLocation = resources.getString(R.string.pref_matching_engine_location_verification);
         prefKeyAllowNetSwitch = resources.getString(R.string.pref_net_switching_allowed);
+        prefKeyUseWifiOnly = resources.getString(R.string.pref_use_wifi_only);
         prefKeyDmeHostname = resources.getString(R.string.pref_dme_hostname);
         prefKeyOperatorName = resources.getString(R.string.pref_operator_name);
         prefKeyDefaultDmeHostname = resources.getString(R.string.pref_default_dme_hostname);
@@ -247,6 +250,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onSharedPreferenceChanged(prefs, prefKeyAppVersion);
         onSharedPreferenceChanged(prefs, prefKeyOrgName);
         onSharedPreferenceChanged(prefs, prefKeyDefaultAppInfo);
+        onSharedPreferenceChanged(prefs, prefKeyUseWifiOnly);
 
         // Only initialize these on/off settings, but don't yet update the mEdgeEventsConfig.
         onEdgeEventPreferenceChanged(prefs, prefKeyEnableEdgeEvents);
@@ -732,6 +736,11 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         return me;
     }
 
+    public void setTestPort(int testPort) {
+        Log.i(TAG, "setTestPort() Old="+mTestPort+" New="+testPort);
+        mTestPort = testPort;
+    }
+
     public void setMatchingEngine(MatchingEngine mMatchingEngine) {
         this.me = mMatchingEngine;
     }
@@ -786,6 +795,27 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             mNetworkSwitchingAllowed = prefs.getBoolean(prefKeyAllowNetSwitch, false);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mNetworkSwitchingAllowed);
             me.setNetworkSwitchingEnabled(mNetworkSwitchingAllowed);
+        }
+
+        if (key.equals(prefKeyUseWifiOnly)) {
+            String carrierName = "";
+            String message = "";
+            mUseWifiOnly = prefs.getBoolean(key, false);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mUseWifiOnly);
+            me.setUseWifiOnly(mUseWifiOnly);
+            if (mUseWifiOnly) {
+                carrierName = me.getCarrierName(mActivity);
+            } else {
+                // Get value from preferences.
+                carrierName = prefs.getString(prefKeyOperatorName, DEFAULT_CARRIER_NAME);
+            }
+            message = "Wifi Only = "+me.isUseWifiOnly()+". Carrier Name changing from \"" + mCarrierName + "\" to \"" + carrierName + "\"";
+            Log.i(TAG, message);
+            if (!mCarrierName.equals(carrierName)) {
+                // Don't show upon initial prefs reading.
+                meHelperInterface.showMessage(message);
+            }
+            setCarrierName(carrierName);
         }
 
         if (key.equals(prefKeyDefaultDmeHostname)) {
@@ -1237,6 +1267,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
         // Only the app knows with any certainty which AppPort (and internal port array)
         // it wants to test, so this is in the application.
+        @Subscribe
         void handleLatencyRequest(AppClient.ServerEdgeEvent event) {
             if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_LATENCY_REQUEST) {
                 return;
@@ -1263,14 +1294,16 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                     HashMap<Integer, Appcommon.AppPort> ports = me.getAppConnectionManager().getTCPMap(mClosestCloudlet);
                     Appcommon.AppPort anAppPort = ports.get(mTestPort);
                     if (anAppPort == null) {
-                        Log.e(TAG, "The expected server (or port) doesn't seem to be here!");
+                        String message = "The expected port ("+mTestPort+") is not present. Aborting EVENT_LATENCY_REQUEST";
+                        Log.e(TAG, message);
+                        meHelperInterface.showError(message);
                         return;
                     }
 
                     // Test with default network in use:
                     publicPort = anAppPort.getPublicPort();
                     String host = me.getAppConnectionManager().getHost(mClosestCloudlet, anAppPort);
-                    Site site = new Site(mActivity, NetTest.TestType.CONNECT, 5, host, publicPort);
+                    Site site = new Site(mActivity, mEdgeEventsConfig.latencyTestType, 5, host, publicPort);
                     netTest.addSite(site);
                     netTest.testSites(netTest.TestTimeoutMS); // Test the one we just added.
 
