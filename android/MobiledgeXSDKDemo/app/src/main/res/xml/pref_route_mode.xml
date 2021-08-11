@@ -6,8 +6,8 @@
     <SeekBarPreference
         app:key="pref_driving_time_seekbar"
         android:title="@string/pref_title_driving_time"
-        android:defaultValue="18"
-        android:max="30"
+        android:defaultValue="20"
+        android:max="60"
         android:min="1"
         android:icon="@drawable/ic_pref_driving"
         app:showSeekBarValue="true"
@@ -16,8 +16,8 @@
     <SeekBarPreference
         app:key="pref_flying_time_seekbar"
         android:title="@string/pref_title_flying_time"
-        android:defaultValue="12"
-        android:max="30"
+        android:defaultValue="15"
+        android:max="60"
         android:min="1"
         android:icon="@drawable/ic_pref_flying"
         app:showSeekBarValue="true"

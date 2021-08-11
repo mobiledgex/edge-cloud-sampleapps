@@ -40,6 +40,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.ArrayMap;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -89,6 +90,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.maps.DirectionsApi;
+import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
@@ -192,15 +194,14 @@ public class MainActivity extends AppCompatActivity
     private RouteMode mRouteMode;
     private Marker mStartMarker;
     private Marker mEndMarker;
-    private LatLng mStartLatLng;
-    private LatLng mEndLatLng;
+    private List<Marker> mWaypointMarkers = new ArrayList<>();
     private MenuItem mapTypeGroupPrevItem;
     private boolean mRouteIsPlaying;
     private ValueAnimator mValueAnimator;
     private int mDrivingAnimDuration;
     private int mFlyingAnimDuration;
-    private static final int DEF_DRIVING_DURATION = 18; //Seconds
-    private static final int DEF_FLYING_DURATION = 12; //Seconds
+    private static final int DEF_DRIVING_DURATION = 20; //Seconds
+    private static final int DEF_FLYING_DURATION = 15; //Seconds
 
     private String mApiKey = BuildConfig.GOOGLE_DIRECTIONS_API_KEY;
     private Polyline mRoutePolyLine;
@@ -350,11 +351,11 @@ public class MainActivity extends AppCompatActivity
         } else {
             fabPlayRoute.setImageResource(R.drawable.ic_baseline_pause_24);
             mEventLogViewer.mAutoExpand = false;
-            mUserLocationMarker.setPosition(mStartLatLng);
+            mUserLocationMarker.setPosition(mStartMarker.getPosition());
             if (mRouteMode == RouteMode.FLYING) {
-                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mFlyingAnimDuration);
+                animateMarker(mRouteMode, mUserLocationMarker, mEndMarker.getPosition(), mFlyingAnimDuration);
             } else if (mRouteMode == RouteMode.DRIVING) {
-                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mDrivingAnimDuration);
+                animateMarker(mRouteMode, mUserLocationMarker, mEndMarker.getPosition(), mDrivingAnimDuration);
             }
             mRouteIsPlaying = true;
         }
@@ -522,10 +523,10 @@ public class MainActivity extends AppCompatActivity
                     .replace("${carrier}", meHelper.mCarrierName)
                     .replace("${region}", meHelper.mDmeHostname)
                     .replace(".dme.mobiledgex.net", "");
-
+            Log.i(TAG, "htmlData=\n"+htmlData);
             // The WebView to show our HTML.
             WebView webView = new WebView(MainActivity.this);
-            webView.loadData(htmlData, "text/html; charset=UTF-8",null);
+            webView.loadData(Base64.encodeToString(htmlData.getBytes(), Base64.DEFAULT), "text/html", "base64");
             new AlertDialog.Builder(MainActivity.this)
                     .setView(webView)
                     .setIcon(R.drawable.ic_launcher_foreground)
@@ -714,20 +715,35 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onRouteModeItemClick(MenuItem item) {
+        Log.i(TAG, "onRouteModeItemClick "+item+" "+item.isChecked());
         // Remove any existing driving route.
         if (mRoutePolyLine != null) {
             mRoutePolyLine.remove();
         }
 
-        if (item.isChecked()) {
-            // Turn off.
+        // Turn off everything route related. If a menu item is being unchecked,
+        // then we're done after this. Otherwise we will rebuild everything below.
+        if (mStartMarker != null) {
             mStartMarker.setVisible(false);
-            mEndMarker.setVisible(false);
-            item.setChecked(false);
-            fabPlayRoute.setVisibility(View.GONE);
-            return;
         }
+        if (mEndMarker != null) {
+            mEndMarker.setVisible(false);
+        }
+        mStartMarker = null;
+        mEndMarker = null;
+        for (Marker marker: mWaypointMarkers) {
+            marker.setVisible(false);
+        }
+        mWaypointMarkers.clear();
+        fabPlayRoute.setVisibility(View.GONE);
+        /////////////////////////////////////////////////////////////////////
 
+        if (item.isChecked()) {
+            if (routeModePrevItem == item) {
+                routeModePrevItem.setChecked(false);
+                return;
+            }
+        }
         if (routeModePrevItem != null) {
             routeModePrevItem.setChecked(false);
         }
@@ -737,6 +753,7 @@ public class MainActivity extends AppCompatActivity
             mRouteMode = RouteMode.FLYING;
             initRouteMarkers(item.getItemId());
             item.setChecked(true);
+            fabPlayRoute.setVisibility(View.VISIBLE);
         }
         if (item.getItemId() == R.id.action_route_mode_driving) {
             mRouteMode = RouteMode.DRIVING;
@@ -745,7 +762,7 @@ public class MainActivity extends AppCompatActivity
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    routeBetweenPoints(mStartLatLng, mEndLatLng);
+                    routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
                 }
             });
         }
@@ -774,17 +791,14 @@ public class MainActivity extends AppCompatActivity
         double endLng = maxLng - width/5;
         double endLat = minLat + height/5;
 
-        mStartLatLng = new LatLng(startLat, startLng);
-        mEndLatLng = new LatLng(endLat, endLng);
-
         mStartMarker = mGoogleMap.addMarker(new MarkerOptions()
-                .position(mStartLatLng)
+                .position(new LatLng(startLat, startLng))
                 .title("Start of route")
                 .icon(BitmapDescriptorFactory
                         .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         mStartMarker.setDraggable(true);
         mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
-                .position(mEndLatLng)
+                .position(new LatLng(endLat, endLng))
                 .title("End of route")); //"End" or "Stop" -- Red by default.
         mEndMarker.setDraggable(true);
     }
@@ -1068,17 +1082,21 @@ public class MainActivity extends AppCompatActivity
         mUserLocationMarker.setPosition(spoofLatLng);
         final boolean[] resetPosition = {true}; //Has to be final. Use array so we can update the value.
         String spoofText = "Spoof GPS at this location";
+        String addWaypointText = "Add waypoint to route";
         String updateSimText = "Update location in GPS database";
-        final CharSequence[] charSequence;
-        // Only allow updating location simulator on supported environments
-        if(meHelper.mAllowLocationSimulatorUpdate) {
-            charSequence = new CharSequence[] {spoofText, updateSimText};
-        } else {
-            charSequence = new CharSequence[] {spoofText};
+        List<String> items = new ArrayList<>();
+        items.add(spoofText);
+        if (mRoutePolyLine != null) {
+            items.add(addWaypointText);
         }
+        // Only allow updating location simulator on supported environments
+        if (meHelper.mAllowLocationSimulatorUpdate) {
+            items.add(updateSimText);
+        }
+        Log.i(TAG, "items="+items);
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setSingleChoiceItems(charSequence, -1, new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setSingleChoiceItems(items.toArray(new CharSequence[items.size()]), -1, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Location location = new Location("MobiledgeX_Loc_Sim");
@@ -1092,28 +1110,39 @@ public class MainActivity extends AppCompatActivity
                 } else {
                     oldLatLng = new LatLng(meHelper.mLocationInSimulator.getLatitude(), meHelper.mLocationInSimulator.getLongitude());
                 }
-                switch (which) {
-                    case 0:
-                        Log.i(TAG, "Spoofing GPS at "+location);
-                        showMessage("GPS spoofing activated.");
-                        float[] results = new float[1];
-                        Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
-                        double distance = results[0]/1000;
-                        initUserMobileIcon();
-                        mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
-                        meHelper.setSpoofedLocation(location);
-                        resetPosition[0] = false;
-                        break;
-                    case 1:
-                        Log.i(TAG, "Update GPS in simulator to "+location);
-                        initUserMobileIcon();
-                        mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
-                        updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
-                        meHelper.setSpoofedLocation(location);
-                        resetPosition[0] = false;
-                        break;
-                    default:
-                        Log.i(TAG, "Unknown dialog selection.");
+
+                String selectedItemText = items.get(which);
+
+                if (selectedItemText.equals(spoofText)) {
+                    Log.i(TAG, "Spoofing GPS at " + location);
+                    showMessage("GPS spoofing activated.");
+                    float[] results = new float[1];
+                    Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
+                    double distance = results[0] / 1000;
+                    initUserMobileIcon();
+                    mUserLocationMarker.setSnippet("Spoofed " + String.format("%.2f", distance) + " km from actual location");
+                    meHelper.setSpoofedLocation(location);
+                    resetPosition[0] = false;
+                } else if (selectedItemText.equals(updateSimText)) {
+                    Log.i(TAG, "Update GPS in simulator to " + location);
+                    initUserMobileIcon();
+                    mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
+                    updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
+                    meHelper.setSpoofedLocation(location);
+                    resetPosition[0] = false;
+                } else if (selectedItemText.equals(addWaypointText)) {
+                    Log.i(TAG, "Add new waypoint at " + location);
+                    Marker marker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(spoofLatLng)
+                            .alpha(0.6f)
+                            .title("Waypoint " + mWaypointMarkers.size()+1)
+                            .icon(BitmapDescriptorFactory
+                                    .defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+                    marker.setDraggable(true);
+                    mWaypointMarkers.add(marker);
+                    routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
+                } else {
+                    Log.i(TAG, "Unknown dialog selection.");
                 }
                 dialog.dismiss();
             }
@@ -1445,15 +1474,13 @@ public class MainActivity extends AppCompatActivity
             if (publicPort == 0) {
                 publicPort = aPort.getPublicPort();
                 mTls = aPort.getTls();
+                meHelper.setTestPort(publicPort);
                 Log.i(TAG, "Using publicPort="+publicPort+" TLS="+mTls);
-            }
 
-            if (publicPort != DEFAULT_SPEED_TEST_PORT) {
-                // Only the default port is currently supported. Set it here so the
-                // above "first port" logic is overridden in case the port order in
-                // the app definition was incorrect.
-                Log.w(TAG, "Incorrect appInst first port "+publicPort+". Overriding with default: " + DEFAULT_SPEED_TEST_PORT);
-                publicPort = DEFAULT_SPEED_TEST_PORT;
+                if (publicPort != DEFAULT_SPEED_TEST_PORT) {
+                    String message = "WARNING: appInst first port " + publicPort + " does not match " + DEFAULT_SPEED_TEST_PORT;
+                    Log.w(TAG, message);
+                }
             }
         }
         double distance = cloudletLocation.getDistance();
@@ -1541,10 +1568,15 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (marker.equals(mStartMarker) || marker.equals(mEndMarker)) {
-            Log.i(TAG, "Find route");
-            mStartLatLng = mStartMarker.getPosition();
-            mEndLatLng = mEndMarker.getPosition();
-            routeBetweenPoints(mStartLatLng, mEndLatLng);
+            Log.i(TAG, "Find route with moved start or end point");
+            if (mRouteMode == RouteMode.DRIVING) {
+                routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
+            }
+        }
+
+        if (mWaypointMarkers.contains(marker)) {
+            Log.i(TAG, "Find route with moved waypoint");
+            routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
         }
     }
 
@@ -1752,11 +1784,11 @@ public class MainActivity extends AppCompatActivity
      * Based on a starting and ending point, get route from the Google Directions API, and use
      * the returned data to build paths to draw on the map, and build a list of points to
      * collect QOS data for.
-     *
-     * @param startLatLng  The route's starting point.
+     *  @param startLatLng  The route's starting point.
      * @param endLatLng  The route's ending point.
+     * @param waypointMarkers  List of Waypoint markers to added to the route.
      */
-    private void routeBetweenPoints(LatLng startLatLng, LatLng endLatLng) {
+    private void routeBetweenPoints(LatLng startLatLng, LatLng endLatLng, List<Marker> waypointMarkers) {
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
 
         //Execute Directions API request
@@ -1767,12 +1799,19 @@ public class MainActivity extends AppCompatActivity
         if (mRoutePolyLine != null) {
             mRoutePolyLine.remove();
         }
-
+        DirectionsApiRequest.Waypoint[] waypoints = new DirectionsApiRequest.Waypoint[waypointMarkers.size()];
+        for (int i = 0; i < waypointMarkers.size(); i++) {
+            Marker marker = waypointMarkers.get(i);
+            // Converting between com.google.maps.model.LatLng
+            // and com.google.android.gms.maps.model.Latlng is a pain!
+            waypoints[i] = new DirectionsApiRequest.Waypoint(new com.google.maps.model.LatLng(marker.getPosition().latitude, marker.getPosition().longitude));
+        }
         try {
             DirectionsResult calculatedRoutes = DirectionsApi.newRequest(context)
                     .alternatives(false)
                     .mode(TravelMode.DRIVING)
                     .origin(new com.google.maps.model.LatLng(startLatLng.latitude, startLatLng.longitude))
+                    .waypoints(waypoints)
                     .destination(new com.google.maps.model.LatLng(endLatLng.latitude, endLatLng.longitude))
                     .await();
 
