@@ -1380,7 +1380,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 // Hide the log viewer after a short delay.
-                mEventLogViewer.initialLogsComplete();
+                mEventLogViewer.collapseAfter(3000);
 
                 // Reset all cloudlet markers to default state.
                 initAllCloudletMarkers();

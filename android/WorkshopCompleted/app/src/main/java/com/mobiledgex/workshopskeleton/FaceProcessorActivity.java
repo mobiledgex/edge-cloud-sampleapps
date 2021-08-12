@@ -26,8 +26,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.mobiledgex.matchingengine.AppConnectionManager;
+import com.mobiledgex.matchingengine.DmeDnsException;
 import com.mobiledgex.matchingengine.MatchingEngine;
 
 import java.io.IOException;
@@ -77,15 +79,27 @@ public class FaceProcessorActivity extends AppCompatActivity {
         AppConnectionManager appConnect = me.getAppConnectionManager();
         me.setMatchingEngineLocationAllowed(true);
         me.setAllowSwitchIfNoSubscriberInfo(true);
+        String host = null;
+        try {
+            host = me.generateDmeHostAddress();
+        } catch (DmeDnsException e) {
+            e.printStackTrace();
+        }
+        if(host == null) {
+            Log.e(TAG, "Could not generate host");
+            host = "wifi.dme.mobiledgex.net";   //fallback host
+        }
+        int port = me.getPort(); // Keep same port.
 
         String appName = "ComputerVision";
-        String appVersion = "2.0";
-        String orgName = "MobiledgeX";
+        String appVersion = "2.2";
+        String orgName = "MobiledgeX-Samples";
         Location location = new Location("MobiledgeX");
         location.setLatitude(52.52);
         location.setLongitude(13.4040);    //Berlin
 
-        Future<AppClient.FindCloudletReply> future = me.registerAndFindCloudlet(this, orgName, appName, appVersion,  location, "", 0, "", "", null, MatchingEngine.FindCloudletMode.PROXIMITY);
+
+        Future<AppClient.FindCloudletReply> future = me.registerAndFindCloudlet(this, host, port, orgName, appName, appVersion,  location, "", 0, "", "", null, MatchingEngine.FindCloudletMode.PROXIMITY);
         AppClient.FindCloudletReply findCloudletReply;
         try {
             findCloudletReply = future.get();
@@ -103,7 +117,7 @@ public class FaceProcessorActivity extends AppCompatActivity {
         me.setNetworkSwitchingEnabled(false); // if using wifi only
 
         if (fs == null) {
-            Log.e(TAG, "Socket future didnt return anything");
+            Log.e(TAG, "Socket future didn't return anything");
             return null;
         }
 
@@ -112,6 +126,7 @@ public class FaceProcessorActivity extends AppCompatActivity {
             socket = fs.get();
         } catch (ExecutionException | InterruptedException e) {
             Log.e(TAG, "Cannot get socket from future. Exception: " + e.getMessage());
+            Toast.makeText(this, "Unable to connect. "+e.getMessage(), Toast.LENGTH_LONG);
             return null;
         }
         return socket;

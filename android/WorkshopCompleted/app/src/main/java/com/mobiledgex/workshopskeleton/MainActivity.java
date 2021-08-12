@@ -17,6 +17,8 @@
 
 package com.mobiledgex.workshopskeleton;
 
+import static android.text.Html.FROM_HTML_MODE_LEGACY;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,7 +28,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.NetworkOnMainThreadException;
 import android.preference.PreferenceManager;
-
+import android.text.Html;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,49 +38,35 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.annotation.NonNull;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.common.eventbus.Subscribe;
 import com.google.maps.android.SphericalUtil;
-
-
-// Matching Engine API:
-import com.mobiledgex.matchingengine.EdgeEventsConnection;
-import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.ChannelIterator;
 import com.mobiledgex.matchingengine.DmeDnsException;
+import com.mobiledgex.matchingengine.EdgeEventsConnection;
+import com.mobiledgex.matchingengine.MatchingEngine;
 import com.mobiledgex.matchingengine.edgeeventsconfig.EdgeEventsConfig;
 import com.mobiledgex.matchingengine.edgeeventsconfig.FindCloudletEvent;
 import com.mobiledgex.matchingengine.performancemetrics.NetTest;
-import com.mobiledgex.matchingengine.performancemetrics.Site;
 import com.mobiledgex.matchingengine.util.RequestPermissions;
 import com.mobiledgex.matchingenginehelper.EventLogViewer;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
@@ -84,8 +74,6 @@ import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 import io.grpc.StatusRuntimeException;
-
-import static distributed_match_engine.AppClient.ServerEdgeEvent.ServerEventType.EVENT_APPINST_HEALTH;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -125,10 +113,6 @@ public class MainActivity extends AppCompatActivity
     private CheckBox checkboxCloudletFound;
     private CheckBox checkboxLocationVerified;
     private ProgressBar progressBar;
-
-    private GoogleSignInClient mGoogleSignInClient;
-    private MenuItem signInMenuItem;
-    private MenuItem signOutMenuItem;
 
     private String registerStatusText;
     private String findCloudletStatusText;
@@ -182,31 +166,6 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-
-        // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        // Check for existing Google Sign In account, if the user is already signed in
-        // the GoogleSignInAccount will be non-null.
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-
-        signInMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signin);
-        signOutMenuItem = navigationView.getMenu().findItem(R.id.nav_google_signout);
-
-        if(account != null) {
-            //This means we're already signed in.
-            signInMenuItem.setVisible(false);
-            signOutMenuItem.setVisible(true);
-        } else {
-            signInMenuItem.setVisible(true);
-            signOutMenuItem.setVisible(false);
-        }
 
         /**
          * MatchingEngine APIs require special user approved permissions to READ_PHONE_STATE and
@@ -280,19 +239,19 @@ public class MainActivity extends AppCompatActivity
             // Handle the camera action
             Intent intent = new Intent(this, FaceProcessorActivity.class);
             startActivity(intent);
-        } else if (id == R.id.nav_google_signin) {
-            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-            startActivityForResult(signInIntent, RC_SIGN_IN);
-        } else if (id == R.id.nav_google_signout) {
-            mGoogleSignInClient.signOut()
-                    .addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            Toast.makeText(MainActivity.this, "Sign out successful.", Toast.LENGTH_LONG).show();
-                            signInMenuItem.setVisible(true);
-                            signOutMenuItem.setVisible(false);
-                        }
-                    });
+        } else if (id == R.id.nav_about) {
+            Spanned message = Html.fromHtml("<h2>MobiledgeX Android Workshop App</h2>" +
+                    "<p>Click here for details and access to source code:</p>" +
+                    "<p><a href=\"https://developers.mobiledgex.com/sdks/android-sdk/android-sdk-sample/\">" +
+                    "https://developers.mobiledgex.com/sdks/android-sdk/android-sdk-sample/</a></p>", FROM_HTML_MODE_LEGACY);
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("About")
+                    .setMessage(message)
+                    .setPositiveButton("OK", null);
+            AlertDialog alertDialog = dialogBuilder.create();
+            alertDialog.show();
+            // Make link clickable
+            ((TextView)alertDialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -445,7 +404,7 @@ public class MainActivity extends AppCompatActivity
 
         mEventLogViewer.showMessage("Closest cloudlet is now "+mClosestCloudletHostname);
         // Hide the log viewer after a short delay.
-        mEventLogViewer.initialLogsComplete();
+        mEventLogViewer.collapseAfter(3000);
     }
 
     private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
@@ -596,11 +555,7 @@ public class MainActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
 
         // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
-        if (requestCode == RC_SIGN_IN) {
-            // The Task returned from this call is always completed, no need to attach a listener.
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            handleSignInResult(task);
-        } else if (requestCode == RC_STATS && resultCode == RESULT_OK) {
+        if (requestCode == RC_STATS && resultCode == RESULT_OK) {
             //Get preference
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean showDialog = prefs.getBoolean("fd_show_latency_stats_dialog", false);
@@ -624,25 +579,6 @@ public class MainActivity extends AppCompatActivity
                     .show();
         }
 
-    }
-
-    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
-        try {
-            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            // Signed in successfully, show authenticated UI.
-            signInMenuItem.setVisible(false);
-            signOutMenuItem.setVisible(true);
-            Toast.makeText(MainActivity.this, "Sign in successful. Welcome, "+account.getDisplayName(), Toast.LENGTH_LONG).show();
-        } catch (ApiException e) {
-            // The ApiException status code indicates the detailed failure reason.
-            // Please refer to the GoogleSignInStatusCodes class reference for more information.
-            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Error")
-                    .setMessage("signInResult:failed code=" + e.getStatusCode())
-                    .setPositiveButton("OK", null)
-                    .show();
-        }
     }
 
     @Override

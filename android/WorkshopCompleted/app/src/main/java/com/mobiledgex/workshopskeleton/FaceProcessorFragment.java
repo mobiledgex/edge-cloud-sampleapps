@@ -20,6 +20,7 @@ package com.mobiledgex.workshopskeleton;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -37,14 +38,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mobiledgex.computervision.Camera2BasicFragment;
 import com.mobiledgex.computervision.FaceBoxRenderer;
 import com.mobiledgex.computervision.ImageProviderInterface;
 import com.mobiledgex.computervision.ImageSender;
 import com.mobiledgex.computervision.ImageServerInterface;
 import com.mobiledgex.computervision.RollingAverage;
+import com.mobiledgex.matchingenginehelper.EventLogViewer;
+import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 
 import org.json.JSONArray;
 
@@ -83,11 +88,18 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         mCameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
 
+        FrameLayout frameLayout = view.findViewById(com.mobiledgex.computervision.R.id.container);
         mLatencyFull = view.findViewById(R.id.full_latency);
         mLatencyNet = view.findViewById(R.id.network_latency);
         mStdFull = view.findViewById(R.id.full_std_dev);
         mStdNet = view.findViewById(R.id.network_std_dev);
         mStatusText = view.findViewById(R.id.statusTextView);
+
+        RecyclerView eventsRecyclerView = view.findViewById(com.mobiledgex.computervision.R.id.events_recycler_view);
+        FloatingActionButton logExpansionButton = view.findViewById(com.mobiledgex.computervision.R.id.fab);
+        mEventLogViewer = new EventLogViewer(getActivity(), logExpansionButton, eventsRecyclerView);
+        mEventLogViewer.showMessage("Starting Face Detection on "+mHost+":"+mPort);
+        mEventLogViewer.collapseAfter(2000);
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to access preferences.
@@ -112,10 +124,11 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
                 .setCloudLetType(CloudletType.EDGE)
                 .setHost(mHost)
                 .setPort(mPort)
+                .setTls(true)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .setCameraMode(ImageSender.CameraMode.FACE_DETECTION)
                 .build();
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.FACE_DETECTION);
-        mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
         mCameraToolbar.setTitle("Face Detection");
 
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,6 +148,12 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         Log.i(TAG, "onCreateOptionsMenu");
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.face_detection_menu, menu);
+    }
+
+    @Override
+    public void reportConnectionError(String text, ImageSender imageSender) {
+        Log.i(TAG, "reportConnectionError from " + imageSender.getHost() + ": " + text);
+        showError(text);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
