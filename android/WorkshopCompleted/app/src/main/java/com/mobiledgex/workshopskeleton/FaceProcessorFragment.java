@@ -167,7 +167,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
      */
     @Override
     public void onBitmapAvailable(Bitmap bitmap, Rect imageRect) {
-        if(bitmap == null) {
+        if (bitmap == null) {
             return;
         }
 
@@ -219,7 +219,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
     public void updateFullProcessStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
         final long latency = rollingAverage.getAverage();
-        if(getActivity() == null) {
+        if (getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
         }
@@ -238,7 +238,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         final long latency;
         latency = rollingAverage.getAverage();
 
-        if(getActivity() == null) {
+        if (getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
         }

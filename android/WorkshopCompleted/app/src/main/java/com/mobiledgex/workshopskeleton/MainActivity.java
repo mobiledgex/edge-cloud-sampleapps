@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity
         /////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to register the client. Replace all "= null" lines here.
         host = matchingEngine.generateDmeHostAddress();
-        if(host == null) {
+        if (host == null) {
             Log.e(TAG, "Could not generate host");
             host = "wifi.dme.mobiledgex.net";   //fallback host
         }
@@ -291,7 +291,7 @@ public class MainActivity extends AppCompatActivity
                 = matchingEngine.registerClient (registerClientRequest, host, port, 10000);
         /////////////////////////////////////////////////////////////////////////////////////
 
-        if(matchingEngine == null) {
+        if (matchingEngine == null) {
             registerStatusText = "matchingEngine uninitialized";
             Log.e(TAG, registerStatusText);
             return false;
@@ -332,12 +332,12 @@ public class MainActivity extends AppCompatActivity
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         Log.i(TAG, "mClosestCloudlet="+mClosestCloudlet);
-        if(mClosestCloudlet == null) {
+        if (mClosestCloudlet == null) {
             findCloudletStatusText = "findCloudlet call is not successfully coded. Search for TODO in code.";
             Log.e(TAG, findCloudletStatusText);
             return false;
         }
-        if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
+        if (mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
             findCloudletStatusText = "findCloudlet Failed. Error: " + mClosestCloudlet.getStatus();
             Log.e(TAG, findCloudletStatusText);
             return false;
@@ -443,7 +443,7 @@ public class MainActivity extends AppCompatActivity
         }
         AppClient.QosPositionRequest qosPositionRequest = matchingEngine.createDefaultQosPositionRequest(requests, 0, null).build();
 
-        if(qosPositionRequest != null) {
+        if (qosPositionRequest != null) {
             try {
                 ChannelIterator<AppClient.QosPositionKpiReply> qosPositionKpiReplies = matchingEngine.getQosPositionKpi(qosPositionRequest, host, port, 20000);
                 if (!qosPositionKpiReplies.hasNext()) {
@@ -559,7 +559,7 @@ public class MainActivity extends AppCompatActivity
             //Get preference
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean showDialog = prefs.getBoolean("fd_show_latency_stats_dialog", false);
-            if(!showDialog) {
+            if (!showDialog) {
                 Log.d(TAG, "Preference is to not show latency stats dialog");
                 return;
             }
@@ -613,7 +613,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Boolean clientRegistered) {
-            if(clientRegistered) {
+            if (clientRegistered) {
                 checkboxRegistered.setChecked(true);
                 checkboxRegistered.setText(R.string.client_registered);
                 // Populate app details.
@@ -643,7 +643,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Boolean cloudletFound) {
-            if(!cloudletFound) {
+            if (!cloudletFound) {
                 findCloudletStatusText = "Failed to find cloudlet. " + findCloudletStatusText;
                 Log.e(TAG, findCloudletStatusText);
                 showErrorMsg(findCloudletStatusText);

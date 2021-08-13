@@ -85,7 +85,7 @@ public class FaceProcessorActivity extends AppCompatActivity {
         } catch (DmeDnsException e) {
             e.printStackTrace();
         }
-        if(host == null) {
+        if (host == null) {
             Log.e(TAG, "Could not generate host");
             host = "wifi.dme.mobiledgex.net";   //fallback host
         }
