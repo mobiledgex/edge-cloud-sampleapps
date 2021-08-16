@@ -261,6 +261,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
      */
     @Override
     public void showMessage(final String text) {
+        Log.i(TAG, "showMessage mEventLogViewer="+mEventLogViewer+" text="+text);
         if (mEventLogViewer != null) {
             mEventLogViewer.showMessage(text);
         } else {
@@ -275,6 +276,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
      */
     @Override
     public void showError(final String text) {
+        Log.i(TAG, "showError mEventLogViewer="+mEventLogViewer+" text="+text);
         if (mEventLogViewer != null) {
             mEventLogViewer.showError(text);
         } else {
@@ -336,7 +338,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         String message;
         if (mImageSenderEdge == null) {
             message = "Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
-            mEventLogViewer.initialLogsComplete();
+            mEventLogViewer.collapseAfter(3000);
         } else {
             message = "Restarting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
             mImageSenderEdge.closeConnection();

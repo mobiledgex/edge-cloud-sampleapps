@@ -122,11 +122,13 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
     }
 
     /**
-     * Calling this method indicates the initial logs that the activity always shows are complete.
-     * Start a timer to hide the logs. Note that the logviewer will automatically be expanded if
-     * additional logs are displayed.
+     * Start a timer to hide the logs after waiting 'ms' milliseconds.
+     * Note that the logviewer will automatically be expanded if additional
+     * logs are displayed, and "Auto Expand" hasn't been turned off.
+     *
+     * @param ms  The number of milliseconds to wait before collapsing.
      */
-    public void initialLogsComplete() {
+    public void collapseAfter(int ms) {
         Log.i(TAG, "initialLogsComplete()");
         Timer myTimer = new Timer();
         myTimer.schedule(new TimerTask() {
@@ -137,7 +139,7 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
                     isLogExpanded = false;
                 }
             }
-        }, 3000);
+        }, ms);
     }
 
     protected void logViewAnimate(final int start, final int end) {
