@@ -202,8 +202,8 @@
                 android:layout_above="@+id/statusTextView"
                 android:layout_alignParentStart="true"
                 android:layout_marginStart="5dp"
-                android:scaleX="-1"
                 android:clickable="true"
+                android:scaleX="-1"
                 app:srcCompat="@drawable/ic_baseline_more_24" />
 
         </RelativeLayout>
