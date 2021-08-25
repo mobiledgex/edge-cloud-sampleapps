@@ -121,6 +121,7 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
             @Override
             public void onClick(View view) {
                 latencyMessageTv.setText("");
+                progressBarLatency.setProgress(0);
                 cloudlet.startLatencyTest();
             }
         });
