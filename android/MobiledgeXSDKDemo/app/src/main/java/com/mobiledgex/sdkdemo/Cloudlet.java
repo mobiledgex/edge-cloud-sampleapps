@@ -572,9 +572,9 @@ public class Cloudlet implements Serializable {
             netTest.testSites(netTest.TestTimeoutMS);
 
             // Values for the UI to display
-            latencyMin = 0;
+            latencyMin = site.min();
             latencyAvg = site.average;
-            latencyMax = 0;
+            latencyMax = site.max();
             latencyStddev = site.stddev;
 
             return null;
