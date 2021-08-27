@@ -25,6 +25,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -166,6 +167,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     public static final String EXTRA_SPOOF_GPS = "EXTRA_SPOOF_GPS";
     public static final String EXTRA_LATITUDE = "EXTRA_LATITUDE";
     public static final String EXTRA_LONGITUDE = "EXTRA_LONGITUDE";
+    private Location mSpoofedLocation;
     protected String mVideoFilename;
     protected boolean mAttached;
     protected EventLogViewer mEventLogViewer;
@@ -1105,6 +1107,11 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setTestPort(FACE_DETECTION_HOST_PORT)
                 .build();
 
+        // If getCommonIntentExtras() found a spoofed location passed in, set it now.
+        if (mSpoofedLocation != null) {
+            meHelper.setSpoofedLocation(mSpoofedLocation);
+        }
+
         getProvisioningData();
     }
 
@@ -1270,7 +1277,9 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         if (spoofGps) {
             double latitude = intent.getDoubleExtra(EXTRA_LATITUDE, 1);
             double longitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 1);
-            meHelper.setSpoofedLocation(latitude, longitude);
+            mSpoofedLocation = new Location("MobiledgeX");
+            mSpoofedLocation.setLatitude(latitude);
+            mSpoofedLocation.setLongitude(longitude);
         }
     }
 
