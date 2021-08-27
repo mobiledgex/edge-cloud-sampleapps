@@ -1,14 +1,19 @@
 package com.mobiledgex.matchingenginehelper;
 
+import static com.mobiledgex.matchingenginehelper.EventItem.EventType.ERROR;
+import static com.mobiledgex.matchingenginehelper.EventItem.EventType.INFO;
+
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.PopupMenu;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,9 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import static com.mobiledgex.matchingenginehelper.EventItem.EventType.ERROR;
-import static com.mobiledgex.matchingenginehelper.EventItem.EventType.INFO;
 
 public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
     private static final String TAG = "EventLogViewer";
@@ -32,12 +34,16 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
     private boolean isLogExpanded = false;
     private int mLogViewHeight;
     public boolean mAutoExpand = true;
+    private String mAutoExpandPrefKey;
 
     public EventLogViewer(Activity activity, FloatingActionButton button, RecyclerView recyclerView) {
         mActivity = activity;
         mEventsRecyclerView = recyclerView;
         mLogExpansionButton = button;
         mLogViewHeight = (int) (mActivity.getResources().getDisplayMetrics().heightPixels*.4);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+        mAutoExpandPrefKey = mActivity.getResources().getString(R.string.pref_elv_auto_expand);
+        mAutoExpand = prefs.getBoolean(mAutoExpandPrefKey, true);
         setupLogViewer();
     }
 
@@ -95,6 +101,8 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
         } else if (item.getItemId() == R.id.action_elv_auto_expand) {
             mAutoExpand = !mAutoExpand;
             item.setChecked(mAutoExpand);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
+            prefs.edit().putBoolean(mAutoExpandPrefKey, mAutoExpand).apply();
         }
         return true;
     }
