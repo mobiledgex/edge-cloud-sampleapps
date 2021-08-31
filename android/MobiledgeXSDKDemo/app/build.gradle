@@ -10,7 +10,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 29
         versionCode 62
-        versionName "1.1.15-4"
+        versionName "1.1.16"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         manifestPlaceholders = [GOOGLE_MAPS_API_KEY: "${googleMapsApiKey}"]
