@@ -184,4 +184,6 @@
     <string name="action_elv_clear">Clear Logs</string>
     <string name="action_elv_copy">Copy All Items</string>
 
+    <string name="pref_elv_auto_expand">pref_elv_aut_oexpand</string>
+
 </resources>

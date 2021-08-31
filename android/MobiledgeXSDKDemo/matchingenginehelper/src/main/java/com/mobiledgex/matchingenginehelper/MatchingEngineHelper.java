@@ -460,7 +460,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 registerClient();
             } catch (ExecutionException | InterruptedException
                     | PackageManager.NameNotFoundException | IllegalArgumentException e) {
-                Log.e(TAG, "Exception in findCloudletInBackground() for "+
+                Log.e(TAG, "Exception in registerClientInBackground() for "+
                         mAppName+", "+mAppVersion+", "+mOrgName);
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
@@ -1133,14 +1133,15 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             return;
         }
 
-        AsyncTask.execute(() -> {
+        // Don't use shared thread which may have tasks queued. Create our own to post immediately.
+        new Thread(() -> {
             Log.i(TAG, "Posting location to DME");
             DecimalFormat decFor = new DecimalFormat("#.#####");
             meHelperInterface.showMessage("Posting location to DME: "
                     + decFor.format(location.getLatitude()) + ", "
                     + decFor.format(location.getLongitude()));
             me.getEdgeEventsConnection().postLocationUpdate(location);
-        });
+        }).start();
     }
 
     // (Guava EventBus Interface)
