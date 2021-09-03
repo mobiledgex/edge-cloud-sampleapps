@@ -70,6 +70,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -108,7 +109,6 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     public Location mLastKnownLocation;
     public Location mLocationInSimulator;
-    public String mClosestCloudletHostname;
     private String mSessionCookie;
     public AppClient.FindCloudletReply mClosestCloudlet;
     public AppClient.AppInstListReply mAppInstanceReplyList;
@@ -578,7 +578,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     private void onFindCloudlet(AppClient.FindCloudletReply closestCloudlet) {
         if (closestCloudlet.equals(mClosestCloudlet)) {
-            Log.i(TAG, "New onFindCloudlet with same closestCloudlet:" +closestCloudlet);
+            Log.i(TAG, "New onFindCloudlet with same closestCloudlet:" +closestCloudlet.getFqdn());
         }
         mClosestCloudlet = closestCloudlet;
         meHelperInterface.onFindCloudlet(closestCloudlet);
@@ -604,6 +604,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     public boolean getAppInstList() throws InterruptedException, ExecutionException {
         Log.i(TAG, "getAppInstList mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
+        mClosestCloudlet = null;
         try {
             if (!validateCookie(mSessionCookie)) {
                 return false;
@@ -932,7 +933,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
         if (appInfoChanged) {
             mSessionCookie = null;
-            mClosestCloudletHostname = null;
+            mClosestCloudlet = null;
             meHelperInterface.getCloudlets(true);
         }
     }
@@ -1049,14 +1050,14 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public void setCarrierName(String carrierName) {
         mSessionCookie = null;
         mCarrierName = carrierName;
-        mClosestCloudletHostname = null;
+        mClosestCloudlet = null;
         meHelperInterface.getCloudlets(true);
     }
 
     public void setDmeHostname(String hostname) {
         mSessionCookie = null;
         mDmeHostname = hostname;
-        mClosestCloudletHostname = null;
+        mClosestCloudlet = null;
         checkForLocSimulator(mDmeHostname);
         meHelperInterface.getCloudlets(true);
     }
@@ -1133,6 +1134,11 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             return;
         }
 
+        if (location == null) {
+            Log.i(TAG, "location=null. Not posting location.");
+            return;
+        }
+
         // Don't use shared thread which may have tasks queued. Create our own to post immediately.
         new Thread(() -> {
             Log.i(TAG, "Posting location to DME");
@@ -1142,6 +1148,14 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                     + decFor.format(location.getLongitude()));
             me.getEdgeEventsConnection().postLocationUpdate(location);
         }).start();
+    }
+
+    public String getClosestCloudletHostname() {
+        if (mClosestCloudlet == null) {
+            return null;
+        } else {
+            return mClosestCloudlet.getFqdn();
+        }
     }
 
     // (Guava EventBus Interface)

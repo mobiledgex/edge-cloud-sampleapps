@@ -96,6 +96,7 @@ public class Cloudlet implements Serializable {
     private CloudletListHolder.LatencyTestMethod mLatencyTestMethod;
     private boolean mLatencyTestMethodForced = false;
     private Context mContext;
+    private boolean mRemoved;
 
     public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, String fqdnPrefix, boolean tls, Marker marker, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
@@ -260,6 +261,14 @@ public class Cloudlet implements Serializable {
 
     public void setContext(Context context) {
         mContext = context;
+    }
+
+    public void setRemoved(boolean removed) {
+        this.mRemoved = removed;
+    }
+
+    public boolean isRemoved() {
+        return mRemoved;
     }
 
     public class LatencyTestTaskSocket extends AsyncTask<Void, Integer, String> {
