@@ -598,6 +598,11 @@ public class MainActivity extends AppCompatActivity
         mapTypeGroupPrevItem.setChecked(true);
         onMapTypeGroupItemClick(mapTypeGroupPrevItem);
         Log.i(TAG, "onCreateOptionsMenu itemId="+itemId+" "+mapTypeGroupPrevItem);
+
+        // TODO: If we want to allow verifyLocation, unhide this menu item.
+        MenuItem verifyLocationMenuItem = menu.findItem(R.id.action_verify_location);
+        verifyLocationMenuItem.setVisible(false);
+
         return true;
     }
 
@@ -1345,10 +1350,6 @@ public class MainActivity extends AppCompatActivity
         Cloudlet cloudlet = null;
         meHelper.mClosestCloudlet = null;
         Log.d(TAG, "Existing CloudletList: "+CloudletListHolder.getCloudletList());
-
-
-
-
         for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
             cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
             Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
@@ -1936,10 +1937,8 @@ public class MainActivity extends AppCompatActivity
                     }
                 }
 
-                // TODO:
                 // Reduce the number of points in the path.
                 List<LatLng> reducedPath = new ArrayList<>();
-
                 for (LatLng latLng : path) {
                     numPoints++;
                     if (numPoints % mRoutePointModulo == 0) {
