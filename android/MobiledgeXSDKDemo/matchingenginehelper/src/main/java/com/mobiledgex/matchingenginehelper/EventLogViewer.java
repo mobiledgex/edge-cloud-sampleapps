@@ -137,7 +137,7 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
      * @param ms  The number of milliseconds to wait before collapsing.
      */
     public void collapseAfter(int ms) {
-        Log.i(TAG, "initialLogsComplete()");
+        Log.i(TAG, "collapseAfter "+ms+" ms");
         Timer myTimer = new Timer();
         myTimer.schedule(new TimerTask() {
             @Override
