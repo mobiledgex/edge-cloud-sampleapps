@@ -63,8 +63,11 @@
 
     <!-- Settings for Route Mode -->
     <string name="pref_title_driving_time">Driving Animation Time (Seconds)</string>
-    <string name="pref_title_flying_time">Flying Animation Time (Seconds)</string>
     <string name="pref_driving_time_seekbar">pref_driving_time_seekbar</string>
+    <string name="pref_title_route_point_reduction">Route Points Reduction</string>
+    <string name="pref_route_point_reduction_seekbar">pref_route_point_reduction_seekbar</string>
+    <string name="pref_summary_route_point_reduction">Modulo value for adding points to route, i.e. keep every Nth value</string>
+    <string name="pref_title_flying_time">Flying Animation Time (Seconds)</string>
     <string name="pref_flying_time_seekbar">pref_flying_time_seekbar</string>
 
     <!-- Strings related to first-use screen -->

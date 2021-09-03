@@ -120,6 +120,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -200,8 +201,10 @@ public class MainActivity extends AppCompatActivity
     private ValueAnimator mValueAnimator;
     private int mDrivingAnimDuration;
     private int mFlyingAnimDuration;
+    private int mRoutePointModulo;
     private static final int DEF_DRIVING_DURATION = 20; //Seconds
     private static final int DEF_FLYING_DURATION = 15; //Seconds
+    private static final int DEF_ROUTE_POINT_REDUCTION = 10;
 
     private String mApiKey = BuildConfig.GOOGLE_DIRECTIONS_API_KEY;
     private Polyline mRoutePolyLine;
@@ -284,6 +287,7 @@ public class MainActivity extends AppCompatActivity
         fabPlayRoute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Play route button pressed");
                 playRoute();
             }
         });
@@ -323,6 +327,7 @@ public class MainActivity extends AppCompatActivity
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_autostart));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_driving_time_seekbar));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_flying_time_seekbar));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_route_point_reduction_seekbar));
 
         // Watch for any updated preferences:
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -341,12 +346,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void playRoute() {
-        Log.i(TAG, "playRoute mRouteIsPlaying="+mRouteIsPlaying);
+        Log.i(TAG, "playRoute mRouteIsPlaying="+mRouteIsPlaying+" mRouteMode="+mRouteMode);
         if (mRouteIsPlaying) {
             fabPlayRoute.setImageResource(R.drawable.ic_baseline_play_arrow_24);
-            if (mValueAnimator != null) {
-                mValueAnimator.cancel();
-            }
             mRouteIsPlaying = false;
         } else {
             fabPlayRoute.setImageResource(R.drawable.ic_baseline_pause_24);
@@ -368,6 +370,8 @@ public class MainActivity extends AppCompatActivity
      * @param duration Animation duration in ms.
      */
     public void animateMarker(RouteMode routeMode, Marker marker, LatLng endPosition, long duration) {
+        Log.i(TAG, "animateMarker routeMode="+routeMode+" duration="+duration);
+
         final long[] lastLocationUpdateTime = {0};
         LatLng startPosition = marker.getPosition();
 
@@ -376,11 +380,30 @@ public class MainActivity extends AppCompatActivity
         mValueAnimator.setDuration(duration);
         mValueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         mValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            private long mFrameLastTime;
+            private long mFrameStartTime;
+            private int mFrameCount;
+            private DecimalFormat decFor = new DecimalFormat("#.###");
+
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float v = animation.getAnimatedFraction();
+                mFrameCount++;
+                long current = System.currentTimeMillis();
+                if(mFrameStartTime == 0) {
+                    mFrameStartTime = current;
+                }
+                long totalSeconds = (current - mFrameStartTime)/1000;
+                if(mFrameLastTime > 0) {
+                    Log.i(TAG, "elapsed="+(current - mFrameLastTime)+" FPS="+(decFor.format((float) mFrameCount /totalSeconds)));
+                }
+                mFrameLastTime = current;
+
                 LatLng newPosition;
                 if (routeMode == RouteMode.DRIVING) {
+                    if (mRoutePolyLine == null) {
+                        return;
+                    }
                     int index = (int) (v * mRoutePolyLine.getPoints().size());
                     if (index >= mRoutePolyLine.getPoints().size()) {
                         return;
@@ -415,6 +438,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     protected void drawClosestCloudletLine() {
+        Log.i(TAG, "drawClosestCloudletLine. getClosestCloudletPosition()="+getClosestCloudletPosition());
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -574,6 +598,11 @@ public class MainActivity extends AppCompatActivity
         mapTypeGroupPrevItem.setChecked(true);
         onMapTypeGroupItemClick(mapTypeGroupPrevItem);
         Log.i(TAG, "onCreateOptionsMenu itemId="+itemId+" "+mapTypeGroupPrevItem);
+
+        // TODO: If we want to allow verifyLocation, unhide this menu item.
+        MenuItem verifyLocationMenuItem = menu.findItem(R.id.action_verify_location);
+        verifyLocationMenuItem.setVisible(false);
+
         return true;
     }
 
@@ -589,7 +618,7 @@ public class MainActivity extends AppCompatActivity
             meHelper.registerClientInBackground();
         }
         if (id == R.id.action_get_app_inst_list) {
-            getCloudlets(false);
+            getCloudlets(true);
         }
         if (id == R.id.action_reset_location) {
             // Reset spoofed GPS
@@ -612,7 +641,6 @@ public class MainActivity extends AppCompatActivity
             if(meHelper.mAllowLocationSimulatorUpdate) {
                 updateLocSimLocation(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
             }
-            meHelper.mClosestCloudletHostname = null;
             getCloudlets(true);
             return true;
         }
@@ -655,7 +683,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_face_detection) {
             // Start the face detection Activity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
-            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.mClosestCloudletHostname);
+            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.getClosestCloudletHostname());
             putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
@@ -663,7 +691,7 @@ public class MainActivity extends AppCompatActivity
             // Start the face recognition Activity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_FACE_RECOGNITION, true);
-            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.mClosestCloudletHostname);
+            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.getClosestCloudletHostname());
             putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
@@ -723,6 +751,9 @@ public class MainActivity extends AppCompatActivity
 
         // Turn off everything route related. If a menu item is being unchecked,
         // then we're done after this. Otherwise we will rebuild everything below.
+        if (mValueAnimator != null) {
+            mValueAnimator.cancel();
+        }
         if (mStartMarker != null) {
             mStartMarker.setVisible(false);
         }
@@ -741,6 +772,7 @@ public class MainActivity extends AppCompatActivity
         if (item.isChecked()) {
             if (routeModePrevItem == item) {
                 routeModePrevItem.setChecked(false);
+                mRoutePolyLine = null;
                 return;
             }
         }
@@ -751,6 +783,7 @@ public class MainActivity extends AppCompatActivity
 
         if (item.getItemId() == R.id.action_route_mode_flying) {
             mRouteMode = RouteMode.FLYING;
+            mRoutePolyLine = null;
             initRouteMarkers(item.getItemId());
             item.setChecked(true);
             fabPlayRoute.setVisibility(View.VISIBLE);
@@ -986,12 +1019,9 @@ public class MainActivity extends AppCompatActivity
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    //Clear list so we don't show old cloudlets as transparent
                     //First, remove all cloudlet markers.
-                    for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
-                        Cloudlet cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
-                        cloudlet.getMarker().remove();
-                    }
+                    mGoogleMap.clear();
+                    mUserLocationMarker = null; // Will be recreated.
                     //Then clear the list.
                     CloudletListHolder.getCloudletList().clear();
                 }
@@ -1020,7 +1050,7 @@ public class MainActivity extends AppCompatActivity
             tls = false;
         }
         String scheme = tls ? "https" : "http";
-        String appInstUrl = scheme+"://"+meHelper.mClosestCloudlet.getFqdn()+":"+testConnectionPort+testUrl;
+        String appInstUrl = scheme+"://"+meHelper.getClosestCloudletHostname()+":"+testConnectionPort+testUrl;
 
         return new ConnectionTester(appInstUrl, expectedResponse);
     }
@@ -1205,15 +1235,26 @@ public class MainActivity extends AppCompatActivity
      * @param cloudlet
      */
     private void initCloudletMarker(Cloudlet cloudlet) {
+        Log.i(TAG, "initCloudletMarker "+cloudlet);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Marker marker = cloudlet.getMarker();
                 String cloudletName = cloudlet.getCloudletName();
-                marker.setTitle(cloudletName + " Cloudlet");
-                marker.setSnippet("Click for details");
+                marker.setTitle(cloudletName);
+                if (cloudlet.isRemoved()) {
+                    marker.setSnippet("Has been removed");
+                } else {
+                    marker.setSnippet("Click for details");
+                }
                 marker.setTag(cloudletName); // This is used by automation testing.
-                marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, mDefaultCloudletColor, getBadgeText(cloudlet)));
+                int color = mDefaultCloudletColor;
+                if (meHelper.mClosestCloudlet != null &&
+                        meHelper.mClosestCloudlet.getFqdn().equals(cloudlet.getFqdn())) {
+                    cloudlet.setBestMatch(true);
+                    color = COLOR_VERIFIED;
+                }
+                marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, color, getBadgeText(cloudlet)));
             }
         });
     }
@@ -1302,10 +1343,13 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
+        Log.i(TAG, "onFindCloudlet "+closestCloudlet.getFqdn());
         // Get full list of cloudlets again in case any have been added or removed.
         getCloudlets(false);
         initAllCloudletMarkers();
         Cloudlet cloudlet = null;
+        meHelper.mClosestCloudlet = null;
+        Log.d(TAG, "Existing CloudletList: "+CloudletListHolder.getCloudletList());
         for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
             cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
             Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
@@ -1319,17 +1363,25 @@ public class MainActivity extends AppCompatActivity
                         marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, badgeText));
                     }
                 });
+                meHelper.mClosestCloudlet = closestCloudlet;
                 cloudlet.setBestMatch(true);
                 break;
             }
         }
-        if (cloudlet != null) {
-            drawClosestCloudletLine();
-            //Save the hostname for use by the Computer Vision Activity.
-            meHelper.mClosestCloudletHostname = cloudlet.getHostName();
-            Log.i(TAG, "mClosestCloudletHostname: "+ meHelper.mClosestCloudletHostname);
-            showMessage("Closest Cloudlet is now: " + meHelper.mClosestCloudletHostname);
+        if (meHelper.mClosestCloudlet == null) {
+            meHelper.mClosestCloudlet = closestCloudlet;
+            Log.i(TAG, "onFindCloudlet. No existing cloudlet found for "+closestCloudlet.getFqdn());
+            String message = "New cloudlet received, now closest: "+meHelper.getClosestCloudletHostname();
+            Log.i(TAG, message);
+            showMessage(message);
+//            CloudletListHolder.getCloudletList().put(closestCloudlet.get)
+        } else {
+            String message = "Closest Cloudlet is now: " + meHelper.getClosestCloudletHostname();
+            Log.i(TAG, message);
+            showMessage(message);
         }
+
+        drawClosestCloudletLine();
     }
 
     /**
@@ -1366,12 +1418,16 @@ public class MainActivity extends AppCompatActivity
                     showError(message);
                 }
 
-                showMessage("Got "+cloudletList.getCloudletsList().size()+" cloudlets");
+                String message = "Got "+cloudletList.getCloudletsList().size()+" cloudlets";
+                Log.i(TAG, message);
+                showMessage(message);
                 int num = 1;
                 //First get the new list into an ArrayMap so we can index on the cloudletName
                 for(AppClient.CloudletLocation cloudletLocation : cloudletList.getCloudletsList()) {
                     Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName()+" getCarrierName()="+cloudletLocation.getCarrierName());
-                    showMessage(" "+num+". "+cloudletLocation.getCloudletName());
+                    message = " "+num+". "+cloudletLocation.getCloudletName();
+                    Log.i(TAG, message);
+                    showMessage(message);
                     num++;
                     Cloudlet cloudlet = makeCloudlet(cloudletLocation);
                     tempCloudlets.put(cloudlet.getCloudletName(), cloudlet);
@@ -1392,11 +1448,14 @@ public class MainActivity extends AppCompatActivity
                         Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
                         showMessage(cloudlet.getCloudletName() + " has been removed");
                         Marker marker = cloudlet.getMarker();
+                        cloudlet.setRemoved(true);
+                        marker.hideInfoWindow();
                         marker.setSnippet("Has been removed");
                         marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_FAILURE, getBadgeText(cloudlet)));
                         marker.setAlpha((float) 0.33);
                     }
                 }
+                Log.i(TAG, "tempCloudlets="+tempCloudlets);
                 CloudletListHolder.setCloudlets(tempCloudlets);
 
                 // Erase "closest cloudlet" line if it exists.
@@ -1446,6 +1505,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     protected Cloudlet makeCloudlet(AppClient.CloudletLocation cloudletLocation) {
+        Log.i(TAG, "makeCloudlet "+cloudletLocation.getCloudletName());
         String carrierName = cloudletLocation.getCarrierName();
         String cloudletName = cloudletLocation.getCloudletName();
         List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
@@ -1530,6 +1590,10 @@ public class MainActivity extends AppCompatActivity
 
         String cloudletName = (String) marker.getTag();
         Cloudlet cloudlet = CloudletListHolder.getCloudletList().get(cloudletName);
+        if (cloudlet == null) {
+            Log.d(TAG, "skipping removed cloudlet "+cloudletName);
+            return;
+        }
         Log.i(TAG, "1."+cloudlet+" "+cloudlet.getCloudletName()+" "+cloudlet.getSpeedTestDownloadResult());
 
         Intent intent = new Intent(getApplicationContext(), CloudletDetailsActivity.class);
@@ -1678,45 +1742,55 @@ public class MainActivity extends AppCompatActivity
         String prefKeyLatencyMethod = getResources().getString(R.string.pref_latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
         String prefKeyDrivingAnimDuration = getResources().getString(R.string.pref_driving_time_seekbar);
+        String prefKeyRoutePointReduction = getResources().getString(R.string.pref_route_point_reduction_seekbar);
         String prefKeyFlyingAnimDuration = getResources().getString(R.string.pref_flying_time_seekbar);
 
         if (key.equals(prefKeyLatencyMethod)) {
-            String latencyTestMethod = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
+            String latencyTestMethod = sharedPreferences.getString(key, defaultLatencyMethod);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestMethod);
             CloudletListHolder.setLatencyTestMethod(latencyTestMethod);
         }
 
         if (key.equals(prefKeyLatencyAutoStart)) {
-            boolean latencyTestAutoStart = sharedPreferences.getBoolean(prefKeyLatencyAutoStart, true);
+            boolean latencyTestAutoStart = sharedPreferences.getBoolean(key, true);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestAutoStart);
             CloudletListHolder.setLatencyTestAutoStart(latencyTestAutoStart);
         }
 
         if (key.equals(prefKeyDownloadSize)) {
-            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyDownloadSize, "10485760"));
+            int numBytes = Integer.parseInt(sharedPreferences.getString(key, "10485760"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
             CloudletListHolder.setNumBytesDownload(numBytes);
         }
 
         if (key.equals(prefKeyUploadSize)) {
-            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyUploadSize, "5242880"));
+            int numBytes = Integer.parseInt(sharedPreferences.getString(key, "5242880"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
             CloudletListHolder.setNumBytesUpload(numBytes);
         }
 
         if (key.equals(prefKeyNumPackets)) {
-            int numPackets = Integer.parseInt(sharedPreferences.getString(prefKeyNumPackets, "5"));
+            int numPackets = Integer.parseInt(sharedPreferences.getString(key, "5"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numPackets);
             CloudletListHolder.setNumPackets(numPackets);
         }
 
         if (key.equals(prefKeyDrivingAnimDuration)) {
-            mDrivingAnimDuration = 1000 * sharedPreferences.getInt(prefKeyDrivingAnimDuration, DEF_DRIVING_DURATION);
+            mDrivingAnimDuration = 1000 * sharedPreferences.getInt(key, DEF_DRIVING_DURATION);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mDrivingAnimDuration);
         }
 
+        if (key.equals(prefKeyRoutePointReduction)) {
+            mRoutePointModulo = sharedPreferences.getInt(key, DEF_ROUTE_POINT_REDUCTION);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mRoutePointModulo);
+            if (mRoutePointModulo == 0) {
+                mRoutePointModulo = 1;
+            }
+            Log.i(TAG, "onSharedPreferenceChanged("+key+"). mRoutePointModulo="+mRoutePointModulo);
+        }
+
         if (key.equals(prefKeyFlyingAnimDuration)) {
-            mFlyingAnimDuration = 1000 * sharedPreferences.getInt(prefKeyFlyingAnimDuration, DEF_FLYING_DURATION);
+            mFlyingAnimDuration = 1000 * sharedPreferences.getInt(key, DEF_FLYING_DURATION);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mFlyingAnimDuration);
         }
     }
@@ -1789,6 +1863,9 @@ public class MainActivity extends AppCompatActivity
      * @param waypointMarkers  List of Waypoint markers to added to the route.
      */
     private void routeBetweenPoints(LatLng startLatLng, LatLng endLatLng, List<Marker> waypointMarkers) {
+        Log.i(TAG, "routeBetweenPoints with "+waypointMarkers.size()+" waypoint(s)");
+        long start = System.currentTimeMillis();
+
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
 
         //Execute Directions API request
@@ -1824,6 +1901,7 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "calculatedRoutes="+calculatedRoutes.routes.length);
             fabPlayRoute.setVisibility(View.VISIBLE);
 
+            int numPoints = 0;
             //Loop through legs and steps to get encoded polylines of each step
             for (DirectionsRoute route: calculatedRoutes.routes) {
                 List<LatLng> path = new ArrayList<>();
@@ -1843,7 +1921,6 @@ public class MainActivity extends AppCompatActivity
                                         for (com.google.maps.model.LatLng coord : coords) {
                                             LatLng latLng = new LatLng(coord.lat, coord.lng);
                                             path.add(latLng);
-                                            boundsBuilder.include(latLng);
                                         }
                                     }
                                 } else {
@@ -1853,18 +1930,30 @@ public class MainActivity extends AppCompatActivity
                                     for (com.google.maps.model.LatLng coord : coords) {
                                         LatLng latLng = new LatLng(coord.lat, coord.lng);
                                         path.add(latLng);
-                                        boundsBuilder.include(latLng);
                                     }
                                 }
                             }
                         }
                     }
                 }
-                Log.d(TAG, "path.size()="+path.size());
+
+                // Reduce the number of points in the path.
+                List<LatLng> reducedPath = new ArrayList<>();
+                for (LatLng latLng : path) {
+                    numPoints++;
+                    if (numPoints % mRoutePointModulo == 0) {
+                        reducedPath.add(latLng);
+                        boundsBuilder.include(latLng);
+                    }
+                }
+
+                long elapsed = System.currentTimeMillis() - start;
+                float percent = 100f / mRoutePointModulo;
+                Log.d(TAG, elapsed+" ms to generate path.size()="+path.size()+ ". Kept every "+ mRoutePointModulo +"th value, reduced to "+percent+"%");
 
                 //Draw the polyline
                 if (path.size() > 0) {
-                    PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(8);
+                    PolylineOptions opts = new PolylineOptions().addAll(reducedPath).color(Color.BLUE).width(8);
                     mRoutePolyLine = mGoogleMap.addPolyline(opts);
                 }
             }
@@ -1876,7 +1965,7 @@ public class MainActivity extends AppCompatActivity
             LatLngBounds bounds = boundsBuilder.build();
             int width = getResources().getDisplayMetrics().widthPixels;
             int height = getResources().getDisplayMetrics().heightPixels;
-            int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
+            int padding = (int) (height * 0.01); // offset from edges of the map 1% of screen
             CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
             mGoogleMap.animateCamera(cu);
 
