@@ -140,13 +140,11 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
     protected static final int PERSISTENT_TCP_PORT = 8011;
-    protected boolean mTlsEdge = true;
     protected boolean mTlsCloud = true;
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
 
     private String mDefaultHostCloud;
     private String mDefaultHostEdge;
-    private String mDefaultHostGpu;
 
     protected ImageSender mImageSenderEdge;
     private ImageSender mImageSenderCloud;
@@ -347,7 +345,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         }
         Log.i(TAG, message);
         showMessage(message);
-        boolean tls = mTlsEdge;
+        boolean tls = meHelper.mAppInstTls;
         if (mEdgeHostNameOverride) {
             tls = mEdgeHostNameTls;
         }
@@ -1115,7 +1113,8 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         getProvisioningData();
     }
 
-    private void getProvisioningData() {
+    protected void getProvisioningData() {
+        Log.i(TAG, "getProvisioningData()");
         RequestQueue queue = Volley.newRequestQueue(getActivity());
         String url = "http://opencv.facetraining.mobiledgex.net/cvprovisioning.json";
 
@@ -1142,6 +1141,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     }
 
     private void parseProvisioningData(String provData, boolean isLocal) {
+        Log.i(TAG, "parseProvisioningData()");
         try {
             JSONObject dataForRegion;
             JSONObject jsonObject = new JSONObject(provData);
@@ -1159,10 +1159,8 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             JSONObject defaultHostNames = dataForRegion.getJSONObject("defaultHostNames");
             mDefaultHostCloud = defaultHostNames.getString("cloud");
             mDefaultHostEdge = defaultHostNames.getString("edge");
-            mDefaultHostGpu = defaultHostNames.getString("gpu");
             Log.i(TAG, "mDefaultHostCloud = "+mDefaultHostCloud);
             Log.i(TAG, "mDefaultHostEdge = "+mDefaultHostEdge);
-            Log.i(TAG, "mDefaultHostGpu = "+mDefaultHostGpu);
 
             startImageSenders();
         } catch (JSONException e) {
@@ -1200,6 +1198,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     }
 
     private void startImageSenders() {
+        Log.i(TAG, "startImageSenders()");
         mHostDetectionCloud = mHostDetectionCloud.toLowerCase();
         if (mCloudHostNameOverride) {
             Log.i(TAG, "mHostDetectionCloud came from Settings: "+mHostDetectionCloud);
@@ -1228,7 +1227,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .setCameraMode(mCameraMode)
                 .build();
-        showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
 
         if (mEdgeHostNameOverride) {
             mHostDetectionEdge = mHostDetectionEdge.toLowerCase();
@@ -1237,9 +1235,10 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 Log.i(TAG, "Edge override selected, but setting contains 'default', so use mHostDetectionEdge provisioning: "+mHostDetectionEdge);
             }
             if (mHostDetectionEdge.endsWith(".gcp.mobiledgex.net")) {
-                mTlsEdge = false; //Because this is a GCP cloudlet where TLS is not supported.
-                Log.i(TAG, "Set mTlsEdge="+mTlsEdge+" because GCP cloudlets don't support TLS.");
+                meHelper.mAppInstTls = false; //Because this is a GCP cloudlet where TLS is not supported.
+                Log.i(TAG, "Set mTlsEdge="+meHelper.mAppInstTls+" because GCP cloudlets don't support TLS.");
             }
+            showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
             mEdgeHostList.clear();
             mEdgeHostListIndex = 0;
             mEdgeHostList.add(mHostDetectionEdge);
@@ -1266,13 +1265,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     }
 
     protected void getCommonIntentExtras(Intent intent) {
-        // See if we have an Extra with the closest cloudlet passed in to override the preference.
-        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
-        if(edgeCloudletHostname != null) {
-            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
-            mEdgeHostNameOverride = true;
-            mHostDetectionEdge = edgeCloudletHostname;
-        }
         boolean spoofGps = intent.getBooleanExtra(EXTRA_SPOOF_GPS, false);
         if (spoofGps) {
             double latitude = intent.getDoubleExtra(EXTRA_LATITUDE, 1);

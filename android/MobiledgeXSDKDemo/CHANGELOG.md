@@ -2,6 +2,29 @@
 
 All notable changes to the **Android SDK Demo App** project will be documented in this file.
 
+## 2021 releases
+
+### 1.1.17 - Sep 3, 2:40 PM
+
+#### Major Features:  
+- EDGECLOUD-4940 Add support for routes, and using the locations to demonstrate EdgeEvents
+- EDGECLOUD-5017 Add preferences for EdgeEvents config
+
+#### Improvements and Bug Fixes
+- EDGECLOUD-2553 Remove base64 encoding of image data
+- EDGECLOUD-5092 Add TLS switch preference for the case of overriding the Edge hostname
+- EDGECLOUD-4594 Add option for using SDK's NetTest for cloudlet latency testing.
+- EDGECLOUD-3589 HA features with CV activities don't handle non-success cases for FindCloudlet
+- EDGECLOUD-4940 Settings update
+  - Migrated Settings screens to androidx.
+  - Broke Computer Vision Settings into 3 separate pages.
+  - Added preferences for driving/flying route animation duration.
+- New context/popup menu for the event log viewer: Long press the collapse/expand button to select one of these menu items:
+  - Copy all items
+  - Clear Logs
+  - Auto Expand toggle - Turn off, and viewer doesn't automatically expand when new event occurs.
+- Added CSS to "About" HTML to the use MobiledgeX colors instead of stark black and white.
+
 ## 2020 releases
 
 ### 1.1.12 - Oct 2, 10:40 AM

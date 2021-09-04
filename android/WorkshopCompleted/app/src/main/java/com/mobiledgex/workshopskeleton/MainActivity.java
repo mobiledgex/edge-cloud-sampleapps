@@ -111,7 +111,6 @@ public class MainActivity extends AppCompatActivity
 
     private CheckBox checkboxRegistered;
     private CheckBox checkboxCloudletFound;
-    private CheckBox checkboxLocationVerified;
     private ProgressBar progressBar;
 
     private String registerStatusText;
@@ -140,7 +139,6 @@ public class MainActivity extends AppCompatActivity
         longitudeTv = findViewById(R.id.longitude);
         checkboxRegistered = findViewById(R.id.checkBoxRegistered);
         checkboxCloudletFound = findViewById(R.id.checkBoxCloudletFound);
-        checkboxLocationVerified = findViewById(R.id.checkBoxLocationVerified);
         progressBar = findViewById(R.id.progressBar);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -221,8 +219,6 @@ public class MainActivity extends AppCompatActivity
             checkboxRegistered.setText(R.string.client_registered_question);
             checkboxCloudletFound.setChecked(false);
             checkboxCloudletFound.setText(R.string.cloudlet_found_question);
-            checkboxLocationVerified.setChecked(false);
-            checkboxLocationVerified.setText(R.string.location_verified_question);
             return true;
         }
 
@@ -278,6 +274,7 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "Could not generate host");
             host = "wifi.dme.mobiledgex.net";   //fallback host
         }
+//        host = "eu-mexdemo.dme.mobiledgex.net";
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest;
         registerClientRequest = matchingEngine.createDefaultRegisterClientRequest(ctx, orgName)
@@ -352,8 +349,6 @@ public class MainActivity extends AppCompatActivity
         // TODO: Copy/paste the output of this log into a terminal to test latency.
         Log.i("COPY_PASTE", "ping -c 4 "+mClosestCloudletHostname);
 
-        verifyLocationInBackground(mLastKnownLocation);
-
         getQoSPositionKpiInBackground(mLastKnownLocation);
 
         return true;
@@ -405,33 +400,6 @@ public class MainActivity extends AppCompatActivity
         mEventLogViewer.showMessage("Closest cloudlet is now "+mClosestCloudletHostname);
         // Hide the log viewer after a short delay.
         mEventLogViewer.collapseAfter(3000);
-    }
-
-    private boolean verifyLocation(Location loc) throws InterruptedException, IOException, ExecutionException {
-        AppClient.VerifyLocationRequest verifyLocationRequest
-                = matchingEngine.createDefaultVerifyLocationRequest(ctx, loc)
-                .setCarrierName(carrierName).build();
-        String TAG = "verifyLocation";
-        Log.i(TAG, "verifyLocationRequest="+verifyLocationRequest);
-        if (verifyLocationRequest != null) {
-            try {
-                AppClient.VerifyLocationReply verifyLocationReply = matchingEngine.verifyLocation(verifyLocationRequest, host, port, 10000);
-                String message = "GPS LocationStatus: " + verifyLocationReply.getGpsLocationStatus() +
-                        ", Location Accuracy: " + verifyLocationReply.getGpsLocationAccuracyKm() +
-                        ", Location Verified: Tower: " + verifyLocationReply.getTowerStatus();
-                Log.i(TAG, message);
-                mEventLogViewer.showMessage(message);
-                return true;
-            } catch(NetworkOnMainThreadException ne) {
-                verifyLocStatusText = "Network thread exception";
-                Log.e(TAG, verifyLocStatusText);
-                return false;
-            }
-        } else {
-            verifyLocStatusText = "Cannot verify location";
-            Log.e(TAG, verifyLocStatusText);
-            return false;
-        }
     }
 
     private boolean getQoSPositionKpi(LocOuterClass.Loc loc) throws InterruptedException, ExecutionException{
@@ -497,11 +465,6 @@ public class MainActivity extends AppCompatActivity
     private void findCloudletInBackground() {
         // Creates new BackgroundRequest object which will call findCloudlet
         new FindCloudletBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
-
-    private void verifyLocationInBackground(Location loc) {
-        // Creates new BackgroundRequest object which will call verifyLocation to run on background thread
-        new VerifyLocBackgroundRequest().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, loc);
     }
 
     private void getQoSPositionKpiInBackground(Location loc) {
@@ -593,7 +556,7 @@ public class MainActivity extends AppCompatActivity
             mRpUtil.requestMultiplePermissions(this);
             return;
         }
-        // Ensures that user can switch from wifi to cellular network data connection (required to verifyLocation)
+        // Ensures that user can switch from wifi to cellular network data connection.
         matchingEngine = new MatchingEngine(ctx);
         matchingEngine.setNetworkSwitchingEnabled(false);  //false-> wifi (Use wifi for demo)
     }
@@ -647,42 +610,6 @@ public class MainActivity extends AppCompatActivity
                 findCloudletStatusText = "Failed to find cloudlet. " + findCloudletStatusText;
                 Log.e(TAG, findCloudletStatusText);
                 showErrorMsg(findCloudletStatusText);
-            }
-        }
-    }
-
-    public class VerifyLocBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
-        @Override
-        protected Boolean doInBackground(Object... params) {
-            try {
-                if (verifyLocation((Location) params[0])) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            } catch (IOException ioe) {
-                verifyLocStatusText = ioe.getMessage();
-                Log.e(TAG, verifyLocStatusText);
-                showErrorMsg(verifyLocStatusText);
-            } catch (ExecutionException ee) {
-                verifyLocStatusText = ee.getMessage();
-                Log.e(TAG, verifyLocStatusText);
-                showErrorMsg(verifyLocStatusText);
-            }
-            return false;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean locationVerified) {
-            if (locationVerified) {
-                checkboxLocationVerified.setChecked(true);
-                checkboxLocationVerified.setText(R.string.location_verified);
-            } else {
-                verifyLocStatusText = "Failed to verify location. " + verifyLocStatusText;
-                Log.e(TAG, verifyLocStatusText);
-                showErrorMsg(verifyLocStatusText);
             }
         }
     }
