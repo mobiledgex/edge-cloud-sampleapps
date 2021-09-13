@@ -70,7 +70,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -85,12 +84,14 @@ import static distributed_match_engine.AppClient.ServerEdgeEvent.ServerEventType
 
 public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = "MatchingEngineHelper";
+    public static final boolean VERIFY_LOCATION_ENABLED = false;
     public static boolean mEdgeEventsConfigUpdated = false;
+    public static boolean mAppDefinitionUpdated = false;
     private Activity mActivity;
     private final View mView;
     private EdgeEventsSubscriber mEdgeEventsSubscriber;
     public int mDmePort = 50051;
-    public static final String DEFAULT_DME_HOSTNAME = "wifi.dme.mobiledgex.net";
+    public static final String DEFAULT_DME_HOSTNAME = "eu-mexdemo.dme.mobiledgex.net"; //TODO: Change back to wifi whenever that gets fixed.
     public static final String DEFAULT_CARRIER_NAME = "";
     public static final String DEF_HOSTNAME_PLACEHOLDER = "Default";
     public static final String DEFAULT_FIND_CLOUDLET_MODE = "PROXIMITY";
@@ -109,7 +110,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     public Location mLastKnownLocation;
     public Location mLocationInSimulator;
-    private String mSessionCookie;
+    public String mSessionCookie;
     public AppClient.FindCloudletReply mClosestCloudlet;
     public AppClient.AppInstListReply mAppInstanceReplyList;
     public boolean mAllowLocationSimulatorUpdate = false;
@@ -350,9 +351,11 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                     Log.e(TAG, "getAppInstList failed. aborting doEnhancedLocationUpdateInBackground");
                     return;
                 }
-                if (!verifyLocation()) {
-                    Log.e(TAG, "verifyLocation failed. aborting doEnhancedLocationUpdateInBackground");
-                    return;
+                if (VERIFY_LOCATION_ENABLED) {
+                    if (!verifyLocation()) {
+                        Log.e(TAG, "verifyLocation failed. aborting doEnhancedLocationUpdateInBackground");
+                        return;
+                    }
                 }
                 if (!findCloudlet()) {
                     Log.e(TAG, "findCloudlet failed. aborting doEnhancedLocationUpdateInBackground");
@@ -781,15 +784,12 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             Log.e(TAG, "mActivity is null, possibly after onDestroy()");
             return;
         }
-        boolean appInfoChanged = false;
 
         if (key.equals(prefKeyAllowMatchingEngineLocation)) {
             boolean matchingEngineLocationAllowed = prefs.getBoolean(prefKeyAllowMatchingEngineLocation, false);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+matchingEngineLocationAllowed);
             MatchingEngine.setMatchingEngineLocationAllowed(matchingEngineLocationAllowed);
-            if (matchingEngineLocationAllowed) {
-                meHelperInterface.getCloudlets(true);
-            }
+            mAppDefinitionUpdated = true;
         }
 
         if (key.equals(prefKeyAllowNetSwitch)) {
@@ -820,7 +820,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }
 
         if (key.equals(prefKeyDefaultDmeHostname)) {
-            boolean useDefault = prefs.getBoolean(prefKeyDefaultDmeHostname, true);
+            boolean useDefault = prefs.getBoolean(prefKeyDefaultDmeHostname, false);
             if (useDefault) {
                 new Thread(() -> {
                     try {
@@ -842,7 +842,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }
 
         if (key.equals(prefKeyDefaultOperatorName)) {
-            boolean useDefault = prefs.getBoolean(prefKeyDefaultOperatorName, true);
+            boolean useDefault = prefs.getBoolean(prefKeyDefaultOperatorName, false);
             if (useDefault) {
                 // This will try to get the MccMnc from the device, unless wifiOnly is set.
                 mDefaultCarrierName = me.getCarrierName(mActivity);
@@ -894,7 +894,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 mAppInstancesLimit = DEFAULT_APP_INSTANCES_LIMIT;
             }
             Log.i(TAG, "appInstancesLimit="+appInstancesLimit+" mAppInstancesLimit="+mAppInstancesLimit);
-            appInfoChanged = true;
+            mAppDefinitionUpdated = true;
         }
 
         if (key.equals(prefKeyDefaultAppInfo)) {
@@ -909,33 +909,27 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 mOrgName = prefs.getString(prefKeyOrgName, mActivity.getResources().getString(R.string.org_name));
                 Log.i(TAG, "onSharedPreferenceChanged("+key+")=false. Custom values: appName="+mAppName+" appVersion="+mAppVersion+" orgName="+mOrgName);
             }
-            appInfoChanged = true;
+            mAppDefinitionUpdated = true;
         }
 
         if (key.equals(prefKeyAppName)) {
             mAppName = prefs.getString(key, mActivity.getResources().getString(R.string.dme_app_name));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAppName);
-            appInfoChanged = true;
+            mAppDefinitionUpdated = true;
         }
         if (key.equals(prefKeyAppVersion)) {
             mAppVersion = prefs.getString(key, mActivity.getResources().getString(R.string.app_version));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAppVersion);
-            appInfoChanged = true;
+            mAppDefinitionUpdated = true;
         }
         if (key.equals(prefKeyOrgName)) {
             mOrgName = prefs.getString(key, mActivity.getResources().getString(R.string.org_name));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mOrgName);
-            appInfoChanged = true;
+            mAppDefinitionUpdated = true;
         }
 
         // Separated the Edge Event Settings into their own method.
         onEdgeEventPreferenceChanged(prefs, key);
-
-        if (appInfoChanged) {
-            mSessionCookie = null;
-            mClosestCloudlet = null;
-            meHelperInterface.getCloudlets(true);
-        }
     }
 
     /**
@@ -949,7 +943,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
         if (key.equals(prefKeyEnableEdgeEvents)) {
             mEdgeEventsConfigUpdated = true;
-            boolean value = prefs.getBoolean(key, false);
+            boolean value = prefs.getBoolean(key, true);
             mEdgeEventsEnabled = value;
             String message;
             if (mEdgeEventsEnabled) {
@@ -1028,7 +1022,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             mEdgeEventsConfigUpdated = true;
         }
         if (key.equals(prefKeyLatencyTestType)) {
-            String value = prefs.getString(key, "PING");
+            String value = prefs.getString(key, "CONNECT");
             mEdgeEventsConfig.latencyTestType = NetTest.TestType.valueOf(value);
         }
         if (key.equals(prefKeyLatencyTestTriggerMode)) {
@@ -1054,18 +1048,23 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void setCarrierName(String carrierName) {
+        Log.i(TAG, "setCarrierName("+carrierName+")");
         mSessionCookie = null;
         mCarrierName = carrierName;
         mClosestCloudlet = null;
-        meHelperInterface.getCloudlets(true);
+        mAppDefinitionUpdated = true;
     }
 
     public void setDmeHostname(String hostname) {
+        Log.i(TAG, "setDmeHostname("+hostname+")");
+        meHelperInterface.showMessage("Using DME: "+hostname);
         mSessionCookie = null;
         mDmeHostname = hostname;
         mClosestCloudlet = null;
-        checkForLocSimulator(mDmeHostname);
-        meHelperInterface.getCloudlets(true);
+        if (VERIFY_LOCATION_ENABLED) {
+            checkForLocSimulator(mDmeHostname);
+        }
+        mAppDefinitionUpdated = true;
     }
 
     public static String parseDmeHost(String hostAndPort) throws HostParseException {
