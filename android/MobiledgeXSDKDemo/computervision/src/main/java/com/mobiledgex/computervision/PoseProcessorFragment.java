@@ -156,15 +156,6 @@ public class PoseProcessorFragment extends GpuImageProcessorFragment implements 
                 .build();
 
         setAppNameForGpu();
-
-        if (mEdgeHostNameOverride) {
-            mEdgeHostList.clear();
-            mEdgeHostListIndex = 0;
-            mEdgeHostList.add(mHostDetectionEdge);
-            showMessage("Overriding Edge host. Host=" + mHostDetectionEdge);
-            restartImageSenderEdge();
-        } else {
-            meHelper.findCloudletInBackground();
-        }
+        getProvisioningData();
     }
 }

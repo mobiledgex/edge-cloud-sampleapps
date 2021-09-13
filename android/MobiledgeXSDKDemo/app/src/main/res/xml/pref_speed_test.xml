@@ -35,7 +35,7 @@
         app:iconSpaceReserved="false"/>
 
     <ListPreference
-        android:defaultValue="ping"
+        android:defaultValue="socket"
         android:entries="@array/pref_latency_test_method_titles"
         android:entryValues="@array/pref_latency_test_method_values"
         android:key="@string/pref_latency_method"

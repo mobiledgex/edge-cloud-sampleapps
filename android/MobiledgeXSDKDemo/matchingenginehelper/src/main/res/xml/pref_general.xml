@@ -6,7 +6,7 @@
     android:id="@+id/general_preference_screen">
 
     <CheckBoxPreference
-        android:defaultValue="true"
+        android:defaultValue="false"
         android:disableDependentsState="true"
         android:key="@string/pref_default_dme_hostname"
         android:summary="@string/pref_summary_default_dme_hostname"
@@ -26,7 +26,7 @@
         app:iconSpaceReserved="false"/>
 
     <CheckBoxPreference
-        android:defaultValue="true"
+        android:defaultValue="false"
         android:disableDependentsState="true"
         android:key="@string/pref_default_operator_name"
         android:summary="@string/pref_summary_default_operator_name"

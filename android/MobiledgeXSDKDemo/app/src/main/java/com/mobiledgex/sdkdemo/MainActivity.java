@@ -133,6 +133,8 @@ import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.VERIFY_LOCATION_ENABLED;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mAppDefinitionUpdated;
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsConfigUpdated;
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsEnabled;
 
@@ -174,7 +176,7 @@ public class MainActivity extends AppCompatActivity
     private boolean locationVerified = false;
     private boolean locationVerificationAttempted = false;
     private double mGpsLocationAccuracyKM;
-    private String defaultLatencyMethod = "ping";
+    private String defaultLatencyMethod = "socket";
 
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
@@ -599,9 +601,10 @@ public class MainActivity extends AppCompatActivity
         onMapTypeGroupItemClick(mapTypeGroupPrevItem);
         Log.i(TAG, "onCreateOptionsMenu itemId="+itemId+" "+mapTypeGroupPrevItem);
 
-        // TODO: If we want to allow verifyLocation, unhide this menu item.
-        MenuItem verifyLocationMenuItem = menu.findItem(R.id.action_verify_location);
-        verifyLocationMenuItem.setVisible(false);
+        if (!VERIFY_LOCATION_ENABLED) {
+            MenuItem verifyLocationMenuItem = menu.findItem(R.id.action_verify_location);
+            verifyLocationMenuItem.setVisible(false);
+        }
 
         return true;
     }
@@ -673,6 +676,7 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_settings) {
             // Open "Settings" UI
             mEdgeEventsConfigUpdated = false;
+            mAppDefinitionUpdated = false;
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
@@ -752,7 +756,7 @@ public class MainActivity extends AppCompatActivity
         // Turn off everything route related. If a menu item is being unchecked,
         // then we're done after this. Otherwise we will rebuild everything below.
         if (mValueAnimator != null) {
-            mValueAnimator.cancel();
+            mValueAnimator.pause();
         }
         if (mStartMarker != null) {
             mStartMarker.setVisible(false);
@@ -1820,6 +1824,12 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "onResume() mEdgeEventsConfigUpdated="+mEdgeEventsConfigUpdated);
         if (mEdgeEventsEnabled && mEdgeEventsConfigUpdated) {
             meHelper.startEdgeEvents();
+        }
+
+        if (mAppDefinitionUpdated) {
+            meHelper.mSessionCookie = null;
+            meHelper.mClosestCloudlet = null;
+            getCloudlets(true);
         }
 
         startLocationUpdates();
