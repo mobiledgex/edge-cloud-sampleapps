@@ -1012,6 +1012,12 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         // Edge Events Config
         if (key.equals(prefKeyFindCloudletEventTrigger)) {
             Set<String> stringSet = new HashSet<>();
+            // Build default stringset with all possible values.
+            stringSet.add("CloudletStateChanged");
+            stringSet.add("AppInstHealthChanged");
+            stringSet.add("CloudletMaintenanceStateChanged");
+            stringSet.add("LatencyTooHigh");
+            stringSet.add("CloserCloudlet");
             Set<String> values = prefs.getStringSet(key, stringSet);
             Log.i(TAG, "values="+values);
             EnumSet<FindCloudletEventTrigger> triggerSet = EnumSet.noneOf(FindCloudletEventTrigger.class);
