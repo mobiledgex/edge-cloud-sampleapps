@@ -10,8 +10,8 @@
     {
       "type": "SINGLE",
       "filters": [],
-      "versionCode": 62,
-      "versionName": "1.1.14",
+      "versionCode": 63,
+      "versionName": "1.1.18",
       "outputFile": "MobiledgeXSDKDemo-release.apk"
     }
   ]
