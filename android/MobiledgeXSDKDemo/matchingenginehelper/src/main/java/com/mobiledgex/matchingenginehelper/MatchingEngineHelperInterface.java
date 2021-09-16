@@ -26,6 +26,6 @@ public interface MatchingEngineHelperInterface {
     void onGetCloudletList(AppClient.AppInstListReply cloudletList);
     void showMessage(String text);
     void showError(String text);
-    void getCloudlets(boolean clearExisting);
+    void getCloudlets(boolean clearExisting, boolean background);
     ConnectionTester makeConnectionTester(boolean tls);
 }

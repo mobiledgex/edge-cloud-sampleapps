@@ -286,6 +286,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void startEdgeEvents() {
+        mEdgeEventsConfigUpdated = false;
         if (!mEdgeEventsEnabled) {
             Log.e(TAG, "Aborting attempt to startEdgeEvents while mEdgeEventsEnabled="+ false);
             return;
@@ -1287,7 +1288,6 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
         // Only the app knows with any certainty which AppPort (and internal port array)
         // it wants to test, so this is in the application.
-        @Subscribe
         void handleLatencyRequest(AppClient.ServerEdgeEvent event) {
             if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_LATENCY_REQUEST) {
                 return;
@@ -1387,7 +1387,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 }
 
                 if(!mGpsInitialized) {
-                    meHelperInterface.getCloudlets(true);
+                    meHelperInterface.getCloudlets(true, false);
                     mGpsInitialized = true;
                 }
 
