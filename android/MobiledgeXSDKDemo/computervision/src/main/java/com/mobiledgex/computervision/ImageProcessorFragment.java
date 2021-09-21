@@ -285,7 +285,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     }
 
     @Override
-    public void getCloudlets(boolean clearExisting) {
+    public void getCloudlets(boolean clearExisting, boolean background) {
         // Not used for this non-map activity.
     }
 

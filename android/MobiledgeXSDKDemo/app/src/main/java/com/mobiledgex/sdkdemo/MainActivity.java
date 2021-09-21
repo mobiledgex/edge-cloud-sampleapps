@@ -621,7 +621,7 @@ public class MainActivity extends AppCompatActivity
             meHelper.registerClientInBackground();
         }
         if (id == R.id.action_get_app_inst_list) {
-            getCloudlets(true);
+            getCloudlets(true, false);
         }
         if (id == R.id.action_reset_location) {
             // Reset spoofed GPS
@@ -644,7 +644,7 @@ public class MainActivity extends AppCompatActivity
             if(meHelper.mAllowLocationSimulatorUpdate) {
                 updateLocSimLocation(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
             }
-            getCloudlets(true);
+            getCloudlets(true, false);
             return true;
         }
         if (id == R.id.action_verify_location) {
@@ -1005,9 +1005,11 @@ public class MainActivity extends AppCompatActivity
     /**
      * Gets list of cloudlets from DME, and populates map with markers.
      * @param clearExisting
+     * @param background
      */
-    public void getCloudlets(boolean clearExisting) {
+    public void getCloudlets(boolean clearExisting, boolean background) {
         Log.i(TAG, "getCloudlets()  meHelper="+ meHelper);
+        mAppDefinitionUpdated = false;
         if (meHelper == null) {
             Log.i(TAG, "getCloudlets() meHelper not yet initialized");
             return;
@@ -1034,7 +1036,11 @@ public class MainActivity extends AppCompatActivity
 
         showMessage("Performing getAppInstList");
         try {
-            meHelper.getAppInstList();
+            if (background) {
+                meHelper.getAppInstListInBackground();
+            } else {
+                meHelper.getAppInstList();
+            }
         } catch (InterruptedException | ExecutionException e) {
             String message = "Error during getAppInstList: " + e;
             Log.e(TAG, message);
@@ -1349,7 +1355,7 @@ public class MainActivity extends AppCompatActivity
     public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
         Log.i(TAG, "onFindCloudlet "+closestCloudlet.getFqdn());
         // Get full list of cloudlets again in case any have been added or removed.
-        getCloudlets(false);
+        getCloudlets(false, false);
         initAllCloudletMarkers();
         Cloudlet cloudlet = null;
         meHelper.mClosestCloudlet = null;
@@ -1821,7 +1827,7 @@ public class MainActivity extends AppCompatActivity
                     .build();
         }
 
-        Log.i(TAG, "onResume() mEdgeEventsConfigUpdated="+mEdgeEventsConfigUpdated);
+        Log.i(TAG, "onResume() mEdgeEventsConfigUpdated="+mEdgeEventsConfigUpdated+" mAppDefinitionUpdated="+mAppDefinitionUpdated);
         if (mEdgeEventsEnabled && mEdgeEventsConfigUpdated) {
             meHelper.startEdgeEvents();
         }
@@ -1829,7 +1835,7 @@ public class MainActivity extends AppCompatActivity
         if (mAppDefinitionUpdated) {
             meHelper.mSessionCookie = null;
             meHelper.mClosestCloudlet = null;
-            getCloudlets(true);
+            getCloudlets(true, true);
         }
 
         startLocationUpdates();
