@@ -4,7 +4,16 @@ All notable changes to the **Android SDK Demo App** project will be documented i
 
 ## 2021 releases
 
-### 1.1.17 - Sep 3, 2:40 PM
+### 1.1.20 - Sep 23, 4:40 PM
+- EDGECLOUD-5592 SampleApp MobiledgeX SDK Demo slow after LatencyRequest from server is sent
+- EDGECLOUD-5414 Removed "Verify Location" menu item and button action.
+- EDGECLOUD-5603 Demo app - After displaying "Cloudlet Details" page, closest cloudlet is cleared  
+- EDGECLOUD-5563 Change event log viewer icon in the case of error
+- Added "background" parameter to getCloudlets, allowing smoother UI when returning from Settings page.  
+- Improved auto-scroll when event log viewer is expanded
+- Improve resetting mEdgeEventsConfigUpdated/mAppDefinitionUpdated flags used by onResume to determine whether to do a new getAppInstances call.
+
+### 1.1.18 - Sep 5 11:57 AM
 
 #### Major Features:  
 - EDGECLOUD-4940 Add support for routes, and using the locations to demonstrate EdgeEvents
