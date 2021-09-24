@@ -628,6 +628,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public class QoSPosBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        boolean errorShown = false;
         @Override
         protected Boolean doInBackground(Object... params) {
             Location location = (Location) params[0];
@@ -642,11 +643,11 @@ public class MainActivity extends AppCompatActivity
                 } else {
                     return false;
                 }
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            } catch (ExecutionException ee) {
-                getQosPosStatusText = ee.getMessage();
+            } catch (InterruptedException | ExecutionException e ) {
+                e.printStackTrace();
+                getQosPosStatusText = e.getMessage();
                 Log.e(TAG, getQosPosStatusText);
+                errorShown = true;
             }
             return false;
         }
@@ -656,7 +657,9 @@ public class MainActivity extends AppCompatActivity
             if (!gotQoSPositions) {
                 getQosPosStatusText = "Failed to get qosPositions. " + getQosPosStatusText;
                 Log.e(TAG, getQosPosStatusText);
-                showErrorMsg(getQosPosStatusText);
+                if (!errorShown) {
+                    showErrorMsg(getQosPosStatusText);
+                }
             }
         }
     }
