@@ -286,7 +286,6 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void startEdgeEvents() {
-        mEdgeEventsConfigUpdated = false;
         if (!mEdgeEventsEnabled) {
             Log.e(TAG, "Aborting attempt to startEdgeEvents while mEdgeEventsEnabled="+ false);
             return;
@@ -326,6 +325,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             meHelperInterface.showMessage(message);
             me.startEdgeEvents(mEdgeEventsConfig);
             mEdgeEventsRunning = true;
+            mEdgeEventsConfigUpdated = false;
         }).start();
     }
 
@@ -536,6 +536,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
     public boolean findCloudlet() throws ExecutionException, InterruptedException,
             IllegalArgumentException, PackageManager.NameNotFoundException {
+        mAppDefinitionUpdated = false;
         if (!validateCookie(mSessionCookie)) {
             return false;
         }
