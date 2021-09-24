@@ -7,7 +7,7 @@ project.ext.grpcVersion = '1.32.1'
 project.ext.mobiledgeXContextUrl = "https://artifactory.mobiledgex.net/artifactory"
 project.ext.debugRepoKey = "maven-development"
 project.ext.releaseRepoKey = "maven-releases"
-project.ext.repoKey = "${releaseRepoKey}"
+project.ext.repoKey = "${debugRepoKey}"
 
 //
 buildscript {

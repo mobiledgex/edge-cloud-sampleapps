@@ -3,6 +3,7 @@ package com.mobiledgex.matchingenginehelper;
 import static com.mobiledgex.matchingenginehelper.EventItem.EventType.ERROR;
 import static com.mobiledgex.matchingenginehelper.EventItem.EventType.INFO;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -32,9 +33,11 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
     private EventRecyclerViewAdapter mEventRecyclerViewAdapter;
     private FloatingActionButton mLogExpansionButton;
     private boolean isLogExpanded = false;
+    private boolean isAnimationPlaying = false;
     private int mLogViewHeight;
     public boolean mAutoExpand = true;
     private String mAutoExpandPrefKey;
+    private LinearLayoutManager mLayout;
 
     public EventLogViewer(Activity activity, FloatingActionButton button, RecyclerView recyclerView) {
         mActivity = activity;
@@ -48,13 +51,13 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
     }
 
     protected void setupLogViewer() {
-        final LinearLayoutManager layout = new LinearLayoutManager(mEventsRecyclerView.getContext());
-        mEventsRecyclerView.setLayoutManager(layout);
+        mLayout = new LinearLayoutManager(mEventsRecyclerView.getContext());
+        mEventsRecyclerView.setLayoutManager(mLayout);
         mEventRecyclerViewAdapter = new EventRecyclerViewAdapter(mEventItemList);
         mEventRecyclerViewAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
-                layout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
+                mLayout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
             }
 
         });
@@ -68,12 +71,16 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
                 Log.i(TAG, "mEventsRecyclerView.getLayoutParams().height="+mEventsRecyclerView.getLayoutParams().height);
                 Log.i(TAG, "mLogExpansionButton.getHeight()="+mLogExpansionButton.getHeight());
                 Log.i(TAG, "isLogExpanded="+isLogExpanded);
-                layout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
-                if(!isLogExpanded){
+                // Reset image in case it was changed to the warning icon.
+                mLogExpansionButton.setImageResource(R.drawable.ic_baseline_more_24);
+                if (isAnimationPlaying) {
+                    // Ignore clicks during animation.
+                    return;
+                }
+                if (!isLogExpanded) {
                     logViewAnimate(0, mLogViewHeight);
                     isLogExpanded = true;
-                }
-                else{
+                } else {
                     logViewAnimate(mLogViewHeight, 0);
                     isLogExpanded = false;
                 }
@@ -171,6 +178,29 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
                         mEventsRecyclerView.getLayoutParams().height = value.intValue();
                         mEventsRecyclerView.requestLayout();
                     }
+
+                });
+                va.addListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animator) {
+                        isAnimationPlaying = true;
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animator) {
+                        isAnimationPlaying = false;
+                        mLayout.smoothScrollToPosition(mEventsRecyclerView, null, mEventRecyclerViewAdapter.getItemCount());
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animator) {
+                        isAnimationPlaying = false;
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animator) {
+                        // Ignore this.
+                    }
                 });
                 va.start();
             }
@@ -182,6 +212,10 @@ public class EventLogViewer implements PopupMenu.OnMenuItemClickListener {
             if (mAutoExpand) {
                 logViewAnimate(0, mLogViewHeight);
                 isLogExpanded = true;
+            } else {
+                if (type == ERROR) {
+                    mLogExpansionButton.setImageResource(R.drawable.ic_baseline_warning_white_24);
+                }
             }
         }
 

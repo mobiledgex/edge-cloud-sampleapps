@@ -1,11 +1,14 @@
 package com.mobiledgex.matchingenginehelper;
 
+import static com.mobiledgex.matchingenginehelper.EventItem.EventType.ERROR;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +42,10 @@ public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecycler
         holder.mItem = mValues.get(position);
         holder.mTimestampView.setText(mValues.get(position).timestampText);
         holder.mContentView.setText(mValues.get(position).content);
+
+        if (holder.mItem.eventType == ERROR) {
+            holder.mIconView.setImageResource(R.drawable.ic_baseline_warning_24);
+        }
     }
 
     @Override
