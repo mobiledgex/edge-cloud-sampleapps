@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivity
 
     private String registerStatusText;
     private String findCloudletStatusText;
-    private String verifyLocStatusText;
     private String getQosPosStatusText;
     private EventLogViewer mEventLogViewer;
     private EdgeEventsSubscriber mEdgeEventsSubscriber;
@@ -274,7 +273,13 @@ public class MainActivity extends AppCompatActivity
             Log.e(TAG, "Could not generate host");
             host = "wifi.dme.mobiledgex.net";   //fallback host
         }
-//        host = "eu-mexdemo.dme.mobiledgex.net";
+
+        // The generateDmeHostAddress() call above will generate a hostname that includes the
+        // MCC+MNC of your current provider. Example: UFGT is 310-410.dme.mobiledgex.net.
+        // Since most of these values haven't been mapped to a live DME, here we override
+        // the host with a known good value for a DME that has our app instance deployed.
+        host = "eu-mexdemo.dme.mobiledgex.net";
+
         port = matchingEngine.getPort(); // Keep same port.
         AppClient.RegisterClientRequest registerClientRequest;
         registerClientRequest = matchingEngine.createDefaultRegisterClientRequest(ctx, orgName)
@@ -509,7 +514,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void showErrorMsg(String msg) {
-        Snackbar.make(findViewById(android.R.id.content), msg, Snackbar.LENGTH_LONG).show();
+        mEventLogViewer.showError(msg);
     }
 
     @Override
@@ -562,6 +567,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public class RegisterClientBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        boolean errorShown = false;
         @Override
         protected Boolean doInBackground(Object... params) {
             try {
@@ -570,6 +576,7 @@ public class MainActivity extends AppCompatActivity
                 e.printStackTrace();
                 registerStatusText = "Registration Failed. Exception="+e.getLocalizedMessage();
                 showErrorMsg(registerStatusText);
+                errorShown = true;
                 return false;
             }
         }
@@ -586,12 +593,15 @@ public class MainActivity extends AppCompatActivity
             } else {
                 registerStatusText = "Failed to register client. " + registerStatusText;
                 Log.e(TAG, registerStatusText);
-                showErrorMsg(registerStatusText);
+                if (!errorShown) {
+                    showErrorMsg(registerStatusText);
+                }
             }
         }
     }
 
     public class FindCloudletBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        boolean errorShown = false;
         @Override
         protected Boolean doInBackground(Object... params) {
             try {
@@ -600,6 +610,7 @@ public class MainActivity extends AppCompatActivity
                 e.printStackTrace();
                 findCloudletStatusText = ". Exception="+e.getLocalizedMessage();
                 showErrorMsg(findCloudletStatusText);
+                errorShown = true;
                 return false;
             }
         }
@@ -609,12 +620,15 @@ public class MainActivity extends AppCompatActivity
             if (!cloudletFound) {
                 findCloudletStatusText = "Failed to find cloudlet. " + findCloudletStatusText;
                 Log.e(TAG, findCloudletStatusText);
-                showErrorMsg(findCloudletStatusText);
+                if (!errorShown) {
+                    showErrorMsg(findCloudletStatusText);
+                }
             }
         }
     }
 
     public class QoSPosBackgroundRequest extends AsyncTask<Object, Void, Boolean> {
+        boolean errorShown = false;
         @Override
         protected Boolean doInBackground(Object... params) {
             Location location = (Location) params[0];
@@ -629,11 +643,11 @@ public class MainActivity extends AppCompatActivity
                 } else {
                     return false;
                 }
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            } catch (ExecutionException ee) {
-                getQosPosStatusText = ee.getMessage();
+            } catch (InterruptedException | ExecutionException e ) {
+                e.printStackTrace();
+                getQosPosStatusText = e.getMessage();
                 Log.e(TAG, getQosPosStatusText);
+                errorShown = true;
             }
             return false;
         }
@@ -643,7 +657,9 @@ public class MainActivity extends AppCompatActivity
             if (!gotQoSPositions) {
                 getQosPosStatusText = "Failed to get qosPositions. " + getQosPosStatusText;
                 Log.e(TAG, getQosPosStatusText);
-                showErrorMsg(getQosPosStatusText);
+                if (!errorShown) {
+                    showErrorMsg(getQosPosStatusText);
+                }
             }
         }
     }

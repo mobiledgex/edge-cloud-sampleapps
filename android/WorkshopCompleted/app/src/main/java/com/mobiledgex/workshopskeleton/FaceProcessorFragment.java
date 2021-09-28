@@ -286,4 +286,9 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
     public String getStatsText() {
         return mImageSenderEdge.getStatsText();
     }
+
+    @Override
+    public void getCloudlets(boolean clearExisting, boolean background) {
+        // Required for MatchingEngineHelperInterface. Not used for this non-map activity.
+    }
 }

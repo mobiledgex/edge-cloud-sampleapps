@@ -43,7 +43,7 @@ dependencies {
     implementation 'androidx.ads:ads-identifier:1.0.0-alpha04'
 
     // Matching Engine SDK
-    implementation 'com.mobiledgex:matchingengine:3.0'
+    implementation 'com.mobiledgex:matchingengine:3.0.1'
     implementation 'com.mobiledgex:mel:1.0.11'
     implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
@@ -54,6 +54,6 @@ dependencies {
     // MobiledgeX Computer Vision library
     implementation 'com.mobiledgex:computervision:1.1.6'
     // MobiledgeX matchingenginehelper, for EventLogViewer
-    implementation "com.mobiledgex:matchingenginehelper:3.0"
+    implementation "com.mobiledgex:matchingenginehelper:3.0.1"
 
 }
