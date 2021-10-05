@@ -37,11 +37,12 @@
         android:summary="@string/pref_find_cloudlet_mode_summary"
         android:title="@string/pref_find_cloudlet_mode_title"
         app:iconSpaceReserved="false" />
-    <ListPreference
+
+    <EditTextPreference
         android:defaultValue="4"
-        android:entries="@array/pref_app_instances_limit_titles"
-        android:entryValues="@array/pref_app_instances_limit_values"
         android:key="@string/pref_app_instances_limit"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
         android:summary="@string/pref_app_instances_limit_summary"
         android:title="@string/pref_app_instances_limit_title"
         app:iconSpaceReserved="false" />

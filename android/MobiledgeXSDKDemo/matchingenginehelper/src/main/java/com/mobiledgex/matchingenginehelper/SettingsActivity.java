@@ -52,6 +52,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_APP_INSTANCES_LIMIT;
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_CARRIER_NAME;
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEFAULT_DME_HOSTNAME;
 
@@ -145,9 +146,24 @@ public class SettingsActivity extends AppCompatActivity implements
     }
 
     public static class MatchingEngineSettingsFragment extends PreferenceFragmentCompat {
+        private String prefKeyAppInstancesLimit;
+        private EditTextPreference prefAppInstancesLimit;
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.pref_matching_engine, rootKey);
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            prefKeyAppInstancesLimit = getResources().getString(R.string.pref_app_instances_limit);
+            prefAppInstancesLimit = findPreference(prefKeyAppInstancesLimit);
+            prefAppInstancesLimit.setSummaryProvider(preference -> getResources().getString(R.string.pref_app_instances_limit_summary, prefAppInstancesLimit.getText()));
+            prefAppInstancesLimit.setOnBindEditTextListener(editText -> {
+                SetEditTextNumerical(editText);
+            });
         }
     }
 

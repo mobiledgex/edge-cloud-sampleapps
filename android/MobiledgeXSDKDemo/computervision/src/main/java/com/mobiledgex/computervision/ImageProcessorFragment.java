@@ -1257,8 +1257,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
 
-        mVideoFilename = VIDEO_FILE_NAME;
-
         //One more call to get preferences for ImageSenders
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         onSharedPreferenceChanged(prefs, ALL_PREFS);
