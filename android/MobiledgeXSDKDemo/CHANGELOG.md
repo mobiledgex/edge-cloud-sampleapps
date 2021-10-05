@@ -4,7 +4,11 @@ All notable changes to the **Android SDK Demo App** project will be documented i
 
 ## 2021 releases
 
-### 1.1.20 - Sep 23, 4:40 PM
+### 1.1.21 - Oct 5, 0:00 PM
+- EDGECLOUD-5672 Object Detection's Play Video function now uses the correct "objects" video file name.
+- EDGECLOUD-5677 "Get App Instances Limit" Setting is now a numeric-only text field to allow for larger values.
+
+### 1.1.20 - Sep 23, 4:12 PM
 - EDGECLOUD-5592 SampleApp MobiledgeX SDK Demo slow after LatencyRequest from server is sent
 - EDGECLOUD-5414 Removed "Verify Location" menu item and button action.
 - EDGECLOUD-5603 Demo app - After displaying "Cloudlet Details" page, closest cloudlet is cleared  
