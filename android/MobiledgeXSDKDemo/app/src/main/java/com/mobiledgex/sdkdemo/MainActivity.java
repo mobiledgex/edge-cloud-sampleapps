@@ -321,7 +321,6 @@ public class MainActivity extends AppCompatActivity
         upgradeToVersion59(prefs);
 
         // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
-        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_app_instances_limit));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.upload_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
