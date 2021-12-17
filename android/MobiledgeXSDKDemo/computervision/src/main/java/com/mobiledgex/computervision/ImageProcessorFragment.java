@@ -1238,7 +1238,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 meHelper.mAppInstTls = false; //Because this is a GCP cloudlet where TLS is not supported.
                 Log.i(TAG, "Set mTlsEdge="+meHelper.mAppInstTls+" because GCP cloudlets don't support TLS.");
             }
-            showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
+            showMessage("Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionCloud);
             mEdgeHostList.clear();
             mEdgeHostListIndex = 0;
             mEdgeHostList.add(mHostDetectionEdge);

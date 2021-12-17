@@ -23,6 +23,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
+import android.net.Network;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.telephony.SubscriptionInfo;
@@ -61,6 +62,10 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -85,8 +90,6 @@ import static distributed_match_engine.AppClient.ServerEdgeEvent.ServerEventType
 public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = "MatchingEngineHelper";
     public static final boolean VERIFY_LOCATION_ENABLED = false;
-    public static boolean mEdgeEventsConfigUpdated = false;
-    public static boolean mAppDefinitionUpdated = false;
     private Activity mActivity;
     private final View mView;
     private EdgeEventsSubscriber mEdgeEventsSubscriber;
@@ -106,6 +109,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public  MatchingEngine.FindCloudletMode mFindCloudletMode;
     private boolean mNetworkSwitchingAllowed;
     private boolean mUseWifiOnly;
+    private boolean mMatchingEngineSSL;
     protected int mAppInstancesLimit;
 
     public Location mLastKnownLocation;
@@ -123,11 +127,18 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private boolean mEdgeEventsRunning;
     private boolean mOverrideDefaultConfig;
     public static boolean mEdgeEventsEnabled = true;
+    public String mQosSessionId = "";
+    public String mQosProfileName = "";
+    public String mAppInstIp;
+    public String mDeviceIpv4;
+
     /**
      * Static variable to flag whether EdgeEvents should be restarted.
      * Set to false before opening Settings. Changing any Location Events Settings
      * or any Latency Events Settings will set it to true.
      */
+    public static boolean mEdgeEventsConfigUpdated = false;
+    public static boolean mAppDefinitionUpdated = false;
 
     private String someText = null;
     public String mAppInstHostname;
@@ -159,6 +170,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private final String prefKeyAllowMatchingEngineLocation;
     private final String prefKeyAllowNetSwitch;
     private final String prefKeyUseWifiOnly;
+    private final String prefKeyMatchingEngineUseSsl;
     private final String prefKeyDmeHostname;
     private final String prefKeyOperatorName;
     private final String prefKeyDefaultDmeHostname;
@@ -214,6 +226,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         prefKeyAllowMatchingEngineLocation = resources.getString(R.string.pref_matching_engine_location_verification);
         prefKeyAllowNetSwitch = resources.getString(R.string.pref_net_switching_allowed);
         prefKeyUseWifiOnly = resources.getString(R.string.pref_use_wifi_only);
+        prefKeyMatchingEngineUseSsl = resources.getString(R.string.pref_matching_engine_ssl);
         prefKeyDmeHostname = resources.getString(R.string.pref_dme_hostname);
         prefKeyOperatorName = resources.getString(R.string.pref_operator_name);
         prefKeyDefaultDmeHostname = resources.getString(R.string.pref_default_dme_hostname);
@@ -252,6 +265,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onSharedPreferenceChanged(prefs, prefKeyOrgName);
         onSharedPreferenceChanged(prefs, prefKeyDefaultAppInfo);
         onSharedPreferenceChanged(prefs, prefKeyUseWifiOnly);
+        onSharedPreferenceChanged(prefs, prefKeyMatchingEngineUseSsl);
 
         // Only initialize these on/off settings, but don't yet update the mEdgeEventsConfig.
         onEdgeEventPreferenceChanged(prefs, prefKeyEnableEdgeEvents);
@@ -377,7 +391,9 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mActivity);
         boolean locationVerificationAllowed = prefs.getBoolean(mActivity.getResources().getString(R.string.pref_matching_engine_location_verification), false);
         if (!locationVerificationAllowed) {
-            Snackbar snackbar = Snackbar.make(mView, "Enhanced Location not enabled", Snackbar.LENGTH_INDEFINITE);
+            String msg = "Enhanced Location not enabled";
+            Log.w(TAG, msg);
+            Snackbar snackbar = Snackbar.make(mView, msg, Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction("Settings", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -395,7 +411,8 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         // For this demo app, we may want to test over wifi, which we can allow by disabling
         // the "Network Switching Enabled" preference.
         boolean netSwitchingAllowed = prefs.getBoolean(prefKeyAllowNetSwitch, false);
-        if (netSwitchingAllowed) {
+        Log.i(TAG, "prefKeyAllowNetSwitch="+netSwitchingAllowed+" isNetworkSwitchingEnabled()="+me.isNetworkSwitchingEnabled());
+        if (me.isNetworkSwitchingEnabled()) {
             boolean carrierNameFound = false;
             List<SubscriptionInfo> subList = me.getActiveSubscriptionInfoList();
             if (subList != null && subList.size() > 0) {
@@ -406,7 +423,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 }
             }
             if (!carrierNameFound) {
-                Snackbar snackbar = Snackbar.make(mView, "No valid SIM card. Disable \"Network Switching Enabled\" to continue.", Snackbar.LENGTH_LONG);
+                String msg = "No valid SIM card. Disable \"Network Switching Enabled\" to continue.";
+                Log.w(TAG, msg);
+                meHelperInterface.showError(msg);
+                Snackbar snackbar = Snackbar.make(mView, msg, Snackbar.LENGTH_LONG);
                 snackbar.setAction("Settings", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -476,6 +496,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         new Thread(() -> {
             try {
                 findCloudlet();
+                mDeviceIpv4 = getLocalIpv4();
             } catch (ExecutionException | InterruptedException
                     | PackageManager.NameNotFoundException | IllegalArgumentException e) {
                 Log.e(TAG, "Exception in findCloudletInBackground() for "+
@@ -489,7 +510,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public void getAppInstListInBackground() {
         Log.i(TAG, "getAppInstListInBackground mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
 
-        meHelperInterface.showMessage("Get App Instances for app "+mAppName+"...");
+        meHelperInterface.showMessage("Get App Instances for AppName "+mAppName+" Version="+mAppVersion+" Org="+mOrgName+"...");
         new Thread(() -> {
             try {
                 getAppInstList();
@@ -509,7 +530,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             } catch (ExecutionException | InterruptedException
                     | PackageManager.NameNotFoundException
                     | IllegalArgumentException | IOException e) {
-                Log.e(TAG, "Exception in findCloudletInBackground() for "+
+                Log.e(TAG, "Exception in verifyLocationInBackground() for "+
                         mAppName+", "+mAppVersion+", "+mOrgName);
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
@@ -526,7 +547,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 getQosPositionKpi(kpiPositions);
             } catch (ExecutionException | InterruptedException
                     | PackageManager.NameNotFoundException | IllegalArgumentException e) {
-                Log.e(TAG, "Exception in findCloudletInBackground() for "+
+                Log.e(TAG, "Exception in doQosRequestInBackground() for "+
                         mAppName+", "+mAppVersion+", "+mOrgName);
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
@@ -555,6 +576,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             return false;
         }
         Log.i(TAG, "mClosestCloudlet.getFqdn()=" + mClosestCloudlet.getFqdn());
+        Log.i(TAG, "Tags:"+mClosestCloudlet.getTagsMap());
+        mQosSessionId = mClosestCloudlet.getTagsMap().get("priority_session_id");
+        mQosProfileName = mClosestCloudlet.getTagsMap().get("qos_profile_name");
+        meHelperInterface.showMessage("QosSessionId="+mQosSessionId+" QosProfileName="+mQosProfileName);
 
         //Find fqdnPrefix from Port structure.
         String fqdnPrefix = "";
@@ -568,15 +593,16 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             Log.i(TAG, "Setting TLS="+ mAppInstTls);
         }
         // Build full hostname.
-        if (!mAppInstTls) {
-            mAppInstHostname = fqdnPrefix + mClosestCloudlet.getFqdn();
-        } else {
-            // TODO: Revert this to prepend fqdnPrefix after EDGECLOUD-3634 is fixed.
-            // Note that Docker deployments don't even have FqdnPrefix, so this workaround
-            // is only needed for k8s, but the same code will work for both.
-            mAppInstHostname = mClosestCloudlet.getFqdn();
+        mAppInstHostname = fqdnPrefix + mClosestCloudlet.getFqdn();
+        try {
+            InetAddress address = InetAddress.getByName(mAppInstHostname);
+            mAppInstIp = address.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            mAppInstIp = "Could not resolve. Error: "+e.getLocalizedMessage();
         }
-        meHelperInterface.showMessage("findCloudlet successful. Host=" + mAppInstHostname);
+
+        meHelperInterface.showMessage("findCloudlet successful. Host="+mAppInstHostname+" IP="+mAppInstIp);
         onFindCloudlet(mClosestCloudlet);
         return true;
     }
@@ -607,7 +633,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }
     }
 
-    public boolean getAppInstList() throws InterruptedException, ExecutionException {
+    public boolean getAppInstList() throws InterruptedException, ExecutionException, io.grpc.StatusRuntimeException {
         Log.i(TAG, "getAppInstList mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
         mClosestCloudlet = null;
         try {
@@ -819,6 +845,12 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 meHelperInterface.showMessage(message);
             }
             setCarrierName(carrierName);
+        }
+
+        if (key.equals(prefKeyMatchingEngineUseSsl)) {
+            mMatchingEngineSSL = prefs.getBoolean(prefKeyMatchingEngineUseSsl, false);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mMatchingEngineSSL);
+            me.setSSLEnabled(mMatchingEngineSSL);
         }
 
         if (key.equals(prefKeyDefaultDmeHostname)) {
@@ -1073,9 +1105,14 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         //Value is in this format: eu-mexdemo.dme.mobiledgex.net:50051
         String domainAndPortRegex = "^(((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}):\\d+$";
         Pattern domainAndPortPattern = Pattern.compile(domainAndPortRegex);
-        Matcher matcher = domainAndPortPattern.matcher(hostAndPort);
-        if(matcher.find()) {
-            return matcher.group(1);
+        String ipAddressRegex = "^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}):\\d+$";
+        Pattern ipAddressPattern = Pattern.compile(ipAddressRegex);
+        Matcher matcher1 = domainAndPortPattern.matcher(hostAndPort);
+        Matcher matcher2 = ipAddressPattern.matcher(hostAndPort);
+        if(matcher1.find()) {
+            return matcher1.group(1);
+        } else if (matcher2.find()) {
+            return matcher2.group(1);
         } else {
             String message = "Invalid DME hostname and port: "+hostAndPort;
             throw new HostParseException(message);
@@ -1197,6 +1234,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             handleFindCloudletServerPush(findCloudletEvent);
         }
 
+        @Subscribe
         void handleEventLatencyResults(AppClient.ServerEdgeEvent event) {
             meHelperInterface.showMessage("Received: " + event.getEventType());
             LocOuterClass.Statistics s = event.getStatistics();
@@ -1289,7 +1327,9 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
 
         // Only the app knows with any certainty which AppPort (and internal port array)
         // it wants to test, so this is in the application.
+        @Subscribe
         void handleLatencyRequest(AppClient.ServerEdgeEvent event) {
+            Log.i(TAG, "handleLatencyRequest event="+event);
             if (event.getEventType() != AppClient.ServerEdgeEvent.ServerEventType.EVENT_LATENCY_REQUEST) {
                 return;
             }
@@ -1401,4 +1441,43 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             }
         }
     };
+
+    // TODO: Move these IP address methods to a util class.
+    public String getLocalIpv4() {
+        String localIp = getLocalIpAny();
+        if (localIp == null) {
+            return null;
+        }
+        else if (localIp.contains(".")) {
+            return localIp;
+        }
+        else {
+            Log.d(TAG, "Local default interface is IPv6 only. Returning empty string.");
+            return null;
+        }
+    }
+
+    public String getLocalIpAny() {
+        Network net = me.getNetworkManager().getActiveNetwork();
+        if (net == null) {
+            return null;
+        }
+        // UDP "connect" to get the default route's local IP address.
+        DatagramSocket ds = null;
+        try {
+            ds = new DatagramSocket();
+            ds.connect(InetAddress.getByName(me.wifiOnlyDmeHost), me.getPort());
+            InetAddress localInet = ds.getLocalAddress();
+            String hostStr;
+            if (localInet != null && (hostStr = localInet.getHostAddress()) != null) {
+                return hostStr;
+            }
+            else {
+                return null;
+            }
+        } catch (SocketException | UnknownHostException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
