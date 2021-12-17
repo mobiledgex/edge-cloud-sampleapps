@@ -17,6 +17,11 @@
 
 package com.mobiledgex.sdkdemo;
 
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.VERIFY_LOCATION_ENABLED;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mAppDefinitionUpdated;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsConfigUpdated;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsEnabled;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -133,11 +138,6 @@ import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
 
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.VERIFY_LOCATION_ENABLED;
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mAppDefinitionUpdated;
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsConfigUpdated;
-import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsEnabled;
-
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
             GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
@@ -181,8 +181,9 @@ public class MainActivity extends AppCompatActivity
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
     private MenuItem signOutMenuItem;
-
     private MenuItem routeModePrevItem;
+    private MenuItem mQosSessionMenuItem;
+    private boolean mAllowQosSessionDialog;
 
     private AlertDialog mAlertDialog;
     private boolean uiHasBeenTouched;
@@ -329,6 +330,7 @@ public class MainActivity extends AppCompatActivity
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_driving_time_seekbar));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_flying_time_seekbar));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_route_point_reduction_seekbar));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_allow_qos_session_dialog));
 
         // Watch for any updated preferences:
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -605,11 +607,15 @@ public class MainActivity extends AppCompatActivity
             verifyLocationMenuItem.setVisible(false);
         }
 
+        mQosSessionMenuItem = menu.findItem(R.id.action_update_qos_session);
+        mQosSessionMenuItem.setVisible(mAllowQosSessionDialog);
+
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.i(TAG, "onOptionsItemSelected "+item.getItemId()+" "+item);
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -652,7 +658,9 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_find_cloudlet) {
             meHelper.findCloudletInBackground();
         }
-
+        if (id == R.id.action_update_qos_session) {
+            DtQosPrioritySessions.createPrioritySession(this, meHelper);
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -1498,7 +1506,16 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "Using cloudlet boundaries");
                     int width = getResources().getDisplayMetrics().widthPixels;
                     int height = getResources().getDisplayMetrics().heightPixels;
-                    int padding = (int) (width * 0.12); // offset from edges of the map 12% of screen
+                    int paddingW = (int) (width * 0.12); // offset from edges of the map 12% of screen
+                    int paddingH = (int) (height * 0.12); // offset from edges of the map 12% of screen
+                    int padding;
+                    if (paddingW > paddingH) {
+                        Log.d(TAG, "Using width boundaries");
+                        padding = paddingW;
+                    } else {
+                        Log.d(TAG, "Using height boundaries");
+                        padding = paddingH;
+                    }
                     cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
                 } else {
                     Log.d(TAG, "No cloudlets. Don't zoom in");
@@ -1753,6 +1770,7 @@ public class MainActivity extends AppCompatActivity
         String prefKeyDrivingAnimDuration = getResources().getString(R.string.pref_driving_time_seekbar);
         String prefKeyRoutePointReduction = getResources().getString(R.string.pref_route_point_reduction_seekbar);
         String prefKeyFlyingAnimDuration = getResources().getString(R.string.pref_flying_time_seekbar);
+        String prefKeyAllowQosDialog = getResources().getString(R.string.pref_allow_qos_session_dialog);
 
         if (key.equals(prefKeyLatencyMethod)) {
             String latencyTestMethod = sharedPreferences.getString(key, defaultLatencyMethod);
@@ -1801,6 +1819,14 @@ public class MainActivity extends AppCompatActivity
         if (key.equals(prefKeyFlyingAnimDuration)) {
             mFlyingAnimDuration = 1000 * sharedPreferences.getInt(key, DEF_FLYING_DURATION);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mFlyingAnimDuration);
+        }
+
+        if (key.equals(prefKeyAllowQosDialog)) {
+            mAllowQosSessionDialog = sharedPreferences.getBoolean(key, false);
+            if (mQosSessionMenuItem != null) {
+                mQosSessionMenuItem.setVisible(mAllowQosSessionDialog);
+            }
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAllowQosSessionDialog);
         }
     }
 

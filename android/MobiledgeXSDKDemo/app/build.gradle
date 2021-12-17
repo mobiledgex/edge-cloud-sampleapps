@@ -9,12 +9,13 @@ android {
         applicationId "com.mobiledgex.sdkdemo"
         minSdkVersion 24
         targetSdkVersion 29
-        versionCode 66
-        versionName "1.1.21"
+        versionCode 67
+        versionName "1.1.23"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         manifestPlaceholders = [GOOGLE_MAPS_API_KEY: "${googleMapsApiKey}"]
         buildConfigField "String", "GOOGLE_DIRECTIONS_API_KEY", "\"${googleDirectionsApiKey}\""
+        buildConfigField "String", "DT_QOS_SESSIONS_API_KEY", "\"${dtQosSessionsApiKey}\""
     }
     buildTypes {
         release {

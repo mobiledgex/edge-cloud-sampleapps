@@ -29,6 +29,14 @@
         android:summary="@string/pref_use_wifi_only_summary"
         android:title="@string/pref_use_wifi_only_title"
         app:iconSpaceReserved="false" />
+    <SwitchPreference
+        android:id="@+id/preference_matching_engine_ssl"
+        android:contentDescription="preference_matching_engine_ssl"
+        android:defaultValue="true"
+        android:key="@string/pref_matching_engine_ssl"
+        android:summary="@string/pref_matching_engine_ssl_summary"
+        android:title="@string/pref_matching_engine_ssl_title"
+        app:iconSpaceReserved="false" />
     <ListPreference
         android:defaultValue="PROXIMITY"
         android:entries="@array/pref_find_cloudlet_mode_titles"

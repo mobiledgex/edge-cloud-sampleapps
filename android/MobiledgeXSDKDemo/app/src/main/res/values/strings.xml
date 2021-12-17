@@ -10,6 +10,7 @@
 
     <string name="action_reset_location">Reset Location</string>
     <string name="action_register_client">Register Client</string>
+    <string name="action_update_qos_session">Update QOS Session</string>
     <string name="action_verify_location">Verify Location</string>
     <string name="action_find_cloudlet">Find Closest Cloudlet</string>
 
