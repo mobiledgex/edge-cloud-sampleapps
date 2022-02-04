@@ -60,7 +60,7 @@
                 android:id="@+id/network_latency"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Full Process Latency"
+                android:text="@string/full_process_latency_title"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="28sp" />
 
@@ -69,7 +69,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/network_latency"
-                android:text="Edge:"
+                android:text="@string/edge_label"
                 android:textColor="@android:color/white"
                 android:textSize="24sp" />
 
@@ -78,7 +78,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/edge_latency"
-                android:text="Stddev: 0 ms"
+                android:text="@string/stddev_label"
                 android:textColor="@android:color/white"
                 android:textSize="20sp" />
 
@@ -88,7 +88,7 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/network_latency"
                 android:layout_alignParentEnd="true"
-                android:text="Cloud:"
+                android:text="@string/cloud_label"
                 android:textColor="@android:color/white"
                 android:textSize="24sp" />
 
@@ -98,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/cloud_latency"
                 android:layout_alignParentEnd="true"
-                android:text="Stddev: 0 ms"
+                android:text="@string/stddev_label"
                 android:textColor="@android:color/white"
                 android:textSize="20sp" />
 
@@ -114,7 +114,7 @@
                     android:id="@+id/latency_title2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Network Latency"
+                    android:text="@string/network_latency_title"
                     android:textColor="@android:color/darker_gray"
                     android:textSize="22sp" />
 
@@ -122,7 +122,7 @@
                     android:id="@+id/edge_latency2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Edge:"
+                    android:text="@string/edge_label"
                     android:textColor="@android:color/white"
                     android:textSize="20sp" />
 
@@ -130,7 +130,7 @@
                     android:id="@+id/edge_std_dev2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Stddev: 0 ms"
+                    android:text="@string/stddev_label"
                     android:textColor="@android:color/white"
                     android:textSize="20sp" />
             </LinearLayout>
@@ -146,7 +146,7 @@
                     android:id="@+id/cloud_latency2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cloud:"
+                    android:text="@string/cloud_label"
                     android:textColor="@android:color/white"
                     android:textSize="20sp" />
 
@@ -154,7 +154,7 @@
                     android:id="@+id/cloud_std_dev2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Stddev: 0 ms"
+                    android:text="@string/stddev_label"
                     android:textColor="@android:color/white"
                     android:textSize="20sp" />
             </LinearLayout>
@@ -202,8 +202,8 @@
                 android:layout_above="@+id/statusTextView"
                 android:layout_alignParentStart="true"
                 android:layout_marginStart="5dp"
-                android:scaleX="-1"
                 android:clickable="true"
+                android:scaleX="-1"
                 app:srcCompat="@drawable/ic_baseline_more_24" />
 
         </RelativeLayout>

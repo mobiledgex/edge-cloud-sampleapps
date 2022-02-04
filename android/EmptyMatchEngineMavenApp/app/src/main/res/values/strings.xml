@@ -1,11 +1,13 @@
 <resources>
-    <string name="app_name">EmptyMatchEngineMavenApp</string>
+    <string name="app_name">MobiledgeX SDK Demo</string>
     <string name="location_default_text">[Client Location: None]</string>
     <string name="click_me_for_cloudlets_text">[Hello! Click the button to verify location and find the closest cloudlet!]</string>
 
     <!-- Strings related to Settings -->
     <string name="action_settings">Settings</string>
     <string name="preference_first_time_use">first_time_use</string>
+    <string name="permissions_needed">Permissions Needed</string>
+
     <string name="enhanced_location_permission">This application uses enhanced features of carrier networks to validate your device location. Please enable in app settings.</string>
     <string name="preference_matching_engine_location_verification">location_verification</string>
     <string name="preference_matching_engine_location_verification_title">Location Verification</string>
@@ -14,6 +16,9 @@
     <string name="needed_permissions_text">We need these permissions to make everything work:</string>
     <string name="location_permission_summary">Access Device Location Permission Summary</string>
     <string name="location_carrier_permission_summary">Verify Location with Carrier Location Permission Summary</string>
+
+    <string name="access_device_location_permission_icon">Access Device Location Permission Icon</string>
+    <string name="verify_location_with_carrier_permission_icon">Verify Location with Carrier Permission Icon</string>
     <string name="why">Why?</string>
 
     <string name="location_device_permission_title">Device Location Verification</string>
@@ -22,4 +27,6 @@
     <string name="location_carrier_permission_explanation">Location with Carrier Supplied Location Permission Explanation</string>
 
     <string name="title_activity_settings">Settings</string>
+    <string name="button_ok_text">OK</string>
+
 </resources>

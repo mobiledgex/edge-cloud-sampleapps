@@ -17,6 +17,11 @@
 
 package com.mobiledgex.sdkdemo;
 
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.VERIFY_LOCATION_ENABLED;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mAppDefinitionUpdated;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsConfigUpdated;
+import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEventsEnabled;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -40,6 +45,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.ArrayMap;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -56,7 +62,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.preference.Preference;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
@@ -90,6 +95,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.maps.DirectionsApi;
+import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
@@ -119,12 +125,14 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
@@ -168,13 +176,14 @@ public class MainActivity extends AppCompatActivity
     private boolean locationVerified = false;
     private boolean locationVerificationAttempted = false;
     private double mGpsLocationAccuracyKM;
-    private String defaultLatencyMethod = "ping";
+    private String defaultLatencyMethod = "socket";
 
     private GoogleSignInClient mGoogleSignInClient;
     private MenuItem signInMenuItem;
     private MenuItem signOutMenuItem;
-
     private MenuItem routeModePrevItem;
+    private MenuItem mQosSessionMenuItem;
+    private boolean mAllowQosSessionDialog;
 
     private AlertDialog mAlertDialog;
     private boolean uiHasBeenTouched;
@@ -189,19 +198,20 @@ public class MainActivity extends AppCompatActivity
     private RouteMode mRouteMode;
     private Marker mStartMarker;
     private Marker mEndMarker;
-    private LatLng mStartLatLng;
-    private LatLng mEndLatLng;
+    private List<Marker> mWaypointMarkers = new ArrayList<>();
     private MenuItem mapTypeGroupPrevItem;
     private boolean mRouteIsPlaying;
     private ValueAnimator mValueAnimator;
     private int mDrivingAnimDuration;
     private int mFlyingAnimDuration;
-    private static final int DEF_DRIVING_DURATION = 15; //Seconds
-    private static final int DEF_FLYING_DURATION = 7; //Seconds
+    private int mRoutePointModulo;
+    private static final int DEF_DRIVING_DURATION = 20; //Seconds
+    private static final int DEF_FLYING_DURATION = 15; //Seconds
+    private static final int DEF_ROUTE_POINT_REDUCTION = 10;
 
     private String mApiKey = BuildConfig.GOOGLE_DIRECTIONS_API_KEY;
     private Polyline mRoutePolyLine;
-    private List<LatLng> mCloudletLatLngs = new ArrayList();
+    private List<LatLng> mCloudletLatLngs = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -280,6 +290,7 @@ public class MainActivity extends AppCompatActivity
         fabPlayRoute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Play route button pressed");
                 playRoute();
             }
         });
@@ -311,7 +322,6 @@ public class MainActivity extends AppCompatActivity
         upgradeToVersion59(prefs);
 
         // Reuse the onSharedPreferenceChanged code to initialize anything dependent on these prefs:
-        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_app_instances_limit));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.upload_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
@@ -319,6 +329,8 @@ public class MainActivity extends AppCompatActivity
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_autostart));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_driving_time_seekbar));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_flying_time_seekbar));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_route_point_reduction_seekbar));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_allow_qos_session_dialog));
 
         // Watch for any updated preferences:
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -337,21 +349,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void playRoute() {
-        Log.i(TAG, "playRoute mRouteIsPlaying="+mRouteIsPlaying);
+        Log.i(TAG, "playRoute mRouteIsPlaying="+mRouteIsPlaying+" mRouteMode="+mRouteMode);
         if (mRouteIsPlaying) {
             fabPlayRoute.setImageResource(R.drawable.ic_baseline_play_arrow_24);
-            if (mValueAnimator != null) {
-                mValueAnimator.cancel();
-            }
             mRouteIsPlaying = false;
         } else {
             fabPlayRoute.setImageResource(R.drawable.ic_baseline_pause_24);
             mEventLogViewer.mAutoExpand = false;
-            mUserLocationMarker.setPosition(mStartLatLng);
+            mUserLocationMarker.setPosition(mStartMarker.getPosition());
             if (mRouteMode == RouteMode.FLYING) {
-                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mDrivingAnimDuration);
+                animateMarker(mRouteMode, mUserLocationMarker, mEndMarker.getPosition(), mFlyingAnimDuration);
             } else if (mRouteMode == RouteMode.DRIVING) {
-                animateMarker(mRouteMode, mUserLocationMarker, mEndLatLng, mFlyingAnimDuration);
+                animateMarker(mRouteMode, mUserLocationMarker, mEndMarker.getPosition(), mDrivingAnimDuration);
             }
             mRouteIsPlaying = true;
         }
@@ -364,6 +373,8 @@ public class MainActivity extends AppCompatActivity
      * @param duration Animation duration in ms.
      */
     public void animateMarker(RouteMode routeMode, Marker marker, LatLng endPosition, long duration) {
+        Log.i(TAG, "animateMarker routeMode="+routeMode+" duration="+duration);
+
         final long[] lastLocationUpdateTime = {0};
         LatLng startPosition = marker.getPosition();
 
@@ -372,11 +383,30 @@ public class MainActivity extends AppCompatActivity
         mValueAnimator.setDuration(duration);
         mValueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         mValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            private long mFrameLastTime;
+            private long mFrameStartTime;
+            private int mFrameCount;
+            private DecimalFormat decFor = new DecimalFormat("#.###");
+
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float v = animation.getAnimatedFraction();
+                mFrameCount++;
+                long current = System.currentTimeMillis();
+                if(mFrameStartTime == 0) {
+                    mFrameStartTime = current;
+                }
+                long totalSeconds = (current - mFrameStartTime)/1000;
+                if(mFrameLastTime > 0) {
+                    Log.i(TAG, "elapsed="+(current - mFrameLastTime)+" FPS="+(decFor.format((float) mFrameCount /totalSeconds)));
+                }
+                mFrameLastTime = current;
+
                 LatLng newPosition;
                 if (routeMode == RouteMode.DRIVING) {
+                    if (mRoutePolyLine == null) {
+                        return;
+                    }
                     int index = (int) (v * mRoutePolyLine.getPoints().size());
                     if (index >= mRoutePolyLine.getPoints().size()) {
                         return;
@@ -411,16 +441,22 @@ public class MainActivity extends AppCompatActivity
     }
 
     protected void drawClosestCloudletLine() {
-        // Erase "closest cloudlet" line if it exists.
-        if (mClosestCloudletPolyLine != null) {
-            mClosestCloudletPolyLine.remove();
-        }
-        if (getClosestCloudletPosition() != null) {
-            mClosestCloudletPolyLine = mGoogleMap.addPolyline(new PolylineOptions()
-                    .add(mUserLocationMarker.getPosition(), getClosestCloudletPosition())
-                    .width(8)
-                    .color(COLOR_VERIFIED));
-        }
+        Log.i(TAG, "drawClosestCloudletLine. getClosestCloudletPosition()="+getClosestCloudletPosition());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Erase "closest cloudlet" line if it exists.
+                if (mClosestCloudletPolyLine != null) {
+                    mClosestCloudletPolyLine.remove();
+                }
+                if (getClosestCloudletPosition() != null) {
+                    mClosestCloudletPolyLine = mGoogleMap.addPolyline(new PolylineOptions()
+                            .add(mUserLocationMarker.getPosition(), getClosestCloudletPosition())
+                            .width(8)
+                            .color(COLOR_VERIFIED));
+                }
+            }
+        });
     }
 
     private interface LatLngInterpolator {
@@ -511,16 +547,16 @@ public class MainActivity extends AppCompatActivity
                     .replace("${appName}", meHelper.mAppName)
                     .replace("${appVersion}", meHelper.mAppVersion)
                     .replace("${orgName}", meHelper.mOrgName)
-                    .replace("${operator}", meHelper.mCarrierName)
+                    .replace("${carrier}", meHelper.mCarrierName)
                     .replace("${region}", meHelper.mDmeHostname)
                     .replace(".dme.mobiledgex.net", "");
-
+            Log.i(TAG, "htmlData=\n"+htmlData);
             // The WebView to show our HTML.
             WebView webView = new WebView(MainActivity.this);
-            webView.loadData(htmlData, "text/html; charset=UTF-8",null);
+            webView.loadData(Base64.encodeToString(htmlData.getBytes(), Base64.DEFAULT), "text/html", "base64");
             new AlertDialog.Builder(MainActivity.this)
                     .setView(webView)
-                    .setIcon(R.mipmap.ic_launcher_foreground)
+                    .setIcon(R.drawable.ic_launcher_foreground)
                     .setTitle(appName)
                     .setCancelable(true)
                     .setPositiveButton(R.string.ok, null)
@@ -565,11 +601,21 @@ public class MainActivity extends AppCompatActivity
         mapTypeGroupPrevItem.setChecked(true);
         onMapTypeGroupItemClick(mapTypeGroupPrevItem);
         Log.i(TAG, "onCreateOptionsMenu itemId="+itemId+" "+mapTypeGroupPrevItem);
+
+        if (!VERIFY_LOCATION_ENABLED) {
+            MenuItem verifyLocationMenuItem = menu.findItem(R.id.action_verify_location);
+            verifyLocationMenuItem.setVisible(false);
+        }
+
+        mQosSessionMenuItem = menu.findItem(R.id.action_update_qos_session);
+        mQosSessionMenuItem.setVisible(mAllowQosSessionDialog);
+
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.i(TAG, "onOptionsItemSelected "+item.getItemId()+" "+item);
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -580,7 +626,7 @@ public class MainActivity extends AppCompatActivity
             meHelper.registerClientInBackground();
         }
         if (id == R.id.action_get_app_inst_list) {
-            getCloudlets(false);
+            getCloudlets(true, false);
         }
         if (id == R.id.action_reset_location) {
             // Reset spoofed GPS
@@ -600,9 +646,10 @@ public class MainActivity extends AppCompatActivity
 
             initUserMobileIcon();
 
-            updateLocSimLocation(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-            meHelper.mClosestCloudletHostname = null;
-            getCloudlets(true);
+            if(meHelper.mAllowLocationSimulatorUpdate) {
+                updateLocSimLocation(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+            }
+            getCloudlets(true, false);
             return true;
         }
         if (id == R.id.action_verify_location) {
@@ -611,7 +658,9 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_find_cloudlet) {
             meHelper.findCloudletInBackground();
         }
-
+        if (id == R.id.action_update_qos_session) {
+            DtQosPrioritySessions.createPrioritySession(this, meHelper);
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -633,6 +682,8 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_settings) {
             // Open "Settings" UI
+            mEdgeEventsConfigUpdated = false;
+            mAppDefinitionUpdated = false;
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
@@ -643,7 +694,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_face_detection) {
             // Start the face detection Activity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
-            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.mClosestCloudletHostname);
+            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.getClosestCloudletHostname());
             putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
@@ -651,7 +702,7 @@ public class MainActivity extends AppCompatActivity
             // Start the face recognition Activity
             Intent intent = new Intent(this, ImageProcessorActivity.class);
             intent.putExtra(ImageProcessorFragment.EXTRA_FACE_RECOGNITION, true);
-            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.mClosestCloudletHostname);
+            intent.putExtra(ImageProcessorFragment.EXTRA_EDGE_CLOUDLET_HOSTNAME, meHelper.getClosestCloudletHostname());
             putCommonIntentExtras(intent);
             startActivityForResult(intent, RC_STATS);
             return true;
@@ -703,21 +754,39 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onRouteModeItemClick(MenuItem item) {
+        Log.i(TAG, "onRouteModeItemClick "+item+" "+item.isChecked());
         // Remove any existing driving route.
         if (mRoutePolyLine != null) {
             mRoutePolyLine.remove();
         }
 
-        if (item.isChecked()) {
-            // Turn off.
-            mStartMarker.setVisible(false);
-            mEndMarker.setVisible(false);
-            item.setChecked(false);
-            fabPlayRoute.setVisibility(View.GONE);
-            return;
+        // Turn off everything route related. If a menu item is being unchecked,
+        // then we're done after this. Otherwise we will rebuild everything below.
+        if (mValueAnimator != null) {
+            mValueAnimator.pause();
         }
-        fabPlayRoute.setVisibility(View.VISIBLE);
+        if (mStartMarker != null) {
+            mStartMarker.setVisible(false);
+        }
+        if (mEndMarker != null) {
+            mEndMarker.setVisible(false);
+        }
+        mStartMarker = null;
+        mEndMarker = null;
+        for (Marker marker: mWaypointMarkers) {
+            marker.setVisible(false);
+        }
+        mWaypointMarkers.clear();
+        fabPlayRoute.setVisibility(View.GONE);
+        /////////////////////////////////////////////////////////////////////
 
+        if (item.isChecked()) {
+            if (routeModePrevItem == item) {
+                routeModePrevItem.setChecked(false);
+                mRoutePolyLine = null;
+                return;
+            }
+        }
         if (routeModePrevItem != null) {
             routeModePrevItem.setChecked(false);
         }
@@ -725,8 +794,10 @@ public class MainActivity extends AppCompatActivity
 
         if (item.getItemId() == R.id.action_route_mode_flying) {
             mRouteMode = RouteMode.FLYING;
+            mRoutePolyLine = null;
             initRouteMarkers(item.getItemId());
             item.setChecked(true);
+            fabPlayRoute.setVisibility(View.VISIBLE);
         }
         if (item.getItemId() == R.id.action_route_mode_driving) {
             mRouteMode = RouteMode.DRIVING;
@@ -735,7 +806,7 @@ public class MainActivity extends AppCompatActivity
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    routeBetweenPoints(mStartLatLng, mEndLatLng);
+                    routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
                 }
             });
         }
@@ -764,17 +835,14 @@ public class MainActivity extends AppCompatActivity
         double endLng = maxLng - width/5;
         double endLat = minLat + height/5;
 
-        mStartLatLng = new LatLng(startLat, startLng);
-        mEndLatLng = new LatLng(endLat, endLng);
-
         mStartMarker = mGoogleMap.addMarker(new MarkerOptions()
-                .position(mStartLatLng)
+                .position(new LatLng(startLat, startLng))
                 .title("Start of route")
                 .icon(BitmapDescriptorFactory
                         .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         mStartMarker.setDraggable(true);
         mEndMarker = mGoogleMap.addMarker(new MarkerOptions()
-                .position(mEndLatLng)
+                .position(new LatLng(endLat, endLng))
                 .title("End of route")); //"End" or "Stop" -- Red by default.
         mEndMarker.setDraggable(true);
     }
@@ -792,6 +860,11 @@ public class MainActivity extends AppCompatActivity
             if (mUserLocationMarker != null) {
                 mUserLocationMarker.setIcon(makeMarker(R.mipmap.ic_marker_mobile, mDefaultCloudletColor, ""));
             }
+        }
+
+        if (mGoogleMap == null) {
+            Log.w(TAG, "Map not ready. Will not modify.");
+            return;
         }
 
         if (item.getItemId() == R.id.action_map_type_normal) {
@@ -938,11 +1011,12 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Gets list of cloudlets from DME, and populates map with markers.
-     *
      * @param clearExisting
+     * @param background
      */
-    public void getCloudlets(boolean clearExisting) {
+    public void getCloudlets(boolean clearExisting, boolean background) {
         Log.i(TAG, "getCloudlets()  meHelper="+ meHelper);
+        mAppDefinitionUpdated = false;
         if (meHelper == null) {
             Log.i(TAG, "getCloudlets() meHelper not yet initialized");
             return;
@@ -955,18 +1029,30 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (clearExisting) {
-            //Clear list so we don't show old cloudlets as transparent
-            //First, remove all cloudlet markers.
-            for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-                Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
-                cloudlet.getMarker().remove();
-            }
-            //Then clear the list.
-            CloudletListHolder.getSingleton().getCloudletList().clear();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    //First, remove all cloudlet markers.
+                    mGoogleMap.clear();
+                    mUserLocationMarker = null; // Will be recreated.
+                    //Then clear the list.
+                    CloudletListHolder.getCloudletList().clear();
+                }
+            });
         }
 
         showMessage("Performing getAppInstList");
-        meHelper.getAppInstListInBackground();
+        try {
+            if (background) {
+                meHelper.getAppInstListInBackground();
+            } else {
+                meHelper.getAppInstList();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            String message = "Error during getAppInstList: " + e;
+            Log.e(TAG, message);
+            showError(message);
+        }
     }
 
     @Override
@@ -981,7 +1067,7 @@ public class MainActivity extends AppCompatActivity
             tls = false;
         }
         String scheme = tls ? "https" : "http";
-        String appInstUrl = scheme+"://"+meHelper.mClosestCloudlet.getFqdn()+":"+testConnectionPort+testUrl;
+        String appInstUrl = scheme+"://"+meHelper.getClosestCloudletHostname()+":"+testConnectionPort+testUrl;
 
         return new ConnectionTester(appInstUrl, expectedResponse);
     }
@@ -1043,17 +1129,21 @@ public class MainActivity extends AppCompatActivity
         mUserLocationMarker.setPosition(spoofLatLng);
         final boolean[] resetPosition = {true}; //Has to be final. Use array so we can update the value.
         String spoofText = "Spoof GPS at this location";
+        String addWaypointText = "Add waypoint to route";
         String updateSimText = "Update location in GPS database";
-        final CharSequence[] charSequence;
-        // Only allow updating location simulator on supported environments
-        if(meHelper.mAllowLocationSimulatorUpdate) {
-            charSequence = new CharSequence[] {spoofText, updateSimText};
-        } else {
-            charSequence = new CharSequence[] {spoofText};
+        List<String> items = new ArrayList<>();
+        items.add(spoofText);
+        if (mRoutePolyLine != null) {
+            items.add(addWaypointText);
         }
+        // Only allow updating location simulator on supported environments
+        if (meHelper.mAllowLocationSimulatorUpdate) {
+            items.add(updateSimText);
+        }
+        Log.i(TAG, "items="+items);
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setSingleChoiceItems(charSequence, -1, new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setSingleChoiceItems(items.toArray(new CharSequence[items.size()]), -1, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Location location = new Location("MobiledgeX_Loc_Sim");
@@ -1067,31 +1157,41 @@ public class MainActivity extends AppCompatActivity
                 } else {
                     oldLatLng = new LatLng(meHelper.mLocationInSimulator.getLatitude(), meHelper.mLocationInSimulator.getLongitude());
                 }
-                switch (which) {
-                    case 0:
-                        Log.i(TAG, "Spoofing GPS at "+location);
-                        showMessage("GPS spoofing enabled.");
-                        float[] results = new float[1];
-                        Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
-                        double distance = results[0]/1000;
-                        initUserMobileIcon();
-                        mUserLocationMarker.setSnippet("Spoofed "+String.format("%.2f", distance)+" km from actual location");
-                        meHelper.setSpoofedLocation(location);
-                        resetPosition[0] = false;
-                        break;
-                    case 1:
-                        Log.i(TAG, "Update GPS in simulator to "+location);
-                        initUserMobileIcon();
-                        mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
-                        updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
-                        meHelper.setSpoofedLocation(location);
-                        resetPosition[0] = false;
-                        break;
-                    default:
-                        Log.i(TAG, "Unknown dialog selection.");
+
+                String selectedItemText = items.get(which);
+
+                if (selectedItemText.equals(spoofText)) {
+                    Log.i(TAG, "Spoofing GPS at " + location);
+                    showMessage("GPS spoofing activated.");
+                    float[] results = new float[1];
+                    Location.distanceBetween(oldLatLng.latitude, oldLatLng.longitude, spoofLatLng.latitude, spoofLatLng.longitude, results);
+                    double distance = results[0] / 1000;
+                    initUserMobileIcon();
+                    mUserLocationMarker.setSnippet("Spoofed " + String.format("%.2f", distance) + " km from actual location");
+                    meHelper.setSpoofedLocation(location);
+                    resetPosition[0] = false;
+                } else if (selectedItemText.equals(updateSimText)) {
+                    Log.i(TAG, "Update GPS in simulator to " + location);
+                    initUserMobileIcon();
+                    mUserLocationMarker.setSnippet((String) getResources().getText(R.string.drag_to_spoof));
+                    updateLocSimLocation(mUserLocationMarker.getPosition().latitude, mUserLocationMarker.getPosition().longitude);
+                    meHelper.setSpoofedLocation(location);
+                    resetPosition[0] = false;
+                } else if (selectedItemText.equals(addWaypointText)) {
+                    Log.i(TAG, "Add new waypoint at " + location);
+                    Marker marker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(spoofLatLng)
+                            .alpha(0.6f)
+                            .title("Waypoint " + mWaypointMarkers.size()+1)
+                            .icon(BitmapDescriptorFactory
+                                    .defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+                    marker.setDraggable(true);
+                    mWaypointMarkers.add(marker);
+                    routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
+                } else {
+                    Log.i(TAG, "Unknown dialog selection.");
                 }
                 dialog.dismiss();
-
             }
         });
 
@@ -1132,17 +1232,18 @@ public class MainActivity extends AppCompatActivity
             mUserLocationMarker.showInfoWindow();
         }
         locationVerificationAttempted = locationVerified = false;
-        if (mClosestCloudletPolyLine != null) {
-            mClosestCloudletPolyLine.remove();
-        }
+
+        // This will also erase any existing line, and will only
+        // draw the line if we actually have a closest cloudlet.
+        drawClosestCloudletLine();
     }
 
     /**
      * Reset all existing cloudlet markers to default state.
      */
     private void initAllCloudletMarkers() {
-        for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-            initCloudletMarker(CloudletListHolder.getSingleton().getCloudletList().valueAt(i));
+        for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+            initCloudletMarker(CloudletListHolder.getCloudletList().valueAt(i));
         }
     }
 
@@ -1151,12 +1252,28 @@ public class MainActivity extends AppCompatActivity
      * @param cloudlet
      */
     private void initCloudletMarker(Cloudlet cloudlet) {
-        Marker marker = cloudlet.getMarker();
-        String cloudletName = cloudlet.getCloudletName();
-        marker.setTitle(cloudletName + " Cloudlet");
-        marker.setSnippet("Click for details");
-        marker.setTag(cloudletName); // This is used by automation testing.
-        marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, mDefaultCloudletColor, getBadgeText(cloudlet)));
+        Log.i(TAG, "initCloudletMarker "+cloudlet);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Marker marker = cloudlet.getMarker();
+                String cloudletName = cloudlet.getCloudletName();
+                marker.setTitle(cloudletName);
+                if (cloudlet.isRemoved()) {
+                    marker.setSnippet("Has been removed");
+                } else {
+                    marker.setSnippet("Click for details");
+                }
+                marker.setTag(cloudletName); // This is used by automation testing.
+                int color = mDefaultCloudletColor;
+                if (meHelper.mClosestCloudlet != null &&
+                        meHelper.mClosestCloudlet.getFqdn().equals(cloudlet.getFqdn())) {
+                    cloudlet.setBestMatch(true);
+                    color = COLOR_VERIFIED;
+                }
+                marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, color, getBadgeText(cloudlet)));
+            }
+        });
     }
 
     @Override
@@ -1243,37 +1360,52 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public void onFindCloudlet(final AppClient.FindCloudletReply closestCloudlet) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                initAllCloudletMarkers();
-                Cloudlet cloudlet = null;
-                for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-                    cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
-                    Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
-                    if(cloudlet.getFqdn().equals(closestCloudlet.getFqdn()) ) {
-                        Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
-                        cloudlet.getMarker().setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, getBadgeText(cloudlet)));
-                        cloudlet.setBestMatch(true);
-                        break;
+        Log.i(TAG, "onFindCloudlet "+closestCloudlet.getFqdn());
+        // Get full list of cloudlets again in case any have been added or removed.
+        getCloudlets(false, false);
+        initAllCloudletMarkers();
+        Cloudlet cloudlet = null;
+        meHelper.mClosestCloudlet = null;
+        Log.d(TAG, "Existing CloudletList: "+CloudletListHolder.getCloudletList());
+        for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+            cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
+            Log.i(TAG, "Checking: "+closestCloudlet.getFqdn()+" "+cloudlet.getFqdn());
+            if(cloudlet.getFqdn().equals(closestCloudlet.getFqdn()) ) {
+                Log.i(TAG, "Got a match! "+cloudlet.getCloudletName());
+                Marker marker = cloudlet.getMarker();
+                String badgeText = getBadgeText(cloudlet);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_VERIFIED, badgeText));
                     }
-                }
-                if (cloudlet != null) {
-                    drawClosestCloudletLine();
-                    //Save the hostname for use by the Computer Vision Activity.
-                    meHelper.mClosestCloudletHostname = cloudlet.getHostName();
-                    Log.i(TAG, "mClosestCloudletHostname: "+ meHelper.mClosestCloudletHostname);
-                    showMessage("Closest Cloudlet is now: " + meHelper.mClosestCloudletHostname);
-                }
+                });
+                meHelper.mClosestCloudlet = closestCloudlet;
+                cloudlet.setBestMatch(true);
+                break;
             }
-        });
+        }
+        if (meHelper.mClosestCloudlet == null) {
+            meHelper.mClosestCloudlet = closestCloudlet;
+            Log.i(TAG, "onFindCloudlet. No existing cloudlet found for "+closestCloudlet.getFqdn());
+            String message = "New cloudlet received, now closest: "+meHelper.getClosestCloudletHostname();
+            Log.i(TAG, message);
+            showMessage(message);
+//            CloudletListHolder.getCloudletList().put(closestCloudlet.get)
+        } else {
+            String message = "Closest Cloudlet is now: " + meHelper.getClosestCloudletHostname();
+            Log.i(TAG, message);
+            showMessage(message);
+        }
+
+        drawClosestCloudletLine();
     }
 
     /**
      * Callback for Matching Engine's getCloudletList results. Creates ArrayMap of cloudlets
      * keyed on the cloudlet name. A map marker is also created for each cloudlet.
-     *
      * @param cloudletList  List of found cloudlet instances.
+     *
      */
     @Override
     public void onGetCloudletList(final AppClient.AppInstListReply cloudletList) {
@@ -1303,100 +1435,45 @@ public class MainActivity extends AppCompatActivity
                     showError(message);
                 }
 
-                showMessage("Got "+cloudletList.getCloudletsList().size()+" cloudlets");
+                String message = "Got "+cloudletList.getCloudletsList().size()+" cloudlets";
+                Log.i(TAG, message);
+                showMessage(message);
                 int num = 1;
                 //First get the new list into an ArrayMap so we can index on the cloudletName
                 for(AppClient.CloudletLocation cloudletLocation : cloudletList.getCloudletsList()) {
                     Log.i(TAG, "getCloudletName()="+cloudletLocation.getCloudletName()+" getCarrierName()="+cloudletLocation.getCarrierName());
-                    showMessage(" "+num+". "+cloudletLocation.getCloudletName());
+                    message = " "+num+". "+cloudletLocation.getCloudletName();
+                    Log.i(TAG, message);
+                    showMessage(message);
                     num++;
-                    String carrierName = cloudletLocation.getCarrierName();
-                    String cloudletName = cloudletLocation.getCloudletName();
-                    List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
-                    // There will only be a single match because we supply all of appName, appVer,
-                    // and orgName in the request. So we just get the first item.
-                    String fqdn = appInstances.get(0).getFqdn();
-                    String appName = appInstances.get(0).getAppName();
-                    String FQDNPrefix = "";
-                    int publicPort = 0;
-                    mTls = false;
-                    List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
-                    String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, TLS: %b, Container Port: %d, External Port: %d}";
-                    for (Appcommon.AppPort aPort : ports) {
-                        FQDNPrefix = aPort.getFqdnPrefix();
-                        Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
-                                    aPort.getProto().getNumber(),
-                                    aPort.getFqdnPrefix(),
-                                    aPort.getTls(),
-                                    aPort.getInternalPort(),
-                                    aPort.getPublicPort()));
-
-                        // For our app, the first port is for an http/ws server and can be TLS.
-                        // This server provides both CV and speedtest capabilities.
-                        // The second port is for a generic socket server.
-                        // Only choose the first port.
-                        if (publicPort == 0) {
-                            publicPort = aPort.getPublicPort();
-                            mTls = aPort.getTls();
-                            Log.i(TAG, "Using publicPort="+publicPort+" TLS="+mTls);
-                        }
-
-                        if (publicPort != DEFAULT_SPEED_TEST_PORT) {
-                            // Only the default port is currently supported. Set it here so the
-                            // above "first port" logic is overridden in case the port order in
-                            // the app definition was incorrect.
-                            Log.w(TAG, "Incorrect appInst first port "+publicPort+". Overriding with default: " + DEFAULT_SPEED_TEST_PORT);
-                            publicPort = DEFAULT_SPEED_TEST_PORT;
-                        }
-                    }
-                    double distance = cloudletLocation.getDistance();
-                    LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());
-                    Marker marker;
-                    Cloudlet cloudlet;
-                    if(CloudletListHolder.getSingleton().getCloudletList().containsKey(cloudletName)){
-                        Log.i(TAG, "Reusing existing marker for "+cloudletName);
-                        cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
-                        marker = cloudlet.getMarker();
-                    } else {
-                        Log.i(TAG, "addMarker for "+cloudletName);
-                        marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                        cloudlet = new CloudletBuilder()
-                                .setCloudletName(cloudletName)
-                                .setAppName(appName)
-                                .setCarrierName(carrierName)
-                                .setGpsLocation(latLng)
-                                .setDistance(distance).setFqdn(fqdn)
-                                .setFqdnPrefix(FQDNPrefix)
-                                .setTls(mTls)
-                                .setMarker(marker)
-                                .setPort(publicPort)
-                                .createCloudlet();
-                        initCloudletMarker(cloudlet);
-                    }
-                    tempCloudlets.put(cloudletName, cloudlet);
-                    builder.include(marker.getPosition());
-                    mCloudletLatLngs.add(marker.getPosition());
+                    Cloudlet cloudlet = makeCloudlet(cloudletLocation);
+                    tempCloudlets.put(cloudlet.getCloudletName(), cloudlet);
+                    builder.include(cloudlet.getMarker().getPosition());
+                    mCloudletLatLngs.add(cloudlet.getMarker().getPosition());
                 }
 
                 // Hide the log viewer after a short delay.
-                mEventLogViewer.initialLogsComplete();
+                mEventLogViewer.collapseAfter(3000);
 
                 // Reset all cloudlet markers to default state.
                 initAllCloudletMarkers();
 
                 //Now see if all cloudlets still exist. If removed, show as semi-transparent.
-                for (int i = 0; i < CloudletListHolder.getSingleton().getCloudletList().size(); i++) {
-                    Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().valueAt(i);
+                for (int i = 0; i < CloudletListHolder.getCloudletList().size(); i++) {
+                    Cloudlet cloudlet = CloudletListHolder.getCloudletList().valueAt(i);
                     if (!tempCloudlets.containsKey(cloudlet.getCloudletName())) {
                         Log.i(TAG, cloudlet.getCloudletName() + " has been removed");
                         showMessage(cloudlet.getCloudletName() + " has been removed");
                         Marker marker = cloudlet.getMarker();
+                        cloudlet.setRemoved(true);
+                        marker.hideInfoWindow();
                         marker.setSnippet("Has been removed");
                         marker.setIcon(makeMarker(R.mipmap.ic_marker_cloudlet, COLOR_FAILURE, getBadgeText(cloudlet)));
                         marker.setAlpha((float) 0.33);
                     }
                 }
-                CloudletListHolder.getSingleton().setCloudlets(tempCloudlets);
+                Log.i(TAG, "tempCloudlets="+tempCloudlets);
+                CloudletListHolder.setCloudlets(tempCloudlets);
 
                 // Erase "closest cloudlet" line if it exists.
                 if (mClosestCloudletPolyLine != null) {
@@ -1429,7 +1506,16 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "Using cloudlet boundaries");
                     int width = getResources().getDisplayMetrics().widthPixels;
                     int height = getResources().getDisplayMetrics().heightPixels;
-                    int padding = (int) (width * 0.12); // offset from edges of the map 12% of screen
+                    int paddingW = (int) (width * 0.12); // offset from edges of the map 12% of screen
+                    int paddingH = (int) (height * 0.12); // offset from edges of the map 12% of screen
+                    int padding;
+                    if (paddingW > paddingH) {
+                        Log.d(TAG, "Using width boundaries");
+                        padding = paddingW;
+                    } else {
+                        Log.d(TAG, "Using height boundaries");
+                        padding = paddingH;
+                    }
                     cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
                 } else {
                     Log.d(TAG, "No cloudlets. Don't zoom in");
@@ -1442,6 +1528,70 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+    }
+
+    protected Cloudlet makeCloudlet(AppClient.CloudletLocation cloudletLocation) {
+        Log.i(TAG, "makeCloudlet "+cloudletLocation.getCloudletName());
+        String carrierName = cloudletLocation.getCarrierName();
+        String cloudletName = cloudletLocation.getCloudletName();
+        List<AppClient.Appinstance> appInstances = cloudletLocation.getAppinstancesList();
+        // There will only be a single match because we supply all of appName, appVer,
+        // and orgName in the request. So we just get the first item.
+        String fqdn = appInstances.get(0).getFqdn();
+        String appName = appInstances.get(0).getAppName();
+        String FQDNPrefix = "";
+        int publicPort = 0;
+        mTls = false;
+        List<distributed_match_engine.Appcommon.AppPort> ports = appInstances.get(0).getPortsList();
+        String appPortFormat = "{Protocol: %d, FQDNPrefix: %s, TLS: %b, Container Port: %d, External Port: %d}";
+        for (Appcommon.AppPort aPort : ports) {
+            FQDNPrefix = aPort.getFqdnPrefix();
+            Log.i(TAG, String.format(Locale.getDefault(), appPortFormat,
+                    aPort.getProto().getNumber(),
+                    aPort.getFqdnPrefix(),
+                    aPort.getTls(),
+                    aPort.getInternalPort(),
+                    aPort.getPublicPort()));
+
+            // For our app, the first port is for an http/ws server and can be TLS.
+            // This server provides both CV and speedtest capabilities.
+            // The second port is for a generic socket server.
+            // Only choose the first port.
+            if (publicPort == 0) {
+                publicPort = aPort.getPublicPort();
+                mTls = aPort.getTls();
+                meHelper.setTestPort(publicPort);
+                Log.i(TAG, "Using publicPort="+publicPort+" TLS="+mTls);
+
+                if (publicPort != DEFAULT_SPEED_TEST_PORT) {
+                    String message = "WARNING: appInst first port " + publicPort + " does not match " + DEFAULT_SPEED_TEST_PORT;
+                    Log.w(TAG, message);
+                }
+            }
+        }
+        double distance = cloudletLocation.getDistance();
+        LatLng latLng = new LatLng(cloudletLocation.getGpsLocation().getLatitude(), cloudletLocation.getGpsLocation().getLongitude());
+        Cloudlet cloudlet;
+        if(CloudletListHolder.getCloudletList().containsKey(cloudletName)){
+            Log.i(TAG, "Reusing existing marker for "+cloudletName);
+            cloudlet = CloudletListHolder.getCloudletList().get(cloudletName);
+        } else {
+            Log.i(TAG, "addMarker for "+cloudletName);
+            Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng));
+            cloudlet = new CloudletBuilder()
+                    .setCloudletName(cloudletName)
+                    .setAppName(appName)
+                    .setCarrierName(carrierName)
+                    .setGpsLocation(latLng)
+                    .setDistance(distance).setFqdn(fqdn)
+                    .setFqdnPrefix(FQDNPrefix)
+                    .setTls(mTls)
+                    .setMarker(marker)
+                    .setPort(publicPort)
+                    .createCloudlet();
+            initCloudletMarker(cloudlet);
+        }
+        return cloudlet;
     }
 
     @Override
@@ -1465,7 +1615,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         String cloudletName = (String) marker.getTag();
-        Cloudlet cloudlet = CloudletListHolder.getSingleton().getCloudletList().get(cloudletName);
+        Cloudlet cloudlet = CloudletListHolder.getCloudletList().get(cloudletName);
+        if (cloudlet == null) {
+            Log.d(TAG, "skipping removed cloudlet "+cloudletName);
+            return;
+        }
         Log.i(TAG, "1."+cloudlet+" "+cloudlet.getCloudletName()+" "+cloudlet.getSpeedTestDownloadResult());
 
         Intent intent = new Intent(getApplicationContext(), CloudletDetailsActivity.class);
@@ -1504,10 +1658,15 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (marker.equals(mStartMarker) || marker.equals(mEndMarker)) {
-            Log.i(TAG, "Find route");
-            mStartLatLng = mStartMarker.getPosition();
-            mEndLatLng = mEndMarker.getPosition();
-            routeBetweenPoints(mStartLatLng, mEndLatLng);
+            Log.i(TAG, "Find route with moved start or end point");
+            if (mRouteMode == RouteMode.DRIVING) {
+                routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
+            }
+        }
+
+        if (mWaypointMarkers.contains(marker)) {
+            Log.i(TAG, "Find route with moved waypoint");
+            routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
         }
     }
 
@@ -1609,46 +1768,65 @@ public class MainActivity extends AppCompatActivity
         String prefKeyLatencyMethod = getResources().getString(R.string.pref_latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
         String prefKeyDrivingAnimDuration = getResources().getString(R.string.pref_driving_time_seekbar);
+        String prefKeyRoutePointReduction = getResources().getString(R.string.pref_route_point_reduction_seekbar);
         String prefKeyFlyingAnimDuration = getResources().getString(R.string.pref_flying_time_seekbar);
+        String prefKeyAllowQosDialog = getResources().getString(R.string.pref_allow_qos_session_dialog);
 
         if (key.equals(prefKeyLatencyMethod)) {
-            String latencyTestMethod = sharedPreferences.getString(prefKeyLatencyMethod, defaultLatencyMethod);
+            String latencyTestMethod = sharedPreferences.getString(key, defaultLatencyMethod);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestMethod);
-            CloudletListHolder.getSingleton().setLatencyTestMethod(latencyTestMethod);
+            CloudletListHolder.setLatencyTestMethod(latencyTestMethod);
         }
 
         if (key.equals(prefKeyLatencyAutoStart)) {
-            boolean latencyTestAutoStart = sharedPreferences.getBoolean(prefKeyLatencyAutoStart, true);
+            boolean latencyTestAutoStart = sharedPreferences.getBoolean(key, true);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+latencyTestAutoStart);
-            CloudletListHolder.getSingleton().setLatencyTestAutoStart(latencyTestAutoStart);
+            CloudletListHolder.setLatencyTestAutoStart(latencyTestAutoStart);
         }
 
         if (key.equals(prefKeyDownloadSize)) {
-            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyDownloadSize, "10485760"));
+            int numBytes = Integer.parseInt(sharedPreferences.getString(key, "10485760"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
-            CloudletListHolder.getSingleton().setNumBytesDownload(numBytes);
+            CloudletListHolder.setNumBytesDownload(numBytes);
         }
 
         if (key.equals(prefKeyUploadSize)) {
-            int numBytes = Integer.parseInt(sharedPreferences.getString(prefKeyUploadSize, "5242880"));
+            int numBytes = Integer.parseInt(sharedPreferences.getString(key, "5242880"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numBytes);
-            CloudletListHolder.getSingleton().setNumBytesUpload(numBytes);
+            CloudletListHolder.setNumBytesUpload(numBytes);
         }
 
         if (key.equals(prefKeyNumPackets)) {
-            int numPackets = Integer.parseInt(sharedPreferences.getString(prefKeyNumPackets, "5"));
+            int numPackets = Integer.parseInt(sharedPreferences.getString(key, "5"));
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+numPackets);
-            CloudletListHolder.getSingleton().setNumPackets(numPackets);
+            CloudletListHolder.setNumPackets(numPackets);
         }
 
         if (key.equals(prefKeyDrivingAnimDuration)) {
-            mDrivingAnimDuration = 1000 * sharedPreferences.getInt(prefKeyDrivingAnimDuration, DEF_DRIVING_DURATION);
+            mDrivingAnimDuration = 1000 * sharedPreferences.getInt(key, DEF_DRIVING_DURATION);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mDrivingAnimDuration);
         }
 
+        if (key.equals(prefKeyRoutePointReduction)) {
+            mRoutePointModulo = sharedPreferences.getInt(key, DEF_ROUTE_POINT_REDUCTION);
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mRoutePointModulo);
+            if (mRoutePointModulo == 0) {
+                mRoutePointModulo = 1;
+            }
+            Log.i(TAG, "onSharedPreferenceChanged("+key+"). mRoutePointModulo="+mRoutePointModulo);
+        }
+
         if (key.equals(prefKeyFlyingAnimDuration)) {
-            mFlyingAnimDuration = 1000 * sharedPreferences.getInt(prefKeyFlyingAnimDuration, DEF_FLYING_DURATION);
+            mFlyingAnimDuration = 1000 * sharedPreferences.getInt(key, DEF_FLYING_DURATION);
             Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mFlyingAnimDuration);
+        }
+
+        if (key.equals(prefKeyAllowQosDialog)) {
+            mAllowQosSessionDialog = sharedPreferences.getBoolean(key, false);
+            if (mQosSessionMenuItem != null) {
+                mQosSessionMenuItem.setVisible(mAllowQosSessionDialog);
+            }
+            Log.i(TAG, "onSharedPreferenceChanged("+key+")="+mAllowQosSessionDialog);
         }
     }
 
@@ -1672,6 +1850,17 @@ public class MainActivity extends AppCompatActivity
                     .setView(mMapFragment.getView())
                     .setTestPort(DEFAULT_SPEED_TEST_PORT)
                     .build();
+        }
+
+        Log.i(TAG, "onResume() mEdgeEventsConfigUpdated="+mEdgeEventsConfigUpdated+" mAppDefinitionUpdated="+mAppDefinitionUpdated);
+        if (mEdgeEventsEnabled && mEdgeEventsConfigUpdated) {
+            meHelper.startEdgeEvents();
+        }
+
+        if (mAppDefinitionUpdated) {
+            meHelper.mSessionCookie = null;
+            meHelper.mClosestCloudlet = null;
+            getCloudlets(true, true);
         }
 
         startLocationUpdates();
@@ -1710,11 +1899,14 @@ public class MainActivity extends AppCompatActivity
      * Based on a starting and ending point, get route from the Google Directions API, and use
      * the returned data to build paths to draw on the map, and build a list of points to
      * collect QOS data for.
-     *
-     * @param startLatLng  The route's starting point.
+     *  @param startLatLng  The route's starting point.
      * @param endLatLng  The route's ending point.
+     * @param waypointMarkers  List of Waypoint markers to added to the route.
      */
-    private void routeBetweenPoints(LatLng startLatLng, LatLng endLatLng) {
+    private void routeBetweenPoints(LatLng startLatLng, LatLng endLatLng, List<Marker> waypointMarkers) {
+        Log.i(TAG, "routeBetweenPoints with "+waypointMarkers.size()+" waypoint(s)");
+        long start = System.currentTimeMillis();
+
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
 
         //Execute Directions API request
@@ -1725,25 +1917,35 @@ public class MainActivity extends AppCompatActivity
         if (mRoutePolyLine != null) {
             mRoutePolyLine.remove();
         }
-
+        DirectionsApiRequest.Waypoint[] waypoints = new DirectionsApiRequest.Waypoint[waypointMarkers.size()];
+        for (int i = 0; i < waypointMarkers.size(); i++) {
+            Marker marker = waypointMarkers.get(i);
+            // Converting between com.google.maps.model.LatLng
+            // and com.google.android.gms.maps.model.Latlng is a pain!
+            waypoints[i] = new DirectionsApiRequest.Waypoint(new com.google.maps.model.LatLng(marker.getPosition().latitude, marker.getPosition().longitude));
+        }
         try {
             DirectionsResult calculatedRoutes = DirectionsApi.newRequest(context)
                     .alternatives(false)
                     .mode(TravelMode.DRIVING)
                     .origin(new com.google.maps.model.LatLng(startLatLng.latitude, startLatLng.longitude))
+                    .waypoints(waypoints)
                     .destination(new com.google.maps.model.LatLng(endLatLng.latitude, endLatLng.longitude))
                     .await();
 
             if (calculatedRoutes == null || calculatedRoutes.routes.length == 0) {
                 Log.w(TAG, "calculatedRoutes has no content");
                 showError("No driving route found.");
+                fabPlayRoute.setVisibility(View.GONE);
                 return;
             }
             Log.d(TAG, "calculatedRoutes="+calculatedRoutes.routes.length);
+            fabPlayRoute.setVisibility(View.VISIBLE);
 
+            int numPoints = 0;
             //Loop through legs and steps to get encoded polylines of each step
             for (DirectionsRoute route: calculatedRoutes.routes) {
-                List path = new ArrayList();
+                List<LatLng> path = new ArrayList<>();
 
                 if (route.legs !=null) {
                     for (int i=0; i<route.legs.length; i++) {
@@ -1760,7 +1962,6 @@ public class MainActivity extends AppCompatActivity
                                         for (com.google.maps.model.LatLng coord : coords) {
                                             LatLng latLng = new LatLng(coord.lat, coord.lng);
                                             path.add(latLng);
-                                            boundsBuilder.include(latLng);
                                         }
                                     }
                                 } else {
@@ -1770,18 +1971,30 @@ public class MainActivity extends AppCompatActivity
                                     for (com.google.maps.model.LatLng coord : coords) {
                                         LatLng latLng = new LatLng(coord.lat, coord.lng);
                                         path.add(latLng);
-                                        boundsBuilder.include(latLng);
                                     }
                                 }
                             }
                         }
                     }
                 }
-                Log.d(TAG, "path.size()="+path.size());
+
+                // Reduce the number of points in the path.
+                List<LatLng> reducedPath = new ArrayList<>();
+                for (LatLng latLng : path) {
+                    numPoints++;
+                    if (numPoints % mRoutePointModulo == 0) {
+                        reducedPath.add(latLng);
+                        boundsBuilder.include(latLng);
+                    }
+                }
+
+                long elapsed = System.currentTimeMillis() - start;
+                float percent = 100f / mRoutePointModulo;
+                Log.d(TAG, elapsed+" ms to generate path.size()="+path.size()+ ". Kept every "+ mRoutePointModulo +"th value, reduced to "+percent+"%");
 
                 //Draw the polyline
                 if (path.size() > 0) {
-                    PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(8);
+                    PolylineOptions opts = new PolylineOptions().addAll(reducedPath).color(Color.BLUE).width(8);
                     mRoutePolyLine = mGoogleMap.addPolyline(opts);
                 }
             }
@@ -1793,7 +2006,7 @@ public class MainActivity extends AppCompatActivity
             LatLngBounds bounds = boundsBuilder.build();
             int width = getResources().getDisplayMetrics().widthPixels;
             int height = getResources().getDisplayMetrics().heightPixels;
-            int padding = (int) (height * 0.10); // offset from edges of the map 10% of screen
+            int padding = (int) (height * 0.01); // offset from edges of the map 1% of screen
             CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
             mGoogleMap.animateCamera(cu);
 

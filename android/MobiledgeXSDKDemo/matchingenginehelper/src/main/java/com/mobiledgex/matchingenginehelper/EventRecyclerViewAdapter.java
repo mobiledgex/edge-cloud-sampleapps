@@ -1,11 +1,14 @@
 package com.mobiledgex.matchingenginehelper;
 
+import static com.mobiledgex.matchingenginehelper.EventItem.EventType.ERROR;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +42,10 @@ public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecycler
         holder.mItem = mValues.get(position);
         holder.mTimestampView.setText(mValues.get(position).timestampText);
         holder.mContentView.setText(mValues.get(position).content);
+
+        if (holder.mItem.eventType == ERROR) {
+            holder.mIconView.setImageResource(R.drawable.ic_baseline_warning_24);
+        }
     }
 
     @Override
@@ -59,6 +66,17 @@ public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecycler
     public void itemAdded() {
         int id = mValues.size();
         this.notifyItemInserted(id);
+    }
+
+    public void copyAllItemsAsText(View view) {
+        // Gets a handle to the clipboard service.
+        ClipboardManager clipboard = (ClipboardManager)
+                view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+        // Creates a new text clip to put on the clipboard
+        ClipData clip = ClipData.newPlainText("simple text", getAllItemsAsText());
+        // Set the clipboard's primary clip.
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(view.getContext(), "Items copied to clipboard.", Toast.LENGTH_SHORT).show();
     }
 
     public String getAllItemsAsText() {
@@ -87,15 +105,8 @@ public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecycler
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    // Gets a handle to the clipboard service.
-                    ClipboardManager clipboard = (ClipboardManager)
-                            view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                    // Creates a new text clip to put on the clipboard
-                    ClipData clip = ClipData.newPlainText("simple text", getAllItemsAsText());
-                    // Set the clipboard's primary clip.
-                    clipboard.setPrimaryClip(clip);
-                    Toast.makeText(view.getContext(), "Items copied to clipboard.", Toast.LENGTH_SHORT).show();
-                    return false;
+                    copyAllItemsAsText(view);
+                    return true;
                 }
             });
         }

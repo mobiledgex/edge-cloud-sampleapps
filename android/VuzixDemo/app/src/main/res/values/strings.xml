@@ -1,7 +1,0 @@
-<resources>
-    <string name="app_name">Vuzix Demo</string>
-    <string name="action_settings">Settings</string>
-    <string name="title_activity_face_detection">Face Detection</string>
-    <string name="title_activity_face_recognition">Face Recognition</string>
-    <string name="title_activity_pose_detection">Pose Detection</string>
-</resources>

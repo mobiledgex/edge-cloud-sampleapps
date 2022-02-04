@@ -42,10 +42,10 @@
     <string name="pref_cv_host_training">fd_host_training</string>
     <string name="pref_cv_host_cloud">fd_host_cloud</string>
     <string name="pref_cv_host_cloud_title">Cloud Server</string>
-    <string name="pref_cv_host_cloud_summary">Enter a custom IP or hostname.</string>
+    <string name="pref_cv_host_cloud_summary">Enter a custom IP or hostname: %s</string>
     <string name="pref_cv_host_edge">fd_host_edge</string>
     <string name="pref_cv_host_edge_title">Edge Server</string>
-    <string name="pref_cv_host_edge_summary">Enter a custom IP or hostname.</string>
+    <string name="pref_cv_host_edge_summary">Enter a custom IP or hostname: %s</string>
     <string name="pref_cv_host_edge_tls">fd_host_edge_tls</string>
     <string name="pref_cv_host_edge_tls_title">TLS Enabled</string>
     <string name="pref_cv_host_edge_tls_summary">Turn on to enable TLS for overridden hostname.</string>
@@ -63,9 +63,6 @@
         <item>No. Retain current values.</item>
     </string-array>
     <string name="fd_latency_method">fd_latency_method</string>
-    <string name="preference_gpu_host_edge">fd_gpu_host_edge</string>
-    <string name="preference_gpu_host_edge_title">GPU Server (OpenPose, PyTorch)</string>
-    <string name="preference_gpu_host_edge_summary">Enter a custom IP or hostname.</string>
     <string name="train_guest_start">Start</string>
     <string name="train_guest_title">Guest Name</string>
     <string name="train_guest_message">Enter the guest name, then face recognition training will begin.</string>
@@ -78,11 +75,11 @@
     <string name="pref_latency_method">latency_method</string>
     <string name="pref_latency_method_title">Latency Test Method</string>
     <string name="pref_latency_method_summary">%s</string>
-    <string-array name="pref_latency_test_method_titles">
+    <string-array name="pref_latency_test_method_titles_cv">
         <item>System Ping (ICMP)</item>
         <item>Socket</item>
     </string-array>
-    <string-array name="pref_latency_test_method_values">
+    <string-array name="pref_latency_test_method_values_cv">
         <item>ping</item>
         <item>socket</item>
     </string-array>
@@ -101,10 +98,6 @@
         <item>WEBSOCKET</item>
     </string-array>
 
-    <string name="pref_override_gpu_cloudlet_hostname">pref_override_gpu_cloudlet_hostname</string>
-    <string name="pref_summary_override_gpu_cloudlet_hostname">Select this to enter a GPU hostname to override the FindCloudlet result.</string>
-    <string name="pref_title_override_gpu_cloudlet_hostname">Override GPU cloudlet hostname</string>
-
     <string name="pref_override_edge_cloudlet_hostname">pref_override_edge_cloudlet_hostname</string>
     <string name="pref_summary_override_edge_cloudlet_hostname">Select this to enter an Edge Server hostname to override the FindCloudlet result.</string>
     <string name="pref_title_override_edge_cloudlet_hostname">Override Edge cloudlet hostname</string>
@@ -112,5 +105,13 @@
     <string name="pref_override_cloud_cloudlet_hostname">pref_override_cloud_cloudlet_hostname</string>
     <string name="pref_summary_override_cloud_cloudlet_hostname">Select this to enter a Cloud Server hostname to override default provisioned value.</string>
     <string name="pref_title_override_cloud_cloudlet_hostname">Override Cloud cloudlet hostname</string>
+
+    <string name="network_latency_title">Network Latency</string>
+    <string name="network_latency_label">Network Latency: %d ms</string>
+    <string name="stddev_label">Stddev: %d ms</string>
+    <string name="full_process_latency_title">Full Process Latency</string>
+    <string name="full_process_latency_label">Full Process Latency: %d ms</string>
+    <string name="edge_label">Edge: %d ms</string>
+    <string name="cloud_label">Cloud: %d ms</string>
 
 </resources>

@@ -20,6 +20,7 @@ package com.mobiledgex.workshopskeleton;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -37,14 +38,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mobiledgex.computervision.Camera2BasicFragment;
 import com.mobiledgex.computervision.FaceBoxRenderer;
 import com.mobiledgex.computervision.ImageProviderInterface;
 import com.mobiledgex.computervision.ImageSender;
 import com.mobiledgex.computervision.ImageServerInterface;
 import com.mobiledgex.computervision.RollingAverage;
+import com.mobiledgex.matchingenginehelper.EventLogViewer;
+import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 
 import org.json.JSONArray;
 
@@ -83,11 +88,18 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         mCameraToolbar = view.findViewById(R.id.cameraToolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(mCameraToolbar);
 
+        FrameLayout frameLayout = view.findViewById(com.mobiledgex.computervision.R.id.container);
         mLatencyFull = view.findViewById(R.id.full_latency);
         mLatencyNet = view.findViewById(R.id.network_latency);
         mStdFull = view.findViewById(R.id.full_std_dev);
         mStdNet = view.findViewById(R.id.network_std_dev);
         mStatusText = view.findViewById(R.id.statusTextView);
+
+        RecyclerView eventsRecyclerView = view.findViewById(com.mobiledgex.computervision.R.id.events_recycler_view);
+        FloatingActionButton logExpansionButton = view.findViewById(com.mobiledgex.computervision.R.id.fab);
+        mEventLogViewer = new EventLogViewer(getActivity(), logExpansionButton, eventsRecyclerView);
+        mEventLogViewer.showMessage("Starting Face Detection on "+mHost+":"+mPort);
+        mEventLogViewer.collapseAfter(2000);
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         // TODO: Copy/paste the code to access preferences.
@@ -99,7 +111,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         // TODO: Copy/paste the code to define a Camera2BasicFragment
         mCamera2BasicFragment = new Camera2BasicFragment();
         mCamera2BasicFragment.setImageProviderInterface(this);
-        String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+        String prefKeyFrontCamera = getResources().getString(R.string.pref_cv_front_camera);
         mCamera2BasicFragment.setCameraLensFacingDirection(prefs.getInt(prefKeyFrontCamera, CameraCharacteristics.LENS_FACING_FRONT));
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
         transaction.replace(com.mobiledgex.computervision.R.id.child_camera_fragment_container, mCamera2BasicFragment).commit();
@@ -112,10 +124,11 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
                 .setCloudLetType(CloudletType.EDGE)
                 .setHost(mHost)
                 .setPort(mPort)
+                .setTls(true)
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
+                .setCameraMode(ImageSender.CameraMode.FACE_DETECTION)
                 .build();
         mImageSenderEdge.setCameraMode(ImageSender.CameraMode.FACE_DETECTION);
-        mCameraMode = ImageSender.CameraMode.FACE_DETECTION;
         mCameraToolbar.setTitle("Face Detection");
 
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,6 +150,12 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         inflater.inflate(R.menu.face_detection_menu, menu);
     }
 
+    @Override
+    public void reportConnectionError(String text, ImageSender imageSender) {
+        Log.i(TAG, "reportConnectionError from " + imageSender.getHost() + ": " + text);
+        showError(text);
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     // TODO: Copy/paste the code to implement methods defined in the ImageProcessorInterface.
     /**
@@ -148,7 +167,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
      */
     @Override
     public void onBitmapAvailable(Bitmap bitmap, Rect imageRect) {
-        if(bitmap == null) {
+        if (bitmap == null) {
             return;
         }
 
@@ -200,7 +219,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
     public void updateFullProcessStats(final CloudletType cloudletType, RollingAverage rollingAverage) {
         final long stdDev = rollingAverage.getStdDev();
         final long latency = rollingAverage.getAverage();
-        if(getActivity() == null) {
+        if (getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
         }
@@ -219,7 +238,7 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         final long latency;
         latency = rollingAverage.getAverage();
 
-        if(getActivity() == null) {
+        if (getActivity() == null) {
             Log.w(TAG, "Activity has gone away. Abort UI update");
             return;
         }
@@ -239,12 +258,12 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
         if (id == R.id.action_camera_swap) {
             mCamera2BasicFragment.switchCamera();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-            String prefKeyFrontCamera = getResources().getString(R.string.preference_fd_front_camera);
+            String prefKeyFrontCamera = getResources().getString(R.string.pref_cv_front_camera);
             prefs.edit().putInt(prefKeyFrontCamera, mCamera2BasicFragment.getCameraLensFacingDirection()).apply();
             return true;
         } else if (id == R.id.action_camera_video) {
             mCameraToolbar.setVisibility(View.GONE);
-            mCamera2BasicFragment.startVideo("portrait/Jason.mp4");
+            mCamera2BasicFragment.startVideo("Jason.mp4", false);
             return true;
         } else if (id == R.id.action_camera_debug) {
             mCamera2BasicFragment.showDebugInfo();
@@ -266,5 +285,10 @@ public class FaceProcessorFragment extends com.mobiledgex.computervision.ImagePr
      */
     public String getStatsText() {
         return mImageSenderEdge.getStatsText();
+    }
+
+    @Override
+    public void getCloudlets(boolean clearExisting, boolean background) {
+        // Required for MatchingEngineHelperInterface. Not used for this non-map activity.
     }
 }

@@ -274,9 +274,9 @@ public class Camera2BasicFragment extends Fragment
             if(mFrameStartTime == 0) {
                 mFrameStartTime = now;
             }
-            long totalSeconds = (now- mFrameStartTime)/1000;
+            long totalSeconds = (now - mFrameStartTime)/1000;
             if(mFrameLastTime > 0) {
-                Log.i(TAG, "elapsed="+(now- mFrameLastTime)+" FPS="+(decFor.format((float) mFrameCount /totalSeconds)));
+                Log.i(TAG, "elapsed="+(now - mFrameLastTime)+" FPS="+(decFor.format((float) mFrameCount /totalSeconds)));
             }
             mFrameLastTime = now;
 

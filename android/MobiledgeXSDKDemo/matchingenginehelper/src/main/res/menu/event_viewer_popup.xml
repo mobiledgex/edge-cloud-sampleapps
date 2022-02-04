@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_elv_copy"
+        android:title="@string/action_elv_copy" />
+    <item
+        android:id="@+id/action_elv_clear"
+        android:title="@string/action_elv_clear" />
+    <item
+        android:id="@+id/action_elv_auto_expand"
+        android:checkable="true"
+        android:checked="true"
+        android:title="@string/action_elv_auto_expand" />
+</menu>

@@ -25,6 +25,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -40,6 +41,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -71,7 +73,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -82,6 +83,10 @@ import distributed_match_engine.Appcommon;
 
 import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.DEF_HOSTNAME_PLACEHOLDER;
 
+/**
+ * This class is used for image processing on both an Edge cloudlet app instance
+ * (displayed as "Edge"), and a public cloud app instance (displayed as "Cloud").
+ */
 public class ImageProcessorFragment extends Fragment implements MatchingEngineHelperInterface,
         ImageServerInterface, ImageProviderInterface,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -135,13 +140,11 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
     protected static final int PERSISTENT_TCP_PORT = 8011;
-    protected boolean mTlsEdge = true;
     protected boolean mTlsCloud = true;
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
 
     private String mDefaultHostCloud;
     private String mDefaultHostEdge;
-    private String mDefaultHostGpu;
 
     protected ImageSender mImageSenderEdge;
     private ImageSender mImageSenderCloud;
@@ -153,7 +156,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     protected List<String> mEdgeHostList = new ArrayList<>();
     protected int mEdgeHostListIndex;
 
-    protected boolean mGpuHostNameOverride = false;
     protected boolean mEdgeHostNameOverride = false;
     protected boolean mEdgeHostNameTls = false;
     private boolean mCloudHostNameOverride = false;
@@ -163,9 +165,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     public static final String EXTRA_SPOOF_GPS = "EXTRA_SPOOF_GPS";
     public static final String EXTRA_LATITUDE = "EXTRA_LATITUDE";
     public static final String EXTRA_LONGITUDE = "EXTRA_LONGITUDE";
+    private Location mSpoofedLocation;
     protected String mVideoFilename;
     protected boolean mAttached;
     protected EventLogViewer mEventLogViewer;
+    protected int fullLatencyEdgeLabel;
+    protected int networkLatencyEdgeLabel;
 
     /**
      * Return statistics information to be displayed in dialog after activity -- a combination
@@ -256,7 +261,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
      */
     @Override
     public void showMessage(final String text) {
-        mEventLogViewer.showMessage(text);
+        Log.i(TAG, "showMessage mEventLogViewer="+mEventLogViewer+" text="+text);
+        if (mEventLogViewer != null) {
+            mEventLogViewer.showMessage(text);
+        } else {
+            Toast.makeText(getContext(), text, Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
@@ -266,11 +276,16 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
      */
     @Override
     public void showError(final String text) {
-        mEventLogViewer.showError(text);
+        Log.i(TAG, "showError mEventLogViewer="+mEventLogViewer+" text="+text);
+        if (mEventLogViewer != null) {
+            mEventLogViewer.showError(text);
+        } else {
+            Toast.makeText(getContext(), text, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
-    public void getCloudlets(boolean clearExisting) {
+    public void getCloudlets(boolean clearExisting, boolean background) {
         // Not used for this non-map activity.
     }
 
@@ -323,14 +338,14 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         String message;
         if (mImageSenderEdge == null) {
             message = "Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
-            mEventLogViewer.initialLogsComplete();
+            mEventLogViewer.collapseAfter(3000);
         } else {
             message = "Restarting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
             mImageSenderEdge.closeConnection();
         }
         Log.i(TAG, message);
         showMessage(message);
-        boolean tls = mTlsEdge;
+        boolean tls = meHelper.mAppInstTls;
         if (mEdgeHostNameOverride) {
             tls = mEdgeHostNameTls;
         }
@@ -490,7 +505,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if (rollingAverage.getCurrent() == 0) {
-            latency = (long)9999*1000*1000; //to indicate connection error.
+            latency = (long)9999; //to indicate connection error.
         } else {
             if (prefUseRollingAvg) {
                 latency = rollingAverage.getAverage();
@@ -508,12 +523,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             public void run() {
                 switch(cloudletType) {
                     case EDGE:
-                        mEdgeLatencyFull.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
-                        mEdgeStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mEdgeLatencyFull.setText(getResources().getString(fullLatencyEdgeLabel, latency));
+                        mEdgeStdFull.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     case CLOUD:
-                        mCloudLatencyFull.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
-                        mCloudStdFull.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mCloudLatencyFull.setText(getResources().getString(R.string.cloud_label, latency));
+                        mCloudStdFull.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     default:
                         break;
@@ -528,7 +543,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         final long stdDev = rollingAverage.getStdDev();
         final long latency;
         if (rollingAverage.getCurrent() == 0) {
-            latency = (long)9999*1000*1000; //to indicate connection error.
+            latency = (long)9999; //to indicate connection error.
         } else {
             if (prefUseRollingAvg) {
                 latency = rollingAverage.getAverage();
@@ -546,12 +561,12 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             public void run() {
                 switch(cloudletType) {
                     case EDGE:
-                        mEdgeLatencyNet.setText("Edge: " + String.valueOf(latency / 1000000) + " ms");
-                        mEdgeStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mEdgeLatencyNet.setText(getResources().getString(networkLatencyEdgeLabel, latency));
+                        mEdgeStdNet.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     case CLOUD:
-                        mCloudLatencyNet.setText("Cloud: " + String.valueOf(latency / 1000000) + " ms");
-                        mCloudStdNet.setText("Stddev: " + new DecimalFormat("#.##").format(stdDev / 1000000) + " ms");
+                        mCloudLatencyNet.setText(getResources().getString(R.string.cloud_label, latency));
+                        mCloudStdNet.setText(getResources().getString(R.string.stddev_label, stdDev));
                         break;
                     default:
                         break;
@@ -672,11 +687,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
         }
 
         if (id == R.id.action_manual_failover) {
-            new Thread(new Runnable() {
-                @Override public void run() {
-                    reportConnectionError("Manual Failover", mImageSenderEdge);
-                }
-            }).start();
+            new Thread(() -> reportConnectionError("Manual Failover", mImageSenderEdge)).start();
             return true;
         }
 
@@ -839,7 +850,9 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     public void onDestroy() {
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
-        meHelper.onDestroy();
+        if (meHelper != null) {
+            meHelper.onDestroy();
+        }
     }
 
     @Override
@@ -1072,6 +1085,19 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             mCameraToolbar.setTitle(R.string.title_activity_face_detection);
         }
 
+        // Initialize all values to 0, otherwise we would see the formatting string "%d" all over the UI.
+        mEdgeLatencyFull.setText(getResources().getString(R.string.edge_label, 0));
+        mEdgeStdFull.setText(getResources().getString(R.string.stddev_label, 0));
+        mEdgeLatencyNet.setText(getResources().getString(R.string.edge_label, 0));
+        mEdgeStdNet.setText(getResources().getString(R.string.stddev_label, 0));
+        mCloudLatencyFull.setText(getResources().getString(R.string.cloud_label, 0));
+        mCloudStdFull.setText(getResources().getString(R.string.stddev_label, 0));
+        mCloudLatencyNet.setText(getResources().getString(R.string.cloud_label, 0));
+        mCloudStdNet.setText(getResources().getString(R.string.stddev_label, 0));
+
+        fullLatencyEdgeLabel = R.string.edge_label;
+        networkLatencyEdgeLabel = R.string.edge_label;
+
         meHelper = new MatchingEngineHelper.Builder()
                 .setActivity(getActivity())
                 .setMeHelperInterface(this)
@@ -1079,10 +1105,16 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setTestPort(FACE_DETECTION_HOST_PORT)
                 .build();
 
+        // If getCommonIntentExtras() found a spoofed location passed in, set it now.
+        if (mSpoofedLocation != null) {
+            meHelper.setSpoofedLocation(mSpoofedLocation);
+        }
+
         getProvisioningData();
     }
 
-    private void getProvisioningData() {
+    protected void getProvisioningData() {
+        Log.i(TAG, "getProvisioningData()");
         RequestQueue queue = Volley.newRequestQueue(getActivity());
         String url = "http://opencv.facetraining.mobiledgex.net/cvprovisioning.json";
 
@@ -1109,6 +1141,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     }
 
     private void parseProvisioningData(String provData, boolean isLocal) {
+        Log.i(TAG, "parseProvisioningData()");
         try {
             JSONObject dataForRegion;
             JSONObject jsonObject = new JSONObject(provData);
@@ -1126,10 +1159,8 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             JSONObject defaultHostNames = dataForRegion.getJSONObject("defaultHostNames");
             mDefaultHostCloud = defaultHostNames.getString("cloud");
             mDefaultHostEdge = defaultHostNames.getString("edge");
-            mDefaultHostGpu = defaultHostNames.getString("gpu");
             Log.i(TAG, "mDefaultHostCloud = "+mDefaultHostCloud);
             Log.i(TAG, "mDefaultHostEdge = "+mDefaultHostEdge);
-            Log.i(TAG, "mDefaultHostGpu = "+mDefaultHostGpu);
 
             startImageSenders();
         } catch (JSONException e) {
@@ -1167,6 +1198,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
     }
 
     private void startImageSenders() {
+        Log.i(TAG, "startImageSenders()");
         mHostDetectionCloud = mHostDetectionCloud.toLowerCase();
         if (mCloudHostNameOverride) {
             Log.i(TAG, "mHostDetectionCloud came from Settings: "+mHostDetectionCloud);
@@ -1195,7 +1227,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .setCameraMode(mCameraMode)
                 .build();
-        showMessage("Starting " + mCameraToolbar.getTitle() + " on CLOUD host " + mHostDetectionCloud);
 
         if (mEdgeHostNameOverride) {
             mHostDetectionEdge = mHostDetectionEdge.toLowerCase();
@@ -1204,9 +1235,10 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 Log.i(TAG, "Edge override selected, but setting contains 'default', so use mHostDetectionEdge provisioning: "+mHostDetectionEdge);
             }
             if (mHostDetectionEdge.endsWith(".gcp.mobiledgex.net")) {
-                mTlsEdge = false; //Because this is a GCP cloudlet where TLS is not supported.
-                Log.i(TAG, "Set mTlsEdge="+mTlsEdge+" because GCP cloudlets don't support TLS.");
+                meHelper.mAppInstTls = false; //Because this is a GCP cloudlet where TLS is not supported.
+                Log.i(TAG, "Set mTlsEdge="+meHelper.mAppInstTls+" because GCP cloudlets don't support TLS.");
             }
+            showMessage("Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionCloud);
             mEdgeHostList.clear();
             mEdgeHostListIndex = 0;
             mEdgeHostList.add(mHostDetectionEdge);
@@ -1225,26 +1257,19 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
 
-        mVideoFilename = VIDEO_FILE_NAME;
-
         //One more call to get preferences for ImageSenders
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         onSharedPreferenceChanged(prefs, ALL_PREFS);
     }
 
     protected void getCommonIntentExtras(Intent intent) {
-        // See if we have an Extra with the closest cloudlet passed in to override the preference.
-        String edgeCloudletHostname = intent.getStringExtra(EXTRA_EDGE_CLOUDLET_HOSTNAME);
-        if(edgeCloudletHostname != null) {
-            Log.i(TAG, "Using Extra "+edgeCloudletHostname+" for mHostDetectionEdge.");
-            mEdgeHostNameOverride = true;
-            mHostDetectionEdge = edgeCloudletHostname;
-        }
         boolean spoofGps = intent.getBooleanExtra(EXTRA_SPOOF_GPS, false);
         if (spoofGps) {
             double latitude = intent.getDoubleExtra(EXTRA_LATITUDE, 1);
             double longitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 1);
-            meHelper.setSpoofedLocation(latitude, longitude);
+            mSpoofedLocation = new Location("MobiledgeX");
+            mSpoofedLocation.setLatitude(latitude);
+            mSpoofedLocation.setLongitude(longitude);
         }
     }
 

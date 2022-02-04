@@ -17,8 +17,6 @@
 
 package com.mobiledgex.matchingenginehelper;
 
-import android.location.Location;
-
 import distributed_match_engine.AppClient;
 
 public interface MatchingEngineHelperInterface {
@@ -28,6 +26,6 @@ public interface MatchingEngineHelperInterface {
     void onGetCloudletList(AppClient.AppInstListReply cloudletList);
     void showMessage(String text);
     void showError(String text);
-    void getCloudlets(boolean clearExisting);
+    void getCloudlets(boolean clearExisting, boolean background);
     ConnectionTester makeConnectionTester(boolean tls);
 }

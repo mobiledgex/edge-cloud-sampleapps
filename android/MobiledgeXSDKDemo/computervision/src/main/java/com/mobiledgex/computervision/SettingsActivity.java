@@ -24,8 +24,10 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 
 public class SettingsActivity extends AppCompatActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
@@ -122,6 +124,26 @@ public class SettingsActivity extends AppCompatActivity implements
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.pref_overrides, rootKey);
+
+            EditTextPreference edgeHostPref = getPreferenceManager().findPreference(getResources().getString(R.string.pref_cv_host_edge));
+            if (edgeHostPref != null) {
+                edgeHostPref.setSummaryProvider(new Preference.SummaryProvider() {
+                    @Override
+                    public CharSequence provideSummary(Preference preference) {
+                        return getResources().getString(R.string.pref_cv_host_edge_summary, edgeHostPref.getText());
+                    }
+                });
+            }
+
+            EditTextPreference cloudHostPref = getPreferenceManager().findPreference(getResources().getString(R.string.pref_cv_host_cloud));
+            if (cloudHostPref != null) {
+                cloudHostPref.setSummaryProvider(new Preference.SummaryProvider() {
+                    @Override
+                    public CharSequence provideSummary(Preference preference) {
+                        return getResources().getString(R.string.pref_cv_host_cloud_summary, cloudHostPref.getText());
+                    }
+                });
+            }
         }
     }
 }

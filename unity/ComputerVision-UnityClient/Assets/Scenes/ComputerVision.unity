@@ -429,7 +429,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2299,7 +2299,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.09433961, g: 0.03604485, b: 0.03604485, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -9006,7 +9006,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.25490198}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -9446,6 +9446,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e1e1f49021854c59abbe7d3b689b38c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  timeOut: 20
 --- !u!114 &1559097365
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9485,7 +9486,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rawImage: {fileID: 0}
   faceRectTexture: {fileID: 2800000, guid: 9492fce5ebc8b4fc6bd5c88d7aa26bab, type: 3}
-  greenRectTexture: {fileID: 2800000, guid: 167563fec3476448f9d5ea887307b0b1, type: 3}
+  greenRectTexture: {fileID: 2800000, guid: 5d8139d0b87ce437da6715eb0293deb8, type: 3}
   redRectTexture: {fileID: 2800000, guid: e2f4117eeb51548b196eba9dee0e8c20, type: 3}
   placeholder: {fileID: 2066049499}
   networkManager: {fileID: 1559097367}
@@ -9516,11 +9517,8 @@ MonoBehaviour:
   avgNetworkOnlyLatencyText: {fileID: 534323773}
   cloudletLocationText: {fileID: 1739281407}
   regionsDmeList:
-  - wifi
   - eu-mexdemo
   - kr-mexdemo
-  - us-mexdemo
-  - jp-mexdemo
   connectionMode: 0
 --- !u!114 &1559097368
 MonoBehaviour:
@@ -10342,11 +10340,7 @@ MonoBehaviour:
   m_Value: 0
   m_Options:
     m_Options:
-    - m_Text: Nearest
-      m_Image: {fileID: 0}
     - m_Text: Europe
-      m_Image: {fileID: 0}
-    - m_Text: US & Canada
       m_Image: {fileID: 0}
     - m_Text: Japan
       m_Image: {fileID: 0}
