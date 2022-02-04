@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#80E0F2F1"
     tools:context=".MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -24,6 +25,31 @@
         android:id="@+id/include"
         layout="@layout/content_main" />
 
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/events_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_above="@+id/fabEventLogs"
+            android:background="#EEEEEE"
+            android:padding="2dp" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabEventLogs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="@dimen/fab_margin"
+            android:clickable="true"
+            android:scaleX="-1"
+            app:srcCompat="@drawable/ic_baseline_more_24" />
+
+    </RelativeLayout>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
@@ -36,17 +62,16 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:layout_marginEnd="12dp"
-        android:text="Click button to register client and find cloudlet"
+        android:layout_gravity="center_vertical"
+        android:text="Click button to register\nclient and find cloudlet:  "
         app:layout_anchor="@+id/fab"
-        app:layout_anchorGravity="top|end" />
+        app:layout_anchorGravity="center_vertical" />
 
     <TextView
         android:id="@+id/textViewCopyright"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Copyright 2020 MobiledgeX, Inc. All rights and licenses reserved."
+        android:text="Copyright 2021 MobiledgeX, Inc. All rights and licenses reserved."
         android:textColor="#999999"
         android:textSize="12sp"
         app:layout_anchor="@+id/include"

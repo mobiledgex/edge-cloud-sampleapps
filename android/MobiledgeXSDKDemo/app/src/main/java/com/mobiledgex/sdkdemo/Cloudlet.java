@@ -96,6 +96,7 @@ public class Cloudlet implements Serializable {
     private CloudletListHolder.LatencyTestMethod mLatencyTestMethod;
     private boolean mLatencyTestMethodForced = false;
     private Context mContext;
+    private boolean mRemoved;
 
     public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, String fqdnPrefix, boolean tls, Marker marker, int port) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
@@ -108,14 +109,14 @@ public class Cloudlet implements Serializable {
         mMarker = marker;
         setUri(fqdnPrefix, fqdn, tls, port);
 
-        if(CloudletListHolder.getSingleton().getLatencyTestAutoStart()) {
+        if(CloudletListHolder.getLatencyTestAutoStart()) {
             //All AsyncTask instances are run on the same thread, so this queues up the tasks.
             startLatencyTest();
         } else {
             Log.i(TAG, "LatencyTestAutoStart is disabled");
         }
 
-        mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        mLatencyTestMethod = CloudletListHolder.getLatencyTestMethod();
     }
 
     /**
@@ -150,7 +151,7 @@ public class Cloudlet implements Serializable {
      * @return  The URI.
      */
     private String getDownloadUri() {
-        mNumBytes = CloudletListHolder.getSingleton().getNumBytesDownload();
+        mNumBytes = CloudletListHolder.getNumBytesDownload();
         return mScheme+"://"+ mHostName +":"+ mOpenPort +"/getdata/?numbytes="+ mNumBytes;
     }
 
@@ -181,7 +182,7 @@ public class Cloudlet implements Serializable {
             return;
         }
 
-        mNumPackets = CloudletListHolder.getSingleton().getNumPackets();
+        mNumPackets = CloudletListHolder.getNumPackets();
 
         latencyMin=9999;
         latencyAvg=0;
@@ -200,7 +201,7 @@ public class Cloudlet implements Serializable {
             Log.i(TAG, "NO, I am NOT an emulator.");
         }
 
-        mLatencyTestMethod = CloudletListHolder.getSingleton().getLatencyTestMethod();
+        mLatencyTestMethod = CloudletListHolder.getLatencyTestMethod();
         if(mCarrierName.equalsIgnoreCase("azure")) {
             Log.i(TAG, "Socket test forced for Azure");
             mLatencyTestMethod = CloudletListHolder.LatencyTestMethod.socket;
@@ -260,6 +261,14 @@ public class Cloudlet implements Serializable {
 
     public void setContext(Context context) {
         mContext = context;
+    }
+
+    public void setRemoved(boolean removed) {
+        this.mRemoved = removed;
+    }
+
+    public boolean isRemoved() {
+        return mRemoved;
     }
 
     public class LatencyTestTaskSocket extends AsyncTask<Void, Integer, String> {
@@ -537,7 +546,7 @@ public class Cloudlet implements Serializable {
                 }
             });
 
-            mNumBytes = CloudletListHolder.getSingleton().getNumBytesUpload();
+            mNumBytes = CloudletListHolder.getNumBytesUpload();
             speedTestSocket.startUpload(getUploadUri(), mNumBytes);
 
             return null;
@@ -572,9 +581,9 @@ public class Cloudlet implements Serializable {
             netTest.testSites(netTest.TestTimeoutMS);
 
             // Values for the UI to display
-            latencyMin = 0;
+            latencyMin = site.min();
             latencyAvg = site.average;
-            latencyMax = 0;
+            latencyMax = site.max();
             latencyStddev = site.stddev;
 
             return null;

@@ -1123,7 +1123,7 @@ public class QoeMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     @Override
-    public void getCloudlets(boolean clearExisting) {
+    public void getCloudlets(boolean clearExisting, boolean background) {
         Log.i(TAG, "getCloudlets called. Nothing to do for this implementation");
     }
 

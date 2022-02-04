@@ -11,7 +11,7 @@
         android:theme="@style/AppTheme">
         <!-- Entry Activity -->
         <activity
-            android:name=".MainActivity"
+            android:name="com.mobiledgex.emptymatchengineapp.MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -21,10 +21,10 @@
         </activity>
         <!-- Extra launcher for First Time Use UI -->
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.mobiledgex.emptymatchengineapp.SettingsActivity"
             android:label="@string/title_activity_settings" />
         <activity
-            android:name=".FirstTimeUseActivity"
+            android:name="com.mobiledgex.emptymatchengineapp.FirstTimeUseActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait">
             <intent-filter>

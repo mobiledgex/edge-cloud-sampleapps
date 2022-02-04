@@ -3,8 +3,8 @@
     <string name="app_version">2.2</string>
     <string name="org_name">MobiledgeX-Samples</string>
 
-    <string name="preference_matching_engine_settings">Matching Engine Settings</string>
-    <string name="preference_general_settings">General Settings</string>
+    <string name="pref_matching_engine_settings">Matching Engine Settings</string>
+    <string name="pref_general_settings">General Settings</string>
 
     <string-array name="pref_dme_hostname_titles">
         <item>Demo (mexdemo)</item>
@@ -41,6 +41,9 @@
     <string name="pref_value_default_dme_hostname">pref_value_default_dme_hostname</string>
     <string name="pref_title_default_dme_hostname">Use Default Region Selection</string>
     <string name="pref_summary_default_dme_hostname">Region determined by the cellular provider</string>
+    <string name="pref_allow_qos_session_dialog">pref_allow_qos_session_dialog</string>
+    <string name="pref_allow_qos_session_dialog_title">Allow QOS Priority Sessions Config</string>
+    <string name="pref_allow_qos_session_dialog_summary">If enabled, the "Update QOS Session" dialog will appear in the options menu.</string>
 
     <string name="pref_first_time_use">first_time_use</string>
     <string name="pref_allow_find_before_verify">allow_find_before_verify</string>
@@ -51,6 +54,12 @@
     <string name="pref_net_switching_allowed">net_switching_allowed</string>
     <string name="pref_net_switching_allowed_title">Network Switching Enabled</string>
     <string name="pref_net_switching_allowed_summary">Wifi to Cell network switching</string>
+    <string name="pref_use_wifi_only">use_wifi_only</string>
+    <string name="pref_use_wifi_only_title">Use Wifi Only</string>
+    <string name="pref_use_wifi_only_summary">Disables using the mobile network</string>
+    <string name="pref_matching_engine_ssl">matching_engine_ssl</string>
+    <string name="pref_matching_engine_ssl_title">Use SSL</string>
+    <string name="pref_matching_engine_ssl_summary">Connect to DME using SSL</string>
 
     <string name="pref_find_cloudlet_mode">find_cloudlet_mode</string>
     <string name="pref_find_cloudlet_mode_title">FindCloudlet Mode</string>
@@ -66,44 +75,101 @@
 
     <string name="pref_app_instances_limit">app_instances_limit</string>
     <string name="pref_app_instances_limit_title">Get App Instances Limit</string>
-    <string name="pref_app_instances_limit_summary">%s</string>
-    <string-array name="pref_app_instances_limit_titles">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-        <item>5</item>
-        <item>6</item>
-        <item>7</item>
-        <item>8</item>
-    </string-array>
-    <string-array name="pref_app_instances_limit_values">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-        <item>5</item>
-        <item>6</item>
-        <item>7</item>
-        <item>8</item>
-    </string-array>
+    <string name="pref_app_instances_limit_summary">The max number of cloudlets to display: %s</string>
 
     <string name="pref_google_map_type">pref_google_map_type</string>
     <string name="title_activity_settings">SettingsActivity</string>
 
-    <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
+    <!-- Settings for Edge Events -->
+    <string name="pref_edge_events_config">Edge Events Config</string>
+    <string name="pref_enable_edge_events">pref_enable_edge_events</string>
+    <string name="pref_enable_edge_events_title">Enable Edge Events</string>
+    <string name="pref_enable_edge_events_summary">summary</string>
+    <string name="pref_override_default_config">pref_override_default_config</string>
+    <string name="pref_override_default_config_title">Override Edge Events Default Config</string>
+    <string name="pref_override_default_config_summary">When turned off, default values from the SDK are used.</string>
 
-    <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
+    <string name="pref_latency_test_port">pref_latency_test_port</string>
+    <string name="pref_latency_test_port_title">Latency Test Port</string>
+    <string name="pref_latency_test_port_summary"><b>%s</b> - Port to use for latency testing. Use 0 to test any app port.</string>
+    <string name="pref_latency_test_type">pref_latency_test_type</string>
+    <string name="pref_latency_test_type_title">Latency Test Type</string>
+    <string name="pref_latency_test_type_summary"><b>%s</b> - The type of latency test to be used.</string>
+    <string-array name="pref_latency_test_type_titles">
+        <item>Ping</item>
+        <item>Connect</item>
+    </string-array>
+    <string-array name="pref_latency_test_type_values">
+        <item>PING</item>
+        <item>CONNECT</item>
+    </string-array>
 
-    <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="pref_latency_threshold_ms">pref_latency_threshold_ms</string>
+    <string name="pref_latency_threshold_ms_title">Latency Threshold (ms)</string>
+    <string name="pref_latency_threshold_ms_summary"><b>%s</b> - Latency Threshold (ms)", "Latency threshold in ms when new FindCloudlet is triggered if eventLatencyProcessed is in newFindCloudletEvents.</string>
+    <string name="pref_latency_test_trigger_mode">pref_latency_test_trigger_mode</string>
+    <string name="pref_latency_test_trigger_mode_title">Latency Test Trigger Mode</string>
+    <string name="pref_latency_test_trigger_mode_summary"><b>%s</b> - Determines how a latency test is triggered.</string>
+    <string name="pref_automigration">pref_automigration</string>
+    <string name="pref_automigration_title">AutoMigration</string>
+    <string name="pref_automigration_summary">Allow MobiledgeX EdgeEvents to automatically stop the current EdgeEvents connection and start a new EdgeEvents connection to receive events from the new cloudlet.</string>
+    <string name="pref_perf_margin_switch">pref_perf_margin_switch</string>
+    <string name="pref_perf_margin_switch_title">Performance Margin Switch</string>
+    <string name="pref_perf_margin_switch_summary">Average performance must be by better by this latency margin (0 to 100%) before notifying of switch.</string>
+
+    <string name="pref_FindCloudletEventTrigger">pref_FindCloudletEventTrigger</string>
+    <string name="pref_FindCloudletEventTrigger_title">FindCloudlet Event Triggers</string>
+    <string name="pref_FindCloudletEventTrigger_summary">Choose which events will trigger FindCloudlet to be performed.</string>
+    <string-array name="pref_FindCloudletEventTrigger_titles">
+        <item>Cloudlet State Changed</item>
+        <item>App Inst Health Changed</item>
+        <item>Cloudlet Maintenance State Changed</item>
+        <item>Latency Too High</item>
+        <item>Closer Cloudlet</item>
+    </string-array>
+    <string-array name="pref_FindCloudletEventTrigger_values">
+        <item>CloudletStateChanged</item>
+        <item>AppInstHealthChanged</item>
+        <item>CloudletMaintenanceStateChanged</item>
+        <item>LatencyTooHigh</item>
+        <item>CloserCloudlet</item>
+    </string-array>
+
+
+    <!-- Settings for Location Update Config -->
+    <string name="pref_location_update_config">Location Update Config</string>
+    <string name="pref_update_pattern_location">pref_update_pattern_location</string>
+    <string name="pref_update_pattern_title">Update Pattern</string>
+    <string name="pref_update_pattern_summary"><b>%s</b> - Update Pattern for sending client events. \'On Start\' will send one update when startEdgeEvents is called. \'On Interval\' will send updates at the specified interval. \'On Trigger\' means the application is responsible for sending the events.</string>
+    <string-array name="pref_update_pattern_titles">
+        <item>On Interval</item>
+        <item>On Start</item>
+        <item>On Trigger</item>
+    </string-array>
+    <string-array name="pref_update_pattern_values">
+        <item>onInterval</item>
+        <item>onStart</item>
+        <item>onTrigger</item>
+    </string-array>
+
+    <string name="pref_update_interval_location">pref_update_interval_location</string>
+    <string name="pref_update_interval_title">Update Interval</string>
+    <string name="pref_update_interval_summary"><b>%s</b> - Update interval in seconds.</string>
+    <string name="pref_max_num_updates_location">pref_max_num_updates_location</string>
+    <string name="pref_max_num_updates_title">Max Number of Updates</string>
+    <string name="pref_max_num_updates_summary"><b>%s</b> - Maximum number of updates throughout the App connection lifetime. Set to 0 for updates to run till the EdgeEvents connection is closed.</string>
+
+    <!-- Settings for Latency Update Config -->
+    <!-- Titles and summaries will reuse the values from Location Update Config -->
+    <string name="pref_latency_update_config">Latency Update Config</string>
+    <string name="pref_update_pattern_latency">pref_update_pattern_latency</string>
+    <string name="pref_update_interval_latency">pref_update_interval_latency</string>
+    <string name="pref_max_num_updates_latency">pref_max_num_updates_latency</string>
+
+    <string name="action_elv_auto_expand">Auto Expand</string>
+    <string name="action_elv_clear">Clear Logs</string>
+    <string name="action_elv_copy">Copy All Items</string>
+
+    <string name="pref_elv_auto_expand">pref_elv_aut_oexpand</string>
 
 </resources>
