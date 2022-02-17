@@ -23,7 +23,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
-import android.net.Network;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.telephony.SubscriptionInfo;
@@ -62,9 +61,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -106,7 +103,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public String mAppName;
     public String mAppVersion;
     public String mOrgName;
-    public  MatchingEngine.FindCloudletMode mFindCloudletMode;
+    public MatchingEngine.FindCloudletMode mFindCloudletMode;
     private boolean mNetworkSwitchingAllowed;
     private boolean mUseWifiOnly;
     private boolean mMatchingEngineSSL;
@@ -117,6 +114,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     public String mSessionCookie;
     public AppClient.FindCloudletReply mClosestCloudlet;
     public AppClient.AppInstListReply mAppInstanceReplyList;
+    public AppClient.QosPrioritySessionReply mQosPrioritySessionReply;
     public boolean mAllowLocationSimulatorUpdate = false;
 
     private final MatchingEngineHelperInterface meHelperInterface;
@@ -143,6 +141,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private String someText = null;
     public String mAppInstHostname;
     public boolean mAppInstTls;
+    private String mAppInstProto;
     private int mTestPort;
     private boolean mRunConnectionTests = true;
 
@@ -492,11 +491,140 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }).start();
     }
 
+    public boolean qosPrioritySessionCreate(String qosProfile, int duration) throws ExecutionException, InterruptedException,
+            io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
+        if (!verifyMeRequirements()) {
+            String message = "Matching engine requirements not met. Please allow app permissions " +
+                    "and enable Enhanced Location Verification in Matching Engine Settings";
+            Log.e(TAG, message);
+            meHelperInterface.showError(message);
+            return false;
+        }
+        AppClient.QosPrioritySessionCreateRequest.Builder builder = me.createDefaultQosPrioritySessionCreateRequest(mActivity);
+        builder.setPortApplicationServer(mTestPort+"");
+        builder.setIpUserEquipment(mDeviceIpv4);
+        builder.setIpApplicationServer(mAppInstIp);
+        builder.setProtocolIn(AppClient.QosSessionProtocol.valueOf(mAppInstProto));
+        builder.setProfile(AppClient.QosSessionProfile.valueOf(qosProfile));
+        builder.setSessionDuration(duration);
+
+        AppClient.QosPrioritySessionCreateRequest qosPrioritySessionCreateRequest;
+        Future<AppClient.QosPrioritySessionReply> qosPrioritySessionReplyFuture;
+        qosPrioritySessionCreateRequest = builder.build();
+        qosPrioritySessionReplyFuture = me.qosPrioritySessionCreateFuture(qosPrioritySessionCreateRequest, mDmeHostname, mDmePort,10000);
+        Log.i(TAG, "qosPrioritySessionReplyFuture="+qosPrioritySessionReplyFuture);
+        mQosPrioritySessionReply = qosPrioritySessionReplyFuture.get();
+        Log.i(TAG, "mQosPrioritySessionReply.getSessionId()="+ mQosPrioritySessionReply.getSessionId()+" mQosPrioritySessionReply.getHttpStatus()="+ mQosPrioritySessionReply.getHttpStatus());
+        if (mQosPrioritySessionReply.getSessionId() == null || mQosPrioritySessionReply.getSessionId().length() == 0) {
+            String msg = "qosPrioritySessionCreate Failed. HttpStatus: " + mQosPrioritySessionReply.getHttpStatus();
+            Log.e(TAG, msg);
+            meHelperInterface.showError(msg);
+            return false;
+        }
+        mQosSessionId = mQosPrioritySessionReply.getSessionId();
+        mQosProfileName = mQosPrioritySessionReply.getProfile().name();
+        String msg = "Got session:\n"+getQosPrioritySessionDetails();
+        Log.i(TAG, msg);
+        meHelperInterface.showMessage(msg);
+        return true;
+    }
+
+    public void qosPrioritySessionCreateInBackground(String qosProfile, int duration) {
+        new Thread(() -> {
+            try {
+                qosPrioritySessionCreate(qosProfile, duration);
+            } catch (ExecutionException | InterruptedException
+                    | PackageManager.NameNotFoundException | IllegalArgumentException e) {
+                Log.e(TAG, "Exception in registerClientInBackground() for "+
+                        mAppName+", "+mAppVersion+", "+mOrgName);
+                e.printStackTrace();
+                meHelperInterface.showError(e.getLocalizedMessage());
+            }
+        }).start();
+    }
+
+    public boolean qosPrioritySessionDelete() throws ExecutionException, InterruptedException,
+            io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
+        if (!verifyMeRequirements()) {
+            String message = "Matching engine requirements not met. Please allow app permissions " +
+                    "and enable Enhanced Location Verification in Matching Engine Settings";
+            Log.e(TAG, message);
+            meHelperInterface.showError(message);
+            return false;
+        }
+        if (mQosPrioritySessionReply == null) {
+            String message = "QOS Priority session does not exist";
+            Log.e(TAG, message);
+            meHelperInterface.showError(message);
+            return false;
+        }
+        AppClient.QosPrioritySessionDeleteRequest.Builder builder = me.createDefaultQosPrioritySessionDeleteRequest(mActivity);
+        builder.setSessionId(mQosPrioritySessionReply.getSessionId());
+        builder.setProfile(mQosPrioritySessionReply.getProfile());
+
+        AppClient.QosPrioritySessionDeleteRequest qosPrioritySessionDeleteRequest;
+        Future<AppClient.QosPrioritySessionDeleteReply> qosPrioritySessionDeleteReplyFuture;
+        qosPrioritySessionDeleteRequest = builder.build();
+        qosPrioritySessionDeleteReplyFuture = me.qosPrioritySessionDeleteFuture(qosPrioritySessionDeleteRequest, mDmeHostname, mDmePort,10000);
+        Log.i(TAG, "qosPrioritySessionDeleteReplyFuture="+qosPrioritySessionDeleteReplyFuture);
+        AppClient.QosPrioritySessionDeleteReply reply = qosPrioritySessionDeleteReplyFuture.get();
+        Log.i(TAG, "reply.getStatus()="+reply.getStatus());
+        String msg = "Deleted session "+mQosPrioritySessionReply.getSessionId();
+        Log.i(TAG, msg);
+        meHelperInterface.showMessage(msg);
+        // Reset all QOS Session variables.
+        mQosPrioritySessionReply = null;
+        mQosSessionId = "";
+        mQosProfileName = "";
+        return true;
+    }
+
+    public void qosPrioritySessionDeleteInBackground() {
+        new Thread(() -> {
+            try {
+                qosPrioritySessionDelete();
+            } catch (ExecutionException | InterruptedException
+                    | PackageManager.NameNotFoundException | IllegalArgumentException e) {
+                Log.e(TAG, "Exception in registerClientInBackground() for "+
+                        mAppName+", "+mAppVersion+", "+mOrgName);
+                e.printStackTrace();
+                meHelperInterface.showError(e.getLocalizedMessage());
+            }
+        }).start();
+    }
+
+    /**
+     * Depending on whether the session was created via FindCloudlet or qosPrioritySessionCreate,
+     * there is a different amount of session details that can be displayed. This method returns
+     * whatever details are available.
+     *
+     * @return Available session details.
+     */
+    public String getQosPrioritySessionDetails() {
+        String details;
+        if (mQosPrioritySessionReply == null) {
+            if (mQosProfileName.equals("")) {
+                details = "QOS Priority session does not exist";
+            } else {
+                details = "profile="+mQosProfileName+"\nsession_id="+mQosSessionId;
+            }
+        } else {
+            // Don't worry. StringBuilder is used under the hood.
+            details = "profile="+mQosPrioritySessionReply.getProfile();
+            details += "\nsession_id="+mQosPrioritySessionReply.getSessionId();
+            details += "\nhttp_status="+mQosPrioritySessionReply.getHttpStatus();
+            details += "\nstarted_at="+mQosPrioritySessionReply.getStartedAt();
+            details += "\nexpires_at="+mQosPrioritySessionReply.getExpiresAt();
+            details += "\nsession_duration="+mQosPrioritySessionReply.getSessionDuration();
+        }
+        return details;
+    }
+
     public void findCloudletInBackground() {
         new Thread(() -> {
             try {
                 findCloudlet();
-                mDeviceIpv4 = getLocalIpv4();
+                mDeviceIpv4 = me.getLocalIpv4();
             } catch (ExecutionException | InterruptedException
                     | PackageManager.NameNotFoundException | IllegalArgumentException e) {
                 Log.e(TAG, "Exception in findCloudletInBackground() for "+
@@ -591,6 +719,12 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             fqdnPrefix = aPort.getFqdnPrefix();
             mAppInstTls = aPort.getTls();
             Log.i(TAG, "Setting TLS="+ mAppInstTls);
+            if (aPort.getProto() == Appcommon.LProto.L_PROTO_UDP) {
+                mAppInstProto = "UDP";
+            }
+            else if (aPort.getProto() == Appcommon.LProto.L_PROTO_TCP) {
+                mAppInstProto = "TCP";
+            }
         }
         // Build full hostname.
         mAppInstHostname = fqdnPrefix + mClosestCloudlet.getFqdn();
@@ -599,7 +733,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             mAppInstIp = address.getHostAddress();
         } catch (UnknownHostException e) {
             e.printStackTrace();
-            mAppInstIp = "Could not resolve. Error: "+e.getLocalizedMessage();
+            mAppInstIp = "127.0.0.1"; // A valid IP address for testing.
         }
 
         meHelperInterface.showMessage("findCloudlet successful. Host="+mAppInstHostname+" IP="+mAppInstIp);
@@ -1441,43 +1575,4 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             }
         }
     };
-
-    // TODO: Move these IP address methods to a util class.
-    public String getLocalIpv4() {
-        String localIp = getLocalIpAny();
-        if (localIp == null) {
-            return null;
-        }
-        else if (localIp.contains(".")) {
-            return localIp;
-        }
-        else {
-            Log.d(TAG, "Local default interface is IPv6 only. Returning empty string.");
-            return null;
-        }
-    }
-
-    public String getLocalIpAny() {
-        Network net = me.getNetworkManager().getActiveNetwork();
-        if (net == null) {
-            return null;
-        }
-        // UDP "connect" to get the default route's local IP address.
-        DatagramSocket ds = null;
-        try {
-            ds = new DatagramSocket();
-            ds.connect(InetAddress.getByName(me.wifiOnlyDmeHost), me.getPort());
-            InetAddress localInet = ds.getLocalAddress();
-            String hostStr;
-            if (localInet != null && (hostStr = localInet.getHostAddress()) != null) {
-                return hostStr;
-            }
-            else {
-                return null;
-            }
-        } catch (SocketException | UnknownHostException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 }
