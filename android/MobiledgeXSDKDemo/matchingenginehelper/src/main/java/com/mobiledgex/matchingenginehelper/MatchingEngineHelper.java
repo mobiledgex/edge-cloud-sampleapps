@@ -17,6 +17,9 @@
 
 package com.mobiledgex.matchingenginehelper;
 
+import static com.mobiledgex.matchingenginehelper.SettingsActivity.EXTRA_SHOW_FRAGMENT;
+import static distributed_match_engine.AppClient.ServerEdgeEvent.ServerEventType.EVENT_APPINST_HEALTH;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -72,17 +75,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
-
-import static com.mobiledgex.matchingenginehelper.SettingsActivity.EXTRA_SHOW_FRAGMENT;
-import static distributed_match_engine.AppClient.ServerEdgeEvent.ServerEventType.EVENT_APPINST_HEALTH;
 
 public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = "MatchingEngineHelper";
@@ -451,10 +451,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             return false;
         }
         AppClient.RegisterClientRequest registerClientRequest;
-        Future<AppClient.RegisterClientReply> registerReplyFuture;
+        AppClient.RegisterClientReply registerReply;
         registerClientRequest = me.createDefaultRegisterClientRequest(mActivity, mOrgName)
                 .setAppName(mAppName).setAppVers(mAppVersion).setCarrierName(mCarrierName).build();
-        registerReplyFuture = me.registerClientFuture(registerClientRequest, mDmeHostname, mDmePort,10000);
+        registerReply = me.registerClient(registerClientRequest, mDmeHostname, mDmePort,10000);
         Log.i(TAG, "registerClientRequest="+registerClientRequest);
         Log.i(TAG, "registerClientRequest: "
                 + " getAppName()=" + registerClientRequest.getAppName()
@@ -462,23 +462,22 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 + " getOrgName()=" + registerClientRequest.getOrgName()
                 + " getCarrierName()=" + registerClientRequest.getCarrierName());
 
-        AppClient.RegisterClientReply reply = registerReplyFuture.get();
-        Log.i(TAG, "registerStatus.getStatus()="+reply.getStatus());
+        Log.i(TAG, "registerStatus.getStatus()="+registerReply.getStatus());
 
-        if (reply.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
-            String registerStatusText = "registerClient Failed. Error: " + reply.getStatus();
+        if (registerReply.getStatus() != AppClient.ReplyStatus.RS_SUCCESS) {
+            String registerStatusText = "registerClient Failed. Error: " + registerReply.getStatus();
             Log.e(TAG, registerStatusText);
             meHelperInterface.showError(registerStatusText);
             return false;
         }
-        mSessionCookie = reply.getSessionCookie();
+        mSessionCookie = registerReply.getSessionCookie();
         Log.i(TAG, "mSessionCookie:" + mSessionCookie);
         meHelperInterface.onRegister();
         return true;
     }
 
     public void registerClientInBackground() {
-        new Thread(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
                 registerClient();
             } catch (ExecutionException | InterruptedException
@@ -488,7 +487,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
             }
-        }).start();
+        });
     }
 
     public boolean qosPrioritySessionCreate(String qosProfile, int duration) throws ExecutionException, InterruptedException,
@@ -509,11 +508,10 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         builder.setSessionDuration(duration);
 
         AppClient.QosPrioritySessionCreateRequest qosPrioritySessionCreateRequest;
-        Future<AppClient.QosPrioritySessionReply> qosPrioritySessionReplyFuture;
+        AppClient.QosPrioritySessionReply qosPrioritySessionReply;
         qosPrioritySessionCreateRequest = builder.build();
-        qosPrioritySessionReplyFuture = me.qosPrioritySessionCreateFuture(qosPrioritySessionCreateRequest, mDmeHostname, mDmePort,10000);
-        Log.i(TAG, "qosPrioritySessionReplyFuture="+qosPrioritySessionReplyFuture);
-        mQosPrioritySessionReply = qosPrioritySessionReplyFuture.get();
+        mQosPrioritySessionReply = me.qosPrioritySessionCreate(qosPrioritySessionCreateRequest, mDmeHostname, mDmePort,10000);
+        Log.i(TAG, "mQosPrioritySessionReply="+ mQosPrioritySessionReply);
         Log.i(TAG, "mQosPrioritySessionReply.getSessionId()="+ mQosPrioritySessionReply.getSessionId()+" mQosPrioritySessionReply.getHttpStatus()="+ mQosPrioritySessionReply.getHttpStatus());
         if (mQosPrioritySessionReply.getSessionId() == null || mQosPrioritySessionReply.getSessionId().length() == 0) {
             String msg = "qosPrioritySessionCreate Failed. HttpStatus: " + mQosPrioritySessionReply.getHttpStatus();
@@ -530,7 +528,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void qosPrioritySessionCreateInBackground(String qosProfile, int duration) {
-        new Thread(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
                 qosPrioritySessionCreate(qosProfile, duration);
             } catch (ExecutionException | InterruptedException
@@ -540,7 +538,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
             }
-        }).start();
+        });
     }
 
     public boolean qosPrioritySessionDelete() throws ExecutionException, InterruptedException,
@@ -563,12 +561,11 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         builder.setProfile(mQosPrioritySessionReply.getProfile());
 
         AppClient.QosPrioritySessionDeleteRequest qosPrioritySessionDeleteRequest;
-        Future<AppClient.QosPrioritySessionDeleteReply> qosPrioritySessionDeleteReplyFuture;
+        AppClient.QosPrioritySessionDeleteReply qosPrioritySessionDeleteReply;
         qosPrioritySessionDeleteRequest = builder.build();
-        qosPrioritySessionDeleteReplyFuture = me.qosPrioritySessionDeleteFuture(qosPrioritySessionDeleteRequest, mDmeHostname, mDmePort,10000);
-        Log.i(TAG, "qosPrioritySessionDeleteReplyFuture="+qosPrioritySessionDeleteReplyFuture);
-        AppClient.QosPrioritySessionDeleteReply reply = qosPrioritySessionDeleteReplyFuture.get();
-        Log.i(TAG, "reply.getStatus()="+reply.getStatus());
+        qosPrioritySessionDeleteReply = me.qosPrioritySessionDelete(qosPrioritySessionDeleteRequest, mDmeHostname, mDmePort,10000);
+        Log.i(TAG, "qosPrioritySessionDeleteReply="+ qosPrioritySessionDeleteReply);
+        Log.i(TAG, "qosPrioritySessionDeleteReply.getStatus()="+qosPrioritySessionDeleteReply.getStatus());
         String msg = "Deleted session "+mQosPrioritySessionReply.getSessionId();
         Log.i(TAG, msg);
         meHelperInterface.showMessage(msg);
@@ -580,7 +577,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void qosPrioritySessionDeleteInBackground() {
-        new Thread(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
                 qosPrioritySessionDelete();
             } catch (ExecutionException | InterruptedException
@@ -590,7 +587,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
             }
-        }).start();
+        });
     }
 
     /**
@@ -621,7 +618,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public void findCloudletInBackground() {
-        new Thread(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
                 findCloudlet();
                 mDeviceIpv4 = me.getLocalIpv4();
@@ -632,7 +629,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
             }
-        }).start();
+        });
     }
 
     public void getAppInstListInBackground() {
@@ -691,10 +688,8 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }
         AppClient.FindCloudletRequest findCloudletRequest;
         findCloudletRequest = me.createDefaultFindCloudletRequest(mActivity, getLocationForMatching()).setCarrierName(mCarrierName).build();
-        Future<AppClient.FindCloudletReply> reply = me.findCloudletFuture(findCloudletRequest,
+        mClosestCloudlet = me.findCloudlet(findCloudletRequest,
                 mDmeHostname, mDmePort,10000, mFindCloudletMode);
-
-        mClosestCloudlet = reply.get();
 
         Log.i(TAG, "findCloudlet mClosestCloudlet="+mClosestCloudlet);
         if(mClosestCloudlet.getStatus() != AppClient.FindCloudletReply.FindStatus.FIND_FOUND) {
@@ -1396,8 +1391,8 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                     + event.getHealthCheck().name());
 
             switch (event.getHealthCheck()) {
-                case HEALTH_CHECK_FAIL_ROOTLB_OFFLINE:
-                case HEALTH_CHECK_FAIL_SERVER_FAIL:
+                case HEALTH_CHECK_ROOTLB_OFFLINE:
+                case HEALTH_CHECK_SERVER_FAIL:
                     doEnhancedLocationUpdateInBackground();
                     break;
                 case HEALTH_CHECK_OK:

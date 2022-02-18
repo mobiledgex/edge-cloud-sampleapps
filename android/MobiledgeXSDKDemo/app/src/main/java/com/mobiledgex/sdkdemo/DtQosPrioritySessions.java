@@ -1,6 +1,8 @@
 package com.mobiledgex.sdkdemo;
 
-import android.content.pm.PackageManager;
+import static distributed_match_engine.AppClient.QosSessionProfile.QOS_NO_PRIORITY;
+import static distributed_match_engine.AppClient.QosSessionProfile.UNRECOGNIZED;
+
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -11,25 +13,10 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.mobiledgex.matchingenginehelper.MatchingEngineHelper;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import distributed_match_engine.AppClient;
 
@@ -50,7 +37,7 @@ public class DtQosPrioritySessions {
         // Create dialog with QOS profile names.
         List<String> items = new ArrayList<>();
         for (AppClient.QosSessionProfile profileName : AppClient.QosSessionProfile.values()) {
-            if (!profileName.name().endsWith("NO_PRIORITY") && !profileName.name().equals("UNRECOGNIZED")) {
+            if (!profileName.equals(QOS_NO_PRIORITY) && !profileName.name().equals(UNRECOGNIZED)) {
                 items.add(profileName.name());
             }
         }
