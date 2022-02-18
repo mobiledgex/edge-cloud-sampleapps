@@ -533,7 +533,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
                 qosPrioritySessionCreate(qosProfile, duration);
             } catch (ExecutionException | InterruptedException
                     | PackageManager.NameNotFoundException | IllegalArgumentException e) {
-                Log.e(TAG, "Exception in registerClientInBackground() for "+
+                Log.e(TAG, "Exception in qosPrioritySessionCreateInBackground() for "+
                         mAppName+", "+mAppVersion+", "+mOrgName);
                 e.printStackTrace();
                 meHelperInterface.showError(e.getLocalizedMessage());
