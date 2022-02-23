@@ -66,7 +66,7 @@ def usage_gpu():
     memory_used = vals[3].strip()
     memory_free = vals[4].strip()
     ret = {"gpu_util": gpu_util, "gpu_mem_util": gpu_mem_util,
-        "memory_total": memory_total, "memory_used":memory_used, "memory_free":memory_free}
+        "gpu_memory_total": memory_total, "gpu_memory_used":memory_used, "gpu_memory_free":memory_free}
     logger.debug("GPU Stats: %s" %(ret))
     return ret
 
