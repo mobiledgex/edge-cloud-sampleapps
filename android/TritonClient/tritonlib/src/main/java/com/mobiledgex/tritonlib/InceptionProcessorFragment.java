@@ -73,7 +73,7 @@ public class InceptionProcessorFragment extends GpuImageProcessorFragment implem
         String message;
         if (mImageSenderEdge == null) {
             message = "Starting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
-            mEventLogViewer.initialLogsComplete();
+            mEventLogViewer.collapseAfter(3000);
         } else {
             message = "Restarting " + mCameraToolbar.getTitle() + " on EDGE host " + mHostDetectionEdge;
             mImageSenderEdge.closeConnection();
