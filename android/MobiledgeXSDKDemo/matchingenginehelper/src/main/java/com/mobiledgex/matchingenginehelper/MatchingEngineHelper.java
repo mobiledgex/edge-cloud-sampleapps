@@ -83,6 +83,7 @@ import java.util.regex.Pattern;
 import distributed_match_engine.AppClient;
 import distributed_match_engine.Appcommon;
 import distributed_match_engine.LocOuterClass;
+import io.grpc.StatusRuntimeException;
 
 public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = "MatchingEngineHelper";
@@ -442,7 +443,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public boolean registerClient() throws ExecutionException, InterruptedException,
-            io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
+            StatusRuntimeException, PackageManager.NameNotFoundException {
         if (!verifyMeRequirements()) {
             String message = "Matching engine requirements not met. Please allow app permissions " +
                     "and enable Enhanced Location Verification in Matching Engine Settings";
@@ -480,7 +481,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         CompletableFuture.runAsync(() -> {
             try {
                 registerClient();
-            } catch (ExecutionException | InterruptedException
+            } catch (ExecutionException | InterruptedException | StatusRuntimeException
                     | PackageManager.NameNotFoundException | IllegalArgumentException e) {
                 Log.e(TAG, "Exception in registerClientInBackground() for "+
                         mAppName+", "+mAppVersion+", "+mOrgName);
@@ -491,10 +492,20 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public boolean qosPrioritySessionCreate(String qosProfile, int duration) throws ExecutionException, InterruptedException,
-            io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
+            StatusRuntimeException, PackageManager.NameNotFoundException {
+        String message;
         if (!verifyMeRequirements()) {
-            String message = "Matching engine requirements not met. Please allow app permissions " +
+            message = "Matching engine requirements not met. Please allow app permissions " +
                     "and enable Enhanced Location Verification in Matching Engine Settings";
+            Log.e(TAG, message);
+            meHelperInterface.showError(message);
+            return false;
+        }
+        if (mDeviceIpv4 == null || mDeviceIpv4.equals("") ||
+                mAppInstIp == null || mAppInstIp.equals("") ||
+                mAppInstProto == null || mAppInstProto.equals("") ||
+                mTestPort == 0) {
+            message = "Closest cloudlet uninitialized. Perform 'Find Closest Cloudlet'.";
             Log.e(TAG, message);
             meHelperInterface.showError(message);
             return false;
@@ -514,16 +525,16 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         Log.i(TAG, "mQosPrioritySessionReply="+ mQosPrioritySessionReply);
         Log.i(TAG, "mQosPrioritySessionReply.getSessionId()="+ mQosPrioritySessionReply.getSessionId()+" mQosPrioritySessionReply.getHttpStatus()="+ mQosPrioritySessionReply.getHttpStatus());
         if (mQosPrioritySessionReply.getSessionId() == null || mQosPrioritySessionReply.getSessionId().length() == 0) {
-            String msg = "qosPrioritySessionCreate Failed. HttpStatus: " + mQosPrioritySessionReply.getHttpStatus();
-            Log.e(TAG, msg);
-            meHelperInterface.showError(msg);
+            message = "qosPrioritySessionCreate Failed. HttpStatus: " + mQosPrioritySessionReply.getHttpStatus();
+            Log.e(TAG, message);
+            meHelperInterface.showError(message);
             return false;
         }
         mQosSessionId = mQosPrioritySessionReply.getSessionId();
         mQosProfileName = mQosPrioritySessionReply.getProfile().name();
-        String msg = "Got session:\n"+getQosPrioritySessionDetails();
-        Log.i(TAG, msg);
-        meHelperInterface.showMessage(msg);
+        message = "Got session:\n"+getQosPrioritySessionDetails();
+        Log.i(TAG, message);
+        meHelperInterface.showMessage(message);
         return true;
     }
 
@@ -542,7 +553,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     }
 
     public boolean qosPrioritySessionDelete() throws ExecutionException, InterruptedException,
-            io.grpc.StatusRuntimeException, PackageManager.NameNotFoundException {
+            StatusRuntimeException, PackageManager.NameNotFoundException {
         if (!verifyMeRequirements()) {
             String message = "Matching engine requirements not met. Please allow app permissions " +
                     "and enable Enhanced Location Verification in Matching Engine Settings";
@@ -762,14 +773,14 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }
     }
 
-    public boolean getAppInstList() throws InterruptedException, ExecutionException, io.grpc.StatusRuntimeException {
+    public boolean getAppInstList() throws InterruptedException, ExecutionException, StatusRuntimeException {
         Log.i(TAG, "getAppInstList mAppName="+mAppName+" mAppVersion="+mAppVersion+" mOrgName="+mOrgName);
         mClosestCloudlet = null;
         try {
             if (!validateCookie(mSessionCookie)) {
                 return false;
             }
-        } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException e) {
+        } catch (ExecutionException | InterruptedException | PackageManager.NameNotFoundException | StatusRuntimeException e) {
             Log.e(TAG, "Exception in getAppInstList() for "+
                     mAppName+", "+mAppVersion+", "+mOrgName);
             e.printStackTrace();
@@ -855,7 +866,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
      * @throws ExecutionException
      * @throws PackageManager.NameNotFoundException
      */
-    private boolean validateCookie(String cookie) throws InterruptedException, ExecutionException, PackageManager.NameNotFoundException {
+    private boolean validateCookie(String cookie) throws InterruptedException, ExecutionException, PackageManager.NameNotFoundException, StatusRuntimeException {
         if (cookie != null) {
             // We already have a cookie. Decode and validate it.
             String[] parts = cookie.split("[.]");

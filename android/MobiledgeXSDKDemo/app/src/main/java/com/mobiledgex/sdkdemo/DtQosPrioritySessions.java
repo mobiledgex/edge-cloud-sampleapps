@@ -37,7 +37,7 @@ public class DtQosPrioritySessions {
         // Create dialog with QOS profile names.
         List<String> items = new ArrayList<>();
         for (AppClient.QosSessionProfile profileName : AppClient.QosSessionProfile.values()) {
-            if (!profileName.equals(QOS_NO_PRIORITY) && !profileName.name().equals(UNRECOGNIZED)) {
+            if (!profileName.equals(QOS_NO_PRIORITY) && !profileName.equals(UNRECOGNIZED)) {
                 items.add(profileName.name());
             }
         }
