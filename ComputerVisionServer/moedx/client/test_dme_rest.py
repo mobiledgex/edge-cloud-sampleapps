@@ -104,7 +104,7 @@ protocol = "http" # http or https
 # app_vers = "1.0"
 # carrier_name = ""
 
-tls_verify=False
+tls_verify=True
 session_cookie=None
 priority_session_id = ""
 qos_profile_name = ""
@@ -220,10 +220,9 @@ def qos_priority_session_create():
     }
     print(f"qos_priority_session_create: {data}")
     resp = requests.post(url, data=json.dumps(data), verify=tls_verify)
-    print(resp.content)
+    print(f"{resp.status_code} {resp.content}")
     decoded_json = json.loads(resp.content)
-    # fqdn_prefix = decoded_json["ports"][0]["fqdn_prefix"]
-    # print(f"Full URI: {fqdn_prefix}{fqdn}")
+    print(f"Session ID: {decoded_json['session_id']} Profile: {decoded_json['profile']}")
 
 def qos_priority_session_delete():
     global priority_session_id
@@ -236,8 +235,7 @@ def qos_priority_session_delete():
     }
     print(f"qos_priority_session_create: {data}")
     resp = requests.post(url, data=json.dumps(data), verify=tls_verify)
-    print(resp.content)
-    decoded_json = json.loads(resp.content)
+    print(f"{resp.status_code} {resp.content}")
 
 register_client()
 get_app_inst_list()
