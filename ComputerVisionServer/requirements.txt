@@ -16,8 +16,8 @@ websockets
 websocket-client
 uvloop
 httptools
-twisted==20.3.0
-channels==2.4.0
+twisted
+channels
 uvicorn
 redis
 whitenoise

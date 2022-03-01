@@ -141,7 +141,9 @@ def get_image_from_request(request, type):
             return HttpResponseBadRequest("Missing 'image' parameter")
         image = base64.b64decode(request.POST.get("image"))
     else:
-        return HttpResponseBadRequest("Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'")
+        msg = "Content-Type must be 'image/png', 'image/jpeg', 'multipart/form-data', or 'application/x-www-urlencoded'"
+        logger.error(msg)
+        return HttpResponseBadRequest(msg)
 
     if request.headers.get("Mobiledgex-Debug", "") == "true":
         save_debug_image(image, request, type)

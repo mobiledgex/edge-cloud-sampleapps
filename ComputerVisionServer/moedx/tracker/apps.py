@@ -23,8 +23,6 @@ import os
 
 logger = logging.getLogger(__name__)
 
-PERSISTENT_TCP_PORT_DEFAULT = 8011 # Can be overridden with envvar FD_PERSISTENT_TCP_PORT
-
 myFaceRecognizer = None
 myFaceDetector = None
 myObjectDetector = None
@@ -45,7 +43,7 @@ class TrackerConfig(AppConfig):
         # If this script is called by manage.py with with either "makemigrations" or "migrate",
         # we don't need to continue with initialization.
         if len(sys.argv) >= 2 and sys.argv[0] == "manage.py" and sys.argv[1] != "runserver":
-            logger.info("Called by '%s %s'. Aborting app initialization." %(sys.argv[0], sys.argv[1]))
+            logger.info("Called by '%s %s'. Skipping app initialization." %(sys.argv[0], sys.argv[1]))
             return
 
         from facial_detection.face_detector import FaceDetector
@@ -105,31 +103,3 @@ class TrackerConfig(AppConfig):
                 logger.warn('/openpose/ web services calls will not be allowed.')
                 myOpenPose = None
                 myOpWrapper = None
-
-        # Check for environment variables to override settings.
-        try:
-            PORT = int(os.environ['FD_PERSISTENT_TCP_PORT'])
-        except (ValueError, KeyError) as e:
-            PORT = PERSISTENT_TCP_PORT_DEFAULT
-
-        # Start the non-REST session-based TCP server.
-        HOST = "0.0.0.0"
-
-        try:
-            server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
-            server.setFaceDetector(myFaceDetector)
-            server.setFaceRecognizer(myFaceRecognizer)
-            server.setOpenPose(myOpenPose, myOpWrapper)
-            server.setObjectDetector(myObjectDetector)
-            ip, port = server.server_address
-            logger.info("ip=%s port=%d" %(ip, port))
-
-            # Start a thread with the server -- that thread will then start one
-            # more thread for each request
-            server_thread = threading.Thread(target=server.serve_forever)
-            # Exit the server thread when the main thread terminates
-            server_thread.daemon = True
-            server_thread.start()
-            logger.info("Persistent TCP Server loop running in thread: %s" %server_thread.name)
-        except OSError:
-            logger.warn("Persistent TCP Server already running on port %d" %PORT)
