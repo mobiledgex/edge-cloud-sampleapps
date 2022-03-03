@@ -70,7 +70,6 @@ public class ImageSender {
     protected String mScheme;
     protected String mHost;
     protected int mPort;
-    private int mPersistentTcpPort;
     protected RollingAverage mLatencyFullProcessRollingAvg;
     protected RollingAverage mLatencyNetOnlyRollingAvg;
     private int mTrainingCount;
@@ -95,7 +94,6 @@ public class ImageSender {
 
     private static ConnectionMode preferencesConnectionMode = ConnectionMode.REST;
     protected ConnectionMode mConnectionMode;
-    private SocketClientTcp mSocketClientTcp;
 
     protected long mStartTime;
     private int mOpcode;
@@ -106,7 +104,6 @@ public class ImageSender {
 
     public enum ConnectionMode {
         REST,
-        PERSISTENT_TCP,
         WEBSOCKET,
         QUIC,
         GRPC
@@ -134,7 +131,6 @@ public class ImageSender {
         private boolean tls = false;
         private String host;
         private int port;
-        private int persistentTcpPort;
         private ImageSender.CameraMode cameraMode;
 
         public Builder setActivity(Activity activity) {
@@ -167,11 +163,6 @@ public class ImageSender {
             return this;
         }
 
-        public Builder setPersistentTcpPort(int persistentTcpPort) {
-            this.persistentTcpPort = persistentTcpPort;
-            return this;
-        }
-
         public Builder setCameraMode(ImageSender.CameraMode cameraMode) {
             this.cameraMode = cameraMode;
             return this;
@@ -191,7 +182,6 @@ public class ImageSender {
         mTls = builder.tls;
         mHost = builder.host;
         mPort = builder.port;
-        mPersistentTcpPort = builder.persistentTcpPort;
         mContext = builder.activity;
         setCameraMode(builder.cameraMode);
 
@@ -220,9 +210,6 @@ public class ImageSender {
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
 
-        HandlerThread handlerThreadPersistentTcp = new HandlerThread("PersistentTcp"+mCloudLetType);
-        handlerThreadPersistentTcp.start();
-
         // Instantiate the RequestQueue.
         try {
             mRequestQueue = Volley.newRequestQueue(mContext);
@@ -241,20 +228,9 @@ public class ImageSender {
         }
         Log.i(TAG, "mConnectionMode="+mConnectionMode);
 
-        if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
-            initTcpSocketConnection();
-        }
-
         if (mConnectionMode == ConnectionMode.WEBSOCKET) {
             startWebSocketClient();
         }
-    }
-
-    private void initTcpSocketConnection() {
-        mSocketClientTcp = null;
-        // connect to the server
-        ConnectTask connectTask = new ConnectTask();
-        connectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     private final class ResultWebSocketListener extends WebSocketListener {
@@ -311,32 +287,6 @@ public class ImageSender {
         Log.i(TAG, mCloudLetType+" started WebSocket client. url: " + url);
     }
 
-    /*receive the message from server with asyncTask*/
-    public class ConnectTask extends AsyncTask<String,String,Void> {
-        @Override
-        protected Void doInBackground(String... message) {
-            mSocketClientTcp = new SocketClientTcp(mHost, mPersistentTcpPort,
-                    new SocketClientTcp.OnMessageReceived() {
-                @Override
-                public void messageReceived(String message) {
-                    try {
-                        if(message!=null) {
-                            long endTime = System.nanoTime();
-                            mBusy = false;
-                            mLatency = endTime - mStartTime;
-                            handleResponse(message, mLatency);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            Log.i(TAG, "mSocketClientTcp="+ mSocketClientTcp);
-            mSocketClientTcp.run();
-            return null;
-        }
-    }
-
     public void closeConnection() {
         Log.i(TAG, "closeConnection for "+mCloudLetType+" mConnectionMode="+mConnectionMode);
         if (mStringRequestMain != null) {
@@ -346,10 +296,6 @@ public class ImageSender {
         if (mWebSocket != null) {
             Log.i(TAG, "Closing WebSocket for "+mCloudLetType);
             mWebSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
-        }
-        if (mSocketClientTcp != null) {
-            Log.i(TAG, "Closing socket for "+mCloudLetType);
-            mSocketClientTcp.stopClient();
         }
     }
 
@@ -451,18 +397,7 @@ public class ImageSender {
 
         // Depending on the connection mode, choose the appropriate way to send the image
         // data to the server.
-        if(mConnectionMode == ConnectionMode.PERSISTENT_TCP) {
-            if(mSocketClientTcp == null) {
-                // The value may have been changed after starting the activity.
-                Log.w(TAG, "mSocketClientTcp not initialized yet. Initializing now.");
-                initTcpSocketConnection();
-                // Try again next image frame that's received.
-                mBusy = false;
-                return;
-            }
-            mSocketClientTcp.send(mOpcode, bytes);
-
-        } else if(mConnectionMode == ConnectionMode.REST) {
+        if(mConnectionMode == ConnectionMode.REST) {
             mScheme =  mTls ? "https" : "http";
             String url = mScheme+"://"+ mHost +":"+mPort + mDjangoUrl;
             Log.i(TAG, "url="+url+" length: "+bytes.length);
@@ -518,7 +453,7 @@ public class ImageSender {
     }
 
     /**
-     * Both the persistent TCP server and the REST server will return results in the same JSON
+     * Both the WebSocket server and the REST server will return results in the same JSON
      * format. This method parses the results and updates the UI with the returned values.
      *
      * @param response
@@ -750,7 +685,7 @@ public class ImageSender {
      * Sets the static preferencesConnectionMode for the class, and if any non-null instances are
      * included, sets the mConnectionMode for each.
      *
-     * @param preferencesConnectionMode  Either REST or PERSISTENT_TCP.
+     * @param preferencesConnectionMode  Either REST or WEBSOCKET.
      * @param imageSenders Any ImageSender instances to set the instance variable value on.
      */
     public static void setPreferencesConnectionMode(ConnectionMode preferencesConnectionMode, ImageSender... imageSenders) {
