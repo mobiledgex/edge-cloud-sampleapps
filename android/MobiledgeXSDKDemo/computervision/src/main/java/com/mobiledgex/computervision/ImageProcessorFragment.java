@@ -139,7 +139,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
 
     public static final int FACE_DETECTION_HOST_PORT = 8008;
     private static final int FACE_TRAINING_HOST_PORT = 8009;
-    protected static final int PERSISTENT_TCP_PORT = 8011;
     protected boolean mTlsCloud = true;
     public static final String DEF_FACE_HOST_TRAINING = "opencv.facetraining.mobiledgex.net";
 
@@ -356,7 +355,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setTls(tls)
                 .setHost(mHostDetectionEdge)
                 .setPort(FACE_DETECTION_HOST_PORT)
-                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .setCameraMode(mCameraMode)
                 .build();
     }
@@ -1224,7 +1222,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setHost(mHostDetectionCloud)
                 .setTls(mTlsCloud)
                 .setPort(FACE_DETECTION_HOST_PORT)
-                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .setCameraMode(mCameraMode)
                 .build();
 
@@ -1254,7 +1251,6 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
                 .setCloudLetType(CloudletType.PUBLIC)
                 .setHost(mHostTraining)
                 .setPort(FACE_TRAINING_HOST_PORT)
-                .setPersistentTcpPort(PERSISTENT_TCP_PORT)
                 .build();
 
         //One more call to get preferences for ImageSenders
