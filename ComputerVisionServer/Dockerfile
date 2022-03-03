@@ -28,8 +28,6 @@ RUN python manage.py collectstatic --noinput
 
 # port for REST
 EXPOSE 8008/tcp
-# port for persistent TCP server
-EXPOSE 8011/tcp
 
 # Fix for "click" Python library, a uvicorn dependency.
 ENV LC_ALL=C.UTF-8
