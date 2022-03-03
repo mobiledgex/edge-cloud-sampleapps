@@ -347,62 +347,6 @@ class RestClient(Client):
 
         return requests.post(self.url, data=data)
 
-class PersistentTcpClient(Client):
-    def __init__(self, host, port=8011):
-        if port is None:
-            port = 8011
-        Client.__init__(self, host, port)
-
-    def start(self):
-        Client.start(self)
-        if self.endpoint == "/detector/detect/":
-            op_code = 1
-        elif self.endpoint == "/recognizer/predict/":
-            op_code = 2
-        elif self.endpoint == "/openpose/detect/":
-            op_code = 3
-        elif self.endpoint == "/object/detect/":
-            op_code = 4
-        else:
-            logger.error("Unknown endpoint: %s" %self.endpoint)
-            return
-
-        # Open the connection one time, then send the image data multiple times.
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        logger.info("host:port = %s:%d" %(self.host, self.port))
-        sock.connect((self.host, self.port))
-
-        logger.debug("repeating %s %d times" %(op_code, self.num_repeat))
-        while True:
-            data = self.get_next_image()
-            if data is None:
-                break
-
-            length = len(data)
-            logger.debug("data length = %d" %length)
-            self.latency_start_time = time.time()
-            sock.sendall(struct.pack('!I', op_code))
-            sock.sendall(struct.pack('!I', length))
-            sock.sendall(data)
-
-            lengthbuf = sock.recv(4)
-            length, = struct.unpack('!I', lengthbuf)
-            result = str(sock.recv(length), "utf-8")
-
-            self.process_result(result)
-
-        logger.debug("Done")
-        self.display_results()
-
-    def recvall(sock, count):
-        buf = b''
-        while count:
-            newbuf = sock.recv(count)
-            if not newbuf: return None
-            buf += newbuf
-            count -= len(newbuf)
-        return buf
-
 class WebSocketClient(Client):
     def __init__(self, host, port=8008):
         if port is None:
@@ -481,7 +425,7 @@ def benchmark(arguments=None, django=False):
     parser.add_argument("-s", "--server", required=True, help="Server host name or IP address.")
     parser.add_argument("-e", "--endpoint", required=True, choices=["/detector/detect/", "/recognizer/predict/", "/openpose/detect/", "/object/detect/", "/trainer/add/", "/trainer/predict/"], help="Endpoint of web service to call.")
     parser.add_argument("-n", "--network-latency", required=False, choices=["PING", "SOCKET", "NONE"], default="SOCKET", help="Network-only latency test method.")
-    parser.add_argument("-c", "--connection-method", required=True, choices=["rest", "socket", "websocket"], help="Connection type.")
+    parser.add_argument("-c", "--connection-method", required=True, choices=["rest", "websocket"], help="Connection type.")
     parser.add_argument("-f", "--filename", required=False, help="Name of image file to send.")
     parser.add_argument("-d", "--directory", required=False, help="Directory containing image files to send (*.jpg, *.png).")
     parser.add_argument("-r", "--repeat", type=int, default=1, help="Number of times to repeat.")
@@ -516,8 +460,6 @@ def benchmark(arguments=None, django=False):
     for x in range(args.threads):
         if args.connection_method == "rest":
             client = RestClient(args.server, args.port)
-        elif args.connection_method == "socket":
-            client = PersistentTcpClient(args.server, args.port)
         elif args.connection_method == "websocket":
             client = WebSocketClient(args.server, args.port)
         else:
