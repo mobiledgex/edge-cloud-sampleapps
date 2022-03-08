@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2022 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -98,7 +98,7 @@ public class Cloudlet implements Serializable {
     private Context mContext;
     private boolean mRemoved;
 
-    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, String fqdnPrefix, boolean tls, Marker marker, int port) {
+    public Cloudlet(String cloudletName, String appName, String carrierName, LatLng gpsLocation, double distance, String fqdn, String fqdnPrefix, boolean tls, Marker marker, int port, Context context) {
         Log.d(TAG, "Cloudlet contructor. cloudletName="+cloudletName);
         mCloudletName = cloudletName;
         mAppName = appName;
@@ -107,6 +107,7 @@ public class Cloudlet implements Serializable {
         mLongitude = gpsLocation.longitude;
         mDistance = distance;
         mMarker = marker;
+        mContext = context;
         setUri(fqdnPrefix, fqdn, tls, port);
 
         if(CloudletListHolder.getLatencyTestAutoStart()) {
@@ -257,10 +258,6 @@ public class Cloudlet implements Serializable {
             ex.printStackTrace();
             return false;
         }
-    }
-
-    public void setContext(Context context) {
-        mContext = context;
     }
 
     public void setRemoved(boolean removed) {

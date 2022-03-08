@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2022 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,6 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
         }
         Log.i(TAG, "cloudlet="+cloudlet+" "+cloudlet.getCloudletName());
         cloudlet.setSpeedTestResultsListener(this);
-        cloudlet.setContext(getApplicationContext());
 
         cloudletNameTv = findViewById(R.id.cloudletName);
         appNameTv = findViewById(R.id.appName);
@@ -213,6 +212,8 @@ public class CloudletDetailsActivity extends AppCompatActivity implements SpeedT
                         latencyMessageTv.setText("Ping failed");
                     } else if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.socket) {
                         latencyMessageTv.setText("Socket test failed");
+                    } else if(latencyTestMethod == CloudletListHolder.LatencyTestMethod.NetTest) {
+                        latencyMessageTv.setText("NetTest connection failed");
                     }
                 }
                 latencyAvgTv.setText(formatValue(cloudlet.getLatencyAvg())+" ms");

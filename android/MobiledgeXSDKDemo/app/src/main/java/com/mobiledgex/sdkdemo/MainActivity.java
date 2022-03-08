@@ -1,5 +1,5 @@
 /**
- * Copyright 2018-2021 MobiledgeX, Inc. All rights and licenses reserved.
+ * Copyright 2018-2022 MobiledgeX, Inc. All rights and licenses reserved.
  * MobiledgeX, Inc. 156 2nd Street #408, San Francisco, CA 94105
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -295,6 +295,7 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+
         fabFindCloudlets = findViewById(R.id.fab2);
         fabFindCloudlets.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -353,16 +354,24 @@ public class MainActivity extends AppCompatActivity
         if (mRouteIsPlaying) {
             fabPlayRoute.setImageResource(R.drawable.ic_baseline_play_arrow_24);
             mRouteIsPlaying = false;
+            if(mValueAnimator != null) {
+                mValueAnimator.pause();
+            }
         } else {
             fabPlayRoute.setImageResource(R.drawable.ic_baseline_pause_24);
             mEventLogViewer.mAutoExpand = false;
             mUserLocationMarker.setPosition(mStartMarker.getPosition());
+            mRouteIsPlaying = true;
+            if(mValueAnimator != null && mValueAnimator.isPaused()) {
+                Log.i(TAG, "Resuming paused route animation");
+                mValueAnimator.resume();
+                return;
+            }
             if (mRouteMode == RouteMode.FLYING) {
                 animateMarker(mRouteMode, mUserLocationMarker, mEndMarker.getPosition(), mFlyingAnimDuration);
             } else if (mRouteMode == RouteMode.DRIVING) {
                 animateMarker(mRouteMode, mUserLocationMarker, mEndMarker.getPosition(), mDrivingAnimDuration);
             }
-            mRouteIsPlaying = true;
         }
     }
 
@@ -778,7 +787,6 @@ public class MainActivity extends AppCompatActivity
         }
         mWaypointMarkers.clear();
         fabPlayRoute.setVisibility(View.GONE);
-        /////////////////////////////////////////////////////////////////////
 
         if (item.isChecked()) {
             if (routeModePrevItem == item) {
@@ -803,12 +811,7 @@ public class MainActivity extends AppCompatActivity
             mRouteMode = RouteMode.DRIVING;
             initRouteMarkers(item.getItemId());
             item.setChecked(true);
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
-                }
-            });
+            routeBetweenPoints(mStartMarker.getPosition(), mEndMarker.getPosition(), mWaypointMarkers);
         }
     }
 
@@ -1588,6 +1591,7 @@ public class MainActivity extends AppCompatActivity
                     .setTls(mTls)
                     .setMarker(marker)
                     .setPort(publicPort)
+                    .setContext(getApplicationContext())
                     .createCloudlet();
             initCloudletMarker(cloudlet);
         }
@@ -1609,7 +1613,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onInfoWindowClick(Marker marker) {
 
-        if(marker.getTag().toString().equalsIgnoreCase("user")) {
+        if(marker.getTag() != null && marker.getTag().toString().equalsIgnoreCase("user")) {
             Log.d(TAG, "skipping mUserLocationMarker");
             return;
         }
@@ -1899,121 +1903,149 @@ public class MainActivity extends AppCompatActivity
      * Based on a starting and ending point, get route from the Google Directions API, and use
      * the returned data to build paths to draw on the map, and build a list of points to
      * collect QOS data for.
-     *  @param startLatLng  The route's starting point.
+     * @param startLatLng  The route's starting point.
      * @param endLatLng  The route's ending point.
      * @param waypointMarkers  List of Waypoint markers to added to the route.
      */
     private void routeBetweenPoints(LatLng startLatLng, LatLng endLatLng, List<Marker> waypointMarkers) {
-        Log.i(TAG, "routeBetweenPoints with "+waypointMarkers.size()+" waypoint(s)");
-        long start = System.currentTimeMillis();
-
-        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
-
-        //Execute Directions API request
-        GeoApiContext context = new GeoApiContext.Builder()
-                .apiKey(mApiKey)
-                .build();
-
+        Log.i(TAG, "routeBetweenPoints with " + waypointMarkers.size() + " waypoint(s)");
         if (mRoutePolyLine != null) {
             mRoutePolyLine.remove();
         }
-        DirectionsApiRequest.Waypoint[] waypoints = new DirectionsApiRequest.Waypoint[waypointMarkers.size()];
-        for (int i = 0; i < waypointMarkers.size(); i++) {
-            Marker marker = waypointMarkers.get(i);
-            // Converting between com.google.maps.model.LatLng
-            // and com.google.android.gms.maps.model.Latlng is a pain!
-            waypoints[i] = new DirectionsApiRequest.Waypoint(new com.google.maps.model.LatLng(marker.getPosition().latitude, marker.getPosition().longitude));
+        if (mValueAnimator != null) {
+            mValueAnimator.cancel();
         }
-        try {
-            DirectionsResult calculatedRoutes = DirectionsApi.newRequest(context)
-                    .alternatives(false)
-                    .mode(TravelMode.DRIVING)
-                    .origin(new com.google.maps.model.LatLng(startLatLng.latitude, startLatLng.longitude))
-                    .waypoints(waypoints)
-                    .destination(new com.google.maps.model.LatLng(endLatLng.latitude, endLatLng.longitude))
-                    .await();
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                long start = System.currentTimeMillis();
 
-            if (calculatedRoutes == null || calculatedRoutes.routes.length == 0) {
-                Log.w(TAG, "calculatedRoutes has no content");
-                showError("No driving route found.");
-                fabPlayRoute.setVisibility(View.GONE);
-                return;
-            }
-            Log.d(TAG, "calculatedRoutes="+calculatedRoutes.routes.length);
-            fabPlayRoute.setVisibility(View.VISIBLE);
+                LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
 
-            int numPoints = 0;
-            //Loop through legs and steps to get encoded polylines of each step
-            for (DirectionsRoute route: calculatedRoutes.routes) {
-                List<LatLng> path = new ArrayList<>();
+                //Execute Directions API request
+                GeoApiContext context = new GeoApiContext.Builder()
+                        .apiKey(mApiKey)
+                        .build();
 
-                if (route.legs !=null) {
-                    for (int i=0; i<route.legs.length; i++) {
-                        DirectionsLeg leg = route.legs[i];
-                        if (leg.steps != null) {
-                            for (int j=0; j<leg.steps.length;j++) {
-                                DirectionsStep step = leg.steps[j];
-                                if (step.steps != null && step.steps.length >0) {
-                                    for (int k=0; k<step.steps.length;k++){
-                                        DirectionsStep step1 = step.steps[k];
-                                        EncodedPolyline points1 = step1.polyline;
-                                        //Decode polyline and add points to list of route coordinates
-                                        List<com.google.maps.model.LatLng> coords = points1.decodePath();
-                                        for (com.google.maps.model.LatLng coord : coords) {
-                                            LatLng latLng = new LatLng(coord.lat, coord.lng);
-                                            path.add(latLng);
+                DirectionsApiRequest.Waypoint[] waypoints = new DirectionsApiRequest.Waypoint[waypointMarkers.size()];
+                for (int i = 0; i < waypointMarkers.size(); i++) {
+                    Marker marker = waypointMarkers.get(i);
+                    // Converting between com.google.maps.model.LatLng
+                    // and com.google.android.gms.maps.model.Latlng is a pain!
+                    waypoints[i] = new DirectionsApiRequest.Waypoint(new com.google.maps.model.LatLng(marker.getPosition().latitude, marker.getPosition().longitude));
+                }
+                try {
+                    DirectionsResult calculatedRoutes = null;
+                        calculatedRoutes = DirectionsApi.newRequest(context)
+                                .alternatives(false)
+                                .mode(TravelMode.DRIVING)
+                                .origin(new com.google.maps.model.LatLng(startLatLng.latitude, startLatLng.longitude))
+                                .waypoints(waypoints)
+                                .destination(new com.google.maps.model.LatLng(endLatLng.latitude, endLatLng.longitude))
+                                .await();
+
+                    if (calculatedRoutes == null || calculatedRoutes.routes.length == 0) {
+                        Log.w(TAG, "calculatedRoutes has no content");
+                        showError("No driving route found.");
+                        toggleFabPlayRoute(View.GONE);
+                        return;
+                    }
+                    Log.d(TAG, "calculatedRoutes=" + calculatedRoutes.routes.length);
+                    toggleFabPlayRoute(View.VISIBLE);
+
+                    int numPoints = 0;
+                    //Loop through legs and steps to get encoded polylines of each step
+                    for (DirectionsRoute route : calculatedRoutes.routes) {
+                        List<LatLng> path = new ArrayList<>();
+
+                        if (route.legs != null) {
+                            for (int i = 0; i < route.legs.length; i++) {
+                                DirectionsLeg leg = route.legs[i];
+                                if (leg.steps != null) {
+                                    for (int j = 0; j < leg.steps.length; j++) {
+                                        DirectionsStep step = leg.steps[j];
+                                        if (step.steps != null && step.steps.length > 0) {
+                                            for (int k = 0; k < step.steps.length; k++) {
+                                                DirectionsStep step1 = step.steps[k];
+                                                EncodedPolyline points1 = step1.polyline;
+                                                //Decode polyline and add points to list of route coordinates
+                                                List<com.google.maps.model.LatLng> coords = points1.decodePath();
+                                                for (com.google.maps.model.LatLng coord : coords) {
+                                                    LatLng latLng = new LatLng(coord.lat, coord.lng);
+                                                    path.add(latLng);
+                                                }
+                                            }
+                                        } else {
+                                            EncodedPolyline points = step.polyline;
+                                            //Decode polyline and add points to list of route coordinates
+                                            List<com.google.maps.model.LatLng> coords = points.decodePath();
+                                            for (com.google.maps.model.LatLng coord : coords) {
+                                                LatLng latLng = new LatLng(coord.lat, coord.lng);
+                                                path.add(latLng);
+                                            }
                                         }
-                                    }
-                                } else {
-                                    EncodedPolyline points = step.polyline;
-                                    //Decode polyline and add points to list of route coordinates
-                                    List<com.google.maps.model.LatLng> coords = points.decodePath();
-                                    for (com.google.maps.model.LatLng coord : coords) {
-                                        LatLng latLng = new LatLng(coord.lat, coord.lng);
-                                        path.add(latLng);
                                     }
                                 }
                             }
                         }
-                    }
-                }
 
-                // Reduce the number of points in the path.
-                List<LatLng> reducedPath = new ArrayList<>();
-                for (LatLng latLng : path) {
-                    numPoints++;
-                    if (numPoints % mRoutePointModulo == 0) {
-                        reducedPath.add(latLng);
+                        // Reduce the number of points in the path.
+                        List<LatLng> reducedPath = new ArrayList<>();
+                        for (LatLng latLng : path) {
+                            numPoints++;
+                            if (numPoints % mRoutePointModulo == 0) {
+                                reducedPath.add(latLng);
+                                boundsBuilder.include(latLng);
+                            }
+                        }
+
+                        long elapsed = System.currentTimeMillis() - start;
+                        float percent = 100f / mRoutePointModulo;
+                        Log.d(TAG, elapsed + " ms to generate path.size()=" + path.size() + ". Kept every " + mRoutePointModulo + "th value, reduced to " + percent + "%");
+
+                        //Draw the polyline
+                        if (path.size() > 0) {
+                            PolylineOptions opts = new PolylineOptions().addAll(reducedPath).color(Color.BLUE).width(8);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mRoutePolyLine = mGoogleMap.addPolyline(opts);
+                                }
+                            });
+                        }
+                    }
+
+                    // Include cloudlet locations in bounds we are going to zoom to.
+                    for (LatLng latLng : mCloudletLatLngs) {
                         boundsBuilder.include(latLng);
                     }
-                }
+                    LatLngBounds bounds = boundsBuilder.build();
+                    int width = getResources().getDisplayMetrics().widthPixels;
+                    int height = getResources().getDisplayMetrics().heightPixels;
+                    int padding = (int) (height * 0.01); // offset from edges of the map 1% of screen
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mGoogleMap.animateCamera(cu);
+                        }
+                    });
 
-                long elapsed = System.currentTimeMillis() - start;
-                float percent = 100f / mRoutePointModulo;
-                Log.d(TAG, elapsed+" ms to generate path.size()="+path.size()+ ". Kept every "+ mRoutePointModulo +"th value, reduced to "+percent+"%");
-
-                //Draw the polyline
-                if (path.size() > 0) {
-                    PolylineOptions opts = new PolylineOptions().addAll(reducedPath).color(Color.BLUE).width(8);
-                    mRoutePolyLine = mGoogleMap.addPolyline(opts);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    Log.e(TAG, "Error during routeBetweenPoints: " + ex.getLocalizedMessage());
+                    showError("Error: " + ex.getLocalizedMessage());
                 }
             }
+        });
+    }
 
-            // Include cloudlet locations in bounds we are going to zoom to.
-            for (LatLng latLng : mCloudletLatLngs) {
-                boundsBuilder.include(latLng);
+    public void toggleFabPlayRoute(int visibility) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                fabPlayRoute.setVisibility(visibility);
             }
-            LatLngBounds bounds = boundsBuilder.build();
-            int width = getResources().getDisplayMetrics().widthPixels;
-            int height = getResources().getDisplayMetrics().heightPixels;
-            int padding = (int) (height * 0.01); // offset from edges of the map 1% of screen
-            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
-            mGoogleMap.animateCamera(cu);
-
-        } catch(Exception ex) {
-            ex.printStackTrace();
-            Log.e(TAG, "Error during routeBetweenPoints: "+ex.getLocalizedMessage());
-            showError("Error: "+ex.getLocalizedMessage());
-        }
+        });
     }
 }
