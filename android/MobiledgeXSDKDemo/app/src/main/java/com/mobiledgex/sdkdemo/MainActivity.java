@@ -1936,13 +1936,13 @@ public class MainActivity extends AppCompatActivity
                 }
                 try {
                     DirectionsResult calculatedRoutes = null;
-                        calculatedRoutes = DirectionsApi.newRequest(context)
-                                .alternatives(false)
-                                .mode(TravelMode.DRIVING)
-                                .origin(new com.google.maps.model.LatLng(startLatLng.latitude, startLatLng.longitude))
-                                .waypoints(waypoints)
-                                .destination(new com.google.maps.model.LatLng(endLatLng.latitude, endLatLng.longitude))
-                                .await();
+                    calculatedRoutes = DirectionsApi.newRequest(context)
+                            .alternatives(false)
+                            .mode(TravelMode.DRIVING)
+                            .origin(new com.google.maps.model.LatLng(startLatLng.latitude, startLatLng.longitude))
+                            .waypoints(waypoints)
+                            .destination(new com.google.maps.model.LatLng(endLatLng.latitude, endLatLng.longitude))
+                            .await();
 
                     if (calculatedRoutes == null || calculatedRoutes.routes.length == 0) {
                         Log.w(TAG, "calculatedRoutes has no content");
