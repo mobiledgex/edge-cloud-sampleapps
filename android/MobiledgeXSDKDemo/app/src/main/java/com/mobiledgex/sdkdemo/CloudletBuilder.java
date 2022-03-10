@@ -1,5 +1,7 @@
 package com.mobiledgex.sdkdemo;
 
+import android.content.Context;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
@@ -14,6 +16,7 @@ public class CloudletBuilder {
     private boolean tls;
     private Marker marker;
     private int port;
+    private Context context;
 
     public CloudletBuilder setCloudletName(String cloudletName) {
         this.cloudletName = cloudletName;
@@ -65,7 +68,12 @@ public class CloudletBuilder {
         return this;
     }
 
+    public CloudletBuilder setContext(Context context) {
+        this.context = context;
+        return this;
+    }
+
     public Cloudlet createCloudlet() {
-        return new Cloudlet(cloudletName, appName, carrierName, gpsLocation, distance, fqdn, fqdnPrefix, tls, marker, port);
+        return new Cloudlet(cloudletName, appName, carrierName, gpsLocation, distance, fqdn, fqdnPrefix, tls, marker, port, context);
     }
 }
