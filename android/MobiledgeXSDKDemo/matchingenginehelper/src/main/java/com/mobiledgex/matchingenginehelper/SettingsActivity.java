@@ -200,6 +200,14 @@ public class SettingsActivity extends AppCompatActivity implements
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
 
+            // Disable/Enable "Operator" items based on pref from another page. Can't use
+            // regular `android:dependency` to control this because that's already used
+            // for the "Use Default Operator" checkbox dependency.
+            boolean wifiOnly = prefs.getBoolean(getResources().getString(R.string.pref_use_wifi_only), false);
+            Log.i(TAG, "wifiOnly="+wifiOnly);
+            findPreference(prefKeyDefaultOperatorName).setEnabled(!wifiOnly);
+            findPreference(prefKeyOperatorName).setEnabled(!wifiOnly);
+
             // Initialize summary values for these keys.
             onSharedPreferenceChanged(prefs, prefKeyMeLocationVerification);
             onSharedPreferenceChanged(prefs, prefKeyDefaultOperatorName);
@@ -297,7 +305,12 @@ public class SettingsActivity extends AppCompatActivity implements
 
             if (key.equals(prefKeyOperatorName)) {
                 String summary = getResources().getString(R.string.pref_summary_operator_name);
-                pref.setSummary(summary + ": " + ((EditTextPreference)pref).getText());
+                summary += ": " + ((EditTextPreference)pref).getText();
+                boolean wifiOnly = prefs.getBoolean(getResources().getString(R.string.pref_use_wifi_only), false);
+                if (wifiOnly) {
+                    summary += ("\n(Disabled due to \"Use Wifi Only\" being turned on.)");
+                }
+                pref.setSummary(summary);
             }
 
             if (key.equals(prefKeyDefaultAppInfo)) {

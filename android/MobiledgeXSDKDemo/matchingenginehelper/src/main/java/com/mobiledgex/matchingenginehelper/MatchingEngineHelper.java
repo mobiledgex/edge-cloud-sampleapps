@@ -100,7 +100,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
     private String mDefaultCarrierName;
     private String mDefaultDmeHostname;
     public String mDmeHostname;
-    public String mCarrierName;
+    private String mCarrierName;
     public String mAppName;
     public String mAppVersion;
     public String mOrgName;
@@ -271,7 +271,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         onEdgeEventPreferenceChanged(prefs, prefKeyEnableEdgeEvents);
         onEdgeEventPreferenceChanged(prefs, prefKeyOverrideDefaultConfig);
 
-        Log.i(TAG, "mDmeHostname="+ mDmeHostname +" networkSwitchingAllowed="+mNetworkSwitchingAllowed+" mCarrierName="+mCarrierName);
+        Log.i(TAG, "mDmeHostname="+ mDmeHostname +" networkSwitchingAllowed="+mNetworkSwitchingAllowed+" mCarrierName="+getCarrierName());
 
         // Watch for any updated preferences:
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -454,7 +454,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         AppClient.RegisterClientRequest registerClientRequest;
         AppClient.RegisterClientReply registerReply;
         registerClientRequest = me.createDefaultRegisterClientRequest(mActivity, mOrgName)
-                .setAppName(mAppName).setAppVers(mAppVersion).setCarrierName(mCarrierName).build();
+                .setAppName(mAppName).setAppVers(mAppVersion).setCarrierName(getCarrierName()).build();
         registerReply = me.registerClient(registerClientRequest, mDmeHostname, mDmePort,10000);
         Log.i(TAG, "registerClientRequest="+registerClientRequest);
         Log.i(TAG, "registerClientRequest: "
@@ -698,7 +698,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
             return false;
         }
         AppClient.FindCloudletRequest findCloudletRequest;
-        findCloudletRequest = me.createDefaultFindCloudletRequest(mActivity, getLocationForMatching()).setCarrierName(mCarrierName).build();
+        findCloudletRequest = me.createDefaultFindCloudletRequest(mActivity, getLocationForMatching()).setCarrierName(getCarrierName()).build();
         mClosestCloudlet = me.findCloudlet(findCloudletRequest,
                 mDmeHostname, mDmePort,10000, mFindCloudletMode);
 
@@ -789,7 +789,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         }
 
         AppClient.AppInstListRequest appInstListRequest
-                = me.createDefaultAppInstListRequest(mActivity, getLocationForMatching()).setCarrierName(mCarrierName).setLimit(mAppInstancesLimit).build();
+                = me.createDefaultAppInstListRequest(mActivity, getLocationForMatching()).setCarrierName(getCarrierName()).setLimit(mAppInstancesLimit).build();
         if(appInstListRequest != null) {
             AppClient.AppInstListReply cloudletList = me.getAppInstList(appInstListRequest,
                     mDmeHostname, mDmePort, 10000);
@@ -819,7 +819,7 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         // Location Verification (Blocking, or use verifyLocationFuture):
         AppClient.VerifyLocationRequest verifyRequest =
                 me.createDefaultVerifyLocationRequest(mActivity, getLocationForMatching())
-                        .setCarrierName(mCarrierName).build();
+                        .setCarrierName(getCarrierName()).build();
         if (verifyRequest != null) {
             AppClient.VerifyLocationReply verifiedLocation =
                     me.verifyLocation(verifyRequest, mDmeHostname, mDmePort, 10000);
@@ -1218,6 +1218,14 @@ public class MatchingEngineHelper implements SharedPreferences.OnSharedPreferenc
         if (key.equals(prefKeyAutoMigration)) {
             boolean value = prefs.getBoolean(key, false);
             me.setAutoMigrateEdgeEventsConnection(value);
+        }
+    }
+
+    public String getCarrierName() {
+        if (me.isUseWifiOnly()) {
+            return "";
+        } else {
+            return mCarrierName;
         }
     }
 
