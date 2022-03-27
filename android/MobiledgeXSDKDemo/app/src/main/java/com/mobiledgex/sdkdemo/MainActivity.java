@@ -552,11 +552,15 @@ public class MainActivity extends AppCompatActivity
                 sb.append(str);
             }
             String htmlData = sb.toString();
+            String carrierName = meHelper.getCarrierName();
+            if (carrierName.equals("")) {
+                carrierName = "blank (wildccard)";
+            }
             htmlData = htmlData.replace("${androidAppVersion}", appVersion)
                     .replace("${appName}", meHelper.mAppName)
                     .replace("${appVersion}", meHelper.mAppVersion)
                     .replace("${orgName}", meHelper.mOrgName)
-                    .replace("${carrier}", meHelper.mCarrierName)
+                    .replace("${carrier}", carrierName)
                     .replace("${region}", meHelper.mDmeHostname)
                     .replace(".dme.mobiledgex.net", "");
             Log.i(TAG, "htmlData=\n"+htmlData);
@@ -739,7 +743,7 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, QoeMapActivity.class);
             Log.i(TAG, "mDmeHostname="+ meHelper. mDmeHostname);
             intent.putExtra(QoeMapActivity.EXTRA_HOSTNAME, meHelper.mDmeHostname);
-            intent.putExtra(QoeMapActivity.EXTRA_CARRIER_NAME, meHelper.mCarrierName);
+            intent.putExtra(QoeMapActivity.EXTRA_CARRIER_NAME, meHelper.getCarrierName());
             startActivity(intent);
             return true;
         } else if (id == R.id.nav_google_signin) {
