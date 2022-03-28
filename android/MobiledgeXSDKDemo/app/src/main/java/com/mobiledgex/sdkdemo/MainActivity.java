@@ -589,7 +589,7 @@ public class MainActivity extends AppCompatActivity
                                 allSettings.append(PrefUtil.getPrefsFromResource("CV UI Settings", getResources(), prefs, R.xml.pref_ui));
                                 allSettings.append(PrefUtil.getPrefsFromResource("CV Override Hostname Settings", getResources(), prefs, R.xml.pref_overrides));
                                 ClipboardManager clipboard = (ClipboardManager) getApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                                ClipData clip = ClipData.newPlainText("simple text", allSettings);
+                                ClipData clip = ClipData.newPlainText("MobiledgeX Preferences", allSettings);
                                 clipboard.setPrimaryClip(clip);
                                 Log.i(TAG, "allSettings =\n" + allSettings);
                                 Toast.makeText(getApplicationContext(), "Settings copied to clipboard.", Toast.LENGTH_SHORT).show();
