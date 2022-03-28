@@ -25,6 +25,9 @@ import static com.mobiledgex.matchingenginehelper.MatchingEngineHelper.mEdgeEven
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -326,7 +329,7 @@ public class MainActivity extends AppCompatActivity
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.download_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.upload_size));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.latency_packets));
-        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_method));
+        onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_cv_latency_method));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_latency_autostart));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_driving_time_seekbar));
         onSharedPreferenceChanged(prefs, getResources().getString(R.string.pref_flying_time_seekbar));
@@ -554,7 +557,7 @@ public class MainActivity extends AppCompatActivity
             String htmlData = sb.toString();
             String carrierName = meHelper.getCarrierName();
             if (carrierName.equals("")) {
-                carrierName = "blank (wildccard)";
+                carrierName = "blank (wildcard)";
             }
             htmlData = htmlData.replace("${androidAppVersion}", appVersion)
                     .replace("${appName}", meHelper.mAppName)
@@ -573,6 +576,24 @@ public class MainActivity extends AppCompatActivity
                     .setTitle(appName)
                     .setCancelable(true)
                     .setPositiveButton(R.string.ok, null)
+                    .setNeutralButton(R.string.copy_settings,
+                            (dialog, which) -> {
+                                // Copy all settings to system clipboard.
+                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                                StringBuffer allSettings = new StringBuffer("");
+                                allSettings.append(PrefUtil.getPrefsFromResource("Matching Engine Settings", getResources(), prefs, R.xml.pref_matching_engine));
+                                allSettings.append(PrefUtil.getPrefsFromResource("General Settings", getResources(), prefs, R.xml.pref_general));
+                                allSettings.append(PrefUtil.getPrefsFromResource("Speed Test Settings", getResources(), prefs, R.xml.pref_speed_test));
+                                allSettings.append(PrefUtil.getPrefsFromResource("Route Mode Settings", getResources(), prefs, R.xml.pref_route_mode));
+                                allSettings.append(PrefUtil.getPrefsFromResource("CV Network Settings", getResources(), prefs, R.xml.pref_network));
+                                allSettings.append(PrefUtil.getPrefsFromResource("CV UI Settings", getResources(), prefs, R.xml.pref_ui));
+                                allSettings.append(PrefUtil.getPrefsFromResource("CV Override Hostname Settings", getResources(), prefs, R.xml.pref_overrides));
+                                ClipboardManager clipboard = (ClipboardManager) getApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                                ClipData clip = ClipData.newPlainText("simple text", allSettings);
+                                clipboard.setPrimaryClip(clip);
+                                Log.i(TAG, "allSettings =\n" + allSettings);
+                                Toast.makeText(getApplicationContext(), "Settings copied to clipboard.", Toast.LENGTH_SHORT).show();
+                            })
                     .show();
         } catch (IOException e) {
             e.printStackTrace();
@@ -1773,7 +1794,7 @@ public class MainActivity extends AppCompatActivity
         String prefKeyDownloadSize = getResources().getString(R.string.download_size);
         String prefKeyUploadSize = getResources().getString(R.string.upload_size);
         String prefKeyNumPackets = getResources().getString(R.string.latency_packets);
-        String prefKeyLatencyMethod = getResources().getString(R.string.pref_latency_method);
+        String prefKeyLatencyMethod = getResources().getString(R.string.pref_cv_latency_method);
         String prefKeyLatencyAutoStart = getResources().getString(R.string.pref_latency_autostart);
         String prefKeyDrivingAnimDuration = getResources().getString(R.string.pref_driving_time_seekbar);
         String prefKeyRoutePointReduction = getResources().getString(R.string.pref_route_point_reduction_seekbar);

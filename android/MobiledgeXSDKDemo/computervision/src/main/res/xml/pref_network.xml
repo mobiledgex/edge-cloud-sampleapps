@@ -22,8 +22,8 @@
         android:key="@string/fd_latency_method"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
-        android:summary="@string/pref_latency_method_summary"
-        android:title="@string/pref_latency_method_title"
+        android:summary="@string/pref_cv_latency_method_summary"
+        android:title="@string/pref_cv_latency_method_title"
         app:iconSpaceReserved="false"/>
 
     <SwitchPreference
