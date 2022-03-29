@@ -8,6 +8,8 @@
     <string name="no">No</string>
     <string name="ok">OK</string>
 
+    <string name="copy_settings">Copy Settings</string>
+
     <string name="action_reset_location">Reset Location</string>
     <string name="action_register_client">Register Client</string>
     <string name="action_update_qos_session">Update QOS Session</string>

@@ -73,7 +73,7 @@ public class EventRecyclerViewAdapter extends RecyclerView.Adapter<EventRecycler
         ClipboardManager clipboard = (ClipboardManager)
                 view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
         // Creates a new text clip to put on the clipboard
-        ClipData clip = ClipData.newPlainText("simple text", getAllItemsAsText());
+        ClipData clip = ClipData.newPlainText("Event Logs", getAllItemsAsText());
         // Set the clipboard's primary clip.
         clipboard.setPrimaryClip(clip);
         Toast.makeText(view.getContext(), "Items copied to clipboard.", Toast.LENGTH_SHORT).show();

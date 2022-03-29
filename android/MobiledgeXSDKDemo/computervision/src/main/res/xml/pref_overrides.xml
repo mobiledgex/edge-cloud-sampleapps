@@ -42,9 +42,9 @@
         android:title="@string/pref_cv_host_cloud_title"
         app:iconSpaceReserved="false" />
     <ListPreference
-        android:defaultValue="invalid"
-        android:entries="@array/pref_fd_reset_all_hosts_choices"
-        android:entryValues="@array/pref_fd_reset_all_hosts_choices"
+        android:defaultValue="No"
+        android:entries="@array/pref_cv_reset_all_hosts_choices"
+        android:entryValues="@array/pref_cv_reset_all_hosts_choices"
         android:key="@string/pref_cv_reset_all_hosts"
         android:title="@string/pref_cv_reset_all_hosts_title"
         app:iconSpaceReserved="false" />

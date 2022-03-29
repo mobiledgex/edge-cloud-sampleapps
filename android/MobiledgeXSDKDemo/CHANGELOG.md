@@ -2,9 +2,22 @@
 
 All notable changes to the **Android SDK Demo App** project will be documented in this file.
 
+## 2022 releases
+
+### 1.1.24 - Mar 10, 3:46 PM
+- Added support for QOS Priority Session creation/modification. Enable in General Settings.
+- EDGECLOUD-6182 Update QOS Session fails silently if FindCloudlet hasn't been performed.
+- EDGECLOUD-6184 Remove "Persistent TCP" Connection Mode Setting
+- EDGECLOUD-6238 Crash when NetTest is selected and Latency Test Auto-Start is on
+- EDGECLOUD-6255 Route mode bug fixes introduced by new library, SDK, and Java versions
+
 ## 2021 releases
 
-### 1.1.21 - Oct 5, 0:00 PM
+### 1.1.23 - Dec 9, 3:46 PM
+- Updated to SDK version 3.0.4-qos5 to support DT QOS Priority Session creation. 
+- Added preference to toggle SSL for the DME connection. (Facilitates local testing.)
+
+### 1.1.21 - Oct 5, 3:46 PM
 - EDGECLOUD-5672 Object Detection's Play Video function now uses the correct "objects" video file name.
 - EDGECLOUD-5677 "Get App Instances Limit" Setting is now a numeric-only text field to allow for larger values.
 
