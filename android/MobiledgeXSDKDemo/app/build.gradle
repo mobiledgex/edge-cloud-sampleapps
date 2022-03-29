@@ -9,8 +9,8 @@ android {
         applicationId "com.mobiledgex.sdkdemo"
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 67
-        versionName "1.1.24"
+        versionCode 69
+        versionName "1.1.25"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         manifestPlaceholders = [GOOGLE_MAPS_API_KEY: "${googleMapsApiKey}"]

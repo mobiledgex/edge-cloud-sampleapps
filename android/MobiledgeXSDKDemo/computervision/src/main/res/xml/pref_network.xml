@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <ListPreference
-        android:defaultValue="REST"
+        android:defaultValue="WebSocket"
         android:entries="@array/pref_cv_connection_mode_titles"
         android:entryValues="@array/pref_cv_connection_mode_values"
         android:key="@string/pref_cv_connection_mode"
@@ -19,11 +19,11 @@
         android:defaultValue="socket"
         android:entries="@array/pref_latency_test_method_titles_cv"
         android:entryValues="@array/pref_latency_test_method_values_cv"
-        android:key="@string/fd_latency_method"
+        android:key="@string/cv_latency_method"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
-        android:summary="@string/pref_latency_method_summary"
-        android:title="@string/pref_latency_method_title"
+        android:summary="@string/pref_cv_latency_method_summary"
+        android:title="@string/pref_cv_latency_method_title"
         app:iconSpaceReserved="false"/>
 
     <SwitchPreference

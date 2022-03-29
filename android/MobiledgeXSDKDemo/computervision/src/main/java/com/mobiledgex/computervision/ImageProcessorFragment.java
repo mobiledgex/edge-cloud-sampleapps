@@ -860,7 +860,7 @@ public class ImageProcessorFragment extends Fragment implements MatchingEngineHe
             //Can happen during rapid screen rotations.
             return;
         }
-        String prefKeyLatencyMethod = getResources().getString(R.string.fd_latency_method);
+        String prefKeyLatencyMethod = getResources().getString(R.string.cv_latency_method);
         String prefKeyConnectionMode = getResources().getString(R.string.pref_cv_connection_mode);
         String prefKeyFrontCamera = getResources().getString(R.string.pref_cv_front_camera);
         String prefKeyLegacyCamera = getResources().getString(R.string.pref_cv_legacy_camera);

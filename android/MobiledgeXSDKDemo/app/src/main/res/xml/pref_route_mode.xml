@@ -11,7 +11,7 @@
             android:max="60"
             android:min="1"
             android:title="@string/pref_title_driving_time"
-            app:key="pref_driving_time_seekbar"
+            android:key="@string/pref_driving_time_seekbar"
             app:showSeekBarValue="true" />
         <SeekBarPreference
             android:defaultValue="10"
@@ -19,7 +19,7 @@
             android:min="1"
             android:summary="@string/pref_summary_route_point_reduction"
             android:title="@string/pref_title_route_point_reduction"
-            app:key="@string/pref_route_point_reduction_seekbar"
+            android:key="@string/pref_route_point_reduction_seekbar"
             app:seekBarIncrement="10"
             app:showSeekBarValue="true" />
     </PreferenceCategory>
@@ -32,7 +32,7 @@
             android:max="60"
             android:min="1"
             android:title="@string/pref_title_flying_time"
-            app:key="pref_flying_time_seekbar"
+            android:key="@string/pref_flying_time_seekbar"
             app:showSeekBarValue="true" />
     </PreferenceCategory>
 

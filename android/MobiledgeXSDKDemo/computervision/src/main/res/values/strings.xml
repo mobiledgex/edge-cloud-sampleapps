@@ -58,11 +58,11 @@
     <string name="pref_cv_show_latency_stats_dialog">fd_show_latency_stats_dialog</string>
     <string name="pref_cv_show_latency_stats_dialog_title">Show Latency Stats after session</string>
     <string name="pref_cv_show_latency_stats_dialog_summary">Show a dialog with copyable latency stats after ending camera session.</string>
-    <string-array name="pref_fd_reset_all_hosts_choices">
+    <string-array name="pref_cv_reset_all_hosts_choices">
         <item>Yes. Reset hosts to default.</item>
         <item>No. Retain current values.</item>
     </string-array>
-    <string name="fd_latency_method">fd_latency_method</string>
+    <string name="cv_latency_method">fd_latency_method</string>
     <string name="train_guest_start">Start</string>
     <string name="train_guest_title">Guest Name</string>
     <string name="train_guest_message">Enter the guest name, then face recognition training will begin.</string>
@@ -72,9 +72,9 @@
     <string name="verify_delete_title">Delete Training Data</string>
     <string name="verify_delete_message">Are you sure you want to delete your face training data from the server?</string>
 
-    <string name="pref_latency_method">latency_method</string>
-    <string name="pref_latency_method_title">Latency Test Method</string>
-    <string name="pref_latency_method_summary">%s</string>
+    <string name="pref_cv_latency_method">latency_method</string>
+    <string name="pref_cv_latency_method_title">Latency Test Method</string>
+    <string name="pref_cv_latency_method_summary">%s</string>
     <string-array name="pref_latency_test_method_titles_cv">
         <item>System Ping (ICMP)</item>
         <item>Socket</item>

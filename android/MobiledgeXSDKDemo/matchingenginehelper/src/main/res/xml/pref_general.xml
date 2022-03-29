@@ -51,7 +51,8 @@
         android:title="@string/pref_title_default_app_definition"
         app:iconSpaceReserved="false"/>
 
-    <PreferenceCategory android:title="App Definition">
+    <PreferenceCategory android:title="App Definition"
+        app:iconSpaceReserved="false">
 
         <EditTextPreference
             android:defaultValue="@string/dme_app_name"
