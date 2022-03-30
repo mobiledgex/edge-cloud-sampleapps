@@ -92,6 +92,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -724,6 +725,10 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_about) {
             // Handle the About action
             showAboutDialog();
+            return true;
+        } else if (id == R.id.nav_licenses) {
+            // Handle the Open Sources Notices action
+            startActivity(new Intent(this, OssLicensesMenuActivity.class));
             return true;
         } else if (id == R.id.nav_face_detection) {
             // Start the face detection Activity

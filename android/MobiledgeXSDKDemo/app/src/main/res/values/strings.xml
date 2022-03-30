@@ -149,6 +149,7 @@
     <string name="download_speed_test">DL Speed Test</string>
     <string name="menu_sign_in_with_google">Sign in with Google</string>
     <string name="menu_sign_out">Sign out</string>
+    <string name="menu_licenses">Open source notices</string>
     <string name="menu_about">About</string>
     <string name="location_not_verified">User Location - Not Verified</string>
 

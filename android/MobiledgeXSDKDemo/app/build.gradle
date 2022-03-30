@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'com.google.android.gms.oss-licenses-plugin'
 
 android {
     archivesBaseName = "MobiledgeXSDKDemo"
@@ -68,6 +69,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.material:material:1.3.0'
     implementation 'com.google.android.gms:play-services-location:18.0.0'
     implementation 'com.google.android.gms:play-services-auth:19.0.0'
@@ -93,3 +95,57 @@ dependencies {
 
 }
 
+// Generate the RELEASE variant app, to get App level third party disclosures, then convert to text file (same as for App Display)
+task generateThirdPartyLicensesTxt {
+    dependsOn "generateReleaseAssets"
+    // Convert the generated output metadata into a single text file:
+    def currDir = System.getProperty("user.dir");
+    printf("CurrentDir: %s\n", currDir)
+    def licensesFile = new File(currDir + "/app/build/generated/third_party_licenses/release/res/raw/third_party_licenses")
+    def licensesMetadataFile = new File(currDir + "/app/build/generated/third_party_licenses/release/res/raw/third_party_license_metadata")
+    if (!licensesFile.canRead() || licensesFile.length() == 0) {
+        printf("Can't read release license file: [%s]!\n", licensesFile)
+        return
+    }
+    if (!licensesMetadataFile.canRead() || licensesMetadataFile.length() == 0) {
+        printf("Can't read release license metadata file [%s]!\n", licensesMetadataFile)
+        return
+    }
+
+    def licFileReader = new java.io.RandomAccessFile(licensesFile, "r")
+    File thirdPartyLicensesTextFile = new File("THIRD_PARTY_LICENSES.txt")
+
+    def licenseWriter = new FileWriter(thirdPartyLicensesTextFile, false) // overwrite mode.
+
+    def lines = licensesMetadataFile.readLines()
+    def licenseSeparator = "================================================================================"
+    lines.each { String line ->
+        {
+            printf("line: %s\n", line)
+            String []data = line.split(" ", 2)
+            String []licLocation = data[0].split(":", 2)
+
+            def packageString = data[1]
+            printf("package: %s\n", packageString)
+
+            def offset = Long.parseLong(licLocation[0])
+            printf("Offset seek: %d\n", offset)
+            def licenseLength = Long.parseLong(licLocation[1])
+            printf("Length of lic text: %d\n", licenseLength)
+
+            // ASCII files, according to "FILE"
+            licFileReader.seek(offset)
+            byte []licText = new byte[licenseLength]
+            licFileReader.read(licText, 0, (int)licenseLength)
+
+            def packageOut = String.format("%s\nPackage: %s\n", licenseSeparator, packageString)
+            def licenseTextOut = String.format("License:\n%s\n", new String(licText, "ASCII"))
+
+            licenseWriter.write(packageOut)
+            licenseWriter.write(licenseTextOut)
+        }
+    }
+    licenseWriter.flush()
+    licenseWriter.close()
+    licFileReader.close()
+}
