@@ -4,6 +4,11 @@ All notable changes to the **Android SDK Demo App** project will be documented i
 
 ## 2022 releases
 
+### 1.1.24 - Apr 14, 3:53 PM
+- EDGECLOUD-6331 Carrier name fix for wifi-only
+- EDGECLOUD-6330 Copy settings to clipboard
+- Add 'Open source notices' menu item to display licenses.
+
 ### 1.1.24 - Mar 10, 3:46 PM
 - Added support for QOS Priority Session creation/modification. Enable in General Settings.
 - EDGECLOUD-6182 Update QOS Session fails silently if FindCloudlet hasn't been performed.
